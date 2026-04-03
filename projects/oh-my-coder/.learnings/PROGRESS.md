@@ -11,14 +11,18 @@
 2. ✅ models/deepseek.py - DeepSeek 适配器
 3. ✅ core/router.py - 智能路由器
 4. ✅ agents/base.py - Agent 基类
-5. ✅ agents/explore.py - 第一个 Agent
-6. ✅ core/orchestrator.py - 编排引擎
-7. ✅ src/cli.py - CLI 入口
+5. ✅ agents/explore.py - 代码探索 Agent (LOW tier)
+6. ✅ agents/analyst.py - 需求分析 Agent (HIGH tier)
+7. ✅ agents/architect.py - 架构设计 Agent (HIGH tier)
+8. ✅ agents/executor.py - 代码实现 Agent (MEDIUM tier)
+9. ✅ core/orchestrator.py - 编排引擎
+10. ✅ src/cli.py - CLI 入口
+11. ✅ README.md - 完整文档
 
 **代码统计：**
-- 总代码：~60KB
-- 核心文件：7 个
-- Git 提交：2 次
+- 总代码：~70KB
+- 核心文件：10 个
+- Git 提交：3 次
 
 **进度：**
 - Day 5 目标：✅ 全部完成（超前）
@@ -27,7 +31,8 @@
 
 **下一步计划：**
 1. 安装依赖并运行测试
-2. 实现更多 Agent（analyst, architect, executor）
+2. 实现更多 Agent（verifier, reviewer）
+3. 其他模型适配器（文心/通义）
 3. 完善文档
 
 **技术亮点：**
