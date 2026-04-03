@@ -114,7 +114,8 @@ def agents():
     from .agents import (
         ExploreAgent, AnalystAgent, PlannerAgent, ArchitectAgent, ExecutorAgent,
         VerifierAgent, TestEngineerAgent, CodeReviewerAgent, DebuggerAgent, CriticAgent,
-        WriterAgent, DesignerAgent, SecurityReviewerAgent
+        WriterAgent, DesignerAgent, SecurityReviewerAgent, GitMasterAgent,
+        CodeSimplifierAgent, TracerAgent
     )
     
     agents_list = [
@@ -127,10 +128,13 @@ def agents():
         ("test-engineer", TestEngineerAgent.description, TestEngineerAgent.default_tier),
         ("code-reviewer", CodeReviewerAgent.description, CodeReviewerAgent.default_tier),
         ("debugger", DebuggerAgent.description, DebuggerAgent.default_tier),
+        ("tracer", TracerAgent.description, TracerAgent.default_tier),
         ("critic", CriticAgent.description, CriticAgent.default_tier),
         ("writer", WriterAgent.description, WriterAgent.default_tier),
         ("designer", DesignerAgent.description, DesignerAgent.default_tier),
         ("security-reviewer", SecurityReviewerAgent.description, SecurityReviewerAgent.default_tier),
+        ("git-master", GitMasterAgent.description, GitMasterAgent.default_tier),
+        ("code-simplifier", CodeSimplifierAgent.description, CodeSimplifierAgent.default_tier),
     ]
     
     for name, desc, tier in agents_list:

@@ -18,6 +18,9 @@ from .critic import CriticAgent
 from .writer import WriterAgent
 from .designer import DesignerAgent
 from .security import SecurityReviewerAgent
+from .git_master import GitMasterAgent
+from .code_simplifier import CodeSimplifierAgent
+from .tracer import TracerAgent
 
 # 导出所有 Agent
 __all__ = [
@@ -25,17 +28,24 @@ __all__ = [
     "register_agent",
     "get_agent",
     "list_agents",
+    # Build/Analysis Lane
     "ExploreAgent",
     "AnalystAgent",
     "PlannerAgent",
     "ArchitectAgent",
+    "DebuggerAgent",
     "ExecutorAgent",
     "VerifierAgent",
-    "TestEngineerAgent",
+    "TracerAgent",
+    # Review Lane
     "CodeReviewerAgent",
-    "DebuggerAgent",
-    "CriticAgent",
-    "WriterAgent",
-    "DesignerAgent",
     "SecurityReviewerAgent",
+    # Domain Lane
+    "TestEngineerAgent",
+    "DesignerAgent",
+    "WriterAgent",
+    "GitMasterAgent",
+    "CodeSimplifierAgent",
+    # Coordination Lane
+    "CriticAgent",
 ]
