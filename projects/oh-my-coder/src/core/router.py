@@ -156,7 +156,17 @@ class ModelRouter:
                 self._models.setdefault(ModelProvider.WENXIN, {})[tier] = \
                     WenxinModel(model_config, tier, secret_key=wenxin_secret_key)
         
-        # TODO: 添加其他提供商（通义、GLM）
+        # 通义千问
+        if self.config.tongyi_api_key:
+            from ..models.tongyi import TongyiModel
+            for tier in ModelTier:
+                model_config = ModelConfig(
+                    api_key=self.config.tongyi_api_key,
+                )
+                self._models.setdefault(ModelProvider.TONGYI, {})[tier] = \
+                    TongyiModel(model_config, tier)
+        
+        # TODO: 添加其他提供商（GLM）
     
     def select(
         self,
