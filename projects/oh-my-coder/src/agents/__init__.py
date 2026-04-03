@@ -7,11 +7,14 @@ Agents 模块
 from .base import BaseAgent, register_agent, get_agent, list_agents
 from .explore import ExploreAgent
 from .analyst import AnalystAgent
+from .planner import PlannerAgent
 from .architect import ArchitectAgent
 from .executor import ExecutorAgent
 from .verifier import VerifierAgent
+from .test_engineer import TestEngineerAgent
 from .code_reviewer import CodeReviewerAgent
 from .debugger import DebuggerAgent
+from .critic import CriticAgent
 
 # 导出所有 Agent
 __all__ = [
@@ -21,9 +24,12 @@ __all__ = [
     "list_agents",
     "ExploreAgent",
     "AnalystAgent",
+    "PlannerAgent",
     "ArchitectAgent",
     "ExecutorAgent",
     "VerifierAgent",
+    "TestEngineerAgent",
     "CodeReviewerAgent",
     "DebuggerAgent",
+    "CriticAgent",
 ]
