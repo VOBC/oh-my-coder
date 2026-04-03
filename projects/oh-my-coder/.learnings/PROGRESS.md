@@ -1,0 +1,104 @@
+# Oh My Coder 开发进度
+
+---
+
+## [2026-04-03 20:55] 完成核心基础模块
+
+### 已完成
+- ✅ **models/base.py** (5011 字节)
+  - 定义统一的模型接口（BaseModel）
+  - 支持流式和非流式生成
+  - Token 使用统计和成本计算
+  - 三层模型分级（LOW/MEDIUM/HIGH）
+  
+- ✅ **models/deepseek.py** (8762 字节)
+  - DeepSeek API 适配器
+  - 完全兼容 OpenAI 格式
+  - 支持流式输出
+  - 错误处理和重试机制
+  
+- ✅ **core/router.py** (8041 字节)
+  - 智能模型路由器
+  - 任务类型到模型层级的映射
+  - 成本预算控制
+  - 故障转移设计
+  
+- ✅ **agents/base.py** (7630 字节)
+  - Agent 基类设计
+  - 生命周期管理
+  - 上下文和输出结构
+  - 注册机制
+  
+- ✅ **agents/explore.py** (10301 字节)
+  - 第一个 Agent 实现
+  - 代码库扫描和项目地图生成
+  - 文件统计和依赖提取
+  - 目录树生成
+
+### 代码统计
+- 新增代码：~40KB
+- 文件数：5 个核心模块
+- 进度：Day 5 目标已超前完成
+
+### 技术决策
+1. **异步优先** - 所有 API 调用使用 async/await
+2. **统一接口** - 所有模型实现相同接口，便于替换
+3. **三层路由** - 保留原项目的 haiku/sonnet/opus 分层理念
+4. **注册机制** - Agent 使用装饰器注册，支持动态发现
+
+### 下一步
+- 实现 core/orchestrator.py（Agent 调度器）
+- 实现更多 Agent（analyst, architect, executor）
+- 编写单元测试
+- 实现简单的 CLI 入口
+
+### 阻塞
+- 无
+
+---
+
+## [2026-04-03 19:40] 完成原项目架构分析
+
+### 已完成
+- ✅ 通过 web_fetch 获取 oh-my-claudecode 完整架构文档
+- ✅ 深度阅读 19 个 Agent 设计（4 个通道：Build/Analysis、Review、Domain、Coordination）
+- ✅ 理解 31 个 Skills 系统及分层架构（Guarantee → Enhancement → Execution）
+- ✅ 分析 Hooks 系统（11 个生命周期事件）
+- ✅ 理解 State 状态管理机制
+- ✅ 发现 TASK.md 描述与实际差异：
+  - Agent 数量：32 → **19**（带tier变体）
+  - 模型路由：国内模型 → **Claude三层**（haiku/sonnet/opus）
+- ✅ 保存架构分析到 `docs/ORIGINAL_ARCHITECTURE.md`（7022字节）
+
+### 下一步
+- 设计 Python 版本架构（模型适配层设计）
+- 实现 models/base.py（模型基类）
+- 实现 models/deepseek.py（DeepSeek适配器）
+- 设计 Agent 基类和注册机制
+
+### 阻塞
+- 无
+
+### 技术笔记
+原项目是 Claude Code 插件，依赖 Claude Code 的生命周期事件和 Task 工具。Python 版本需要：
+1. 自己实现事件系统
+2. 重新设计 Agent 调度机制
+3. 适配国内模型 API
+
+---
+
+## [2026-04-03 16:31] 项目初始化
+
+### 已完成
+- ✅ 创建项目目录结构
+- ✅ 编写 TASK.md 任务文档
+- ✅ 编写 ARCHITECTURE.md 初版架构
+- ✅ 创建 FastAPI 骨架（src/main.py）
+- ✅ 创建目录：src/core、src/agents、src/models、src/skills、src/utils
+
+### 下一步
+- 深度阅读原项目源码
+- 完善架构设计
+
+### 阻塞
+- 无
