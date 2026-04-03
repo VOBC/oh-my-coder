@@ -110,11 +110,14 @@ def agents():
     table.add_column("描述")
     table.add_column("层级", style="green")
     
-    # 目前只有 explore，后续会添加更多
-    from .agents.explore import ExploreAgent
+    # 导入所有 Agent
+    from .agents import ExploreAgent, AnalystAgent, ArchitectAgent, ExecutorAgent
     
     agents_list = [
         ("explore", ExploreAgent.description, ExploreAgent.default_tier),
+        ("analyst", AnalystAgent.description, AnalystAgent.default_tier),
+        ("architect", ArchitectAgent.description, ArchitectAgent.default_tier),
+        ("executor", ExecutorAgent.description, ExecutorAgent.default_tier),
     ]
     
     for name, desc, tier in agents_list:
