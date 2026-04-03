@@ -172,10 +172,21 @@ class ModelRouter:
         
         # 根据复杂度调整层级
         tier = base_tier
-        if complexity == "low" and base_tier != ModelTier.LOW:
-            tier = ModelTier(base_tier.value - 1)  # 降一级
-        elif complexity == "high" and base_tier != ModelTier.HIGH:
-            tier = ModelTier(base_tier.value + 1)  # 升一级
+        
+        # 层级映射（用于升降级）
+        tier_upgrades = {
+            ModelTier.LOW: ModelTier.MEDIUM,
+            ModelTier.MEDIUM: ModelTier.HIGH,
+        }
+        tier_downgrades = {
+            ModelTier.HIGH: ModelTier.MEDIUM,
+            ModelTier.MEDIUM: ModelTier.LOW,
+        }
+        
+        if complexity == "low" and base_tier in tier_downgrades:
+            tier = tier_downgrades[base_tier]  # 降一级
+        elif complexity == "high" and base_tier in tier_upgrades:
+            tier = tier_upgrades[base_tier]  # 升一级
         
         # 选择提供商（优先 DeepSeek）
         selected_provider = None
