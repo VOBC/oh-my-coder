@@ -111,13 +111,19 @@ def agents():
     table.add_column("层级", style="green")
     
     # 导入所有 Agent
-    from .agents import ExploreAgent, AnalystAgent, ArchitectAgent, ExecutorAgent
+    from .agents import (
+        ExploreAgent, AnalystAgent, ArchitectAgent, ExecutorAgent,
+        VerifierAgent, CodeReviewerAgent, DebuggerAgent
+    )
     
     agents_list = [
         ("explore", ExploreAgent.description, ExploreAgent.default_tier),
         ("analyst", AnalystAgent.description, AnalystAgent.default_tier),
         ("architect", ArchitectAgent.description, ArchitectAgent.default_tier),
         ("executor", ExecutorAgent.description, ExecutorAgent.default_tier),
+        ("verifier", VerifierAgent.description, VerifierAgent.default_tier),
+        ("code-reviewer", CodeReviewerAgent.description, CodeReviewerAgent.default_tier),
+        ("debugger", DebuggerAgent.description, DebuggerAgent.default_tier),
     ]
     
     for name, desc, tier in agents_list:

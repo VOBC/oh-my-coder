@@ -9,6 +9,9 @@ from .explore import ExploreAgent
 from .analyst import AnalystAgent
 from .architect import ArchitectAgent
 from .executor import ExecutorAgent
+from .verifier import VerifierAgent
+from .code_reviewer import CodeReviewerAgent
+from .debugger import DebuggerAgent
 
 # 导出所有 Agent
 __all__ = [
@@ -20,4 +23,7 @@ __all__ = [
     "AnalystAgent",
     "ArchitectAgent",
     "ExecutorAgent",
+    "VerifierAgent",
+    "CodeReviewerAgent",
+    "DebuggerAgent",
 ]
