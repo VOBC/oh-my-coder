@@ -145,10 +145,18 @@ class ModelRouter:
                 self._models.setdefault(ModelProvider.DEEPSEEK, {})[tier] = \
                     DeepSeekModel(model_config, tier)
         
-        # TODO: 添加其他提供商
         # 文心一言
-        # if self.config.wenxin_api_key:
-        #     ...
+        wenxin_secret_key = os.getenv("WENXIN_SECRET_KEY")
+        if self.config.wenxin_api_key and wenxin_secret_key:
+            from ..models.wenxin import WenxinModel
+            for tier in ModelTier:
+                model_config = ModelConfig(
+                    api_key=self.config.wenxin_api_key,
+                )
+                self._models.setdefault(ModelProvider.WENXIN, {})[tier] = \
+                    WenxinModel(model_config, tier, secret_key=wenxin_secret_key)
+        
+        # TODO: 添加其他提供商（通义、GLM）
     
     def select(
         self,
