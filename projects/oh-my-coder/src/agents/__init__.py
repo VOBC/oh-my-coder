@@ -15,6 +15,9 @@ from .test_engineer import TestEngineerAgent
 from .code_reviewer import CodeReviewerAgent
 from .debugger import DebuggerAgent
 from .critic import CriticAgent
+from .writer import WriterAgent
+from .designer import DesignerAgent
+from .security import SecurityReviewerAgent
 
 # 导出所有 Agent
 __all__ = [
@@ -32,4 +35,7 @@ __all__ = [
     "CodeReviewerAgent",
     "DebuggerAgent",
     "CriticAgent",
+    "WriterAgent",
+    "DesignerAgent",
+    "SecurityReviewerAgent",
 ]

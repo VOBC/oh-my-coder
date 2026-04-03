@@ -113,7 +113,8 @@ def agents():
     # 导入所有 Agent
     from .agents import (
         ExploreAgent, AnalystAgent, PlannerAgent, ArchitectAgent, ExecutorAgent,
-        VerifierAgent, TestEngineerAgent, CodeReviewerAgent, DebuggerAgent, CriticAgent
+        VerifierAgent, TestEngineerAgent, CodeReviewerAgent, DebuggerAgent, CriticAgent,
+        WriterAgent, DesignerAgent, SecurityReviewerAgent
     )
     
     agents_list = [
@@ -127,6 +128,9 @@ def agents():
         ("code-reviewer", CodeReviewerAgent.description, CodeReviewerAgent.default_tier),
         ("debugger", DebuggerAgent.description, DebuggerAgent.default_tier),
         ("critic", CriticAgent.description, CriticAgent.default_tier),
+        ("writer", WriterAgent.description, WriterAgent.default_tier),
+        ("designer", DesignerAgent.description, DesignerAgent.default_tier),
+        ("security-reviewer", SecurityReviewerAgent.description, SecurityReviewerAgent.default_tier),
     ]
     
     for name, desc, tier in agents_list:
