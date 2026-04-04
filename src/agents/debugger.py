@@ -9,6 +9,7 @@ Debugger Agent - 调试智能体
 
 模型层级：MEDIUM（平衡，对应 sonnet）
 """
+
 from typing import List, Dict, Any
 from pathlib import Path
 
@@ -26,14 +27,14 @@ from ..core.router import TaskType
 @register_agent
 class DebuggerAgent(BaseAgent):
     """调试 Agent - 定位和修复 Bug"""
-    
+
     name = "debugger"
     description = "调试智能体 - 根因分析和错误修复"
     lane = AgentLane.BUILD_ANALYSIS
     default_tier = "medium"
     icon = "🐛"
     tools = ["bash", "file_read", "search", "test"]
-    
+
     @property
     def system_prompt(self) -> str:
         return """你是一个经验丰富的调试专家。
@@ -89,39 +90,39 @@ class DebuggerAgent(BaseAgent):
 - 增加错误处理
 - 改进日志记录
 """
-    
+
     async def _run(
-        self,
-        context: AgentContext,
-        prompt: List[Dict[str, str]],
-        **kwargs
+        self, context: AgentContext, prompt: List[Dict[str, str]], **kwargs
     ) -> str:
         """执行调试"""
         # 添加错误信息
         error_info = context.metadata.get("error")
         if error_info:
-            prompt.append({
-                "role": "user",
-                "content": f"## 错误信息\n```\n{error_info}\n```"
-            })
-        
+            prompt.append(
+                {"role": "user", "content": f"## 错误信息\n```\n{error_info}\n```"}
+            )
+
         # 读取相关代码
         if context.relevant_files:
             code_parts = []
             for file_path in context.relevant_files[:5]:
                 try:
-                    with open(file_path, 'r', encoding='utf-8') as f:
+                    with open(file_path, "r", encoding="utf-8") as f:
                         content = f.read()
-                        code_parts.append(f"### {file_path.name}\n```\n{content[:3000]}\n```")
+                        code_parts.append(
+                            f"### {file_path.name}\n```\n{content[:3000]}\n```"
+                        )
                 except:
                     pass
-            
+
             if code_parts:
-                prompt.append({
-                    "role": "user",
-                    "content": "## 相关代码\n" + "\n\n".join(code_parts)
-                })
-        
+                prompt.append(
+                    {
+                        "role": "user",
+                        "content": "## 相关代码\n" + "\n\n".join(code_parts),
+                    }
+                )
+
         # 调试提示
         debug_hint = """
 
@@ -132,22 +133,19 @@ class DebuggerAgent(BaseAgent):
 4. 如何防止再次发生？
 """
         prompt.append({"role": "user", "content": debug_hint})
-        
+
         # 调用模型
         from ..models.base import Message
-        
-        messages = [
-            Message(role=msg["role"], content=msg["content"])
-            for msg in prompt
-        ]
-        
+
+        messages = [Message(role=msg["role"], content=msg["content"]) for msg in prompt]
+
         response = await self.model_router.route_and_call(
             task_type=TaskType.DEBUGGING,
             messages=messages,
         )
-        
+
         return response.content
-    
+
     def _post_process(self, result: str, context: AgentContext) -> AgentOutput:
         """后处理"""
         return AgentOutput(

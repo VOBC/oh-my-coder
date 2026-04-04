@@ -9,6 +9,7 @@ Scientist Agent - 数据分析智能体
 
 模型层级：MEDIUM（平衡，对应 sonnet）
 """
+
 from typing import List, Dict, Any
 from pathlib import Path
 
@@ -26,14 +27,14 @@ from ..core.router import TaskType
 @register_agent
 class ScientistAgent(BaseAgent):
     """数据分析 Agent - 统计分析和洞察发现"""
-    
+
     name = "scientist"
     description = "数据分析智能体 - 统计分析和洞察发现"
     lane = AgentLane.DOMAIN
     default_tier = "medium"
     icon = "🔬"
     tools = ["file_read", "file_write", "bash"]
-    
+
     @property
     def system_prompt(self) -> str:
         return """你是一个数据科学家，擅长从数据中发现规律和洞察。
@@ -78,12 +79,9 @@ class ScientistAgent(BaseAgent):
 ### 5. 建议
 - ...
 """
-    
+
     async def _run(
-        self,
-        context: AgentContext,
-        prompt: List[Dict[str, str]],
-        **kwargs
+        self, context: AgentContext, prompt: List[Dict[str, str]], **kwargs
     ) -> str:
         """执行数据分析"""
         # 分析提示
@@ -97,22 +95,19 @@ class ScientistAgent(BaseAgent):
 5. 有哪些值得关注的发现？
 """
         prompt.append({"role": "user", "content": analysis_hint})
-        
+
         # 调用模型
         from ..models.base import Message
-        
-        messages = [
-            Message(role=msg["role"], content=msg["content"])
-            for msg in prompt
-        ]
-        
+
+        messages = [Message(role=msg["role"], content=msg["content"]) for msg in prompt]
+
         response = await self.model_router.route_and_call(
             task_type=TaskType.CODE_GENERATION,
             messages=messages,
         )
-        
+
         return response.content
-    
+
     def _post_process(self, result: str, context: AgentContext) -> AgentOutput:
         """后处理"""
         return AgentOutput(

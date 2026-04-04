@@ -9,6 +9,7 @@ Tracer Agent - 因果追踪智能体
 
 模型层级：MEDIUM（平衡，对应 sonnet）
 """
+
 from typing import List, Dict, Any
 from pathlib import Path
 from dataclasses import dataclass
@@ -27,6 +28,7 @@ from ..core.router import TaskType
 @dataclass
 class Hypothesis:
     """假设"""
+
     description: str
     evidence_for: List[str]
     evidence_against: List[str]
@@ -36,14 +38,14 @@ class Hypothesis:
 @register_agent
 class TracerAgent(BaseAgent):
     """追踪 Agent - 因果分析和根因定位"""
-    
+
     name = "tracer"
     description = "追踪智能体 - 证据驱动的因果分析"
     lane = AgentLane.BUILD_ANALYSIS
     default_tier = "medium"
     icon = "🔍"
     tools = ["file_read", "search", "bash"]
-    
+
     @property
     def system_prompt(self) -> str:
         return """你是一个问题分析专家，擅长追踪问题的根因。
@@ -111,39 +113,39 @@ class TracerAgent(BaseAgent):
 ### 6. 修复建议
 - ...
 """
-    
+
     async def _run(
-        self,
-        context: AgentContext,
-        prompt: List[Dict[str, str]],
-        **kwargs
+        self, context: AgentContext, prompt: List[Dict[str, str]], **kwargs
     ) -> str:
         """执行因果追踪"""
         # 添加错误信息
         error_info = context.metadata.get("error")
         if error_info:
-            prompt.append({
-                "role": "user",
-                "content": f"## 问题现象\n```\n{error_info}\n```"
-            })
-        
+            prompt.append(
+                {"role": "user", "content": f"## 问题现象\n```\n{error_info}\n```"}
+            )
+
         # 添加相关代码
         if context.relevant_files:
             code_parts = []
             for file_path in context.relevant_files[:5]:
                 try:
-                    with open(file_path, 'r', encoding='utf-8') as f:
+                    with open(file_path, "r", encoding="utf-8") as f:
                         content = f.read()
-                        code_parts.append(f"### {file_path.name}\n```\n{content[:2000]}\n```")
+                        code_parts.append(
+                            f"### {file_path.name}\n```\n{content[:2000]}\n```"
+                        )
                 except:
                     pass
-            
+
             if code_parts:
-                prompt.append({
-                    "role": "user",
-                    "content": "## 相关代码\n" + "\n\n".join(code_parts)
-                })
-        
+                prompt.append(
+                    {
+                        "role": "user",
+                        "content": "## 相关代码\n" + "\n\n".join(code_parts),
+                    }
+                )
+
         # 追踪提示
         trace_hint = """
 
@@ -154,22 +156,19 @@ class TracerAgent(BaseAgent):
 4. 如何验证你的结论？
 """
         prompt.append({"role": "user", "content": trace_hint})
-        
+
         # 调用模型
         from ..models.base import Message
-        
-        messages = [
-            Message(role=msg["role"], content=msg["content"])
-            for msg in prompt
-        ]
-        
+
+        messages = [Message(role=msg["role"], content=msg["content"]) for msg in prompt]
+
         response = await self.model_router.route_and_call(
             task_type=TaskType.DEBUGGING,
             messages=messages,
         )
-        
+
         return response.content
-    
+
     def _post_process(self, result: str, context: AgentContext) -> AgentOutput:
         """后处理"""
         return AgentOutput(

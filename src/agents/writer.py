@@ -9,6 +9,7 @@ Writer Agent - 文档编写智能体
 
 模型层级：LOW（快速，对应 haiku）
 """
+
 from typing import List, Dict, Any
 from pathlib import Path
 
@@ -26,14 +27,14 @@ from ..core.router import TaskType
 @register_agent
 class WriterAgent(BaseAgent):
     """文档编写 Agent - 技术文档和 API 文档"""
-    
+
     name = "writer"
     description = "文档编写智能体 - 技术文档和 API 文档生成"
     lane = AgentLane.DOMAIN
     default_tier = "low"
     icon = "📝"
     tools = ["file_read", "file_write"]
-    
+
     @property
     def system_prompt(self) -> str:
         return """你是一个专业的技术文档撰写者。
@@ -128,32 +129,30 @@ const x = require('xxx')
 MIT
 ````
 """
-    
+
     async def _run(
-        self,
-        context: AgentContext,
-        prompt: List[Dict[str, str]],
-        **kwargs
+        self, context: AgentContext, prompt: List[Dict[str, str]], **kwargs
     ) -> str:
         """执行文档编写"""
         doc_type = context.metadata.get("doc_type", "readme")
-        
+
         # 添加前序输出
         if context.previous_outputs.get("executor"):
-            prompt.append({
-                "role": "user",
-                "content": f"## 实现代码\n{context.previous_outputs['executor'].result}"
-            })
-        
+            prompt.append(
+                {
+                    "role": "user",
+                    "content": f"## 实现代码\n{context.previous_outputs['executor'].result}",
+                }
+            )
+
         # 读取现有文档
         readme = context.project_path / "README.md"
         if readme.exists():
-            with open(readme, 'r', encoding='utf-8') as f:
-                prompt.append({
-                    "role": "user",
-                    "content": f"## 现有 README\n{f.read()[:2000]}"
-                })
-        
+            with open(readme, "r", encoding="utf-8") as f:
+                prompt.append(
+                    {"role": "user", "content": f"## 现有 README\n{f.read()[:2000]}"}
+                )
+
         # 文档提示
         doc_hint = f"""
 
@@ -165,23 +164,20 @@ MIT
 5. 注意事项
 """
         prompt.append({"role": "user", "content": doc_hint})
-        
+
         # 调用模型
         from ..models.base import Message
-        
-        messages = [
-            Message(role=msg["role"], content=msg["content"])
-            for msg in prompt
-        ]
-        
+
+        messages = [Message(role=msg["role"], content=msg["content"]) for msg in prompt]
+
         response = await self.model_router.route_and_call(
             task_type=TaskType.SIMPLE_QA,
             messages=messages,
             complexity="low",
         )
-        
+
         return response.content
-    
+
     def _post_process(self, result: str, context: AgentContext) -> AgentOutput:
         """后处理"""
         return AgentOutput(

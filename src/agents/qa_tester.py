@@ -9,6 +9,7 @@ QA Tester Agent - QA 测试智能体
 
 模型层级：MEDIUM（平衡，对应 sonnet）
 """
+
 from typing import List, Dict, Any
 from pathlib import Path
 import subprocess
@@ -27,14 +28,14 @@ from ..core.router import TaskType
 @register_agent
 class QATesterAgent(BaseAgent):
     """QA 测试 Agent - 交互式测试和端到端验证"""
-    
+
     name = "qa-tester"
     description = "QA 测试智能体 - 交互式测试和端到端验证"
     lane = AgentLane.DOMAIN
     default_tier = "medium"
     icon = "🛠️"
     tools = ["bash", "file_read"]
-    
+
     @property
     def system_prompt(self) -> str:
         return """你是一个 QA 测试专家，擅长端到端测试和交互式验证。
@@ -92,27 +93,24 @@ class QATesterAgent(BaseAgent):
 - 🟡 中风险: ...
 - 🟢 低风险: ...
 """
-    
+
     async def _run(
-        self,
-        context: AgentContext,
-        prompt: List[Dict[str, str]],
-        **kwargs
+        self, context: AgentContext, prompt: List[Dict[str, str]], **kwargs
     ) -> str:
         """执行 QA 测试"""
         # 获取项目信息
         project_path = context.project_path
-        
+
         # 检查可执行文件
         executables = []
         for pattern in ["*.sh", "start*.sh", "run*.py"]:
             executables.extend(project_path.glob(pattern))
-        
+
         # 检查入口文件
         main_files = []
         for name in ["main.py", "app.py", "cli.py", "__main__.py"]:
             main_files.extend(project_path.glob(f"**/{name}"))
-        
+
         test_info = f"""## 测试环境
 
 项目路径: {project_path}
@@ -126,22 +124,19 @@ class QATesterAgent(BaseAgent):
 4. 输出格式是否符合预期？
 """
         prompt.append({"role": "user", "content": test_info})
-        
+
         # 调用模型
         from ..models.base import Message
-        
-        messages = [
-            Message(role=msg["role"], content=msg["content"])
-            for msg in prompt
-        ]
-        
+
+        messages = [Message(role=msg["role"], content=msg["content"]) for msg in prompt]
+
         response = await self.model_router.route_and_call(
             task_type=TaskType.TESTING,
             messages=messages,
         )
-        
+
         return response.content
-    
+
     def _post_process(self, result: str, context: AgentContext) -> AgentOutput:
         """后处理"""
         return AgentOutput(

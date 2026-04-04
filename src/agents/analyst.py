@@ -16,6 +16,7 @@ Analyst Agent - 需求分析智能体
 4. 提出澄清问题
 5. 生成需求文档
 """
+
 from typing import List, Dict, Any
 from pathlib import Path
 from dataclasses import dataclass
@@ -35,6 +36,7 @@ from ..core.router import TaskType
 @dataclass
 class Requirement:
     """需求项"""
+
     id: str
     description: str
     priority: str  # high, medium, low
@@ -46,6 +48,7 @@ class Requirement:
 @dataclass
 class AnalysisResult:
     """分析结果"""
+
     summary: str
     requirements: List[Requirement]
     questions: List[str]  # 需要澄清的问题
@@ -57,20 +60,20 @@ class AnalysisResult:
 class AnalystAgent(BaseAgent):
     """
     需求分析 Agent
-    
+
     特点：
     - 使用 HIGH tier 模型（深度推理）
     - 苏格拉底式提问，澄清需求
     - 输出结构化需求文档
     """
-    
+
     name = "analyst"
     description = "需求分析智能体 - 深度理解需求并发现隐藏约束"
     lane = AgentLane.BUILD_ANALYSIS
     default_tier = "high"
     icon = "📊"
     tools = ["file_read", "search"]
-    
+
     @property
     def system_prompt(self) -> str:
         return """你是一个资深的需求分析师。
@@ -121,16 +124,13 @@ class AnalystAgent(BaseAgent):
 ### 7. 下一步建议
 - ...
 """
-    
+
     async def _run(
-        self,
-        context: AgentContext,
-        prompt: List[Dict[str, str]],
-        **kwargs
+        self, context: AgentContext, prompt: List[Dict[str, str]], **kwargs
     ) -> str:
         """
         执行需求分析
-        
+
         步骤：
         1. 分析用户输入
         2. 结合项目上下文
@@ -139,11 +139,10 @@ class AnalystAgent(BaseAgent):
         # 添加项目上下文
         if context.previous_outputs.get("explore"):
             explore_result = context.previous_outputs["explore"].result
-            prompt.append({
-                "role": "user",
-                "content": f"## 项目探索结果\n\n{explore_result}"
-            })
-        
+            prompt.append(
+                {"role": "user", "content": f"## 项目探索结果\n\n{explore_result}"}
+            )
+
         # 添加分析提示
         analysis_hint = """
 
@@ -154,23 +153,20 @@ class AnalystAgent(BaseAgent):
 4. 需要哪些额外的信息？
 """
         prompt.append({"role": "user", "content": analysis_hint})
-        
+
         # 调用模型
         from ..models.base import Message
-        
-        messages = [
-            Message(role=msg["role"], content=msg["content"])
-            for msg in prompt
-        ]
-        
+
+        messages = [Message(role=msg["role"], content=msg["content"]) for msg in prompt]
+
         response = await self.model_router.route_and_call(
             task_type=TaskType.ARCHITECTURE,  # 使用 HIGH tier
             messages=messages,
             complexity="high",
         )
-        
+
         return response.content
-    
+
     def _post_process(
         self,
         result: str,
@@ -178,7 +174,7 @@ class AnalystAgent(BaseAgent):
     ) -> AgentOutput:
         """后处理 - 提取关键信息"""
         # TODO: 使用正则或模型提取结构化需求
-        
+
         return AgentOutput(
             agent_name=self.name,
             status=AgentStatus.COMPLETED,

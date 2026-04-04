@@ -9,6 +9,7 @@ Designer Agent - UI/UX 设计智能体
 
 模型层级：MEDIUM（平衡，对应 sonnet）
 """
+
 from typing import List, Dict, Any
 from pathlib import Path
 
@@ -26,14 +27,14 @@ from ..core.router import TaskType
 @register_agent
 class DesignerAgent(BaseAgent):
     """UI/UX 设计 Agent - 界面和交互设计"""
-    
+
     name = "designer"
     description = "UI/UX 设计智能体 - 界面和交互设计"
     lane = AgentLane.DOMAIN
     default_tier = "medium"
     icon = "🎨"
     tools = ["file_read", "file_write"]
-    
+
     @property
     def system_prompt(self) -> str:
         return """你是一个资深的 UI/UX 设计师。
@@ -100,21 +101,20 @@ class DesignerAgent(BaseAgent):
 - 字体: 14px, PingFang SC
 - 间距: 8px, 16px, 24px
 """
-    
+
     async def _run(
-        self,
-        context: AgentContext,
-        prompt: List[Dict[str, str]],
-        **kwargs
+        self, context: AgentContext, prompt: List[Dict[str, str]], **kwargs
     ) -> str:
         """执行设计"""
         # 添加前序输出
         if context.previous_outputs.get("architect"):
-            prompt.append({
-                "role": "user",
-                "content": f"## 架构设计\n{context.previous_outputs['architect'].result}"
-            })
-        
+            prompt.append(
+                {
+                    "role": "user",
+                    "content": f"## 架构设计\n{context.previous_outputs['architect'].result}",
+                }
+            )
+
         # 设计提示
         design_hint = """
 
@@ -125,22 +125,19 @@ class DesignerAgent(BaseAgent):
 4. 样式规范
 """
         prompt.append({"role": "user", "content": design_hint})
-        
+
         # 调用模型
         from ..models.base import Message
-        
-        messages = [
-            Message(role=msg["role"], content=msg["content"])
-            for msg in prompt
-        ]
-        
+
+        messages = [Message(role=msg["role"], content=msg["content"]) for msg in prompt]
+
         response = await self.model_router.route_and_call(
             task_type=TaskType.CODE_GENERATION,
             messages=messages,
         )
-        
+
         return response.content
-    
+
     def _post_process(self, result: str, context: AgentContext) -> AgentOutput:
         """后处理"""
         return AgentOutput(

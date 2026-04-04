@@ -9,6 +9,7 @@ Test Engineer Agent - 测试工程师智能体
 
 模型层级：MEDIUM（平衡，对应 sonnet）
 """
+
 from typing import List, Dict, Any
 from pathlib import Path
 
@@ -26,14 +27,14 @@ from ..core.router import TaskType
 @register_agent
 class TestEngineerAgent(BaseAgent):
     """测试工程师 Agent - 测试策略和用例编写"""
-    
+
     name = "test-engineer"
     description = "测试工程师智能体 - 测试策略设计和用例编写"
     lane = AgentLane.DOMAIN
     default_tier = "medium"
     icon = "🧪"
     tools = ["file_read", "file_write", "bash", "test"]
-    
+
     @property
     def system_prompt(self) -> str:
         return """你是一个专业的测试工程师。
@@ -100,30 +101,31 @@ class TestXXX:
 ### 5. 建议
 - ...
 """
-    
+
     async def _run(
-        self,
-        context: AgentContext,
-        prompt: List[Dict[str, str]],
-        **kwargs
+        self, context: AgentContext, prompt: List[Dict[str, str]], **kwargs
     ) -> str:
         """执行测试设计"""
         # 添加前序输出
         if context.previous_outputs.get("executor"):
-            prompt.append({
-                "role": "user",
-                "content": f"## 实现代码\n{context.previous_outputs['executor'].result}"
-            })
-        
+            prompt.append(
+                {
+                    "role": "user",
+                    "content": f"## 实现代码\n{context.previous_outputs['executor'].result}",
+                }
+            )
+
         # 检查现有测试
         test_dir = context.project_path / "tests"
         if test_dir.exists():
             test_files = list(test_dir.glob("test_*.py"))
-            prompt.append({
-                "role": "user",
-                "content": f"## 现有测试\n共 {len(test_files)} 个测试文件"
-            })
-        
+            prompt.append(
+                {
+                    "role": "user",
+                    "content": f"## 现有测试\n共 {len(test_files)} 个测试文件",
+                }
+            )
+
         # 测试提示
         test_hint = """
 
@@ -134,22 +136,19 @@ class TestXXX:
 4. 有哪些边界情况需要覆盖？
 """
         prompt.append({"role": "user", "content": test_hint})
-        
+
         # 调用模型
         from ..models.base import Message
-        
-        messages = [
-            Message(role=msg["role"], content=msg["content"])
-            for msg in prompt
-        ]
-        
+
+        messages = [Message(role=msg["role"], content=msg["content"]) for msg in prompt]
+
         response = await self.model_router.route_and_call(
             task_type=TaskType.TESTING,
             messages=messages,
         )
-        
+
         return response.content
-    
+
     def _post_process(self, result: str, context: AgentContext) -> AgentOutput:
         """后处理"""
         return AgentOutput(
