@@ -264,19 +264,27 @@ class ModelRouter:
         # 获取模型
         model = self._models[decision.selected_provider][decision.selected_tier]
         
-        try:
-            response = await model.generate(messages, **kwargs)
-            
-            # 更新成本统计
-            actual_cost = model.get_cost(response.usage)
-            self._total_cost += actual_cost
-            
-            return response
-            
-        except Exception as e:
-            # 故障转移到下一个提供商
-            # TODO: 实现 fallback 逻辑
-            raise
+        # 重试机制
+        last_error = None
+        for attempt in range(3):
+            try:
+                response = await model.generate(messages, **kwargs)
+                
+                # 更新成本统计
+                actual_cost = model.get_cost(response.usage)
+                self._total_cost += actual_cost
+                
+                return response
+                
+            except Exception as e:
+                last_error = e
+                if attempt < 2:  # 还有重试机会
+                    import asyncio
+                    import time
+                    time.sleep(2)  # 等待 2 秒后重试
+        
+        # 所有重试都失败
+        raise last_error
     
     def get_model(
         self,

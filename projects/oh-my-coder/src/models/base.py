@@ -78,8 +78,9 @@ class ModelConfig:
     timeout: float = 60.0
     
     # 重试策略
-    max_retries: int = 3
-    retry_delay: float = 1.0
+    max_retries: int = 5
+    retry_delay: float = 2.0
+    timeout: float = 120.0  # 增加超时时间到 120 秒
     
     # 成本控制
     cost_per_1k_prompt: float = 0.0    # 每 1k prompt token 的成本（元）
