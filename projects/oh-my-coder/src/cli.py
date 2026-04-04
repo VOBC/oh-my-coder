@@ -115,7 +115,7 @@ def agents():
         ExploreAgent, AnalystAgent, PlannerAgent, ArchitectAgent, ExecutorAgent,
         VerifierAgent, TestEngineerAgent, CodeReviewerAgent, DebuggerAgent, CriticAgent,
         WriterAgent, DesignerAgent, SecurityReviewerAgent, GitMasterAgent,
-        CodeSimplifierAgent, TracerAgent
+        CodeSimplifierAgent, TracerAgent, ScientistAgent, QATesterAgent
     )
     
     agents_list = [
@@ -135,6 +135,8 @@ def agents():
         ("security-reviewer", SecurityReviewerAgent.description, SecurityReviewerAgent.default_tier),
         ("git-master", GitMasterAgent.description, GitMasterAgent.default_tier),
         ("code-simplifier", CodeSimplifierAgent.description, CodeSimplifierAgent.default_tier),
+        ("scientist", ScientistAgent.description, ScientistAgent.default_tier),
+        ("qa-tester", QATesterAgent.description, QATesterAgent.default_tier),
     ]
     
     for name, desc, tier in agents_list:

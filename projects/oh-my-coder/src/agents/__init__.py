@@ -21,6 +21,8 @@ from .security import SecurityReviewerAgent
 from .git_master import GitMasterAgent
 from .code_simplifier import CodeSimplifierAgent
 from .tracer import TracerAgent
+from .scientist import ScientistAgent
+from .qa_tester import QATesterAgent
 
 # 导出所有 Agent
 __all__ = [
@@ -46,6 +48,8 @@ __all__ = [
     "WriterAgent",
     "GitMasterAgent",
     "CodeSimplifierAgent",
+    "ScientistAgent",
+    "QATesterAgent",
     # Coordination Lane
     "CriticAgent",
 ]
