@@ -16,6 +16,7 @@ Executor Agent - 代码实现智能体
 4. 自我测试
 5. 输出代码
 """
+
 from typing import List, Dict, Any
 from pathlib import Path
 
@@ -34,20 +35,20 @@ from ..core.router import TaskType
 class ExecutorAgent(BaseAgent):
     """
     执行者 Agent
-    
+
     特点：
     - 使用 MEDIUM tier 模型
     - 代码实现为主
     - 支持 Python、JavaScript、Go 等多语言
     """
-    
+
     name = "executor"
     description = "执行者智能体 - 代码实现和重构"
     lane = AgentLane.BUILD_ANALYSIS
     default_tier = "medium"
     icon = "💻"
     tools = ["file_read", "file_write", "bash", "test"]
-    
+
     @property
     def system_prompt(self) -> str:
         return """你是一个资深的软件工程师。
@@ -93,45 +94,45 @@ class ExecutorAgent(BaseAgent):
 ### 注意事项
 - ...
 """
-    
+
     async def _run(
-        self,
-        context: AgentContext,
-        prompt: List[Dict[str, str]],
-        **kwargs
+        self, context: AgentContext, prompt: List[Dict[str, str]], **kwargs
     ) -> str:
         """
         执行代码实现
         """
         # 添加前序输出
         context_parts = []
-        
+
         if context.previous_outputs.get("architect"):
-            context_parts.append(f"## 架构设计\n{context.previous_outputs['architect'].result}")
-        
+            context_parts.append(
+                f"## 架构设计\n{context.previous_outputs['architect'].result}"
+            )
+
         if context_parts:
-            prompt.append({
-                "role": "user",
-                "content": "\n\n".join(context_parts)
-            })
-        
+            prompt.append({"role": "user", "content": "\n\n".join(context_parts)})
+
         # 读取相关文件
         if context.relevant_files:
             files_content = []
             for file_path in context.relevant_files[:5]:  # 最多 5 个文件
                 try:
-                    with open(file_path, 'r', encoding='utf-8') as f:
+                    with open(file_path, "r", encoding="utf-8") as f:
                         content = f.read()
-                        files_content.append(f"### {file_path.name}\n```\n{content[:2000]}\n```")
+                        files_content.append(
+                            f"### {file_path.name}\n```\n{content[:2000]}\n```"
+                        )
                 except:
                     pass
-            
+
             if files_content:
-                prompt.append({
-                    "role": "user",
-                    "content": "## 现有代码\n" + "\n\n".join(files_content)
-                })
-        
+                prompt.append(
+                    {
+                        "role": "user",
+                        "content": "## 现有代码\n" + "\n\n".join(files_content),
+                    }
+                )
+
         # 实现提示
         impl_hint = """
 
@@ -142,23 +143,20 @@ class ExecutorAgent(BaseAgent):
 4. 编写测试用例
 """
         prompt.append({"role": "user", "content": impl_hint})
-        
+
         # 调用模型
         from ..models.base import Message
-        
-        messages = [
-            Message(role=msg["role"], content=msg["content"])
-            for msg in prompt
-        ]
-        
+
+        messages = [Message(role=msg["role"], content=msg["content"]) for msg in prompt]
+
         response = await self.model_router.route_and_call(
             task_type=TaskType.CODE_GENERATION,
             messages=messages,
             complexity="medium",
         )
-        
+
         return response.content
-    
+
     def _post_process(
         self,
         result: str,
@@ -166,7 +164,7 @@ class ExecutorAgent(BaseAgent):
     ) -> AgentOutput:
         """后处理 - 提取代码"""
         # TODO: 从结果中提取代码并保存到文件
-        
+
         return AgentOutput(
             agent_name=self.name,
             status=AgentStatus.COMPLETED,

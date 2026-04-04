@@ -13,6 +13,7 @@ DeepSeek API 文档：https://platform.deepseek.com/api-docs/
 - deepseek-chat：通用对话模型（对应 sonnet）
 - deepseek-coder：代码专用模型（代码任务首选）
 """
+
 import httpx
 from typing import List, AsyncIterator, Dict, Any, Optional
 import json
@@ -33,7 +34,7 @@ from .base import (
 DEEPSEEK_MODELS = {
     ModelTier.LOW: {
         "name": "deepseek-chat",
-        "cost_per_1k_prompt": 0.0,      # 免费额度内
+        "cost_per_1k_prompt": 0.0,  # 免费额度内
         "cost_per_1k_completion": 0.0,
     },
     ModelTier.MEDIUM: {
@@ -59,10 +60,10 @@ DEEPSEEK_CODER = {
 class DeepSeekModel(BaseModel):
     """
     DeepSeek 模型适配器
-    
+
     API 兼容 OpenAI 格式，使用 httpx 作为 HTTP 客户端
     """
-    
+
     def __init__(
         self,
         config: ModelConfig,
@@ -78,7 +79,7 @@ class DeepSeekModel(BaseModel):
         # 设置 DeepSeek 特定配置
         if config.base_url is None:
             config.base_url = "https://api.deepseek.com/v1"
-        
+
         # 设置成本
         if use_coder:
             config.cost_per_1k_prompt = DEEPSEEK_CODER["cost_per_1k_prompt"]
@@ -89,22 +90,22 @@ class DeepSeekModel(BaseModel):
             config.cost_per_1k_prompt = model_info["cost_per_1k_prompt"]
             config.cost_per_1k_completion = model_info["cost_per_1k_completion"]
             self._use_coder = False
-        
+
         super().__init__(config, tier)
-        
+
         # HTTP 客户端（延迟初始化）
         self._client: Optional[httpx.AsyncClient] = None
-    
+
     @property
     def provider(self) -> ModelProvider:
         return ModelProvider.DEEPSEEK
-    
+
     @property
     def model_name(self) -> str:
         if self._use_coder:
             return DEEPSEEK_CODER["name"]
         return DEEPSEEK_MODELS[self.tier]["name"]
-    
+
     async def _get_client(self) -> httpx.AsyncClient:
         """获取或创建 HTTP 客户端"""
         if self._client is None or self._client.is_closed:
@@ -117,13 +118,13 @@ class DeepSeekModel(BaseModel):
                 timeout=self.config.timeout,
             )
         return self._client
-    
+
     async def close(self):
         """关闭 HTTP 客户端"""
         if self._client and not self._client.is_closed:
             await self._client.aclose()
             self._client = None
-    
+
     def _format_messages(self, messages: List[Message]) -> List[Dict[str, str]]:
         """将统一消息格式转换为 DeepSeek API 格式"""
         formatted = []
@@ -133,15 +134,11 @@ class DeepSeekModel(BaseModel):
                 item["name"] = msg.name
             formatted.append(item)
         return formatted
-    
-    async def generate(
-        self,
-        messages: List[Message],
-        **kwargs
-    ) -> ModelResponse:
+
+    async def generate(self, messages: List[Message], **kwargs) -> ModelResponse:
         """
         非流式生成
-        
+
         Args:
             messages: 对话历史
             **kwargs: 可选参数
@@ -151,7 +148,7 @@ class DeepSeekModel(BaseModel):
                 - stop: 停止词列表
         """
         client = await self._get_client()
-        
+
         # 构建请求体
         request_body = {
             "model": self.model_name,
@@ -160,30 +157,30 @@ class DeepSeekModel(BaseModel):
             "temperature": kwargs.get("temperature", self.config.temperature),
             "stream": False,
         }
-        
+
         # 添加可选参数
         if "top_p" in kwargs:
             request_body["top_p"] = kwargs["top_p"]
         if "stop" in kwargs:
             request_body["stop"] = kwargs["stop"]
-        
+
         start_time = time.time()
-        
+
         try:
             response = await client.post(
                 "/chat/completions",
                 json=request_body,
             )
             response.raise_for_status()
-            
+
             data = response.json()
             latency_ms = (time.time() - start_time) * 1000
-            
+
             # 解析响应
             choice = data["choices"][0]
             content = choice["message"]["content"]
             finish_reason = choice.get("finish_reason", "stop")
-            
+
             # 使用统计
             usage_data = data.get("usage", {})
             usage = Usage(
@@ -191,10 +188,10 @@ class DeepSeekModel(BaseModel):
                 completion_tokens=usage_data.get("completion_tokens", 0),
                 total_tokens=usage_data.get("total_tokens", 0),
             )
-            
+
             # 更新累计使用量
             self.update_usage(usage)
-            
+
             return ModelResponse(
                 content=content,
                 model=self.model_name,
@@ -208,7 +205,7 @@ class DeepSeekModel(BaseModel):
                     "created": data.get("created"),
                 },
             )
-            
+
         except httpx.HTTPStatusError as e:
             # 处理 API 错误
             error_detail = ""
@@ -217,26 +214,22 @@ class DeepSeekModel(BaseModel):
                 error_detail = error_body.get("error", {}).get("message", str(e))
             except:
                 error_detail = str(e)
-            
+
             raise DeepSeekAPIError(
                 f"DeepSeek API 错误 ({e.response.status_code}): {error_detail}"
             )
         except httpx.RequestError as e:
             raise DeepSeekAPIError(f"网络请求失败: {e}")
-    
-    async def stream(
-        self,
-        messages: List[Message],
-        **kwargs
-    ) -> AsyncIterator[str]:
+
+    async def stream(self, messages: List[Message], **kwargs) -> AsyncIterator[str]:
         """
         流式生成
-        
+
         Yields:
             str: 每次生成的文本片段
         """
         client = await self._get_client()
-        
+
         # 构建请求体
         request_body = {
             "model": self.model_name,
@@ -245,7 +238,7 @@ class DeepSeekModel(BaseModel):
             "temperature": kwargs.get("temperature", self.config.temperature),
             "stream": True,
         }
-        
+
         try:
             async with client.stream(
                 "POST",
@@ -253,31 +246,31 @@ class DeepSeekModel(BaseModel):
                 json=request_body,
             ) as response:
                 response.raise_for_status()
-                
+
                 async for line in response.aiter_lines():
                     # 跳过空行和注释
                     if not line or line.startswith(":"):
                         continue
-                    
+
                     # 移除 "data: " 前缀
                     if line.startswith("data: "):
                         line = line[6:]
-                    
+
                     # 结束标记
                     if line == "[DONE]":
                         break
-                    
+
                     # 解析 JSON
                     try:
                         data = json.loads(line)
                         delta = data["choices"][0].get("delta", {})
                         content = delta.get("content", "")
-                        
+
                         if content:
                             yield content
                     except json.JSONDecodeError:
                         continue
-                        
+
         except httpx.HTTPStatusError as e:
             error_detail = ""
             try:
@@ -285,7 +278,7 @@ class DeepSeekModel(BaseModel):
                 error_detail = error_body.get("error", {}).get("message", str(e))
             except:
                 error_detail = str(e)
-            
+
             raise DeepSeekAPIError(
                 f"DeepSeek API 错误 ({e.response.status_code}): {error_detail}"
             )
@@ -295,4 +288,5 @@ class DeepSeekModel(BaseModel):
 
 class DeepSeekAPIError(Exception):
     """DeepSeek API 错误"""
+
     pass

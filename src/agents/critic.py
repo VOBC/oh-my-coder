@@ -9,6 +9,7 @@ Critic Agent - 批评家智能体
 
 模型层级：HIGH（深度推理，对应 opus）
 """
+
 from typing import List, Dict, Any
 from pathlib import Path
 
@@ -26,14 +27,14 @@ from ..core.router import TaskType
 @register_agent
 class CriticAgent(BaseAgent):
     """批评家 Agent - 多角度审查和缺口分析"""
-    
+
     name = "critic"
     description = "批评家智能体 - 计划审查和缺口分析"
     lane = AgentLane.COORDINATION
     default_tier = "high"
     icon = "🎯"
     tools = ["file_read", "search"]
-    
+
     @property
     def system_prompt(self) -> str:
         return """你是一个犀利但建设性的批评家。
@@ -93,27 +94,23 @@ class CriticAgent(BaseAgent):
 ### 7. 下一步建议
 - ...
 """
-    
+
     async def _run(
-        self,
-        context: AgentContext,
-        prompt: List[Dict[str, str]],
-        **kwargs
+        self, context: AgentContext, prompt: List[Dict[str, str]], **kwargs
     ) -> str:
         """执行批评审查"""
         # 收集前序输出
         context_parts = []
-        
+
         for agent_name in ["planner", "architect"]:
             if context.previous_outputs.get(agent_name):
-                context_parts.append(f"## {agent_name.title()}\n{context.previous_outputs[agent_name].result}")
-        
+                context_parts.append(
+                    f"## {agent_name.title()}\n{context.previous_outputs[agent_name].result}"
+                )
+
         if context_parts:
-            prompt.append({
-                "role": "user",
-                "content": "\n\n".join(context_parts)
-            })
-        
+            prompt.append({"role": "user", "content": "\n\n".join(context_parts)})
+
         # 批评提示
         critic_hint = """
 
@@ -124,23 +121,20 @@ class CriticAgent(BaseAgent):
 4. 是否有更好的实现方式？
 """
         prompt.append({"role": "user", "content": critic_hint})
-        
+
         # 调用模型
         from ..models.base import Message
-        
-        messages = [
-            Message(role=msg["role"], content=msg["content"])
-            for msg in prompt
-        ]
-        
+
+        messages = [Message(role=msg["role"], content=msg["content"]) for msg in prompt]
+
         response = await self.model_router.route_and_call(
             task_type=TaskType.ARCHITECTURE,
             messages=messages,
             complexity="high",
         )
-        
+
         return response.content
-    
+
     def _post_process(self, result: str, context: AgentContext) -> AgentOutput:
         """后处理"""
         return AgentOutput(

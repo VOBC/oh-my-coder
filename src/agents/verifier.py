@@ -9,6 +9,7 @@ Verifier Agent - 验证智能体
 
 模型层级：MEDIUM（平衡，对应 sonnet）
 """
+
 from typing import List, Dict, Any
 from pathlib import Path
 
@@ -26,14 +27,14 @@ from ..core.router import TaskType
 @register_agent
 class VerifierAgent(BaseAgent):
     """验证 Agent - 确保代码质量和功能正确"""
-    
+
     name = "verifier"
     description = "验证智能体 - 检查功能正确性和测试覆盖"
     lane = AgentLane.BUILD_ANALYSIS
     default_tier = "medium"
     icon = "✅"
     tools = ["bash", "file_read", "test"]
-    
+
     @property
     def system_prompt(self) -> str:
         return """你是一个严谨的质量保证工程师。
@@ -76,21 +77,20 @@ class VerifierAgent(BaseAgent):
 ### 4. 建议
 - ...
 """
-    
+
     async def _run(
-        self,
-        context: AgentContext,
-        prompt: List[Dict[str, str]],
-        **kwargs
+        self, context: AgentContext, prompt: List[Dict[str, str]], **kwargs
     ) -> str:
         """执行验证"""
         # 添加前序输出
         if context.previous_outputs.get("executor"):
-            prompt.append({
-                "role": "user",
-                "content": f"## 实现代码\n{context.previous_outputs['executor'].result}"
-            })
-        
+            prompt.append(
+                {
+                    "role": "user",
+                    "content": f"## 实现代码\n{context.previous_outputs['executor'].result}",
+                }
+            )
+
         # 读取测试文件
         test_dir = context.project_path / "tests"
         if test_dir.exists():
@@ -98,7 +98,7 @@ class VerifierAgent(BaseAgent):
             if test_files:
                 tests_info = f"## 现有测试\n共 {len(test_files)} 个测试文件"
                 prompt.append({"role": "user", "content": tests_info})
-        
+
         # 验证提示
         verify_hint = """
 
@@ -109,22 +109,19 @@ class VerifierAgent(BaseAgent):
 4. 是否有遗漏的边界情况？
 """
         prompt.append({"role": "user", "content": verify_hint})
-        
+
         # 调用模型
         from ..models.base import Message
-        
-        messages = [
-            Message(role=msg["role"], content=msg["content"])
-            for msg in prompt
-        ]
-        
+
+        messages = [Message(role=msg["role"], content=msg["content"]) for msg in prompt]
+
         response = await self.model_router.route_and_call(
             task_type=TaskType.TESTING,
             messages=messages,
         )
-        
+
         return response.content
-    
+
     def _post_process(self, result: str, context: AgentContext) -> AgentOutput:
         """后处理"""
         return AgentOutput(

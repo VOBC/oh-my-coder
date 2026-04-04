@@ -9,6 +9,7 @@ Git Master Agent - Git 操作智能体
 
 模型层级：MEDIUM（平衡，对应 sonnet）
 """
+
 from typing import List, Dict, Any
 from pathlib import Path
 
@@ -26,14 +27,14 @@ from ..core.router import TaskType
 @register_agent
 class GitMasterAgent(BaseAgent):
     """Git 操作 Agent - 版本控制管理"""
-    
+
     name = "git-master"
     description = "Git 操作智能体 - 版本控制和提交管理"
     lane = AgentLane.DOMAIN
     default_tier = "medium"
     icon = "🔀"
     tools = ["bash", "file_read"]
-    
+
     @property
     def system_prompt(self) -> str:
         return """你是一个 Git 版本控制专家。
@@ -107,43 +108,41 @@ def456 fix: 修复 Bug
 ### 4. 分支策略建议
 - ...
 """
-    
+
     async def _run(
-        self,
-        context: AgentContext,
-        prompt: List[Dict[str, str]],
-        **kwargs
+        self, context: AgentContext, prompt: List[Dict[str, str]], **kwargs
     ) -> str:
         """执行 Git 操作"""
         import subprocess
-        
+
         # 获取 Git 状态
         try:
             status_result = subprocess.run(
                 ["git", "status", "--short"],
                 cwd=context.project_path,
                 capture_output=True,
-                text=True
+                text=True,
             )
             status = status_result.stdout
         except:
             status = "无法获取 Git 状态"
-        
+
         # 获取最近的提交
         try:
             log_result = subprocess.run(
                 ["git", "log", "--oneline", "-10"],
                 cwd=context.project_path,
                 capture_output=True,
-                text=True
+                text=True,
             )
             recent_commits = log_result.stdout
         except:
             recent_commits = "无法获取提交历史"
-        
-        prompt.append({
-            "role": "user",
-            "content": f"""## 当前 Git 状态
+
+        prompt.append(
+            {
+                "role": "user",
+                "content": f"""## 当前 Git 状态
 ```
 {status}
 ```
@@ -157,24 +156,22 @@ def456 fix: 修复 Bug
 1. 应该提交哪些文件？
 2. 如何编写提交消息？
 3. 是否需要创建分支？
-"""
-        })
-        
+""",
+            }
+        )
+
         # 调用模型
         from ..models.base import Message
-        
-        messages = [
-            Message(role=msg["role"], content=msg["content"])
-            for msg in prompt
-        ]
-        
+
+        messages = [Message(role=msg["role"], content=msg["content"]) for msg in prompt]
+
         response = await self.model_router.route_and_call(
             task_type=TaskType.CODE_GENERATION,
             messages=messages,
         )
-        
+
         return response.content
-    
+
     def _post_process(self, result: str, context: AgentContext) -> AgentOutput:
         """后处理"""
         return AgentOutput(

@@ -9,6 +9,7 @@ Security Reviewer Agent - 安全审查智能体
 
 模型层级：HIGH（深度推理，对应 opus）
 """
+
 from typing import List, Dict, Any
 from pathlib import Path
 
@@ -26,14 +27,14 @@ from ..core.router import TaskType
 @register_agent
 class SecurityReviewerAgent(BaseAgent):
     """安全审查 Agent - 安全漏洞和风险检测"""
-    
+
     name = "security-reviewer"
     description = "安全审查智能体 - 安全漏洞和风险检测"
     lane = AgentLane.REVIEW
     default_tier = "high"
     icon = "🔒"
     tools = ["file_read", "search"]
-    
+
     @property
     def system_prompt(self) -> str:
         return """你是一个专业的安全审查专家。
@@ -102,12 +103,9 @@ class SecurityReviewerAgent(BaseAgent):
 2. [HIGH] XSS漏洞
 3. [MEDIUM] CSRF保护
 """
-    
+
     async def _run(
-        self,
-        context: AgentContext,
-        prompt: List[Dict[str, str]],
-        **kwargs
+        self, context: AgentContext, prompt: List[Dict[str, str]], **kwargs
     ) -> str:
         """执行安全审查"""
         # 读取代码文件
@@ -115,20 +113,22 @@ class SecurityReviewerAgent(BaseAgent):
             code_parts = []
             for file_path in context.relevant_files[:10]:
                 try:
-                    with open(file_path, 'r', encoding='utf-8') as f:
+                    with open(file_path, "r", encoding="utf-8") as f:
                         content = f.read()
                         code_parts.append(
                             f"### {file_path.relative_to(context.project_path)}\n```\n{content}\n```"
                         )
                 except:
                     pass
-            
+
             if code_parts:
-                prompt.append({
-                    "role": "user",
-                    "content": "## 待审查代码\n" + "\n\n".join(code_parts)
-                })
-        
+                prompt.append(
+                    {
+                        "role": "user",
+                        "content": "## 待审查代码\n" + "\n\n".join(code_parts),
+                    }
+                )
+
         # 安全审查提示
         security_hint = """
 
@@ -140,23 +140,20 @@ class SecurityReviewerAgent(BaseAgent):
 5. 是否有其他安全漏洞？
 """
         prompt.append({"role": "user", "content": security_hint})
-        
+
         # 调用模型
         from ..models.base import Message
-        
-        messages = [
-            Message(role=msg["role"], content=msg["content"])
-            for msg in prompt
-        ]
-        
+
+        messages = [Message(role=msg["role"], content=msg["content"]) for msg in prompt]
+
         response = await self.model_router.route_and_call(
             task_type=TaskType.SECURITY_REVIEW,
             messages=messages,
             complexity="high",
         )
-        
+
         return response.content
-    
+
     def _post_process(self, result: str, context: AgentContext) -> AgentOutput:
         """后处理"""
         return AgentOutput(

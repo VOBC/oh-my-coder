@@ -16,6 +16,7 @@ Architect Agent - 系统架构设计智能体
 4. 定义接口和数据流
 5. 输出架构文档
 """
+
 from typing import List, Dict, Any
 from pathlib import Path
 from dataclasses import dataclass
@@ -34,6 +35,7 @@ from ..core.router import TaskType
 @dataclass
 class ArchitectureDecision:
     """架构决策"""
+
     title: str
     status: str  # proposed, accepted, deprecated
     context: str
@@ -45,21 +47,21 @@ class ArchitectureDecision:
 class ArchitectAgent(BaseAgent):
     """
     架构师 Agent
-    
+
     特点：
     - 使用 HIGH tier 模型
     - 系统性思维
     - 权衡分析
     - 输出 ADR
     """
-    
+
     name = "architect"
     description = "架构师智能体 - 系统架构设计和技术选型"
     lane = AgentLane.BUILD_ANALYSIS
     default_tier = "high"
     icon = "🏗️"
     tools = ["file_read", "file_write", "diagram"]
-    
+
     @property
     def system_prompt(self) -> str:
         return """你是一个资深软件架构师。
@@ -129,31 +131,29 @@ project/
 ### 7. 下一步
 - ...
 """
-    
+
     async def _run(
-        self,
-        context: AgentContext,
-        prompt: List[Dict[str, str]],
-        **kwargs
+        self, context: AgentContext, prompt: List[Dict[str, str]], **kwargs
     ) -> str:
         """
         执行架构设计
         """
         # 添加前序输出
         context_parts = []
-        
+
         if context.previous_outputs.get("explore"):
-            context_parts.append(f"## 项目探索\n{context.previous_outputs['explore'].result}")
-        
+            context_parts.append(
+                f"## 项目探索\n{context.previous_outputs['explore'].result}"
+            )
+
         if context.previous_outputs.get("analyst"):
-            context_parts.append(f"## 需求分析\n{context.previous_outputs['analyst'].result}")
-        
+            context_parts.append(
+                f"## 需求分析\n{context.previous_outputs['analyst'].result}"
+            )
+
         if context_parts:
-            prompt.append({
-                "role": "user",
-                "content": "\n\n".join(context_parts)
-            })
-        
+            prompt.append({"role": "user", "content": "\n\n".join(context_parts)})
+
         # 架构设计提示
         design_hint = """
 
@@ -164,23 +164,20 @@ project/
 4. 如何保证可扩展性？
 """
         prompt.append({"role": "user", "content": design_hint})
-        
+
         # 调用模型
         from ..models.base import Message
-        
-        messages = [
-            Message(role=msg["role"], content=msg["content"])
-            for msg in prompt
-        ]
-        
+
+        messages = [Message(role=msg["role"], content=msg["content"]) for msg in prompt]
+
         response = await self.model_router.route_and_call(
             task_type=TaskType.ARCHITECTURE,
             messages=messages,
             complexity="high",
         )
-        
+
         return response.content
-    
+
     def _post_process(
         self,
         result: str,
