@@ -1,0 +1,18 @@
+# Development dependencies for Oh My Coder
+
+# Testing
+pytest>=8.0.0
+pytest-asyncio>=0.21.0
+pytest-cov>=4.1.0
+
+# Code formatting
+black>=24.0.0
+autopep8>=2.0.0
+ruff>=0.3.0
+
+# Type checking
+mypy>=1.8.0
+
+# Additional dev tools
+ipython>=8.0.0
+pre-commit>=3.0.0
