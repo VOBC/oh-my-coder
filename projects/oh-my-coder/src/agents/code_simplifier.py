@@ -9,6 +9,7 @@ Code Simplifier Agent - 代码简化智能体
 
 模型层级：HIGH（深度推理，对应 opus）
 """
+
 from typing import List, Dict, Any
 from pathlib import Path
 
@@ -26,14 +27,14 @@ from ..core.router import TaskType
 @register_agent
 class CodeSimplifierAgent(BaseAgent):
     """代码简化 Agent - 提高代码质量和可读性"""
-    
+
     name = "code-simplifier"
     description = "代码简化智能体 - 提高代码清晰度和可维护性"
     lane = AgentLane.DOMAIN
     default_tier = "high"
     icon = "🧹"
     tools = ["file_read", "file_write", "bash"]
-    
+
     @property
     def system_prompt(self) -> str:
         return """你是一个代码重构专家，专注于简化代码。
@@ -93,12 +94,9 @@ class CodeSimplifierAgent(BaseAgent):
 ### 4. 进一步优化建议
 - ...
 """
-    
+
     async def _run(
-        self,
-        context: AgentContext,
-        prompt: List[Dict[str, str]],
-        **kwargs
+        self, context: AgentContext, prompt: List[Dict[str, str]], **kwargs
     ) -> str:
         """执行代码简化分析"""
         # 读取要分析的代码
@@ -106,21 +104,23 @@ class CodeSimplifierAgent(BaseAgent):
             code_parts = []
             for file_path in context.relevant_files[:5]:
                 try:
-                    with open(file_path, 'r', encoding='utf-8') as f:
+                    with open(file_path, "r", encoding="utf-8") as f:
                         content = f.read()
-                        lines = len(content.split('\n'))
+                        lines = len(content.split("\n"))
                         code_parts.append(
                             f"### {file_path.name} ({lines} 行)\n```\n{content}\n```"
                         )
                 except:
                     pass
-            
+
             if code_parts:
-                prompt.append({
-                    "role": "user",
-                    "content": "## 待分析代码\n" + "\n\n".join(code_parts)
-                })
-        
+                prompt.append(
+                    {
+                        "role": "user",
+                        "content": "## 待分析代码\n" + "\n\n".join(code_parts),
+                    }
+                )
+
         # 简化提示
         simplify_hint = """
 
@@ -131,23 +131,20 @@ class CodeSimplifierAgent(BaseAgent):
 4. 是否有死代码？
 """
         prompt.append({"role": "user", "content": simplify_hint})
-        
+
         # 调用模型
         from ..models.base import Message
-        
-        messages = [
-            Message(role=msg["role"], content=msg["content"])
-            for msg in prompt
-        ]
-        
+
+        messages = [Message(role=msg["role"], content=msg["content"]) for msg in prompt]
+
         response = await self.model_router.route_and_call(
             task_type=TaskType.CODE_REVIEW,
             messages=messages,
             complexity="high",
         )
-        
+
         return response.content
-    
+
     def _post_process(self, result: str, context: AgentContext) -> AgentOutput:
         """后处理"""
         return AgentOutput(

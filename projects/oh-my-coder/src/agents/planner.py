@@ -9,6 +9,7 @@ Planner Agent - 任务规划智能体
 
 模型层级：HIGH（深度推理，对应 opus）
 """
+
 from typing import List, Dict, Any
 from pathlib import Path
 from dataclasses import dataclass
@@ -27,6 +28,7 @@ from ..core.router import TaskType
 @dataclass
 class Task:
     """任务项"""
+
     id: str
     description: str
     priority: str  # high, medium, low
@@ -38,14 +40,14 @@ class Task:
 @register_agent
 class PlannerAgent(BaseAgent):
     """规划 Agent - 任务分解和计划制定"""
-    
+
     name = "planner"
     description = "规划智能体 - 任务分解和执行计划"
     lane = AgentLane.BUILD_ANALYSIS
     default_tier = "high"
     icon = "📋"
     tools = ["file_read", "search"]
-    
+
     @property
     def system_prompt(self) -> str:
         return """你是一个资深的项目规划师。
@@ -103,27 +105,28 @@ class PlannerAgent(BaseAgent):
 - 推荐从 T1 开始执行
 - ...
 """
-    
+
     async def _run(
-        self,
-        context: AgentContext,
-        prompt: List[Dict[str, str]],
-        **kwargs
+        self, context: AgentContext, prompt: List[Dict[str, str]], **kwargs
     ) -> str:
         """执行规划"""
         # 添加前序输出
         if context.previous_outputs.get("explore"):
-            prompt.append({
-                "role": "user",
-                "content": f"## 项目探索\n{context.previous_outputs['explore'].result}"
-            })
-        
+            prompt.append(
+                {
+                    "role": "user",
+                    "content": f"## 项目探索\n{context.previous_outputs['explore'].result}",
+                }
+            )
+
         if context.previous_outputs.get("analyst"):
-            prompt.append({
-                "role": "user",
-                "content": f"## 需求分析\n{context.previous_outputs['analyst'].result}"
-            })
-        
+            prompt.append(
+                {
+                    "role": "user",
+                    "content": f"## 需求分析\n{context.previous_outputs['analyst'].result}",
+                }
+            )
+
         # 规划提示
         plan_hint = """
 
@@ -134,23 +137,20 @@ class PlannerAgent(BaseAgent):
 4. 有哪些风险需要注意？
 """
         prompt.append({"role": "user", "content": plan_hint})
-        
+
         # 调用模型
         from ..models.base import Message
-        
-        messages = [
-            Message(role=msg["role"], content=msg["content"])
-            for msg in prompt
-        ]
-        
+
+        messages = [Message(role=msg["role"], content=msg["content"]) for msg in prompt]
+
         response = await self.model_router.route_and_call(
             task_type=TaskType.PLANNING,
             messages=messages,
             complexity="high",
         )
-        
+
         return response.content
-    
+
     def _post_process(self, result: str, context: AgentContext) -> AgentOutput:
         """后处理"""
         return AgentOutput(

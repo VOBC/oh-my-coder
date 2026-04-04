@@ -9,6 +9,7 @@ Code Reviewer Agent - 代码审查智能体
 
 模型层级：HIGH（深度推理，对应 opus）
 """
+
 from typing import List, Dict, Any
 from pathlib import Path
 
@@ -26,14 +27,14 @@ from ..core.router import TaskType
 @register_agent
 class CodeReviewerAgent(BaseAgent):
     """代码审查 Agent - 全面的代码质量检查"""
-    
+
     name = "code-reviewer"
     description = "代码审查智能体 - 全面审查代码质量和设计"
     lane = AgentLane.REVIEW
     default_tier = "high"
     icon = "👀"
     tools = ["file_read", "search"]
-    
+
     @property
     def system_prompt(self) -> str:
         return """你是一个资深的代码审查专家。
@@ -89,12 +90,9 @@ class CodeReviewerAgent(BaseAgent):
 - 代码行数: X
 - 问题数: X (必须: X, 建议: X)
 """
-    
+
     async def _run(
-        self,
-        context: AgentContext,
-        prompt: List[Dict[str, str]],
-        **kwargs
+        self, context: AgentContext, prompt: List[Dict[str, str]], **kwargs
     ) -> str:
         """执行代码审查"""
         # 读取要审查的代码
@@ -102,18 +100,22 @@ class CodeReviewerAgent(BaseAgent):
             code_parts = []
             for file_path in context.relevant_files[:10]:
                 try:
-                    with open(file_path, 'r', encoding='utf-8') as f:
+                    with open(file_path, "r", encoding="utf-8") as f:
                         content = f.read()
-                        code_parts.append(f"### {file_path.relative_to(context.project_path)}\n```\n{content}\n```")
+                        code_parts.append(
+                            f"### {file_path.relative_to(context.project_path)}\n```\n{content}\n```"
+                        )
                 except:
                     pass
-            
+
             if code_parts:
-                prompt.append({
-                    "role": "user",
-                    "content": "## 待审查代码\n" + "\n\n".join(code_parts)
-                })
-        
+                prompt.append(
+                    {
+                        "role": "user",
+                        "content": "## 待审查代码\n" + "\n\n".join(code_parts),
+                    }
+                )
+
         # 审查提示
         review_hint = """
 
@@ -125,23 +127,20 @@ class CodeReviewerAgent(BaseAgent):
 5. API 设计是否合理？
 """
         prompt.append({"role": "user", "content": review_hint})
-        
+
         # 调用模型
         from ..models.base import Message
-        
-        messages = [
-            Message(role=msg["role"], content=msg["content"])
-            for msg in prompt
-        ]
-        
+
+        messages = [Message(role=msg["role"], content=msg["content"]) for msg in prompt]
+
         response = await self.model_router.route_and_call(
             task_type=TaskType.CODE_REVIEW,
             messages=messages,
             complexity="high",
         )
-        
+
         return response.content
-    
+
     def _post_process(self, result: str, context: AgentContext) -> AgentOutput:
         """后处理"""
         return AgentOutput(
