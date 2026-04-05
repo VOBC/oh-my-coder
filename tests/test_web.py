@@ -150,7 +150,8 @@ async def test_get_task_after_submit(client):
     resp2 = await client.get(f"/api/tasks/{task_id}")
     assert resp2.status_code == 200
     data = resp2.json()
-    assert data["status"] in ("pending", "running")
+    # 任务可能在后台快速执行完毕，状态可能是 pending/running/completed
+    assert data["status"] in ("pending", "running", "completed")
 
 
 # ============================================================

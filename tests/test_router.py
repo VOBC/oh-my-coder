@@ -19,6 +19,7 @@ from src.models.base import (
 )
 from src.models.deepseek import DeepSeekModel
 from src.core.router import ModelRouter, RouterConfig, TaskType
+from src.core.router import _TASK_TIER_MAPPING as TASK_TIER_MAPPING
 
 
 class TestDeepSeekModel:
@@ -104,8 +105,8 @@ class TestModelRouter:
         
         decision = router.select(TaskType.EXPLORE)
         
-        assert decision.selected_tier == ModelTier.LOW
-        assert decision.selected_provider == ModelProvider.DEEPSEEK
+        assert decision.selected_tier == "low"
+        assert decision.selected_provider == "deepseek"
     
     def test_select_high_tier(self):
         """测试 HIGH tier 任务路由"""
@@ -114,8 +115,8 @@ class TestModelRouter:
         
         decision = router.select(TaskType.ARCHITECTURE)
         
-        assert decision.selected_tier == ModelTier.HIGH
-        assert decision.selected_provider == ModelProvider.DEEPSEEK
+        assert decision.selected_tier == "high"
+        assert decision.selected_provider == "deepseek"
     
     def test_select_with_complexity(self):
         """测试复杂度调整"""
@@ -124,11 +125,11 @@ class TestModelRouter:
         
         # MEDIUM 任务，高复杂度 -> HIGH
         decision = router.select(TaskType.CODE_GENERATION, complexity="high")
-        assert decision.selected_tier == ModelTier.HIGH
+        assert decision.selected_tier == "high"
         
         # MEDIUM 任务，低复杂度 -> LOW
         decision = router.select(TaskType.CODE_GENERATION, complexity="low")
-        assert decision.selected_tier == ModelTier.LOW
+        assert decision.selected_tier == "low"
 
 
 class TestExploreAgent:
