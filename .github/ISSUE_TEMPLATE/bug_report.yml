@@ -1,0 +1,88 @@
+---
+name: 🐛 Bug 报告
+description: 报告一个 Bug 或错误
+labels: ["bug"]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## 🐛 Bug 描述
+        请简洁清晰地描述这个 Bug。
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Bug 详细描述
+      placeholder: |
+        描述你遇到的问题...
+        预期行为是...
+        实际行为是...
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: "复现步骤"
+      description: "请提供能复现此 Bug 的具体步骤"
+      placeholder: |
+        1. 运行 '...'
+        2. 执行 '...'
+        3. 出现错误...
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Oh My Coder 版本
+      placeholder: "例如: v0.2.0"
+    validations:
+      required: false
+
+  - type: dropdown
+    id: os
+    attributes:
+      label: 操作系统
+      options:
+        - macOS
+        - Linux
+        - Windows
+        - 其他
+    validations:
+      required: false
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: 错误日志 / 终端输出
+      description: 如有错误日志，请粘贴在此
+      placeholder: |
+        [Paste your error log here]
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: 
+      options:
+        - label: 我已检查此问题不是重复的
+          required: true
+        - label: 我愿意参与修复此问题的讨论
+          required: false
+
+---
+
+## 🎉 功能请求
+
+如果你是想提交功能请求，请关闭此 Issue 并打开新的 **Feature Request**。
+
+---
+
+## 📝 提示
+
+- 运行 `python -m src.cli status` 可以查看当前配置状态
+- 运行 `python -m src.cli --version` 可以查看版本号
+- 提交前请先搜索 [已有 Issues](https://github.com/VOBC/oh-my-coder/issues)，避免重复

@@ -6,11 +6,13 @@ Oh My Coder CLI - 命令行入口
 主要命令：
 - omc run <task>         # 执行任务
 - omc explore            # 探索代码库
-- omc workflow <name>    # 执行预定义工作流
 - omc agents             # 列出所有 Agent
 - omc status             # 查看状态
+- omc --version          # 显示版本
+- omc --help             # 帮助信息
 """
 import asyncio
+import sys
 from pathlib import Path
 from typing import Optional
 
@@ -19,18 +21,58 @@ from rich.console import Console
 from rich.table import Table
 from rich.panel import Panel
 from rich.progress import Progress, SpinnerColumn, TextColumn
+from rich.style import Style
 
 from .core.router import ModelRouter, RouterConfig
 from .core.orchestrator import Orchestrator
 from .agents.base import list_agents
 
+# 版本信息
+__version__ = "0.2.0"
+__author__ = "VOBC"
+__repo__ = "https://github.com/VOBC/oh-my-coder"
+
 app = typer.Typer(
     name="omc",
-    help="Oh My Coder - 多智能体编程助手",
+    help=f"Oh My Coder v{__version__} - 多智能体 AI 编程助手",
     add_completion=False,
+    no_args_is_help=True,
 )
 
 console = Console()
+
+
+@app.callback(invoke_without_command=True)
+def main(
+    ctx: typer.Context,
+    version: bool = typer.Option(
+        None,
+        "--version",
+        "-v",
+        help="显示版本信息",
+        is_eager=True,
+    ),
+):
+    """Oh My Coder - 多智能体 AI 编程助手"""
+    if version:
+        _print_version()
+        raise typer.Exit(0)
+    if ctx.invoked_subcommand is None:
+        console.print(Panel.fit(
+            f"[bold cyan]Oh My Coder[/bold cyan] v{__version__}\n"
+            f"[dim]多智能体 AI 编程助手[/dim]\n\n"
+            f"[dim]使用 [bold]omc --help[/bold] 查看所有命令[/dim]\n"
+            f"[dim]仓库: {__repo__}[/dim]",
+            border_style="cyan",
+        ))
+        raise typer.Exit(0)
+
+
+def _print_version():
+    """打印版本信息"""
+    console.print(f"[bold cyan]oh-my-coder[/bold cyan] version [green]{__version__}[/green]")
+    console.print(f"[dim]Author: {__author__}[/dim]")
+    console.print(f"[dim]Repo: {__repo__}[/dim]")
 
 
 @app.command()
