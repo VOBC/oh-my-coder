@@ -4,6 +4,50 @@
 
 格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/) 规范。
 
+## [v0.2.0] - 2026-04-05
+
+### 🌐 Web 界面
+
+首个完整的 Web 界面版本上线！
+
+#### 新增功能
+
+- **FastAPI Web 应用** - `src/web/app.py`
+  - 异步任务执行（BackgroundTasks）
+  - SSE 实时进度推送（`/sse/execute/{task_id}`）
+  - 完整 REST API（execute/execute-sync/tasks/config）
+  - TaskManager 任务状态管理
+
+- **前端页面** - `src/web/templates/index.html`
+  - Agent 流水线可视化动画（Explore → Analyst → Architect → Executor → Verifier）
+  - SSE 实时接收进度，毫秒级更新
+  - 多标签页输出（每个 Agent 独立展示）
+  - 深色/浅色主题切换
+  - 4 种工作流快捷卡片
+  - 成本统计面板
+
+- **样式系统** - `src/web/static/style.css`
+  - 完整 CSS 变量主题系统
+  - 深色模式支持
+  - 响应式布局
+
+#### 新增文档
+
+- `README.md` - 完整的 Web 界面使用说明和 API 文档
+- `tests/test_web.py` - Web 界面单元测试（12 个测试用例）
+- `tests/test_integration.py` - 集成测试（14 个测试用例）
+- `examples/web_demo.py` - Web API 使用示例（5 个场景）
+- `examples/cli_demo.py` - CLI 使用示例
+
+#### 改进
+
+- README.md 新增徽章（Stars, Last Commit, Issues）
+- README.md 新增项目结构树状图
+- README.md 新增测试运行说明
+- CHANGELOG.md 格式规范化
+
+---
+
 ## [v0.1.0] - 2026-04-04
 
 ### 🎉 首次发布
