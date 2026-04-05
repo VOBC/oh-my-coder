@@ -104,15 +104,41 @@ curl -X POST http://localhost:8000/api/execute-sync \
 
 ---
 
-## 🤖 可用智能体
+## 🤖 Agent 系统（18 个专业 Agent）
 
-| Agent | 职责 | 模型层级 | 描述 |
-|-------|------|----------|------|
-| `explore` | 代码探索 | LOW | 快速扫描代码库，生成项目地图 |
-| `analyst` | 需求分析 | HIGH | 深度理解需求，发现隐藏约束 |
-| `architect` | 架构设计 | HIGH | 系统架构设计，技术选型 |
-| `executor` | 代码实现 | MEDIUM | 代码编写，重构，Bug 修复 |
-| `verifier` | 验证测试 | MEDIUM | 质量保证，验证完成 |
+### 构建 / 分析通道
+| Agent | 功能描述 |
+|-------|---------|
+| `ExploreAgent` | 探索代码库结构，生成项目地图 |
+| `AnalystAgent` | 分析需求和任务，发现隐藏约束 |
+| `PlannerAgent` | 规划开发计划，制定执行步骤 |
+| `ArchitectAgent` | 设计系统架构和技术选型 |
+| `ExecutorAgent` | 执行代码生成，支持 14 种语言 |
+| `VerifierAgent` | 验证代码正确性，运行测试 |
+| `DebuggerAgent` | 调试和修复代码错误 |
+| `TracerAgent` | 追踪代码执行流程，定位根因 |
+
+### 审查通道
+| Agent | 功能描述 |
+|-------|---------|
+| `CodeReviewerAgent` | 代码质量审查，发现坏味道 |
+| `SecurityReviewerAgent` | 代码安全审查，扫描漏洞 |
+
+### 领域通道
+| Agent | 功能描述 |
+|-------|---------|
+| `TestEngineerAgent` | 生成单元测试和集成测试 |
+| `DesignerAgent` | 界面和交互设计 |
+| `WriterAgent` | 文档和注释生成 |
+| `ScientistAgent` | 技术调研和可行性分析 |
+| `GitMasterAgent` | Git 操作自动化 |
+| `CodeSimplifierAgent` | 代码简化优化 |
+| `QATesterAgent` | QA 测试和质量验证 |
+
+### 协调通道
+| Agent | 功能描述 |
+|-------|---------|
+| `CriticAgent` | 审查计划和设计，提供改进建议 |
 
 **模型层级说明：**
 - **LOW** - 快速便宜（对应 haiku）
