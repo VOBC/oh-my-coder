@@ -1,0 +1,45 @@
+name: 功能请求
+description: 提出新功能建议
+title: "[Feature] "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        感谢提出功能建议！请填写以下信息。
+
+  - type: textarea
+    id: description
+    attributes:
+      label: 功能描述
+      description: 请详细描述你希望添加的功能
+      placeholder: "例如：我希望能够支持..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: usecase
+    attributes:
+      label: 使用场景
+      description: 这个功能可以解决什么问题？
+      placeholder: "例如：在开发微信小程序时..."
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: 优先级
+      description: 你认为这个功能的优先级是？
+      options:
+        - 低 - 有了更好
+        - 中 - 比较实用
+        - 高 - 非常需要
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: 补充信息
+      description: 其他相关信息（如参考实现、截图等）

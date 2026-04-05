@@ -12,6 +12,19 @@
 
 ---
 
+## 为什么选择 Oh My Coder？
+
+| 特性 | Oh My Coder | Claude Code | 其他 AI 编程工具 |
+|------|:-----------:|:-----------:|:----------------:|
+| 中文语境理解 | ✅ 原生支持 | ⚠️ 需额外提示 | ⚠️ 参差不齐 |
+| 国内模型支持 | ✅ 8家厂商 | ❌ 仅 Claude | ⚠️ 有限支持 |
+| 成本控制 | ✅ 免费/低成本 | ❌ 高昂订阅 | ⚠️ 按量付费 |
+| 本地部署 | ✅ 完全本地 | ❌ 云端依赖 | ⚠️ 部分支持 |
+| 多 Agent 协作 | ✅ 18个专业Agent | ❌ 单一模型 | ⚠️ 有限支持 |
+| API 开放 | ✅ 完全开放 | ⚠️ 受限 | ⚠️ 各异 |
+
+---
+
 ## 🎯 项目简介
 
 Oh My Coder 是一个**多智能体协作编程系统**，通过多个专业 Agent 协作完成复杂开发任务。
@@ -20,7 +33,7 @@ Oh My Coder 是一个**多智能体协作编程系统**，通过多个专业 Age
 - 🧠 **智能路由** - 根据任务类型自动选择合适模型，节省 30-50% Token
 - 🔄 **协作模式** - 多个 Agent 分工协作，像真实团队一样工作
 - 🇨🇳 **中文优先** - 本土化设计，支持国内主流大模型
-- ⚡ **成本优化** - 优先使用 DeepSeek 免费额度，几乎零成本
+- ⚡ **成本优化** - 支持 DeepSeek 等低成本模型接入
 
 ---
 
@@ -37,18 +50,55 @@ pip install -r requirements.txt
 ### 2. 配置 API Key
 
 ```bash
-# DeepSeek（推荐，免费额度高，每天 4000 万 token）
+# DeepSeek（推荐，性价比高）
 export DEEPSEEK_API_KEY=your_key_here
 
 # 可选：其他模型
-export WENXIN_API_KEY=your_key      # 文心一言
-export TONGYI_API_KEY=your_key      # 通义千问
-export GLM_API_KEY=your_key         # 智谱 GLM
-export MINIMAX_API_KEY=your_key      # MiniMax 海螺
-export KIMI_API_KEY=your_key        # Kimi 月暗
-export HUNYUAN_API_KEY=your_key     # 腾讯混元
-export DOUBAO_API_KEY=your_key      # 字节豆包
+export WENXIN_API_KEY=your_key           # 文心一言
+export WENXIN_SECRET_KEY=your_secret     # 文心一言（需要两个）
+export TONGYI_API_KEY=your_key           # 通义千问
+export GLM_API_KEY=your_key              # 智谱 GLM
+export MINIMAX_API_KEY=your_key          # MiniMax 海螺
+export KIMI_API_KEY=your_key             # Kimi 月暗
+export HUNYUAN_API_KEY=your_key          # 腾讯混元
+export HUNYUAN_SECRET_KEY=your_secret    # 腾讯混元（需要两个）
+export DOUBAO_API_KEY=your_key           # 字节豆包
 ```
+
+<details>
+<summary>📖 详细配置说明</summary>
+
+### 模型特定配置
+
+**DeepSeek**
+```bash
+export DEEPSEEK_API_KEY=sk-xxxxx
+# API 地址: https://api.deepseek.com
+# 模型: deepseek-chat, deepseek-reasoner
+```
+
+**文心一言**
+```bash
+export WENXIN_API_KEY=your_api_key
+export WENXIN_SECRET_KEY=your_secret_key
+# 需要在百度智能云控制台获取
+```
+
+**腾讯混元**
+```bash
+export HUNYUAN_API_KEY=your_api_key
+export HUNYUAN_SECRET_KEY=your_secret_key
+# 需要在腾讯云控制台获取
+```
+
+### 自定义 API 地址
+
+如果需要使用代理或私有部署：
+```bash
+export DEEPSEEK_API_BASE=https://your-proxy.com/v1
+```
+
+</details>
 
 ### 3. 运行
 
@@ -104,6 +154,51 @@ curl -X POST http://localhost:8000/api/execute-sync \
 
 ---
 
+## 🏗️ 架构设计
+
+### 多 Agent 协作流程
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                      用户输入任务                            │
+└─────────────────────────┬───────────────────────────────────┘
+                          ▼
+┌─────────────────────────────────────────────────────────────┐
+│  [ExploreAgent] 探索代码库结构，生成项目地图                  │
+└─────────────────────────┬───────────────────────────────────┘
+                          ▼
+┌─────────────────────────────────────────────────────────────┐
+│  [AnalystAgent] 分析需求和任务，发现隐藏约束                  │
+└─────────────────────────┬───────────────────────────────────┘
+                          ▼
+┌─────────────────────────────────────────────────────────────┐
+│  [ArchitectAgent] 设计系统架构和技术选型                      │
+└─────────────────────────┬───────────────────────────────────┘
+                          ▼
+┌─────────────────────────────────────────────────────────────┐
+│  [ExecutorAgent] 执行代码生成，支持 14 种语言                 │
+└─────────────────────────┬───────────────────────────────────┘
+                          ▼
+┌─────────────────────────────────────────────────────────────┐
+│  [VerifierAgent] 验证代码正确性，运行测试                     │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### 三层模型路由
+
+```
+┌──────────────┐     ┌──────────────┐     ┌──────────────┐
+│   任务类型    │ ──▶ │   模型层级    │ ──▶ │   提供商选择  │
+└──────────────┘     └──────────────┘     └──────────────┘
+    EXPLORE              LOW (快)           DeepSeek
+    ANALYST              MEDIUM (平衡)       DeepSeek
+    ARCHITECT            HIGH (高质量)       DeepSeek
+    CODE_GEN             MEDIUM              DeepSeek
+    REVIEW               LOW                 DeepSeek
+```
+
+---
+
 ## 🤖 Agent 系统（18 个专业 Agent）
 
 ### 构建 / 分析通道
@@ -145,13 +240,15 @@ curl -X POST http://localhost:8000/api/execute-sync \
 - **MEDIUM** - 平衡性能和成本（对应 sonnet）
 - **HIGH** - 最高质量推理（对应 opus）
 
+---
+
 ## 🧠 支持的模型
 
 共 **8 个**模型提供商，系统自动按性价比选择：
 
 | 提供商 | 环境变量 | API 地址 | 特点 |
 |--------|----------|----------|------|
-| **DeepSeek** | `DEEPSEEK_API_KEY` | api.deepseek.com | 免费额度高，每天 4000 万 token |
+| **DeepSeek** | `DEEPSEEK_API_KEY` | api.deepseek.com | 性价比高，推理能力强 |
 | **Kimi** | `KIMI_API_KEY` | api.moonshot.cn | 最长 128K 上下文 |
 | **豆包** | `DOUBAO_API_KEY` | ark.volces.com | 字节自研，性价比高 |
 | **MiniMax** | `MINIMAX_API_KEY` | api.minimax.chat | 中文理解能力强 |
@@ -172,6 +269,18 @@ curl -X POST http://localhost:8000/api/execute-sync \
 | 🔍 `review` | `-w review` | 代码审查 + 安全审查 |
 | 🐛 `debug` | `-w debug` | 问题定位 → 修复 → 验证 |
 | 🧪 `test` | `-w test` | 设计测试 → 实现测试 → 运行验证 |
+
+---
+
+## 🔒 安全机制
+
+Oh My Coder 高度重视代码安全：
+
+- **本地运行** - 所有代码在本地执行，不上传到云端
+- **API 密钥本地存储** - 密钥仅存储在本地环境变量
+- **代码审查** - 生成的代码经过 SecurityReviewerAgent 安全审查
+- **Diff 预览** - 修改文件前可预览变更（通过 GitMasterAgent）
+- **沙盒模式** - 支持在隔离环境中运行（需额外配置）
 
 ---
 
@@ -235,55 +344,38 @@ pytest tests/test_integration.py -v
 
 ---
 
-## 🎨 核心设计
-
-### 三层模型路由
-
-```
-任务类型 → 模型层级 → 提供商选择
-  EXPLORE    LOW       DeepSeek (免费)
-  ARCHITECT  HIGH      DeepSeek (高质量)
-  CODE_GEN   MEDIUM    DeepSeek (平衡)
-```
-
-### Agent 协作流程
-
-```
-用户输入
-    ↓
-[explore] 探索代码库
-    ↓
-[analyst] 分析需求
-    ↓
-[architect] 设计架构
-    ↓
-[executor] 实现代码
-    ↓
-[verifier] 验证完成
-```
-
----
-
 ## 📊 开发进度
 
 - [x] 核心架构设计
-- [x] 模型适配层（DeepSeek / 文心 / 通义）
+- [x] 模型适配层（DeepSeek / 文心 / 通义 / GLM / Kimi / 豆包 / MiniMax / 混元）
 - [x] Agent 基类和注册机制
-- [x] 核心 Agent（explore/analyst/architect/executor/verifier）
+- [x] 核心 Agent（18 个专业 Agent）
 - [x] 编排引擎（顺序/并行/条件执行）
 - [x] CLI 入口
 - [x] Web 界面（SSE 实时推送）
 - [x] 测试套件
 - [x] 示例代码
-- [ ] 更多 Agent（debugger, reviewer, tester 完善）
-- [ ] 完整测试覆盖
 - [ ] Docker 部署
+- [ ] 更多测试覆盖
 
 ---
 
 ## 🤝 贡献
 
 欢迎提交 Issue 和 PR！详见 [CONTRIBUTING.md](CONTRIBUTING.md)。
+
+### 快速贡献
+
+1. Fork 本仓库
+2. 创建特性分支 (`git checkout -b feature/amazing-feature`)
+3. 提交更改 (`git commit -m 'feat: 添加某个很棒的功能'`)
+4. 推送到分支 (`git push origin feature/amazing-feature`)
+5. 创建 Pull Request
+
+### 反馈渠道
+
+- 🐛 [提交 Issue](https://github.com/VOBC/oh-my-coder/issues)
+- 💬 [讨论区](https://github.com/VOBC/oh-my-coder/discussions)
 
 ---
 
@@ -296,5 +388,11 @@ MIT License - 详见 [LICENSE](LICENSE)
 ## 🙏 致谢
 
 - [oh-my-claudecode](https://github.com/Yeachan-Heo/oh-my-claudecode) 的启发
-- [DeepSeek](https://platform.deepseek.com/) 提供的免费 API
+- [DeepSeek](https://platform.deepseek.com/) 提供优质 API 服务
 - 所有贡献者
+
+---
+
+## 📈 Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=VOBC/oh-my-coder&type=Date)](https://star-history.com/#VOBC/oh-my-coder&Date)
