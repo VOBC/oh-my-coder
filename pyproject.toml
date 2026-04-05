@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "oh-my-coder"
-version = "0.2.0"
+version = "1.0.0"
 description = "Multi-agent AI programming assistant with Chinese LLM support"
 readme = "README.md"
 license = {text = "MIT"}

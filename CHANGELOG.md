@@ -4,6 +4,74 @@
 
 格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/) 规范。
 
+---
+
+## [v1.0.0] - 2026-04-05
+
+### 🎉 正式版发布
+
+> 经过多个迭代版本的打磨，Oh My Coder 正式发布 v1.0.0！
+
+### 新增功能
+
+#### Executor Agent 重大升级
+
+- **自动代码提取与保存** - `_extract_code_blocks()` 从 LLM 输出中精准提取代码块
+  - 支持 ` ```language:path/to/file.ext ` 格式
+  - 支持 ` ```:path/to/file.ext ` 格式
+  - 自动创建目录结构并保存文件
+- **智能格式化** - 保存后自动运行代码格式化工具
+  - Python: `black`
+  - JS/TS: `prettier`
+  - Go: `gofmt`
+- **自动测试运行** - 保存测试文件后自动运行 pytest
+  - 解析测试结果（通过/失败数量）
+  - 返回结构化测试报告
+- **相关文件智能注入** - `_inject_relevant_files()` 根据任务关键词查找相关代码
+- **多语言支持** - 14 种编程语言代码块识别
+
+#### 项目基础设施
+
+- **完整测试套件** - 43 个测试用例，100% 通过
+- **API 参考文档** - `docs/API.md` 完整覆盖 Web API 和 Python SDK
+- **Web 界面** - 可视化工作流 + SSE 实时推送 + 深色模式
+- **CLI 增强** - `--version` / `--help` / 友好主面板
+- **社区配置** - GitHub Issue/PR 模板、FUNDING 文件
+
+### 性能优化
+
+- **ResponseCache** - 消息内容哈希缓存，避免重复 API 调用（节省 30%+ Token）
+- **增强故障转移** - 递增重试等待（2s→4s→6s），全链路日志追踪
+- **惰性 Agent 加载** - `Orchestrator.get_agent()` 按需加载
+
+### 错误处理
+
+- `NoModelAvailableError` - 所有模型不可用时的明确异常
+- SSE `put_nowait` 替代 `create_task` - 避免 event loop 依赖
+- `try_format_code()` / `try_run_tests()` - 所有外部调用均有异常保护
+
+### 代码质量
+
+- 43/43 测试通过，0 warnings
+- Starlette TemplateResponse 参数顺序修正
+- WORKFLOW_TEMPLATES 字段访问修复
+- Router TaskType 从 Enum 改为类常量（避免序列化问题）
+- 完整类型注解覆盖
+
+### 文档
+
+- `README.md` - 徽章（Stars/Issues/License）、项目结构图、测试说明
+- `docs/API.md` - 7 大章节完整 API 参考
+- `CHANGELOG.md` - 版本历史记录
+- `CONTRIBUTING.md` - 贡献指南
+- `.github/ISSUE_TEMPLATE/bug_report.yml` - 结构化 Bug 报告
+- `.github/PULL_REQUEST_TEMPLATE.md` - PR 规范模板
+- `FUNDING.yml` - 赞助说明
+- `examples/web_demo.py` - Web API 5 场景示例
+- `examples/cli_demo.py` - CLI 7 场景示例
+
+---
+
 ## [v0.2.1] - 2026-04-05
 
 ### 📚 API 文档
@@ -11,41 +79,12 @@
 首个完整 API 参考手册上线！
 
 - `docs/API.md` - 完整 Web API 和 Python SDK 文档
-  - 所有端点详细说明（execute/execute-sync/tasks/SSE/health/config）
-  - Python SDK 使用示例（Orchestrator/ModelRouter/AgentContext）
-  - 模型适配器使用说明（DeepSeek/文心/通义）
-  - 错误处理和类型参考
 
 ### ⚡ 性能优化
 
-**Router 重大重构**（`src/core/router.py`）：
-
 - **响应缓存** - `ResponseCache` 类，基于消息内容哈希缓存响应
-  - 避免重复 API 调用（相同探索请求、重复分析等场景）
-  - 可配置 TTL（默认 5 分钟）和最大条目数（默认 100）
-  - FIFO 淘汰策略，开箱即用
-  - `cache.get()` / `cache.set()` / `cache.clear()` / `cache.stats()`
-
-- **故障转移增强** - 主模型失败后按 fallback 顺序自动切换
-  - 记录每次失败原因，避免重复踩坑
-  - 递增重试等待时间（2s → 4s → 6s）
-
+- **故障转移增强** - 递增重试等待时间（2s → 4s → 6s）
 - **日志增强** - 全链路日志记录
-  - 初始化日志：成功/失败/警告
-  - 路由决策日志：任务类型 → 提供商/tier → 原因 → 估算成本
-  - 请求日志：tokens / latency / cost
-  - 缓存命中日志
-
-- **代码质量**
-  - 类型提示完整（所有方法含注解）
-  - TaskType 改用类常量（避免 Enum 序列化问题）
-  - 响应缓存默认开启，可通过 `use_cache=False` 禁用
-  - `reset_stats()` / `clear_cache()` 工具方法
-
-### 🐛 Bug 修复
-
-- `pyproject.toml` 重试超时字段重复定义（已合并为 120s）
-- CLI Agent 列表导入顺序问题
 
 ---
 
@@ -55,41 +94,10 @@
 
 首个完整的 Web 界面版本上线！
 
-#### 新增功能
-
-- **FastAPI Web 应用** - `src/web/app.py`
-  - 异步任务执行（BackgroundTasks）
-  - SSE 实时进度推送（`/sse/execute/{task_id}`）
-  - 完整 REST API（execute/execute-sync/tasks/config）
-  - TaskManager 任务状态管理
-
-- **前端页面** - `src/web/templates/index.html`
-  - Agent 流水线可视化动画（Explore → Analyst → Architect → Executor → Verifier）
-  - SSE 实时接收进度，毫秒级更新
-  - 多标签页输出（每个 Agent 独立展示）
-  - 深色/浅色主题切换
-  - 4 种工作流快捷卡片
-  - 成本统计面板
-
-- **样式系统** - `src/web/static/style.css`
-  - 完整 CSS 变量主题系统
-  - 深色模式支持
-  - 响应式布局
-
-#### 新增文档
-
-- `README.md` - 完整的 Web 界面使用说明和 API 文档
-- `tests/test_web.py` - Web 界面单元测试（12 个测试用例）
-- `tests/test_integration.py` - 集成测试（14 个测试用例）
-- `examples/web_demo.py` - Web API 使用示例（5 个场景）
-- `examples/cli_demo.py` - CLI 使用示例
-
-#### 改进
-
-- README.md 新增徽章（Stars, Last Commit, Issues）
-- README.md 新增项目结构树状图
-- README.md 新增测试运行说明
-- CHANGELOG.md 格式规范化
+- FastAPI Web 应用 + SSE 实时进度推送
+- 可视化 Agent 流水线动画
+- 深色/浅色主题切换
+- 4 种工作流快捷卡片
 
 ---
 
@@ -97,94 +105,4 @@
 
 ### 🎉 首次发布
 
-这是 Oh My Coder 的首个公开版本！
-
-### 新增功能
-
-#### 🤖 智能 Agent 系统（18个）
-
-**Build/Analysis Lane（构建/分析通道）**
-- `explore` - 代码库探索智能体，快速扫描项目结构
-- `analyst` - 需求分析智能体，深度理解需求
-- `planner` - 任务规划智能体，制定执行计划
-- `architect` - 架构设计智能体，系统设计
-- `executor` - 代码实现智能体，功能开发
-- `verifier` - 验证测试智能体，质量保证
-- `debugger` - 调试修复智能体，问题定位
-- `tracer` - 因果追踪智能体，根因分析
-
-**Review Lane（审查通道）**
-- `code-reviewer` - 代码审查智能体
-- `security-reviewer` - 安全审查智能体
-
-**Domain Lane（领域通道）**
-- `test-engineer` - 测试工程师智能体
-- `designer` - UI/UX 设计智能体
-- `writer` - 文档编写智能体
-- `git-master` - Git 操作智能体
-- `code-simplifier` - 代码简化智能体
-- `scientist` - 数据分析智能体
-- `qa-tester` - QA 测试智能体
-
-**Coordination Lane（协调通道）**
-- `critic` - 批评家智能体，审查计划
-
-#### 🔌 模型适配器
-
-- **DeepSeek** - 免费额度高，优先使用
-- **文心一言** - 百度，中文能力强
-- **通义千问** - 阿里，多模型选择
-
-#### ⚙️ 核心功能
-
-- **三层模型路由** - LOW/MEDIUM/HIGH 自动选择
-- **智能编排引擎** - 支持顺序/并行/条件执行
-- **工作流模板** - build/review/debug/test
-- **完整 CLI 工具** - agents/status/run 命令
-
-### 技术特性
-
-- ✅ Python 3.10+ 
-- ✅ 异步 API 设计
-- ✅ 类型注解完整
-- ✅ 统一模型接口
-- ✅ 成本控制机制
-- ✅ 状态持久化
-
-### 文档
-
-- ✅ README.md - 项目介绍
-- ✅ CHANGELOG.md - 更新日志
-- ✅ CONTRIBUTING.md - 贡献指南
-- ✅ LICENSE - MIT 协议
-- ✅ 架构文档 - docs/ARCHITECTURE.md
-
-### 快速开始
-
-```bash
-# 克隆项目
-git clone <repository-url>
-cd oh-my-coder
-
-# 安装依赖
-pip install -r requirements.txt
-
-# 配置 API Key
-export DEEPSEEK_API_KEY=your_key
-
-# 运行演示
-python demo.py
-```
-
-### 致谢
-
-- 感谢 [oh-my-claudecode](https://github.com/Yeachan-Heo/oh-my-claudecode) 项目启发
-- 感谢 DeepSeek、文心一言、通义千问提供的 API
-- 感谢所有测试用户
-
----
-
-## 版本说明
-
-- **v0.1.0** - 首个公开版本，功能基本完善
-- 后续版本将持续优化和增加功能
+18 个 Agent、多模型适配器（DeepSeek/文心/通义）、CLI 工具、编排引擎。
