@@ -17,6 +17,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from src.core.orchestrator import Orchestrator, WORKFLOW_TEMPLATES, WorkflowStep
 from src.core.router import ModelRouter, RouterConfig, TaskType
+from src.core.router import _TASK_TIER_MAPPING as TASK_TIER_MAPPING
 from src.agents.base import AgentContext, AgentOutput, AgentStatus
 
 
@@ -171,15 +172,24 @@ def test_router_select():
     """路由器能正确选择模型"""
     config = RouterConfig(
         deepseek_api_key="fake_key_for_test",
-        fallback_order=[],
+        fallback_order=["deepseek"],
     )
     router = ModelRouter(config)
 
-    # 无可用模型时应该抛出异常
-    # （因为 fake_key 可能无效，但路由选择逻辑本身是可测的）
-    # 这里测试选择逻辑
-    with pytest.raises(Exception):  # NoModelAvailableError
-        router.select(TaskType.EXPLORE)
+    # 有 API key 时应正常选择（DeepSeek 模型存在）
+    decision = router.select(TaskType.EXPLORE)
+    assert decision.selected_tier == "low"
+    assert decision.selected_provider == "deepseek"
+
+    # 禁用缓存时应绕过缓存
+    config2 = RouterConfig(
+        deepseek_api_key="fake_key_for_test",
+        fallback_order=["deepseek"],
+        cache_enabled=False,
+    )
+    router2 = ModelRouter(config2)
+    decision2 = router2.select(TaskType.EXPLORE)
+    assert decision2.selected_tier == "low"
 
 
 def test_router_stats():
@@ -197,17 +207,22 @@ def test_router_stats():
 
 def test_task_type_to_tier_mapping():
     """任务类型到层级的映射正确"""
-    from src.core.router import TASK_TIER_MAPPING
-
     # 快速任务应该是 LOW
-    assert TASK_TIER_MAPPING[TaskType.EXPLORE].value == "low"
+    assert TASK_TIER_MAPPING[TaskType.EXPLORE] == "low"
+    assert TASK_TIER_MAPPING[TaskType.SIMPLE_QA] == "low"
 
     # 复杂任务应该是 HIGH
-    assert TASK_TIER_MAPPING[TaskType.ARCHITECTURE].value == "high"
-    assert TASK_TIER_MAPPING[TaskType.CODE_REVIEW].value == "high"
+    assert TASK_TIER_MAPPING[TaskType.ARCHITECTURE] == "high"
+    assert TASK_TIER_MAPPING[TaskType.CODE_REVIEW] == "high"
 
     # 中等任务应该是 MEDIUM
-    assert TASK_TIER_MAPPING[TaskType.CODE_GENERATION].value == "medium"
+    assert TASK_TIER_MAPPING[TaskType.CODE_GENERATION] == "medium"
+    assert TASK_TIER_MAPPING[TaskType.DEBUGGING] == "medium"
+
+    # TaskType.all() 返回所有类型
+    all_types = TaskType.all()
+    assert TaskType.EXPLORE in all_types
+    assert TaskType.ARCHITECTURE in all_types
 
 
 # ============================================================

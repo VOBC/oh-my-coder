@@ -134,7 +134,7 @@ class RoutingDecision:
 
     task_type: str
     selected_provider: str
-    selected_tier: str
+    selected_tier: str  # "low" | "medium" | "high"
     reason: str
     estimated_cost: float = 0.0
     timestamp: str = field(default_factory=lambda: datetime.now().isoformat())

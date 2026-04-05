@@ -84,11 +84,14 @@ class TaskManager:
         task["step_status"][step] = status
         if content:
             task["step_outputs"][step] = content
-        # Push SSE event
+        # Push SSE event (use put_nowait to avoid needing running event loop)
         queue = self._queues.get(task_id)
         if queue:
             data = {"type": f"step_{status}", "step": step, "content": content}
-            asyncio.create_task(queue.put(data))
+            try:
+                queue.put_nowait(data)
+            except Exception:
+                pass  # Queue full, skip
 
     def complete_task(self, task_id: str, result: Any = None, error: str = None):
         if task_id not in self._tasks:
@@ -98,7 +101,7 @@ class TaskManager:
         task["completed_at"] = datetime.now().isoformat()
         task["result"] = result
         task["error"] = error
-        # Push final event
+        # Push final event (use put_nowait to avoid needing running event loop)
         queue = self._queues.get(task_id)
         if queue:
             data = {
@@ -107,8 +110,11 @@ class TaskManager:
                 "content": error,
                 "stats": task["stats"],
             }
-            asyncio.create_task(queue.put(data))
-            asyncio.create_task(queue.put(None))  # Sentinel to close SSE
+            try:
+                queue.put_nowait(data)
+                queue.put_nowait(None)  # Sentinel to close SSE
+            except Exception:
+                pass  # Queue full, skip
 
     def get_task(self, task_id: str) -> Optional[Dict]:
         return self._tasks.get(task_id)
@@ -199,7 +205,7 @@ def json_dumps(obj):
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
     """主页 - Web 界面"""
-    return templates.TemplateResponse("index.html", {"request": request})
+    return templates.TemplateResponse(request, "index.html")
 
 
 @app.get("/api/tasks")
@@ -425,7 +431,7 @@ async def get_config():
     return JSONResponse({
         "models": ["deepseek", "tongyi", "wenxin"],
         "workflows": list(WORKFLOW_TEMPLATES.keys()),
-        "agents": list(WORKFLOW_TEMPLATES["build"].step.agent_name for _ in [1]),
+        "agents": [s.agent_name for s in WORKFLOW_TEMPLATES["build"]],
     })
 
 
@@ -438,8 +444,8 @@ async def health_check():
 
 # ===== API 文档覆盖 =====
 @app.get("/docs", response_class=HTMLResponse)
-async def docs():
-    return templates.TemplateResponse("index.html", {"request": {}})
+async def docs(request: Request):
+    return templates.TemplateResponse(request, "index.html")
 
 
 # ========================================
