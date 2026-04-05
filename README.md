@@ -45,12 +45,74 @@ export GLM_API_KEY=your_key         # ChatGLM
 ### 3. 运行
 
 ```bash
-# 方式1: CLI
+# 方式1: Web 界面（推荐，新手友好）
+python -m src.web.app
+
+# 然后浏览器打开: http://localhost:8000
+
+# 方式2: CLI
 python -m src.cli explore .                    # 探索代码库
 python -m src.cli run "实现一个 REST API"      # 执行任务
 
-# 方式2: API
+# 方式3: API
 python -m uvicorn src.main:app --reload        # 启动 API 服务
+```
+
+---
+
+## 🌐 Web 界面
+
+启动 Web 界面：
+
+```bash
+python -m src.web.app
+```
+
+浏览器打开 **http://localhost:8000**
+
+### 功能特性
+
+| 功能 | 说明 |
+|------|------|
+| 🎨 **可视化工作流** | 实时显示 Explore → Analyst → Architect → Executor → Verifier 流水线 |
+| ⚡ **SSE 实时推送** | 无轮询，任务进度实时推送，毫秒级更新 |
+| 📋 **多视图输出** | 每个 Agent 的输出独立展示，可随时切换查看 |
+| 📊 **成本统计** | Token 消耗、执行时间、步骤完成情况一目了然 |
+| 🌙 **深色模式** | 支持明暗主题切换 |
+| 💡 **示例任务** | 内置 4 种常用任务模板，一键填入 |
+| 🔄 **工作流选择** | 支持构建、审查、调试、测试等多种工作流 |
+
+### API 端点
+
+```
+POST /api/execute        # 异步执行任务（SSE 实时推送进度）
+POST /api/execute-sync   # 同步执行任务（直接返回结果）
+GET  /api/tasks          # 列出所有任务
+GET  /api/tasks/{id}     # 获取任务详情
+GET  /sse/execute/{id}   # SSE 流，接收任务实时进度
+GET  /health             # 健康检查
+```
+
+### 调用示例
+
+```bash
+# 异步执行（带 SSE 进度推送）
+curl -X POST http://localhost:8000/api/execute \
+  -H "Content-Type: application/json" \
+  -d '{
+    "task": "实现一个 REST API",
+    "project_path": ".",
+    "model": "deepseek",
+    "workflow": "build"
+  }'
+
+# 同步执行（直接返回结果）
+curl -X POST http://localhost:8000/api/execute-sync \
+  -H "Content-Type: application/json" \
+  -d '{
+    "task": "审查当前项目的代码质量",
+    "workflow": "review"
+  }'
 ```
 
 ---
@@ -111,6 +173,10 @@ oh-my-coder/
 │   ├── models/           # 模型适配器
 │   │   ├── base.py       # 模型基类
 │   │   └── deepseek.py   # DeepSeek 适配器
+│   ├── web/              # Web 界面
+│   │   ├── app.py        # FastAPI 应用
+│   │   ├── templates/    # HTML 模板
+│   │   └── static/       # CSS/JS 静态资源
 │   ├── cli.py            # CLI 入口
 │   └── main.py           # API 入口
 ├── tests/                # 测试
@@ -165,9 +231,9 @@ oh-my-coder/
 - [x] 4 个核心 Agent（explore/analyst/architect/executor）
 - [x] 编排引擎
 - [x] CLI 入口
+- [x] Web 界面
 - [ ] 更多 Agent（debugger, reviewer, tester...）
 - [ ] 其他模型适配器（文心/通义/GLM）
-- [ ] Web 界面
 - [ ] 完整测试
 
 ---
