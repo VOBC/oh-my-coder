@@ -4,6 +4,51 @@
 
 格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/) 规范。
 
+## [v0.2.1] - 2026-04-05
+
+### 📚 API 文档
+
+首个完整 API 参考手册上线！
+
+- `docs/API.md` - 完整 Web API 和 Python SDK 文档
+  - 所有端点详细说明（execute/execute-sync/tasks/SSE/health/config）
+  - Python SDK 使用示例（Orchestrator/ModelRouter/AgentContext）
+  - 模型适配器使用说明（DeepSeek/文心/通义）
+  - 错误处理和类型参考
+
+### ⚡ 性能优化
+
+**Router 重大重构**（`src/core/router.py`）：
+
+- **响应缓存** - `ResponseCache` 类，基于消息内容哈希缓存响应
+  - 避免重复 API 调用（相同探索请求、重复分析等场景）
+  - 可配置 TTL（默认 5 分钟）和最大条目数（默认 100）
+  - FIFO 淘汰策略，开箱即用
+  - `cache.get()` / `cache.set()` / `cache.clear()` / `cache.stats()`
+
+- **故障转移增强** - 主模型失败后按 fallback 顺序自动切换
+  - 记录每次失败原因，避免重复踩坑
+  - 递增重试等待时间（2s → 4s → 6s）
+
+- **日志增强** - 全链路日志记录
+  - 初始化日志：成功/失败/警告
+  - 路由决策日志：任务类型 → 提供商/tier → 原因 → 估算成本
+  - 请求日志：tokens / latency / cost
+  - 缓存命中日志
+
+- **代码质量**
+  - 类型提示完整（所有方法含注解）
+  - TaskType 改用类常量（避免 Enum 序列化问题）
+  - 响应缓存默认开启，可通过 `use_cache=False` 禁用
+  - `reset_stats()` / `clear_cache()` 工具方法
+
+### 🐛 Bug 修复
+
+- `pyproject.toml` 重试超时字段重复定义（已合并为 120s）
+- CLI Agent 列表导入顺序问题
+
+---
+
 ## [v0.2.0] - 2026-04-05
 
 ### 🌐 Web 界面
