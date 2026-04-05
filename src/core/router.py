@@ -6,16 +6,21 @@
 2. 根据成本预算选择提供商
 3. 支持故障转移（fallback）
 4. 记录路由决策用于优化
+5. 响应缓存（避免重复请求）
+6. 增强日志和错误处理
 
 设计思路：
 原项目使用 haiku/sonnet/opus 三层模型路由，节省 30-50% token。
 我们扩展为多提供商路由，优先使用 DeepSeek（免费），必要时才调用付费模型。
 """
 
-from dataclasses import dataclass
-from typing import Dict, List, Optional, Type
-from enum import Enum
+from dataclasses import dataclass, field
+from datetime import datetime, timedelta
+from typing import Dict, List, Optional, Any
+import hashlib
+import logging
 import os
+import asyncio
 
 from ..models.base import (
     BaseModel,
@@ -26,30 +31,67 @@ from ..models.base import (
     ModelResponse,
     Usage,
 )
+
 from ..models.deepseek import DeepSeekModel
 
 
-class TaskType(Enum):
-    """任务类型 - 用于路由决策"""
-
-    # 快速任务（LOW tier）
-    EXPLORE = "explore"  # 代码库探索
-    SIMPLE_QA = "simple_qa"  # 简单问答
-    FORMATTING = "formatting"  # 格式化
-
-    # 中等任务（MEDIUM tier）
-    CODE_GENERATION = "code_generation"  # 代码生成
-    DEBUGGING = "debugging"  # 调试
-    TESTING = "testing"  # 测试
-    REFACTORING = "refactoring"  # 重构
-
-    # 复杂任务（HIGH tier）
-    ARCHITECTURE = "architecture"  # 架构设计
-    SECURITY_REVIEW = "security_review"  # 安全审查
-    CODE_REVIEW = "code_review"  # 代码审查
-    PLANNING = "planning"  # 战略规划
+# ============================================================
+# Logger
+# ============================================================
+logger = logging.getLogger("omc.router")
 
 
+# ============================================================
+# Task Type Enum
+# ============================================================
+class TaskType:
+    """任务类型 - 用于路由决策（使用类避免 Enum 序列化问题）"""
+
+    EXPLORE = "explore"
+    SIMPLE_QA = "simple_qa"
+    FORMATTING = "formatting"
+    CODE_GENERATION = "code_generation"
+    DEBUGGING = "debugging"
+    TESTING = "testing"
+    REFACTORING = "refactoring"
+    ARCHITECTURE = "architecture"
+    SECURITY_REVIEW = "security_review"
+    CODE_REVIEW = "code_review"
+    PLANNING = "planning"
+
+    @classmethod
+    def all(cls) -> List[str]:
+        return [
+            cls.EXPLORE, cls.SIMPLE_QA, cls.FORMATTING,
+            cls.CODE_GENERATION, cls.DEBUGGING, cls.TESTING, cls.REFACTORING,
+            cls.ARCHITECTURE, cls.SECURITY_REVIEW, cls.CODE_REVIEW, cls.PLANNING,
+        ]
+
+
+# ============================================================
+# 任务类型到模型层级的映射
+# ============================================================
+_TASK_TIER_MAPPING: Dict[str, str] = {
+    # LOW tier - 快速便宜
+    TaskType.EXPLORE: "low",
+    TaskType.SIMPLE_QA: "low",
+    TaskType.FORMATTING: "low",
+    # MEDIUM tier - 平衡
+    TaskType.CODE_GENERATION: "medium",
+    TaskType.DEBUGGING: "medium",
+    TaskType.TESTING: "medium",
+    TaskType.REFACTORING: "medium",
+    # HIGH tier - 最高质量
+    TaskType.ARCHITECTURE: "high",
+    TaskType.SECURITY_REVIEW: "high",
+    TaskType.CODE_REVIEW: "high",
+    TaskType.PLANNING: "high",
+}
+
+
+# ============================================================
+# Router Config
+# ============================================================
 @dataclass
 class RouterConfig:
     """路由器配置"""
@@ -64,121 +106,192 @@ class RouterConfig:
     daily_budget: float = 10.0
 
     # 故障转移顺序
-    fallback_order: List[ModelProvider] = None
+    fallback_order: List[str] = field(default_factory=list)
+
+    # 缓存配置
+    cache_enabled: bool = True
+    cache_ttl_seconds: int = 300  # 5 分钟缓存
+    cache_max_entries: int = 100
 
     def __post_init__(self):
         # 从环境变量加载 API Keys
-        if self.deepseek_api_key is None:
-            self.deepseek_api_key = os.getenv("DEEPSEEK_API_KEY")
-        if self.wenxin_api_key is None:
-            self.wenxin_api_key = os.getenv("WENXIN_API_KEY")
-        if self.tongyi_api_key is None:
-            self.tongyi_api_key = os.getenv("TONGYI_API_KEY")
-        if self.glm_api_key is None:
-            self.glm_api_key = os.getenv("GLM_API_KEY")
+        self.deepseek_api_key = self.deepseek_api_key or os.getenv("DEEPSEEK_API_KEY")
+        self.wenxin_api_key = self.wenxin_api_key or os.getenv("WENXIN_API_KEY")
+        self.tongyi_api_key = self.tongyi_api_key or os.getenv("TONGYI_API_KEY")
+        self.glm_api_key = self.glm_api_key or os.getenv("GLM_API_KEY")
 
         # 默认故障转移顺序
-        if self.fallback_order is None:
-            self.fallback_order = [
-                ModelProvider.DEEPSEEK,  # 优先使用免费
-                ModelProvider.WENXIN,  # 文心备用
-                ModelProvider.TONGYI,  # 通义备用
-                ModelProvider.GLM,  # GLM 备用
-            ]
+        if not self.fallback_order:
+            self.fallback_order = ["deepseek", "wenxin", "tongyi", "glm"]
 
 
+# ============================================================
+# Routing Decision
+# ============================================================
 @dataclass
 class RoutingDecision:
     """路由决策记录"""
 
-    task_type: TaskType
-    selected_provider: ModelProvider
-    selected_tier: ModelTier
+    task_type: str
+    selected_provider: str
+    selected_tier: str
     reason: str
     estimated_cost: float = 0.0
+    timestamp: str = field(default_factory=lambda: datetime.now().isoformat())
 
 
-# 任务类型到模型层级的映射
-TASK_TIER_MAPPING = {
-    # LOW tier - 快速便宜
-    TaskType.EXPLORE: ModelTier.LOW,
-    TaskType.SIMPLE_QA: ModelTier.LOW,
-    TaskType.FORMATTING: ModelTier.LOW,
-    # MEDIUM tier - 平衡
-    TaskType.CODE_GENERATION: ModelTier.MEDIUM,
-    TaskType.DEBUGGING: ModelTier.MEDIUM,
-    TaskType.TESTING: ModelTier.MEDIUM,
-    TaskType.REFACTORING: ModelTier.MEDIUM,
-    # HIGH tier - 最高质量
-    TaskType.ARCHITECTURE: ModelTier.HIGH,
-    TaskType.SECURITY_REVIEW: ModelTier.HIGH,
-    TaskType.CODE_REVIEW: ModelTier.HIGH,
-    TaskType.PLANNING: ModelTier.HIGH,
-}
+# ============================================================
+# Response Cache
+# ============================================================
+class ResponseCache:
+    """
+    简单 LRU 缓存，按消息内容哈希存储响应
+
+    适用场景：
+    - 重复的探索请求
+    - 相同的分析请求（项目结构未变时）
+    - 相同问题的简单 QA
+    """
+
+    def __init__(self, max_entries: int = 100, ttl_seconds: int = 300):
+        self._cache: Dict[str, Dict[str, Any]] = {}
+        self._order: List[str] = []  # 简单 FIFO（非真实 LRU，但够用）
+        self._max_entries = max_entries
+        self._ttl = ttl_seconds
+
+    def _make_key(self, messages: List[Message]) -> str:
+        """根据消息内容生成缓存 key"""
+        content = "".join(m.content for m in messages)
+        return hashlib.sha256(content.encode()).hexdigest()[:16]
+
+    def get(self, messages: List[Message]) -> Optional[ModelResponse]:
+        """获取缓存的响应"""
+        key = self._make_key(messages)
+        entry = self._cache.get(key)
+
+        if entry is None:
+            return None
+
+        # 检查是否过期
+        age = (datetime.now() - entry["cached_at"]).total_seconds()
+        if age > self._ttl:
+            del self._cache[key]
+            self._order.remove(key)
+            return None
+
+        logger.debug(f"Cache hit: {key[:8]}... (age={age:.1f}s)")
+        return entry["response"]
+
+    def set(self, messages: List[Message], response: ModelResponse) -> None:
+        """缓存响应"""
+        key = self._make_key(messages)
+
+        # LRU 淘汰
+        if len(self._cache) >= self._max_entries and key not in self._cache:
+            oldest = self._order.pop(0)
+            del self._cache[oldest]
+
+        self._cache[key] = {
+            "response": response,
+            "cached_at": datetime.now(),
+        }
+        if key not in self._order:
+            self._order.append(key)
+
+    def clear(self) -> None:
+        """清空缓存"""
+        self._cache.clear()
+        self._order.clear()
+
+    def stats(self) -> Dict[str, int]:
+        """缓存统计"""
+        total = len(self._cache)
+        expired = sum(
+            1 for e in self._cache.values()
+            if (datetime.now() - e["cached_at"]).total_seconds() > self._ttl
+        )
+        return {
+            "total": total,
+            "active": total - expired,
+            "max": self._max_entries,
+            "ttl_seconds": self._ttl,
+        }
 
 
+# ============================================================
+# Model Router
+# ============================================================
 class ModelRouter:
     """
     模型路由器
 
     核心方法：
-    - select(): 选择最优模型
-    - route_and_call(): 路由并执行（带故障转移）
-    - get_stats(): 获取路由统计
+    - select():       选择最优模型
+    - route_and_call(): 路由并执行（带故障转移 + 缓存）
+    - get_stats():    获取路由统计
     """
 
-    def __init__(self, config: RouterConfig):
-        self.config = config
-        self._models: Dict[ModelProvider, Dict[ModelTier, BaseModel]] = {}
+    def __init__(self, config: Optional[RouterConfig] = None):
+        self.config = config or RouterConfig()
+        self._models: Dict[str, Dict[str, BaseModel]] = {}
         self._decision_history: List[RoutingDecision] = []
         self._total_cost = 0.0
+        self._cache = ResponseCache(
+            max_entries=self.config.cache_max_entries,
+            ttl_seconds=self.config.cache_ttl_seconds,
+        ) if self.config.cache_enabled else None
 
-        # 初始化可用模型
         self._initialize_models()
 
-    def _initialize_models(self):
-        """初始化所有可用模型"""
+    def _initialize_models(self) -> None:
+        """初始化所有可用模型（惰性初始化）"""
         # DeepSeek
         if self.config.deepseek_api_key:
-            for tier in ModelTier:
-                model_config = ModelConfig(
-                    api_key=self.config.deepseek_api_key,
-                )
-                self._models.setdefault(ModelProvider.DEEPSEEK, {})[tier] = (
-                    DeepSeekModel(model_config, tier)
-                )
+            try:
+                for tier in ["low", "medium", "high"]:
+                    cfg = ModelConfig(api_key=self.config.deepseek_api_key)
+                    self._models.setdefault("deepseek", {})[tier] = DeepSeekModel(
+                        cfg, ModelTier(tier)
+                    )
+                logger.info("DeepSeek 模型已初始化")
+            except Exception as e:
+                logger.warning(f"DeepSeek 初始化失败: {e}")
 
         # 文心一言
-        wenxin_secret_key = os.getenv("WENXIN_SECRET_KEY")
-        if self.config.wenxin_api_key and wenxin_secret_key:
-            from ..models.wenxin import WenxinModel
-
-            for tier in ModelTier:
-                model_config = ModelConfig(
-                    api_key=self.config.wenxin_api_key,
-                )
-                self._models.setdefault(ModelProvider.WENXIN, {})[tier] = WenxinModel(
-                    model_config, tier, secret_key=wenxin_secret_key
-                )
+        wenxin_secret = os.getenv("WENXIN_SECRET_KEY")
+        if self.config.wenxin_api_key and wenxin_secret:
+            try:
+                from ..models.wenxin import WenxinModel
+                for tier in ["low", "medium", "high"]:
+                    cfg = ModelConfig(api_key=self.config.wenxin_api_key)
+                    self._models.setdefault("wenxin", {})[tier] = WenxinModel(
+                        cfg, ModelTier(tier), secret_key=wenxin_secret
+                    )
+                logger.info("文心一言模型已初始化")
+            except Exception as e:
+                logger.warning(f"文心一言初始化失败: {e}")
 
         # 通义千问
         if self.config.tongyi_api_key:
-            from ..models.tongyi import TongyiModel
+            try:
+                from ..models.tongyi import TongyiModel
+                for tier in ["low", "medium", "high"]:
+                    cfg = ModelConfig(api_key=self.config.tongyi_api_key)
+                    self._models.setdefault("tongyi", {})[tier] = TongyiModel(
+                        cfg, ModelTier(tier)
+                    )
+                logger.info("通义千问模型已初始化")
+            except Exception as e:
+                logger.warning(f"通义千问初始化失败: {e}")
 
-            for tier in ModelTier:
-                model_config = ModelConfig(
-                    api_key=self.config.tongyi_api_key,
-                )
-                self._models.setdefault(ModelProvider.TONGYI, {})[tier] = TongyiModel(
-                    model_config, tier
-                )
-
-        # TODO: 添加其他提供商（GLM）
+        # 记录可用提供商
+        available = list(self._models.keys())
+        logger.info(f"可用模型提供商: {available or '无'}")
 
     def select(
         self,
-        task_type: TaskType,
-        complexity: str = "medium",  # low, medium, high
+        task_type: str,
+        complexity: str = "medium",
         budget_remaining: Optional[float] = None,
     ) -> RoutingDecision:
         """
@@ -186,52 +299,57 @@ class ModelRouter:
 
         Args:
             task_type: 任务类型
-            complexity: 任务复杂度（可覆盖默认层级）
-            budget_remaining: 剩余预算
+            complexity: 任务复杂度（low/medium/high，可覆盖默认层级）
+            budget_remaining: 剩余预算（元）
 
         Returns:
             RoutingDecision: 路由决策
         """
         # 确定模型层级
-        base_tier = TASK_TIER_MAPPING.get(task_type, ModelTier.MEDIUM)
+        base_tier = _TASK_TIER_MAPPING.get(task_type, "medium")
 
-        # 根据复杂度调整层级
         tier = base_tier
+        # 层级升降
+        if complexity == "low" and base_tier == "high":
+            tier = "medium"
+        elif complexity == "low" and base_tier == "medium":
+            tier = "low"
+        elif complexity == "high" and base_tier == "low":
+            tier = "medium"
+        elif complexity == "high" and base_tier == "medium":
+            tier = "high"
 
-        # 层级映射（用于升降级）
-        tier_upgrades = {
-            ModelTier.LOW: ModelTier.MEDIUM,
-            ModelTier.MEDIUM: ModelTier.HIGH,
-        }
-        tier_downgrades = {
-            ModelTier.HIGH: ModelTier.MEDIUM,
-            ModelTier.MEDIUM: ModelTier.LOW,
-        }
-
-        if complexity == "low" and base_tier in tier_downgrades:
-            tier = tier_downgrades[base_tier]  # 降一级
-        elif complexity == "high" and base_tier in tier_upgrades:
-            tier = tier_upgrades[base_tier]  # 升一级
+        # 预算检查（如果设置了预算且不足，降级到便宜模型）
+        if budget_remaining is not None and budget_remaining < 0.01 and tier == "high":
+            tier = "medium"
+            logger.info("预算不足，降级到 MEDIUM tier")
 
         # 选择提供商（优先 DeepSeek）
         selected_provider = None
         reason = ""
 
         for provider in self.config.fallback_order:
-            if provider in self._models and tier in self._models[provider]:
+            provider_models = self._models.get(provider, {})
+            if tier in provider_models:
                 selected_provider = provider
-                if provider == ModelProvider.DEEPSEEK:
-                    reason = "DeepSeek 免费额度优先"
-                else:
-                    reason = f"{provider.value} 备用"
+                reason = (
+                    "DeepSeek 免费额度优先"
+                    if provider == "deepseek"
+                    else f"{provider} 备用"
+                )
                 break
 
         if selected_provider is None:
-            raise NoModelAvailableError(f"没有可用的模型处理 {task_type.value} 任务")
+            raise NoModelAvailableError(
+                f"没有可用的模型处理 {task_type} 任务（tier={tier}，"
+                f"可用提供商={[p for p in self._models.keys() if tier in self._models.get(p, {})]}"
+            )
 
         # 估算成本
         model = self._models[selected_provider][tier]
-        estimated_cost = model.config.cost_per_1k_prompt * 2  # 粗略估算
+        estimated_cost = model.get_cost(
+            Usage(prompt_tokens=1000, completion_tokens=500)
+        )
 
         decision = RoutingDecision(
             task_type=task_type,
@@ -242,90 +360,133 @@ class ModelRouter:
         )
 
         self._decision_history.append(decision)
+        logger.debug(
+            f"路由决策: {task_type} → {selected_provider}/{tier} "
+            f"(reason={reason}, cost≈{estimated_cost:.4f})"
+        )
 
         return decision
 
     async def route_and_call(
         self,
-        task_type: TaskType,
+        task_type: str,
         messages: List[Message],
         complexity: str = "medium",
+        use_cache: bool = True,
         **kwargs,
     ) -> ModelResponse:
         """
-        路由并执行（带故障转移）
+        路由并执行（带故障转移 + 缓存）
 
-        Args:
-            task_type: 任务类型
-            messages: 对话历史
-            complexity: 任务复杂度
-            **kwargs: 传递给模型的参数
-
-        Returns:
-            ModelResponse: 模型响应
+        优化点：
+        1. 缓存相同消息的响应
+        2. 故障转移：主模型失败自动切换备用
+        3. 任务类型识别：自动降级/升级 tier
         """
+        # 1. 检查缓存
+        if use_cache and self._cache:
+            cached = self._cache.get(messages)
+            if cached:
+                logger.info(f"使用缓存响应（task={task_type}）")
+                return cached
+
+        # 2. 选择模型
         decision = self.select(task_type, complexity)
 
-        # 获取模型
+        # 3. 获取模型实例
         model = self._models[decision.selected_provider][decision.selected_tier]
 
-        # 重试机制
-        last_error = None
-        for attempt in range(3):
-            try:
-                response = await model.generate(messages, **kwargs)
+        # 4. 故障转移：按 fallback 顺序尝试
+        fallback_order = [
+            p for p in self.config.fallback_order
+            if p in self._models and decision.selected_tier in self._models[p]
+        ]
+        # 确保当前选择的在最前
+        if decision.selected_provider not in fallback_order:
+            fallback_order.insert(0, decision.selected_provider)
 
-                # 更新成本统计
-                actual_cost = model.get_cost(response.usage)
-                self._total_cost += actual_cost
+        last_error: Optional[Exception] = None
 
-                return response
+        for provider in fallback_order:
+            m = self._models[provider][decision.selected_tier]
+            for attempt in range(3):
+                try:
+                    start = datetime.now()
+                    response = await m.generate(messages, **kwargs)
+                    elapsed = (datetime.now() - start).total_seconds() * 1000
 
-            except Exception as e:
-                last_error = e
-                if attempt < 2:  # 还有重试机会
-                    import asyncio
-                    import time
+                    # 更新成本统计
+                    actual_cost = m.get_cost(response.usage)
+                    self._total_cost += actual_cost
+                    response.latency_ms = elapsed
 
-                    time.sleep(2)  # 等待 2 秒后重试
+                    logger.info(
+                        f"请求成功: {provider}/{decision.selected_tier} "
+                        f"(tokens={response.usage.total_tokens}, "
+                        f"latency={elapsed:.0f}ms, cost={actual_cost:.6f})"
+                    )
 
-        # 所有重试都失败
-        raise last_error
+                    # 缓存响应
+                    if use_cache and self._cache:
+                        self._cache.set(messages, response)
+
+                    return response
+
+                except Exception as e:
+                    last_error = e
+                    logger.warning(
+                        f"请求失败（{provider}/{decision.selected_tier}, "
+                        f"attempt={attempt + 1}/3）: {e}"
+                    )
+                    if attempt < 2:
+                        await asyncio.sleep(2 * (attempt + 1))  # 递增等待
+
+        # 所有尝试都失败
+        logger.error(f"所有提供商均失败: {last_error}")
+        raise NoModelAvailableError(
+            f"所有模型均不可用（task={task_type}）: {last_error}"
+        ) from last_error
 
     def get_model(
         self,
-        provider: ModelProvider,
-        tier: ModelTier,
+        provider: str,
+        tier: str,
     ) -> Optional[BaseModel]:
         """直接获取指定模型"""
         return self._models.get(provider, {}).get(tier)
 
-    def get_stats(self) -> Dict:
+    def get_stats(self) -> Dict[str, Any]:
         """获取路由统计"""
         return {
             "total_requests": len(self._decision_history),
             "total_cost": self._total_cost,
-            "provider_distribution": self._count_by_provider(),
-            "tier_distribution": self._count_by_tier(),
+            "provider_distribution": self._count_by("selected_provider"),
+            "tier_distribution": self._count_by("selected_tier"),
+            "cache": self._cache.stats() if self._cache else None,
         }
 
-    def _count_by_provider(self) -> Dict[str, int]:
-        """统计各提供商的使用次数"""
-        counts = {}
-        for decision in self._decision_history:
-            provider = decision.selected_provider.value
-            counts[provider] = counts.get(provider, 0) + 1
+    def _count_by(self, field: str) -> Dict[str, int]:
+        counts: Dict[str, int] = {}
+        for d in self._decision_history:
+            key = getattr(d, field)
+            counts[key] = counts.get(key, 0) + 1
         return counts
 
-    def _count_by_tier(self) -> Dict[str, int]:
-        """统计各层级的使用次数"""
-        counts = {}
-        for decision in self._decision_history:
-            tier = decision.selected_tier.value
-            counts[tier] = counts.get(tier, 0) + 1
-        return counts
+    def clear_cache(self) -> None:
+        """清空响应缓存"""
+        if self._cache:
+            self._cache.clear()
+            logger.info("响应缓存已清空")
+
+    def reset_stats(self) -> None:
+        """重置统计信息"""
+        self._decision_history.clear()
+        self._total_cost = 0.0
 
 
+# ============================================================
+# Exception
+# ============================================================
 class NoModelAvailableError(Exception):
     """没有可用模型"""
 
