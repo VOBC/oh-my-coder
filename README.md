@@ -37,12 +37,17 @@ pip install -r requirements.txt
 ### 2. 配置 API Key
 
 ```bash
-# DeepSeek API Key（推荐，免费额度高）
+# DeepSeek（推荐，免费额度高，每天 4000 万 token）
 export DEEPSEEK_API_KEY=your_key_here
 
 # 可选：其他模型
 export WENXIN_API_KEY=your_key      # 文心一言
 export TONGYI_API_KEY=your_key      # 通义千问
+export GLM_API_KEY=your_key         # 智谱 GLM
+export MINIMAX_API_KEY=your_key      # MiniMax 海螺
+export KIMI_API_KEY=your_key        # Kimi 月暗
+export HUNYUAN_API_KEY=your_key     # 腾讯混元
+export DOUBAO_API_KEY=your_key      # 字节豆包
 ```
 
 ### 3. 运行
@@ -113,6 +118,23 @@ curl -X POST http://localhost:8000/api/execute-sync \
 - **LOW** - 快速便宜（对应 haiku）
 - **MEDIUM** - 平衡性能和成本（对应 sonnet）
 - **HIGH** - 最高质量推理（对应 opus）
+
+## 🧠 支持的模型
+
+共 **8 个**模型提供商，系统自动按性价比选择：
+
+| 提供商 | 环境变量 | API 地址 | 特点 |
+|--------|----------|----------|------|
+| **DeepSeek** | `DEEPSEEK_API_KEY` | api.deepseek.com | 免费额度高，每天 4000 万 token |
+| **Kimi** | `KIMI_API_KEY` | api.moonshot.cn | 最长 128K 上下文 |
+| **豆包** | `DOUBAO_API_KEY` | ark.volces.com | 字节自研，性价比高 |
+| **MiniMax** | `MINIMAX_API_KEY` | api.minimax.chat | 中文理解能力强 |
+| **智谱 GLM** | `GLM_API_KEY` | open.bigmodel.cn | 支持工具调用 |
+| **通义千问** | `TONGYI_API_KEY` | dashscope.aliyuncs.com | 阿里多模型选择 |
+| **文心一言** | `WENXIN_API_KEY` + `WENXIN_SECRET_KEY` | qianfan.baidubce.com | 百度中文能力强 |
+| **混元** | `HUNYUAN_API_KEY` + `HUNYUAN_SECRET_KEY` | api.hunyuan.cn | 腾讯自研大模型 |
+
+> 💡 只需配置 `DEEPSEEK_API_KEY` 即可使用，其他模型可选配置作为备用。
 
 ---
 
