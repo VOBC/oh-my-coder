@@ -29,9 +29,13 @@ class ModelProvider(Enum):
     DEEPSEEK = "deepseek"
     WENXIN = "wenxin"  # 文心一言
     TONGYI = "tongyi"  # 通义千问
-    GLM = "glm"  # ChatGLM
-    OPENAI = "openai"  # 备用
-    CLAUDE = "claude"  # 备用
+    GLM = "glm"  # 智谱 ChatGLM
+    OPENAI = "openai"  # OpenAI GPT
+    CLAUDE = "claude"  # Anthropic Claude
+    MINIMAX = "minimax"  # MiniMax 海螺
+    KIMI = "kimi"  # 月暗 Kimi
+    HUNYUAN = "hunyuan"  # 腾讯混元
+    DOUBAO = "doubao"  # 字节豆包
 
 
 @dataclass

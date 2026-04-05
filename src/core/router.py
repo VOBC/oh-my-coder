@@ -101,6 +101,10 @@ class RouterConfig:
     wenxin_api_key: Optional[str] = None
     tongyi_api_key: Optional[str] = None
     glm_api_key: Optional[str] = None
+    minimax_api_key: Optional[str] = None
+    kimi_api_key: Optional[str] = None
+    hunyuan_api_key: Optional[str] = None
+    doubao_api_key: Optional[str] = None
 
     # 成本预算（元）
     daily_budget: float = 10.0
@@ -119,10 +123,23 @@ class RouterConfig:
         self.wenxin_api_key = self.wenxin_api_key or os.getenv("WENXIN_API_KEY")
         self.tongyi_api_key = self.tongyi_api_key or os.getenv("TONGYI_API_KEY")
         self.glm_api_key = self.glm_api_key or os.getenv("GLM_API_KEY")
+        self.minimax_api_key = self.minimax_api_key or os.getenv("MINIMAX_API_KEY")
+        self.kimi_api_key = self.kimi_api_key or os.getenv("KIMI_API_KEY")
+        self.hunyuan_api_key = self.hunyuan_api_key or os.getenv("HUNYUAN_API_KEY")
+        self.doubao_api_key = self.doubao_api_key or os.getenv("DOUBAO_API_KEY")
 
-        # 默认故障转移顺序
+        # 默认故障转移顺序（优先免费/便宜的）
         if not self.fallback_order:
-            self.fallback_order = ["deepseek", "wenxin", "tongyi", "glm"]
+            self.fallback_order = [
+                "deepseek",   # 免费额度高
+                "kimi",       # 长上下文
+                "doubao",     # 性价比高
+                "minimax",    # 海螺
+                "glm",        # 智谱
+                "tongyi",     # 通义千问
+                "wenxin",     # 文心一言
+                "hunyuan",    # 混元
+            ]
 
 
 # ============================================================
@@ -283,6 +300,64 @@ class ModelRouter:
                 logger.info("通义千问模型已初始化")
             except Exception as e:
                 logger.warning(f"通义千问初始化失败: {e}")
+
+        # 智谱 GLM
+        if self.config.glm_api_key:
+            try:
+                from ..models.glm import GLMModel
+                for tier in ["low", "medium", "high"]:
+                    cfg = ModelConfig(api_key=self.config.glm_api_key)
+                    self._models.setdefault("glm", {})[tier] = GLMModel(cfg, ModelTier(tier))
+                logger.info("智谱 GLM 模型已初始化")
+            except Exception as e:
+                logger.warning(f"智谱 GLM 初始化失败: {e}")
+
+        # MiniMax
+        if self.config.minimax_api_key:
+            try:
+                from ..models.minimax import MiniMaxModel
+                for tier in ["low", "medium", "high"]:
+                    cfg = ModelConfig(api_key=self.config.minimax_api_key)
+                    self._models.setdefault("minimax", {})[tier] = MiniMaxModel(cfg, ModelTier(tier))
+                logger.info("MiniMax 模型已初始化")
+            except Exception as e:
+                logger.warning(f"MiniMax 初始化失败: {e}")
+
+        # Kimi
+        if self.config.kimi_api_key:
+            try:
+                from ..models.kimi import KimiModel
+                for tier in ["low", "medium", "high"]:
+                    cfg = ModelConfig(api_key=self.config.kimi_api_key)
+                    self._models.setdefault("kimi", {})[tier] = KimiModel(cfg, ModelTier(tier))
+                logger.info("Kimi 模型已初始化")
+            except Exception as e:
+                logger.warning(f"Kimi 初始化失败: {e}")
+
+        # 腾讯混元
+        if self.config.hunyuan_api_key:
+            try:
+                from ..models.hunyuan import HunyuanModel
+                hunyuan_secret = os.getenv("HUNYUAN_SECRET_KEY")
+                for tier in ["low", "medium", "high"]:
+                    cfg = ModelConfig(api_key=self.config.hunyuan_api_key)
+                    self._models.setdefault("hunyuan", {})[tier] = HunyuanModel(
+                        cfg, ModelTier(tier), secret_key=hunyuan_secret
+                    )
+                logger.info("腾讯混元模型已初始化")
+            except Exception as e:
+                logger.warning(f"腾讯混元初始化失败: {e}")
+
+        # 字节豆包
+        if self.config.doubao_api_key:
+            try:
+                from ..models.doubao import DoubaoModel
+                for tier in ["low", "medium", "high"]:
+                    cfg = ModelConfig(api_key=self.config.doubao_api_key)
+                    self._models.setdefault("doubao", {})[tier] = DoubaoModel(cfg, ModelTier(tier))
+                logger.info("字节豆包模型已初始化")
+            except Exception as e:
+                logger.warning(f"字节豆包初始化失败: {e}")
 
         # 记录可用提供商
         available = list(self._models.keys())
