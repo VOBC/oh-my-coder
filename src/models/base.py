@@ -38,6 +38,7 @@ class ModelProvider(Enum):
     DOUBAO = "doubao"  # 字节豆包
     TIANGONG = "tiangong"  # 天工AI
     SPARK = "spark"  # 讯飞星火
+    BAICHUAN = "baichuan"  # 百川智能
 
 
 @dataclass

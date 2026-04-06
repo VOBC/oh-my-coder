@@ -2,7 +2,7 @@
 
 > 🤖 多智能体 AI 编程助手，支持国内大模型
 
-🎯 **10 个国产大模型 | 18 个专业 Agent | 优先使用低成本/免费模型**
+🎯 **11 个国产大模型 | 18 个专业 Agent | 优先使用低成本/免费模型**
 
 [![Python](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
@@ -67,6 +67,7 @@ export HUNYUAN_SECRET_KEY=your_secret    # 腾讯混元（需要两个）
 export DOUBAO_API_KEY=your_key           # 字节豆包
 export TIANGONG_API_KEY=your_key         # 天工AI
 export SPARK_API_KEY=your_key            # 讯飞星火（需同时配置 SPARK_APP_ID 和 SPARK_SECRET_KEY）
+export BAICHUAN_API_KEY=your_key         # 百川智能
 ```
 
 <details>
@@ -387,7 +388,7 @@ flowchart TD
 
 ## 🧠 支持的模型
 
-共 **10 个**模型提供商，系统自动按性价比选择：
+共 **11 个**模型提供商，系统自动按性价比选择：
 
 ### 模型支持状态
 
@@ -397,6 +398,7 @@ flowchart TD
 | **Kimi** | 🟢 生产就绪 | 128K 上下文，适合大代码库 |
 | **豆包** | 🟢 生产就绪 | 字节自研，响应速度快 |
 | **天工AI** | 🟢 生产就绪 | 昆仑万维出品，中文理解强 |
+| **百川智能** | 🟢 生产就绪 | 王小川创办，中文能力出色 |
 | **MiniMax** | 🟡 Beta | 中文理解优秀，工具调用待完善 |
 | **智谱 GLM** | 🟡 Beta | 函数调用支持，兼容性好 |
 | **通义千问** | 🟡 Beta | 多模型选择，部分模型偶发超时 |
@@ -412,6 +414,7 @@ flowchart TD
 | **Kimi** | `KIMI_API_KEY` | `moonshot-v1-128k` | 128K 超长上下文 |
 | **豆包** | `DOUBAO_API_KEY` | `doubao-pro-32k` | 字节自研，响应快 |
 | **天工AI** | `TIANGONG_API_KEY` | `skywork-v1.0` | 昆仑万维出品，中文强 |
+| **百川智能** | `BAICHUAN_API_KEY` | `Baichuan4` | 王小川创办，中文出色 |
 | **MiniMax** | `MINIMAX_API_KEY` | `abab6-chat` | 中文理解强 |
 | **智谱 GLM** | `GLM_API_KEY` | `glm-4-flash` | 函数调用支持 |
 | **通义千问** | `TONGYI_API_KEY` | `qwen-turbo` | 阿里多模型 |
@@ -461,7 +464,7 @@ oh-my-coder/
 │   ├── core/                # 核心引擎
 │   │   ├── router.py        # 三层模型路由器
 │   │   └── orchestrator.py  # 智能编排引擎
-│   ├── models/              # 模型适配层（10 个厂商）
+│   ├── models/              # 模型适配层（11 个厂商）
 │   │   ├── base.py          # 统一接口
 │   │   ├── deepseek.py      # DeepSeek 适配器
 │   │   ├── wenxin.py        # 文心一言
@@ -472,7 +475,8 @@ oh-my-coder/
 │   │   ├── minimax.py       # MiniMax 海螺
 │   │   ├── hunyuan.py       # 腾讯混元
 │   │   ├── tiangong.py      # 天工AI
-│   │   └── spark.py         # 讯飞星火
+│   │   ├── spark.py         # 讯飞星火
+│   │   └── baichuan.py      # 百川智能
 │   ├── web/                 # 🌐 Web 界面
 │   │   ├── app.py           # FastAPI 应用 + SSE
 │   │   ├── templates/       # HTML 模板

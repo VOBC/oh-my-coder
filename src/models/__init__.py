@@ -25,6 +25,7 @@ from .hunyuan import HunyuanModel, HunyuanAPIError
 from .doubao import DoubaoModel, DoubaoAPIError
 from .tiangong import TiangongModel, TiangongAPIError
 from .spark import SparkModel, SparkAPIError
+from .baichuan import BaichuanModel, BaichuanAPIError
 
 __all__ = [
     # 基类
@@ -65,4 +66,7 @@ __all__ = [
     # 讯飞星火
     "SparkModel",
     "SparkAPIError",
+    # 百川智能
+    "BaichuanModel",
+    "BaichuanAPIError",
 ]
