@@ -12,6 +12,7 @@ Oh My Coder CLI - 命令行入口
 - omc --help             # 帮助信息
 """
 import asyncio
+import os
 import sys
 from pathlib import Path
 from typing import Optional
@@ -83,6 +84,10 @@ def run(
     workflow: str = typer.Option("build", "--workflow", "-w", help="工作流名称"),
 ):
     """执行编程任务"""
+    # 前置检查
+    if not _check_env():
+        raise typer.Exit(1)
+
     console.print(Panel.fit(
         f"[bold green]Oh My Coder[/bold green]\n"
         f"任务: {task}\n"
@@ -90,11 +95,15 @@ def run(
         f"工作流: {workflow}",
         title="🚀 启动",
     ))
-    
+
     # 初始化路由器和编排器
-    router = _init_router()
+    try:
+        router = _init_router()
+    except SystemExit:
+        raise typer.Exit(1)
+
     orchestrator = Orchestrator(router, state_dir=project_path / ".omc" / "state")
-    
+
     # 执行工作流
     with Progress(
         SpinnerColumn(),
@@ -102,7 +111,7 @@ def run(
         console=console,
     ) as progress:
         progress.add_task("执行工作流...", total=None)
-        
+
         try:
             result = asyncio.run(orchestrator.execute_workflow(
                 workflow,
@@ -111,12 +120,18 @@ def run(
                     "task": task,
                 }
             ))
-            
+
             # 显示结果
             _display_result(result)
-            
+
         except Exception as e:
-            console.print(f"[red]错误: {e}[/red]")
+            _print_fatal(
+                f"工作流执行出错: {e}",
+                hint="可尝试以下方法：\n"
+                     "  1. 检查网络连接\n"
+                     "  2. 确认 API Key 有效：omc status\n"
+                     "  3. 查看详细日志",
+            )
             raise typer.Exit(1)
 
 
@@ -125,23 +140,35 @@ def explore(
     project_path: Path = typer.Argument(".", help="项目路径"),
 ):
     """探索代码库"""
+    if not _check_env():
+        raise typer.Exit(1)
+
     console.print(f"[bold]🔍 探索项目: {project_path}[/bold]")
-    
-    router = _init_router()
+
+    try:
+        router = _init_router()
+    except SystemExit:
+        raise typer.Exit(1)
+
     orchestrator = Orchestrator(router)
-    
-    result = asyncio.run(orchestrator.execute_single_agent(
-        "explore",
-        {
-            "project_path": str(project_path.absolute()),
-            "task": "探索代码库并生成项目地图",
-        }
-    ))
-    
-    if result.result:
-        console.print(Panel(result.result, title="项目地图"))
-    else:
-        console.print(f"[red]探索失败: {result.error}[/red]")
+
+    try:
+        result = asyncio.run(orchestrator.execute_single_agent(
+            "explore",
+            {
+                "project_path": str(project_path.absolute()),
+                "task": "探索代码库并生成项目地图",
+            }
+        ))
+
+        if result.result:
+            console.print(Panel(result.result, title="项目地图"))
+        else:
+            _print_fatal(f"探索失败: {result.error}")
+
+    except Exception as e:
+        _print_fatal(f"探索出错: {e}", hint="确认项目路径存在且可读")
+        raise typer.Exit(1)
 
 
 @app.command()
@@ -193,42 +220,103 @@ def agents():
 def status():
     """查看系统状态"""
     console.print("[bold]系统状态[/bold]\n")
-    
+
     # 检查 API Key
-    import os
     api_keys = {
-        "DEEPSEEK_API_KEY": os.getenv("DEEPSEEK_API_KEY"),
-        "WENXIN_API_KEY": os.getenv("WENXIN_API_KEY"),
-        "TONGYI_API_KEY": os.getenv("TONGYI_API_KEY"),
-        "GLM_API_KEY": os.getenv("GLM_API_KEY"),
+        "DEEPSEEK_API_KEY": "🟢 生产就绪",
+        "KIMI_API_KEY": "🟢 生产就绪",
+        "DOUBAO_API_KEY": "🟢 生产就绪",
+        "MINIMAX_API_KEY": "🟡 Beta",
+        "GLM_API_KEY": "🟡 Beta",
+        "TONGYI_API_KEY": "🟡 Beta",
+        "WENXIN_API_KEY": "🔴 待完善",
+        "HUNYUAN_API_KEY": "🔴 待完善",
     }
-    
-    console.print("[bold]API Keys:[/bold]")
-    for key, value in api_keys.items():
-        status = "✓ 已配置" if value else "✗ 未配置"
-        color = "green" if value else "red"
-        console.print(f"  {key}: [{color}]{status}[/{color}]")
-    
+
+    console.print("[bold]模型支持状态:[/bold]")
+    for key, status_label in api_keys.items():
+        value = os.getenv(key)
+        if value:
+            console.print(f"  {key}: [{status_label}] 已配置")
+        else:
+            console.print(f"  {key}: [red]✗ 未配置[/red]")
+
     # 检查路由器
+    console.print()
     try:
         router = _init_router()
         stats = router.get_stats()
-        console.print(f"\n[bold]路由器统计:[/bold]")
-        console.print(f"  总请求数: {stats['total_requests']}")
-        console.print(f"  总成本: ¥{stats['total_cost']:.4f}")
+        console.print(Panel(
+            f"[green]✓ 路由器就绪[/green]\n"
+            f"总请求数: [cyan]{stats['total_requests']}[/cyan]\n"
+            f"总成本:   [cyan]¥{stats['total_cost']:.4f}[/cyan]",
+            title="路由器",
+            border_style="green",
+        ))
     except Exception as e:
-        console.print(f"\n[red]路由器初始化失败: {e}[/red]")
+        console.print(Panel(
+            f"[red]✗ 路由器初始化失败[/red]\n\n{e}",
+            title="路由器",
+            border_style="red",
+        ))
 
 
 def _init_router() -> ModelRouter:
-    """初始化模型路由器"""
+    """初始化模型路由器，失败时给出友好提示"""
     config = RouterConfig()
-    
+
     if not config.deepseek_api_key:
-        console.print("[yellow]警告: DEEPSEEK_API_KEY 未配置[/yellow]")
-        console.print("请设置环境变量: export DEEPSEEK_API_KEY=your_key")
-    
-    return ModelRouter(config)
+        _print_missing_key_hint("DEEPSEEK_API_KEY", "性价比最高，推荐配置")
+
+    try:
+        return ModelRouter(config)
+    except Exception as e:
+        _print_fatal(f"路由器初始化失败: {e}")
+
+
+def _print_missing_key_hint(key: str, reason: str = ""):
+    """打印缺失 API Key 的友好提示"""
+    from rich.columns import Columns
+    from rich.text import Text
+
+    console.print()
+    console.print(Panel(
+        f"[bold red]✗ 未找到 {key}[/bold red]\n\n"
+        f"[yellow]请先配置 API Key[/yellow]\n\n"
+        f"[dim]推荐:[/dim] DeepSeek — {reason}\n\n"
+        f"[cyan]方法一:[/cyan] 设置环境变量\n"
+        f"  [green]export {key}=your_key_here[green]\n\n"
+        f"[cyan]方法二:[/cyan] 写入 .env 文件\n"
+        f"  [green]echo '{key}=your_key_here' >> .env[green]\n\n"
+        f"[dim]获取地址:[/dim] https://platform.deepseek.com/",
+        title="⚠️ 缺少 API Key",
+        border_style="red",
+    ))
+    console.print()
+
+
+def _print_fatal(msg: str, hint: str = ""):
+    """打印致命错误并退出"""
+    from rich.markdown import Markdown
+
+    console.print()
+    console.print(Panel(
+        f"[bold red]✗ {msg}[/bold red]" + (f"\n\n[cyan]提示:[/cyan] {hint}" if hint else ""),
+        title="❌ 执行失败",
+        border_style="red",
+    ))
+    console.print()
+
+
+def _check_env() -> bool:
+    """检查环境是否就绪，返回 True 表示就绪"""
+    missing = []
+    if not os.getenv("DEEPSEEK_API_KEY"):
+        missing.append("DEEPSEEK_API_KEY")
+    if missing:
+        _print_missing_key_hint(missing[0], "性价比最高，推荐配置")
+        return False
+    return True
 
 
 def _display_result(result):

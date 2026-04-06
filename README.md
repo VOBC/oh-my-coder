@@ -8,7 +8,7 @@
 [![Last Commit](https://img.shields.io/github/last-commit/VOBC/oh-my-coder?style=flat-square&logo=github)](https://github.com/VOBC/oh-my-coder/commits)
 [![Issues](https://img.shields.io/github/issues/VOBC/oh-my-coder?style=flat-square&logo=github)](https://github.com/VOBC/oh-my-coder/issues)
 
-**原项目**: [oh-my-claudecode](https://github.com/Yeachan-Heo/oh-my-claudecode) (17.8k ⭐)
+**灵感来源**: [oh-my-claudecode](https://github.com/Yeachan-Heo/oh-my-claudecode) (17.8k ⭐)
 
 ---
 
@@ -30,10 +30,10 @@
 Oh My Coder 是一个**多智能体协作编程系统**，通过多个专业 Agent 协作完成复杂开发任务。
 
 **核心优势：**
-- 🧠 **智能路由** - 根据任务类型自动选择合适模型，节省 30-50% Token
+- 🧠 **智能路由** - 根据任务类型自动选择合适模型，智能路由可优化 Token 消耗
 - 🔄 **协作模式** - 多个 Agent 分工协作，像真实团队一样工作
 - 🇨🇳 **中文优先** - 本土化设计，支持国内主流大模型
-- ⚡ **成本优化** - 支持 DeepSeek 等低成本模型接入
+- ⚡ **成本优化** - 优先使用低成本/免费模型，支持 DeepSeek 等高性价比选项
 
 ---
 
@@ -114,6 +114,59 @@ python -m src.cli run "实现一个 REST API"
 
 ---
 
+## 📖 快速示例
+
+### CLI 示例
+
+```bash
+# 探索当前项目
+python -m src.cli explore .
+
+# 执行一个完整构建任务
+python -m src.cli run "为用户模块添加 CRUD 接口"
+
+# 代码审查
+python -m src.cli run "审查 src/api 目录下的代码" -w review
+
+# 调试问题
+python -m src.cli run "修复登录接口偶发的超时问题" -w debug
+
+# 查看所有 Agent
+python -m src.cli agents
+```
+
+### Web API 示例
+
+```python
+import httpx
+
+# 调用异步执行（SSE 实时推送）
+resp = httpx.post(
+    "http://localhost:8000/api/execute",
+    json={"task": "实现用户认证模块", "workflow": "build"},
+    timeout=30
+)
+# resp.iter_lines() 接收 SSE 流式进度
+
+# 同步执行（直接返回）
+resp = httpx.post(
+    "http://localhost:8000/api/execute-sync",
+    json={"task": "审查 src/core 目录", "workflow": "review"}
+)
+print(resp.json()["result"])
+```
+
+### 输入 → 输出示例
+
+| 任务输入 | 工作流 | 输出 |
+|---------|--------|------|
+| `"为商品模块添加分页查询接口"` | `build` | 自动探索项目结构 → 分析 API 规范 → 设计 REST 接口 → 生成代码 → 运行测试验证 |
+| `"审查 src/auth 目录"` | `review` | 调用 CodeReviewerAgent + SecurityReviewerAgent，返回质量报告和安全建议 |
+| `"修复注册接口的空指针异常"` | `debug` | 调用 TracerAgent 追踪调用链 → DebuggerAgent 定位根因 → 自动修复 |
+| `"为 order.py 生成单元测试"` | `test` | 调用 TestEngineerAgent 分析函数 → 生成 pytest 测试用例 → 执行验证 |
+
+---
+
 ## 🌐 Web 界面预览
 
 启动后访问 **http://localhost:8000**：
@@ -158,30 +211,62 @@ curl -X POST http://localhost:8000/api/execute-sync \
 
 ### 多 Agent 协作流程
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                      用户输入任务                            │
-└─────────────────────────┬───────────────────────────────────┘
-                          ▼
-┌─────────────────────────────────────────────────────────────┐
-│  [ExploreAgent] 探索代码库结构，生成项目地图                  │
-└─────────────────────────┬───────────────────────────────────┘
-                          ▼
-┌─────────────────────────────────────────────────────────────┐
-│  [AnalystAgent] 分析需求和任务，发现隐藏约束                  │
-└─────────────────────────┬───────────────────────────────────┘
-                          ▼
-┌─────────────────────────────────────────────────────────────┐
-│  [ArchitectAgent] 设计系统架构和技术选型                      │
-└─────────────────────────┬───────────────────────────────────┘
-                          ▼
-┌─────────────────────────────────────────────────────────────┐
-│  [ExecutorAgent] 执行代码生成，支持 14 种语言                 │
-└─────────────────────────┬───────────────────────────────────┘
-                          ▼
-┌─────────────────────────────────────────────────────────────┐
-│  [VerifierAgent] 验证代码正确性，运行测试                     │
-└─────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    User([用户输入任务])
+    Router{智能路由器}
+
+    subgraph Build["🚀 构建通道"]
+        E[ExploreAgent<br/>探索代码库]
+        A[AnalystAgent<br/>分析需求]
+        P[PlannerAgent<br/>制定计划]
+        AR[ArchitectAgent<br/>设计架构]
+        EX[ExecutorAgent<br/>生成代码]
+        V[VerifierAgent<br/>验证测试]
+    end
+
+    subgraph Review["🔍 审查通道"]
+        CR[CodeReviewerAgent<br/>质量审查]
+        SR[SecurityReviewerAgent<br/>安全审查]
+    end
+
+    subgraph Debug["🐛 调试通道"]
+        DB[DebuggerAgent<br/>定位问题]
+        TR[TracerAgent<br/>追踪根因]
+    end
+
+    subgraph Domain["🎯 领域通道"]
+        TE[TestEngineerAgent<br/>测试生成]
+        DS[DesignerAgent<br/>设计]
+        WT[WriterAgent<br/>文档]
+        SC[ScientistAgent<br/>技术调研]
+        GM[GitMasterAgent<br/>Git操作]
+        CS[CodeSimplifierAgent<br/>代码简化]
+        QA[QATesterAgent<br/>QA验证]
+    end
+
+    User --> Router
+    Router --> E
+    Router --> A
+    Router --> P
+    Router --> AR
+    Router --> CR
+    Router --> SR
+    Router --> DB
+    Router --> TR
+
+    E --> A
+    A --> P
+    P --> AR
+    AR --> EX
+    EX --> V
+
+    DB --> TR
+    CR --> SR
+
+    V --> Result([完成])
+    SR --> Result
+    TR --> Result
 ```
 
 ### 三层模型路由
@@ -246,16 +331,31 @@ curl -X POST http://localhost:8000/api/execute-sync \
 
 共 **8 个**模型提供商，系统自动按性价比选择：
 
-| 提供商 | 环境变量 | API 地址 | 特点 |
+### 模型支持状态
+
+| 提供商 | 支持状态 | 备注 |
+|--------|----------|------|
+| **DeepSeek** | 🟢 生产就绪 | 推荐首选，性价比最高 |
+| **Kimi** | 🟢 生产就绪 | 128K 上下文，适合大代码库 |
+| **豆包** | 🟢 生产就绪 | 字节自研，响应速度快 |
+| **MiniMax** | 🟡 Beta | 中文理解优秀，工具调用待完善 |
+| **智谱 GLM** | 🟡 Beta | 函数调用支持，兼容性好 |
+| **通义千问** | 🟡 Beta | 多模型选择，部分模型偶发超时 |
+| **文心一言** | 🔴 待完善 | 需 Secret Key，双 Key 认证繁琐 |
+| **混元** | 🔴 待完善 | 双 Key 认证，长文本处理慢 |
+
+> 🟢 = 生产就绪 🟡 = Beta（可用但功能待完善）🔴 = 待完善（欢迎 PR 改进）
+
+| 提供商 | 环境变量 | 默认模型 | 特点 |
 |--------|----------|----------|------|
-| **DeepSeek** | `DEEPSEEK_API_KEY` | api.deepseek.com | 性价比高，推理能力强 |
-| **Kimi** | `KIMI_API_KEY` | api.moonshot.cn | 最长 128K 上下文 |
-| **豆包** | `DOUBAO_API_KEY` | ark.volces.com | 字节自研，性价比高 |
-| **MiniMax** | `MINIMAX_API_KEY` | api.minimax.chat | 中文理解能力强 |
-| **智谱 GLM** | `GLM_API_KEY` | open.bigmodel.cn | 支持工具调用 |
-| **通义千问** | `TONGYI_API_KEY` | dashscope.aliyuncs.com | 阿里多模型选择 |
-| **文心一言** | `WENXIN_API_KEY` + `WENXIN_SECRET_KEY` | qianfan.baidubce.com | 百度中文能力强 |
-| **混元** | `HUNYUAN_API_KEY` + `HUNYUAN_SECRET_KEY` | api.hunyuan.cn | 腾讯自研大模型 |
+| **DeepSeek** | `DEEPSEEK_API_KEY` | `deepseek-chat` | 性价比高，推理能力强 |
+| **Kimi** | `KIMI_API_KEY` | `moonshot-v1-128k` | 128K 超长上下文 |
+| **豆包** | `DOUBAO_API_KEY` | `doubao-pro-32k` | 字节自研，响应快 |
+| **MiniMax** | `MINIMAX_API_KEY` | `abab6-chat` | 中文理解强 |
+| **智谱 GLM** | `GLM_API_KEY` | `glm-4-flash` | 函数调用支持 |
+| **通义千问** | `TONGYI_API_KEY` | `qwen-turbo` | 阿里多模型 |
+| **文心一言** | `WENXIN_API_KEY` + `WENXIN_SECRET_KEY` | `ernie-4.0-8k-latest` | 百度中文强 |
+| **混元** | `HUNYUAN_API_KEY` + `HUNYUAN_SECRET_KEY` | `hunyuan-pro` | 腾讯自研 |
 
 > 💡 只需配置 `DEEPSEEK_API_KEY` 即可使用，其他模型可选配置作为备用。
 
