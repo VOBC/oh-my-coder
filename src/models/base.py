@@ -36,6 +36,8 @@ class ModelProvider(Enum):
     KIMI = "kimi"  # 月暗 Kimi
     HUNYUAN = "hunyuan"  # 腾讯混元
     DOUBAO = "doubao"  # 字节豆包
+    TIANGONG = "tiangong"  # 天工AI
+    SPARK = "spark"  # 讯飞星火
 
 
 @dataclass

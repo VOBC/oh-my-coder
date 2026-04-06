@@ -383,7 +383,7 @@ flowchart TD
 
 ## 🧠 支持的模型
 
-共 **8 个**模型提供商，系统自动按性价比选择：
+共 **10 个**模型提供商，系统自动按性价比选择：
 
 ### 模型支持状态
 
@@ -392,9 +392,11 @@ flowchart TD
 | **DeepSeek** | 🟢 生产就绪 | 推荐首选，性价比最高 |
 | **Kimi** | 🟢 生产就绪 | 128K 上下文，适合大代码库 |
 | **豆包** | 🟢 生产就绪 | 字节自研，响应速度快 |
+| **天工AI** | 🟢 生产就绪 | 昆仑万维出品，中文理解强 |
 | **MiniMax** | 🟡 Beta | 中文理解优秀，工具调用待完善 |
 | **智谱 GLM** | 🟡 Beta | 函数调用支持，兼容性好 |
 | **通义千问** | 🟡 Beta | 多模型选择，部分模型偶发超时 |
+| **讯飞星火** | 🔴 待完善 | 三凭证鉴权，流式接口待对接 |
 | **文心一言** | 🔴 待完善 | 需 Secret Key，双 Key 认证繁琐 |
 | **混元** | 🔴 待完善 | 双 Key 认证，长文本处理慢 |
 
@@ -405,9 +407,11 @@ flowchart TD
 | **DeepSeek** | `DEEPSEEK_API_KEY` | `deepseek-chat` | 性价比高，推理能力强 |
 | **Kimi** | `KIMI_API_KEY` | `moonshot-v1-128k` | 128K 超长上下文 |
 | **豆包** | `DOUBAO_API_KEY` | `doubao-pro-32k` | 字节自研，响应快 |
+| **天工AI** | `TIANGONG_API_KEY` | `skywork-v1.0` | 昆仑万维出品，中文强 |
 | **MiniMax** | `MINIMAX_API_KEY` | `abab6-chat` | 中文理解强 |
 | **智谱 GLM** | `GLM_API_KEY` | `glm-4-flash` | 函数调用支持 |
 | **通义千问** | `TONGYI_API_KEY` | `qwen-turbo` | 阿里多模型 |
+| **讯飞星火** | `SPARK_API_KEY` + `SPARK_APP_ID` + `SPARK_SECRET_KEY` | `generalv3.5` | 科大讯飞出品，语音交互 |
 | **文心一言** | `WENXIN_API_KEY` + `WENXIN_SECRET_KEY` | `ernie-4.0-8k-latest` | 百度中文强 |
 | **混元** | `HUNYUAN_API_KEY` + `HUNYUAN_SECRET_KEY` | `hunyuan-pro` | 腾讯自研 |
 
@@ -453,7 +457,7 @@ oh-my-coder/
 │   ├── core/                # 核心引擎
 │   │   ├── router.py        # 三层模型路由器
 │   │   └── orchestrator.py  # 智能编排引擎
-│   ├── models/              # 模型适配层（8 个厂商）
+│   ├── models/              # 模型适配层（10 个厂商）
 │   │   ├── base.py          # 统一接口
 │   │   ├── deepseek.py      # DeepSeek 适配器
 │   │   ├── wenxin.py        # 文心一言
@@ -462,7 +466,9 @@ oh-my-coder/
 │   │   ├── kimi.py          # Kimi 月暗
 │   │   ├── doubao.py        # 字节豆包
 │   │   ├── minimax.py       # MiniMax 海螺
-│   │   └── hunyuan.py       # 腾讯混元
+│   │   ├── hunyuan.py       # 腾讯混元
+│   │   ├── tiangong.py      # 天工AI
+│   │   └── spark.py         # 讯飞星火
 │   ├── web/                 # 🌐 Web 界面
 │   │   ├── app.py           # FastAPI 应用 + SSE
 │   │   ├── templates/       # HTML 模板

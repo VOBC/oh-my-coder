@@ -23,6 +23,8 @@ from .minimax import MiniMaxModel, MiniMaxAPIError
 from .kimi import KimiModel, KimiAPIError
 from .hunyuan import HunyuanModel, HunyuanAPIError
 from .doubao import DoubaoModel, DoubaoAPIError
+from .tiangong import TiangongModel, TiangongAPIError
+from .spark import SparkModel, SparkAPIError
 
 __all__ = [
     # 基类
@@ -57,4 +59,10 @@ __all__ = [
     # 字节豆包
     "DoubaoModel",
     "DoubaoAPIError",
+    # 天工AI
+    "TiangongModel",
+    "TiangongAPIError",
+    # 讯飞星火
+    "SparkModel",
+    "SparkAPIError",
 ]
