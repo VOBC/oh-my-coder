@@ -2,6 +2,8 @@
 
 > 🤖 多智能体 AI 编程助手，支持国内大模型
 
+🎯 **10 个国产大模型 | 18 个专业 Agent | 优先使用低成本/免费模型**
+
 [![Python](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Stars](https://img.shields.io/github/stars/VOBC/oh-my-coder?style=flat-square&logo=github)](https://github.com/VOBC/oh-my-coder/stargazers)
