@@ -63,6 +63,8 @@ export KIMI_API_KEY=your_key             # Kimi 月暗
 export HUNYUAN_API_KEY=your_key          # 腾讯混元
 export HUNYUAN_SECRET_KEY=your_secret    # 腾讯混元（需要两个）
 export DOUBAO_API_KEY=your_key           # 字节豆包
+export TIANGONG_API_KEY=your_key         # 天工AI
+export SPARK_API_KEY=your_key            # 讯飞星火（需同时配置 SPARK_APP_ID 和 SPARK_SECRET_KEY）
 ```
 
 <details>
