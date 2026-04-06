@@ -531,6 +531,44 @@ pytest tests/test_integration.py -v
 
 ---
 
+## ❓ 常见问题
+
+**Q: API Key 如何获取？**
+A: 请访问对应模型的官方网站注册账号后获取：
+   - DeepSeek: https://platform.deepseek.com/
+   - Kimi: https://platform.moonshot.cn/
+   - 豆包: https://console.volcengine.com/
+   - 通义千问: https://dashscope.console.aliyun.com/
+   - 智谱 GLM: https://open.bigmodel.cn/
+   - 天工AI: https://model-platform.tiangong.cn/
+   - 百川智能: https://platform.baichuan-ai.com/
+
+**Q: 模型调用超时怎么办？**
+A: 可通过以下方式解决：
+   1. 在 Web 界面调整 timeout 设置
+   2. 设置环境变量 `REQUEST_TIMEOUT=60`（秒）
+   3. 检查网络连接，确认是否能访问对应 API 地址
+   4. 切换到响应更快的模型（如 DeepSeek / 豆包）
+
+**Q: 如何切换不同的模型？**
+A: 设置对应模型的环境变量即可：
+   ```bash
+   export DEEPSEEK_API_KEY=your_key    # 默认使用
+   export KIMI_API_KEY=your_key        # 备选模型
+   ```
+   路由器会根据任务类型和成本自动选择最优模型。
+
+**Q: 生成的代码有安全问题怎么办？**
+A: Oh My Coder 内置 SecurityReviewerAgent，会对生成的代码进行安全审查。建议配合 `omc run -w review` 进行额外审查后再合并代码。
+
+**Q: 支持本地部署吗？**
+A: 支持。提供三种方式：
+   1. 直接安装：`pip install -r requirements.txt && python -m src.cli`
+   2. Docker 部署：`docker compose up -d`
+   3. 支持对接本地模型 API（如 Ollama）
+
+---
+
 ## 🤝 贡献
 
 欢迎提交 Issue 和 PR！详见 [CONTRIBUTING.md](CONTRIBUTING.md)。
