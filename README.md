@@ -21,7 +21,7 @@
 | 中文语境理解 | ✅ 原生支持 | ⚠️ 需额外提示 | ⚠️ 参差不齐 |
 | 国内模型支持 | ✅ 11家厂商 | ❌ 仅 Claude | ⚠️ 有限支持 |
 | 成本控制 | ✅ 免费/低成本 | ❌ 高昂订阅 | ⚠️ 按量付费 |
-| 本地部署 | ✅ 完全本地 | ❌ 云端依赖 | ⚠️ 部分支持 |
+| 本地部署 | ✅ 支持本地配置 | ❌ 云端依赖 | ⚠️ 部分支持 |
 | 多 Agent 协作 | ✅ 18个专业Agent | ❌ 单一模型 | ⚠️ 有限支持 |
 | API 开放 | ✅ 完全开放 | ⚠️ 受限 | ⚠️ 各异 |
 
@@ -380,9 +380,9 @@ flowchart TD
 | `CriticAgent` | 审查计划和设计，提供改进建议 |
 
 **模型层级说明：**
-- **LOW** - 快速便宜（对应 haiku）
-- **MEDIUM** - 平衡性能和成本（对应 sonnet）
-- **HIGH** - 最高质量推理（对应 opus）
+- **LOW** - 快速便宜（DeepSeek-V3 / GLM-4-Flash / Qwen-Turbo）
+- **MEDIUM** - 平衡性能和成本（DeepSeek-R1 / Qwen-Max）
+- **HIGH** - 最高质量推理（DeepSeek-R1-Reasoner / Qwen-Plus）
 
 ---
 
@@ -394,19 +394,17 @@ flowchart TD
 
 | 提供商 | 支持状态 | 备注 |
 |--------|----------|------|
-| **DeepSeek** | 🟢 生产就绪 | 推荐首选，性价比最高 |
-| **Kimi** | 🟢 生产就绪 | 128K 上下文，适合大代码库 |
-| **豆包** | 🟢 生产就绪 | 字节自研，响应速度快 |
-| **天工AI** | 🟢 生产就绪 | 昆仑万维出品，中文理解强 |
-| **百川智能** | 🟢 生产就绪 | 王小川创办，中文能力出色 |
-| **MiniMax** | 🟡 Beta | 中文理解优秀，工具调用待完善 |
-| **智谱 GLM** | 🟡 Beta | 函数调用支持，兼容性好 |
-| **通义千问** | 🟡 Beta | 多模型选择，部分模型偶发超时 |
-| **讯飞星火** | 🔴 待完善 | 三凭证鉴权，流式接口待对接 |
-| **文心一言** | 🔴 待完善 | 需 Secret Key，双 Key 认证繁琐 |
-| **混元** | 🔴 待完善 | 双 Key 认证，长文本处理慢 |
-
-> 🟢 = 生产就绪 🟡 = Beta（可用但功能待完善）🔴 = 待完善（欢迎 PR 改进）
+| **DeepSeek** | [生产就绪] | 推荐首选，性价比最高 |
+| **Kimi** | [生产就绪] | 128K 上下文，适合大代码库 |
+| **豆包** | [生产就绪] | 字节自研，响应速度快 |
+| **天工AI** | [生产就绪] | 昆仑万维出品，中文理解强 |
+| **百川智能** | [生产就绪] | 王小川创办，中文能力出色 |
+| **MiniMax** | [Beta] | 中文理解优秀，工具调用待完善 |
+| **智谱 GLM** | [Beta] | 函数调用支持，兼容性好 |
+| **通义千问** | [Beta] | 多模型选择，部分模型偶发超时 |
+| **讯飞星火** | [待完善] | 三凭证鉴权，流式接口待对接 |
+| **文心一言** | [待完善] | 需 Secret Key，双 Key 认证繁琐 |
+| **混元** | [待完善] | 双 Key 认证，长文本处理慢 |
 
 | 提供商 | 环境变量 | 默认模型 | 特点 |
 |--------|----------|----------|------|
@@ -568,4 +566,4 @@ MIT License - 详见 [LICENSE](LICENSE)
 
 ## 📈 Star History
 
-[![Star History Chart](https://api.star-history.com/svg?repos=VOBC/oh-my-coder&type=Date)](https://star-history.com/#VOBC/oh-my-coder&Date)
+[![Star History](https://api.star-history.com/svg?repos=VOBC/oh-my-coder&type=Date&theme=dark)](https://star-history.com/#VOBC/oh-my-coder&Date)
