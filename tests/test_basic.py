@@ -94,8 +94,8 @@ def test_explore_agent():
     assert agent.default_tier == "low"
     print(f"  ✓ Agent: {agent.name} (tier: {agent.default_tier})")
     
-    # 测试目录扫描
-    project_path = Path("/Users/vobc/.qclaw/workspace-agent-bf627e2b/projects/oh-my-coder")
+    # 测试目录扫描 - 使用当前项目路径
+    project_path = Path(__file__).parent.parent
     structure = agent._scan_directory(project_path, max_depth=2)
     
     assert "src/" in structure
