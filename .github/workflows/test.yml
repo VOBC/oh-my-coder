@@ -53,12 +53,15 @@ jobs:
           cache: "pip"
 
       - name: Install lint tools
-        run: pip install ruff
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
 
       - name: Run ruff
         run: ruff check src/ tests/
 
       - name: Check code format with black
         run: |
-          pip install black
+          pip install "black>=24.0.0,<25.0.0"
           black --check src/ tests/
