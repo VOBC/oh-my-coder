@@ -1,6 +1,6 @@
 # Oh My Coder 开发进度
 
-> 最后更新：2026-04-05 12:00
+> 最后更新：2026-04-07 09:30
 
 ---
 
@@ -86,7 +86,7 @@
 | qa-tester | DOMAIN | MEDIUM | QA 测试 |
 | critic | COORDINATION | HIGH | 计划审查 |
 
-### 🧠 模型提供商：9 个
+### 🧠 模型提供商：11 个
 
 | 提供商 | 文件 | API | 特点 |
 |--------|------|-----|------|
@@ -98,11 +98,14 @@
 | Kimi | kimi.py | api.moonshot.cn | 128K 上下文 |
 | 混元 | hunyuan.py | api.hunyuan.cn | 腾讯自研 |
 | 豆包 | doubao.py | ark.volces.com | 字节自研 |
+| 天工AI | tiangong.py | model-platform.tiangong.cn | 昆仑万维 |
+| 讯飞星火 | spark.py | spark-api.xf-yun.com | 科大讯飞 |
+| 百川智能 | baichuan.py | api.baichuan-ai.com | 王小川创办 |
 
-### 🧪 测试：43 个用例
+### 🧪 测试：78 个用例
 
 ```
-43 passed, 0 warnings
+78 passed, 0 failed
 ```
 
 ### 📁 文件统计
@@ -110,8 +113,8 @@
 | 类型 | 数量 |
 |------|------|
 | Agent 文件 | 18 |
-| 模型适配器 | 9 |
-| 测试文件 | 4 |
+| 模型适配器 | 11 |
+| 测试用例 | 78 |
 | 示例文件 | 2 |
 | 文档文件 | 5+ |
 
@@ -133,11 +136,13 @@ b63e31d fix: 修复测试失败和代码警告
 
 ## 🔜 下一步计划
 
-- [ ] 添加 Docker 部署支持
+- [x] 添加 Docker 部署支持（Dockerfile + docker-compose.yml）
+- [x] 添加 Docker Compose 快速启动
+- [x] GitHub Actions CI（.github/workflows/test.yml）
 - [ ] 完善 Agent `_post_process` 逻辑（analyst/architect/verifier）
 - [ ] 集成测试覆盖率达到 80%+
-- [ ] 添加 Docker Compose 快速启动
 - [ ] 开发文档网站（mkdocs）
+- [ ] 发布 v1.0.0 GitHub Release
 
 ---
 
