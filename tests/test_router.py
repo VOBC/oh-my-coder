@@ -5,10 +5,11 @@
 """
 import pytest
 import os
+from pathlib import Path
 from unittest.mock import AsyncMock, patch, MagicMock
 
 import sys
-sys.path.insert(0, '/Users/vobc/.qclaw/workspace-agent-bf627e2b/projects/oh-my-coder')
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from src.models.base import (
     ModelConfig,
