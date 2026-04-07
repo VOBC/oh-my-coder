@@ -17,10 +17,18 @@ jobs:
         with:
           python-version: "3.10"
       
+      - name: Show Python version
+        run: python --version
+      
       - name: Install dependencies
         run: |
           pip install --upgrade pip
-          pip install pytest pytest-asyncio httpx pydantic rich python-dotenv fastapi uvicorn typer
+          pip install pytest pytest-asyncio
+          pip install -r requirements.txt
+        continue-on-error: true
+      
+      - name: Show installed packages
+        run: pip list
       
       - name: Run tests
-        run: pytest tests/ -v
+        run: pytest tests/ -v --tb=short
