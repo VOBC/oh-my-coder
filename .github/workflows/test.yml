@@ -6,5 +6,5 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - run: echo "Test passed!"
-        shell: bash
+      - name: Hello
+        run: echo "Hello"
