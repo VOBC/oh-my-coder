@@ -11,21 +11,21 @@ API: https://api.moonshot.cn
 - 代码生成能力强
 """
 
-import httpx
-from typing import List, AsyncIterator, Dict, Any, Optional
 import json
 import time
+from typing import AsyncIterator, Dict, List, Optional
+
+import httpx
 
 from .base import (
     BaseModel,
+    Message,
     ModelConfig,
     ModelProvider,
-    ModelTier,
-    Message,
     ModelResponse,
+    ModelTier,
     Usage,
 )
-
 
 # Kimi 模型配置
 KIMI_MODELS = {
@@ -194,4 +194,5 @@ class KimiModel(BaseModel):
 
 class KimiAPIError(Exception):
     """Kimi API 错误"""
+
     pass

@@ -10,31 +10,29 @@ API: https://api.hunyuan.cn
 - 支持多模态（文本/图像）
 """
 
-import httpx
-from typing import List, AsyncIterator, Dict, Any, Optional
-import json
-import time
 import hashlib
 import hmac
-import base64
-import urllib.parse
+import json
+import time
+from typing import Dict, List, Optional
+
+import httpx
 
 from .base import (
     BaseModel,
+    Message,
     ModelConfig,
     ModelProvider,
-    ModelTier,
-    Message,
     ModelResponse,
+    ModelTier,
     Usage,
 )
-
 
 # 混元模型配置
 HUNYUAN_MODELS = {
     "low": {
         "name": "hunyuan-standard",
-        "cost_per_1k_prompt": 0.0,   # 可能有免费额度
+        "cost_per_1k_prompt": 0.0,  # 可能有免费额度
         "cost_per_1k_completion": 0.0,
     },
     "medium": {
@@ -100,11 +98,14 @@ class HunyuanModel(BaseModel):
             await self._client.aclose()
             self._client = None
 
-    def _sign_tc3(self, secret_key: str, date: str, service: str,
-                  action: str, payload: str) -> str:
+    def _sign_tc3(
+        self, secret_key: str, date: str, service: str, action: str, payload: str
+    ) -> str:
         """TC3-HMAC-SHA256 签名"""
+
         def _hmac_sha256(key: bytes, msg: str) -> bytes:
             return hmac.new(key, msg.encode(), hashlib.sha256).digest()
+
         def _sha256(msg: str) -> bytes:
             return hashlib.sha256(msg.encode()).digest()
 
@@ -121,7 +122,9 @@ class HunyuanModel(BaseModel):
         algorithm = "TC3-HMAC-SHA256"
         timestamp = int(time.time())
         credential_scope = f"{date}/{service}/tc3_request"
-        hashed_canonical_request = hashlib.sha256(canonical_request.encode()).hexdigest()
+        hashed_canonical_request = hashlib.sha256(
+            canonical_request.encode()
+        ).hexdigest()
         string_to_sign = (
             f"{algorithm}\n{timestamp}\n{credential_scope}\n{hashed_canonical_request}"
         )
@@ -130,7 +133,9 @@ class HunyuanModel(BaseModel):
         secret_date = _hmac_sha256(("TC3" + secret_key).encode(), date)
         secret_service = _hmac_sha256(secret_date, service)
         secret_signing = _hmac_sha256(secret_service, "tc3_request")
-        signature = hmac.new(secret_signing, string_to_sign.encode(), hashlib.sha256).hexdigest()
+        signature = hmac.new(
+            secret_signing, string_to_sign.encode(), hashlib.sha256
+        ).hexdigest()
 
         # 步骤 4: 拼接 Authorization
         authorization = (
@@ -153,12 +158,14 @@ class HunyuanModel(BaseModel):
     async def generate(self, messages: List[Message], **kwargs) -> ModelResponse:
         client = await self._get_client()
 
-        payload = json.dumps({
-            "model": self.model_name,
-            "messages": self._format_messages(messages),
-            "max_tokens": kwargs.get("max_tokens", self.config.max_tokens),
-            "temperature": kwargs.get("temperature", self.config.temperature),
-        })
+        payload = json.dumps(
+            {
+                "model": self.model_name,
+                "messages": self._format_messages(messages),
+                "max_tokens": kwargs.get("max_tokens", self.config.max_tokens),
+                "temperature": kwargs.get("temperature", self.config.temperature),
+            }
+        )
 
         timestamp = int(time.time())
         date = time.strftime("%Y-%m-%d", time.gmtime(timestamp))
@@ -215,4 +222,5 @@ class HunyuanModel(BaseModel):
 
 class HunyuanAPIError(Exception):
     """腾讯混元 API 错误"""
+
     pass

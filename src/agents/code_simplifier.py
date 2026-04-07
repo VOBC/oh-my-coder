@@ -10,18 +10,17 @@ Code Simplifier Agent - 代码简化智能体
 模型层级：HIGH（深度推理，对应 opus）
 """
 
-from typing import List, Dict, Any
-from pathlib import Path
+from typing import Dict, List
 
+from ..core.router import TaskType
 from .base import (
-    BaseAgent,
     AgentContext,
+    AgentLane,
     AgentOutput,
     AgentStatus,
-    AgentLane,
+    BaseAgent,
     register_agent,
 )
-from ..core.router import TaskType
 
 
 @register_agent

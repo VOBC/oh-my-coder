@@ -11,18 +11,19 @@ API 地址：https://model-platform.tiangong.cn
 - 兼容 OpenAI 格式
 """
 
-import httpx
-from typing import List, AsyncIterator, Dict, Any, Optional
 import json
 import time
+from typing import Any, AsyncIterator, Dict, List, Optional
+
+import httpx
 
 from .base import (
     BaseModel,
+    Message,
     ModelConfig,
     ModelProvider,
-    ModelTier,
-    Message,
     ModelResponse,
+    ModelTier,
     Usage,
 )
 
@@ -44,6 +45,7 @@ TIANGONG_MODELS = {
         "cost_per_1k_completion": 0.0,
     },
 }
+
 
 class TiangongModel(BaseModel):
     """天工AI 模型适配器，兼容 OpenAI 格式"""
@@ -100,8 +102,10 @@ class TiangongModel(BaseModel):
             "temperature": kwargs.get("temperature", self.config.temperature),
             "stream": False,
         }
-        if "top_p" in kwargs: request_body["top_p"] = kwargs["top_p"]
-        if "stop" in kwargs: request_body["stop"] = kwargs["stop"]
+        if "top_p" in kwargs:
+            request_body["top_p"] = kwargs["top_p"]
+        if "stop" in kwargs:
+            request_body["stop"] = kwargs["stop"]
         start_time = time.time()
         try:
             response = await client.post("/chat/completions", json=request_body)
@@ -142,22 +146,31 @@ class TiangongModel(BaseModel):
             "stream": True,
         }
         try:
-            async with client.stream("POST", "/chat/completions", json=request_body) as response:
+            async with client.stream(
+                "POST", "/chat/completions", json=request_body
+            ) as response:
                 response.raise_for_status()
                 async for line in response.aiter_lines():
-                    if not line or line.startswith(":"): continue
-                    if line.startswith("data: "): line = line[6:]
-                    if line == "[DONE]": break
+                    if not line or line.startswith(":"):
+                        continue
+                    if line.startswith("data: "):
+                        line = line[6:]
+                    if line == "[DONE]":
+                        break
                     try:
                         data = json.loads(line)
                         content = data["choices"][0].get("delta", {}).get("content", "")
-                        if content: yield content
-                    except json.JSONDecodeError: continue
+                        if content:
+                            yield content
+                    except json.JSONDecodeError:
+                        continue
         except httpx.HTTPStatusError as e:
             raise TiangongAPIError(f"天工AI API 错误 ({e.response.status_code}): {e}")
         except httpx.RequestError as e:
             raise TiangongAPIError(f"网络请求失败: {e}")
 
+
 class TiangongAPIError(Exception):
     """天工AI API 错误"""
+
     pass

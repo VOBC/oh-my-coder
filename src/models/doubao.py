@@ -10,21 +10,21 @@ API: https://ark.cn-beijing.volces.com/api/v3
 - 支持长上下文
 """
 
-import httpx
-from typing import List, AsyncIterator, Dict, Any, Optional
 import json
 import time
+from typing import AsyncIterator, Dict, List, Optional
+
+import httpx
 
 from .base import (
     BaseModel,
+    Message,
     ModelConfig,
     ModelProvider,
-    ModelTier,
-    Message,
     ModelResponse,
+    ModelTier,
     Usage,
 )
-
 
 # 豆包模型配置
 DOUBAO_MODELS = {
@@ -193,4 +193,5 @@ class DoubaoModel(BaseModel):
 
 class DoubaoAPIError(Exception):
     """字节豆包 API 错误"""
+
     pass

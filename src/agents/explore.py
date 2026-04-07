@@ -16,20 +16,20 @@ Explore Agent - 代码库探索智能体
 4. 生成项目地图
 """
 
-from typing import List, Dict, Any, Optional
-from pathlib import Path
-from dataclasses import dataclass
 import os
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Any, Dict, List
 
+from ..core.router import TaskType
 from .base import (
-    BaseAgent,
     AgentContext,
+    AgentLane,
     AgentOutput,
     AgentStatus,
-    AgentLane,
+    BaseAgent,
     register_agent,
 )
-from ..core.router import TaskType
 
 
 @dataclass

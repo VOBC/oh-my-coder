@@ -16,24 +16,23 @@
 
 使用示例：
     from src.core.summary import generate_summary, print_summary, save_summary
-    
+
     # 生成总结
     summary = generate_summary(
         task="实现用户认证模块",
         workflow="build",
         completed_steps=[...],
     )
-    
+
     # 打印到终端
     print_summary(summary)
-    
+
     # 保存到文件
     save_path = save_summary(summary, format="json")
 """
 
 import json
-import time
-from dataclasses import dataclass, field, asdict
+from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
@@ -45,6 +44,7 @@ from typing import Optional
 @dataclass
 class StepRecord:
     """单个步骤的执行记录"""
+
     agent: str
     status: str  # "completed" | "failed" | "skipped"
     duration: float  # 秒
@@ -60,6 +60,7 @@ class StepRecord:
 @dataclass
 class ModelUsage:
     """单个模型的调用统计"""
+
     provider: str
     model_name: str
     calls: int = 0
@@ -71,7 +72,7 @@ class ModelUsage:
 class TaskSummary:
     """
     任务总结数据类
-    
+
     Attributes:
         task: 任务描述
         workflow: 工作流名称（build/review/debug/test）
@@ -87,6 +88,7 @@ class TaskSummary:
         errors: 错误列表
         recommendations: 优化建议
     """
+
     task: str
     workflow: str
     start_time: str = ""
@@ -122,7 +124,7 @@ def generate_summary(
 ) -> TaskSummary:
     """
     根据已完成步骤生成任务总结
-    
+
     Args:
         task: 任务描述
         workflow: 工作流名称
@@ -134,7 +136,7 @@ def generate_summary(
             - result: 执行结果描述
             - error: 错误信息（如有）
         project_path: 项目路径
-    
+
     Returns:
         TaskSummary 对象
     """
@@ -259,7 +261,7 @@ def _infer_models(workflow: str, agent_count: int) -> list[str]:
 def print_summary(summary: TaskSummary) -> None:
     """在终端打印总结（带格式）"""
     status_icon = "✅" if summary.success else "❌"
-    
+
     print(f"\n{status_icon} 任务: {summary.task}")
     print(f"📋 工作流: {summary.workflow}")
     print(f"⏱️  耗时: {summary.duration_seconds:.1f}s")
@@ -271,10 +273,16 @@ def print_summary(summary: TaskSummary) -> None:
     if summary.steps_completed:
         print("\n📊 执行步骤：")
         for i, step in enumerate(summary.steps_completed, 1):
-            icon = "✅" if step["status"] == "completed" else ("❌" if step["status"] == "failed" else "⏭️")
+            icon = (
+                "✅"
+                if step["status"] == "completed"
+                else ("❌" if step["status"] == "failed" else "⏭️")
+            )
             agent_short = step["agent"].replace("Agent", "")
-            print(f"  {i}. {icon} {agent_short:<15} - {step['duration']:.1f}s"
-                  f" | {step['tokens']:,} tokens | {step['result'][:50]}...")
+            print(
+                f"  {i}. {icon} {agent_short:<15} - {step['duration']:.1f}s"
+                f" | {step['tokens']:,} tokens | {step['result'][:50]}..."
+            )
 
     if summary.errors:
         print("\n❌ 错误：")
@@ -290,10 +298,12 @@ def print_summary(summary: TaskSummary) -> None:
 def print_summary_compact(summary: TaskSummary) -> None:
     """紧凑版总结（单行）"""
     status = "✅" if summary.success else "❌"
-    print(f"{status} [{summary.workflow}] {summary.task[:40]} | "
-          f"{summary.duration_seconds:.1f}s | "
-          f"¥{summary.total_cost:.4f} | "
-          f"{summary.agent_count} agents")
+    print(
+        f"{status} [{summary.workflow}] {summary.task[:40]} | "
+        f"{summary.duration_seconds:.1f}s | "
+        f"¥{summary.total_cost:.4f} | "
+        f"{summary.agent_count} agents"
+    )
 
 
 # ============================================================
@@ -307,13 +317,13 @@ def save_summary(
 ) -> Path:
     """
     保存总结到文件
-    
+
     Args:
         summary: 总结对象
         output_dir: 输出目录（默认 reports/）
         format: 格式（json/txt/html）
         filename: 自定义文件名
-    
+
     Returns:
         保存的文件路径
     """
@@ -347,7 +357,7 @@ def save_summary(
 
 def _write_txt_summary(f, summary: TaskSummary) -> None:
     """写入 TXT 格式"""
-    f.write(f"任务总结\n")
+    f.write("任务总结\n")
     f.write(f"{'=' * 50}\n")
     f.write(f"任务: {summary.task}\n")
     f.write(f"工作流: {summary.workflow}\n")
@@ -355,11 +365,11 @@ def _write_txt_summary(f, summary: TaskSummary) -> None:
     f.write(f"耗时: {summary.duration_seconds:.1f}s\n")
     f.write(f"Token: {summary.total_tokens:,}\n")
     f.write(f"成本: ¥{summary.total_cost:.4f}\n")
-    f.write(f"\n执行步骤:\n")
+    f.write("\n执行步骤:\n")
     for step in summary.steps_completed:
         f.write(f"  - {step['agent']}: {step['result']}\n")
     if summary.recommendations:
-        f.write(f"\n优化建议:\n")
+        f.write("\n优化建议:\n")
         for rec in summary.recommendations:
             f.write(f"  {rec}\n")
 
@@ -367,7 +377,8 @@ def _write_txt_summary(f, summary: TaskSummary) -> None:
 def _write_html_summary(f, summary: TaskSummary) -> None:
     """写入 HTML 格式"""
     status_color = "#4CAF50" if summary.success else "#F44336"
-    f.write(f"""<!DOCTYPE html>
+    f.write(
+        f"""<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8">
@@ -384,7 +395,7 @@ h1 {{ color: #333; }}
 </head>
 <body>
 <h1>📋 {summary.task}</h1>
-<p>工作流: <strong>{summary.workflow}</strong> | 
+<p>工作流: <strong>{summary.workflow}</strong> |
    状态: <span style="color:{status_color}">{'✅ 成功' if summary.success else '❌ 失败'}</span></p>
 
 <div class="stat">⏱️ {summary.duration_seconds:.1f}s</div>
@@ -393,15 +404,18 @@ h1 {{ color: #333; }}
 <div class="stat">🤖 {summary.agent_count} agents</div>
 
 <h2>执行步骤</h2>
-""")
+"""
+    )
     for step in summary.steps_completed:
         cls = "success" if step["status"] == "completed" else "failed"
         icon = "✅" if step["status"] == "completed" else "❌"
-        f.write(f"""<div class="step {cls}">
+        f.write(
+            f"""<div class="step {cls}">
 <strong>{icon} {step['agent']}</strong> ({step['duration']:.1f}s)<br>
 {step['result']}
 </div>
-""")
+"""
+        )
     if summary.recommendations:
         f.write("<h2>💡 优化建议</h2>\n")
         for rec in summary.recommendations:
@@ -432,19 +446,25 @@ def quick_summary(
 ) -> TaskSummary:
     """
     快速生成简单总结（用于不需要完整信息的场景）
-    
+
     Args:
         task: 任务描述
         workflow: 工作流名称
         duration: 总耗时（秒）
         tokens: Token 总消耗
         steps: 步骤描述列表
-    
+
     Returns:
         TaskSummary 对象
     """
     completed = [
-        {"agent": f"Step{i+1}", "status": "completed", "duration": 0, "tokens": 0, "result": s}
+        {
+            "agent": f"Step{i+1}",
+            "status": "completed",
+            "duration": 0,
+            "tokens": 0,
+            "result": s,
+        }
         for i, s in enumerate(steps)
     ]
     return generate_summary(

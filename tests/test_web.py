@@ -1,17 +1,19 @@
 """
 Web 界面测试
 """
-import pytest
-from httpx import AsyncClient, ASGITransport
-from unittest.mock import AsyncMock, patch, MagicMock
+
 import sys
 from pathlib import Path
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
+from httpx import ASGITransport, AsyncClient
 
 # 确保项目根目录在 path 中
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src.web.app import app, task_manager
 from src.agents.base import AgentOutput, AgentStatus
+from src.web.app import app, task_manager
 
 
 # ============================================================
@@ -220,8 +222,10 @@ async def test_execute_with_mocked_agent(client):
         usage={"total_tokens": 100, "prompt_tokens": 50, "completion_tokens": 50},
     )
 
-    with patch("src.web.app.create_router") as mock_router_cls, \
-         patch("src.web.app.create_orchestrator") as mock_orch_cls:
+    with (
+        patch("src.web.app.create_router") as mock_router_cls,
+        patch("src.web.app.create_orchestrator") as mock_orch_cls,
+    ):
 
         mock_router = MagicMock()
         mock_orch = MagicMock()
@@ -241,6 +245,7 @@ async def test_execute_with_mocked_agent(client):
 
         # 等一小段时间让后台任务处理
         import asyncio
+
         await asyncio.sleep(0.3)
 
         # 验证任务状态已更新

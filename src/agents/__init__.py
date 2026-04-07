@@ -5,25 +5,25 @@ Agents 模块
 使用装饰器 @register_agent 自动注册。
 """
 
-from .base import BaseAgent, register_agent, get_agent, list_agents
-from .explore import ExploreAgent
 from .analyst import AnalystAgent
-from .planner import PlannerAgent
 from .architect import ArchitectAgent
-from .executor import ExecutorAgent
-from .verifier import VerifierAgent
-from .test_engineer import TestEngineerAgent
+from .base import BaseAgent, get_agent, list_agents, register_agent
 from .code_reviewer import CodeReviewerAgent
-from .debugger import DebuggerAgent
-from .critic import CriticAgent
-from .writer import WriterAgent
-from .designer import DesignerAgent
-from .security import SecurityReviewerAgent
-from .git_master import GitMasterAgent
 from .code_simplifier import CodeSimplifierAgent
-from .tracer import TracerAgent
-from .scientist import ScientistAgent
+from .critic import CriticAgent
+from .debugger import DebuggerAgent
+from .designer import DesignerAgent
+from .executor import ExecutorAgent
+from .explore import ExploreAgent
+from .git_master import GitMasterAgent
+from .planner import PlannerAgent
 from .qa_tester import QATesterAgent
+from .scientist import ScientistAgent
+from .security import SecurityReviewerAgent
+from .test_engineer import TestEngineerAgent
+from .tracer import TracerAgent
+from .verifier import VerifierAgent
+from .writer import WriterAgent
 
 # 导出所有 Agent
 __all__ = [

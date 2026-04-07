@@ -17,19 +17,18 @@ Architect Agent - 系统架构设计智能体
 5. 输出架构文档
 """
 
-from typing import List, Dict, Any
-from pathlib import Path
 from dataclasses import dataclass
+from typing import Dict, List
 
+from ..core.router import TaskType
 from .base import (
-    BaseAgent,
     AgentContext,
+    AgentLane,
     AgentOutput,
     AgentStatus,
-    AgentLane,
+    BaseAgent,
     register_agent,
 )
-from ..core.router import TaskType
 
 
 @dataclass

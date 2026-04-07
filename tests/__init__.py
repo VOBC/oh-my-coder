@@ -1,4 +1,5 @@
 """pytest 配置"""
+
 import sys
 from pathlib import Path
 

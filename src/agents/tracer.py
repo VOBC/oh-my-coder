@@ -10,19 +10,18 @@ Tracer Agent - 因果追踪智能体
 模型层级：MEDIUM（平衡，对应 sonnet）
 """
 
-from typing import List, Dict, Any
-from pathlib import Path
 from dataclasses import dataclass
+from typing import Dict, List
 
+from ..core.router import TaskType
 from .base import (
-    BaseAgent,
     AgentContext,
+    AgentLane,
     AgentOutput,
     AgentStatus,
-    AgentLane,
+    BaseAgent,
     register_agent,
 )
-from ..core.router import TaskType
 
 
 @dataclass

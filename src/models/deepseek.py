@@ -14,21 +14,21 @@ DeepSeek API 文档：https://platform.deepseek.com/api-docs/
 - deepseek-coder：代码专用模型（代码任务首选）
 """
 
-import httpx
-from typing import List, AsyncIterator, Dict, Any, Optional
 import json
 import time
+from typing import AsyncIterator, Dict, List, Optional
+
+import httpx
 
 from .base import (
     BaseModel,
+    Message,
     ModelConfig,
     ModelProvider,
-    ModelTier,
-    Message,
     ModelResponse,
+    ModelTier,
     Usage,
 )
-
 
 # DeepSeek 模型配置
 DEEPSEEK_MODELS = {

@@ -4,21 +4,20 @@
 运行: pytest tests/test_orchestrator.py -v
 """
 
-import pytest
 import asyncio
-from unittest.mock import AsyncMock, patch, MagicMock
-from pathlib import Path
-
 import sys
+from unittest.mock import AsyncMock, MagicMock
+
+import pytest
+
 sys.path.insert(0, "/Users/vobc/.qclaw/workspace-agent-bf627e2b/projects/oh-my-coder")
 
 from src.core.orchestrator import (
-    Orchestrator,
-    WorkflowStatus,
-    ExecutionMode,
-    WorkflowStep,
-    WorkflowResult,
     WORKFLOW_TEMPLATES,
+    ExecutionMode,
+    Orchestrator,
+    WorkflowResult,
+    WorkflowStatus,
 )
 
 
@@ -78,7 +77,14 @@ class TestOrchestratorWorkflow:
         """测试模拟执行 build 工作流"""
         orch = Orchestrator(None)
 
-        for name in ["explore", "analyst", "planner", "architect", "executor", "verifier"]:
+        for name in [
+            "explore",
+            "analyst",
+            "planner",
+            "architect",
+            "executor",
+            "verifier",
+        ]:
             orch.register_agent(self._make_agent(name, self._mock_agent_result()))
 
         result = await orch.execute_workflow("build", {"task": "test task"})

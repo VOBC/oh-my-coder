@@ -2,29 +2,28 @@
 Web 界面入口 - FastAPI 应用
 提供可视化界面执行 AI 编程任务
 """
-import os
+
+import asyncio
 import sys
 import uuid
-import asyncio
-from pathlib import Path
-from typing import Dict, Any, Optional, List, Callable
 from datetime import datetime
-from enum import Enum
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
-from fastapi import FastAPI, Request, Form, BackgroundTasks, HTTPException
+import uvicorn
+from fastapi import BackgroundTasks, FastAPI, HTTPException, Request
 from fastapi.responses import HTMLResponse, JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
-import uvicorn
 
 # 确保可以导入 src 模块
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-from src.core.orchestrator import Orchestrator, WORKFLOW_TEMPLATES
-from src.core.router import ModelRouter, RouterConfig, TaskType
 from src.agents.base import AgentContext, AgentOutput, AgentStatus, get_agent
+from src.core.orchestrator import WORKFLOW_TEMPLATES, Orchestrator
+from src.core.router import ModelRouter, RouterConfig
 
 # ========================================
 # FastAPI App
@@ -148,8 +147,18 @@ def create_orchestrator(router: ModelRouter) -> Orchestrator:
     orch = Orchestrator(model_router=router, state_dir=project_root / ".omc" / "state")
 
     # 注册所有已实现的 Agent
-    for name in ["explore", "analyst", "architect", "executor", "verifier", "debugger",
-                 "code_reviewer", "test_engineer", "security", "tracer"]:
+    for name in [
+        "explore",
+        "analyst",
+        "architect",
+        "executor",
+        "verifier",
+        "debugger",
+        "code_reviewer",
+        "test_engineer",
+        "security",
+        "tracer",
+    ]:
         try:
             agent_cls = get_agent(name)
             if agent_cls:
@@ -252,14 +261,18 @@ async def execute_task(background: BackgroundTasks, payload: dict = None):
     # 后台执行
     background.add_task(run_task, task_id, task, project_path, model, workflow_name)
 
-    return JSONResponse({
-        "status": "started",
-        "task_id": task_id,
-        "message": "任务已启动，请通过 SSE 连接获取进度"
-    })
+    return JSONResponse(
+        {
+            "status": "started",
+            "task_id": task_id,
+            "message": "任务已启动，请通过 SSE 连接获取进度",
+        }
+    )
 
 
-async def run_task(task_id: str, task: str, project_path: str, model: str, workflow_name: str):
+async def run_task(
+    task_id: str, task: str, project_path: str, model: str, workflow_name: str
+):
     """后台执行任务"""
     import time
 
@@ -307,17 +320,22 @@ async def run_task(task_id: str, task: str, project_path: str, model: str, workf
 
                 if output.status == AgentStatus.COMPLETED:
                     previous_outputs[agent_name] = output
-                    task_manager.update_step(task_id, agent_name, "completed", output.result)
-                    task_manager._tasks[task_id]["stats"]["steps_completed"].append(agent_name)
-                    task_manager._tasks[task_id]["stats"]["total_tokens"] += output.usage.get(
-                        "total_tokens", 0
+                    task_manager.update_step(
+                        task_id, agent_name, "completed", output.result
                     )
+                    task_manager._tasks[task_id]["stats"]["steps_completed"].append(
+                        agent_name
+                    )
+                    task_manager._tasks[task_id]["stats"][
+                        "total_tokens"
+                    ] += output.usage.get("total_tokens", 0)
                 else:
                     task_manager.update_step(
-                        task_id, agent_name, "failed",
-                        output.error or "Unknown error"
+                        task_id, agent_name, "failed", output.error or "Unknown error"
                     )
-                    task_manager._tasks[task_id]["stats"]["steps_failed"].append(agent_name)
+                    task_manager._tasks[task_id]["stats"]["steps_failed"].append(
+                        agent_name
+                    )
 
             except asyncio.TimeoutError:
                 task_manager.update_step(task_id, agent_name, "failed", "执行超时")
@@ -391,48 +409,57 @@ async def execute_task_sync(req: ExecuteRequest):
                     previous_outputs[agent_name] = output
                     total_tokens += output.usage.get("total_tokens", 0)
                 else:
-                    return JSONResponse({
-                        "status": "error",
-                        "message": f"{agent_name} 执行失败: {output.error}",
-                    })
+                    return JSONResponse(
+                        {
+                            "status": "error",
+                            "message": f"{agent_name} 执行失败: {output.error}",
+                        }
+                    )
 
             except asyncio.TimeoutError:
-                return JSONResponse({
-                    "status": "error",
-                    "message": f"{agent_name} 执行超时",
-                })
+                return JSONResponse(
+                    {
+                        "status": "error",
+                        "message": f"{agent_name} 执行超时",
+                    }
+                )
 
-        return JSONResponse({
-            "status": "success",
-            "result": {
-                "task": req.task,
-                "workflow": req.workflow,
-                "steps_completed": list(previous_outputs.keys()),
-                "total_tokens": total_tokens,
-                "execution_time": round(time.time() - start_time, 1),
-                "outputs": {
-                    name: out.result
-                    for name, out in previous_outputs.items()
+        return JSONResponse(
+            {
+                "status": "success",
+                "result": {
+                    "task": req.task,
+                    "workflow": req.workflow,
+                    "steps_completed": list(previous_outputs.keys()),
+                    "total_tokens": total_tokens,
+                    "execution_time": round(time.time() - start_time, 1),
+                    "outputs": {
+                        name: out.result for name, out in previous_outputs.items()
+                    },
                 },
             }
-        })
+        )
 
     except Exception as e:
-        return JSONResponse({
-            "status": "error",
-            "message": str(e),
-        })
+        return JSONResponse(
+            {
+                "status": "error",
+                "message": str(e),
+            }
+        )
 
 
 # ===== 配置端点 =====
 @app.get("/api/config")
 async def get_config():
     """获取可用配置"""
-    return JSONResponse({
-        "models": ["deepseek", "tongyi", "wenxin"],
-        "workflows": list(WORKFLOW_TEMPLATES.keys()),
-        "agents": [s.agent_name for s in WORKFLOW_TEMPLATES["build"]],
-    })
+    return JSONResponse(
+        {
+            "models": ["deepseek", "tongyi", "wenxin"],
+            "workflows": list(WORKFLOW_TEMPLATES.keys()),
+            "agents": [s.agent_name for s in WORKFLOW_TEMPLATES["build"]],
+        }
+    )
 
 
 # ===== 健康检查 =====

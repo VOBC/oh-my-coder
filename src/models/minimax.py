@@ -10,21 +10,20 @@ API: https://api.minimax.chat
 - 价格适中
 """
 
-import httpx
-from typing import List, AsyncIterator, Dict, Any, Optional
-import json
 import time
+from typing import Dict, List, Optional
+
+import httpx
 
 from .base import (
     BaseModel,
+    Message,
     ModelConfig,
     ModelProvider,
-    ModelTier,
-    Message,
     ModelResponse,
+    ModelTier,
     Usage,
 )
-
 
 # MiniMax 模型配置
 MINIMAX_MODELS = {
@@ -153,4 +152,5 @@ class MiniMaxModel(BaseModel):
 
 class MiniMaxAPIError(Exception):
     """MiniMax API 错误"""
+
     pass

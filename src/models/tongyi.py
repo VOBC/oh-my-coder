@@ -13,21 +13,22 @@
 - qwen-plus：通用模型（对应 MEDIUM tier）
 - qwen-turbo：快速模型（对应 LOW tier）
 """
-import httpx
-from typing import List, AsyncIterator, Dict, Any, Optional
+
 import json
 import time
+from typing import AsyncIterator, Dict, List, Optional
+
+import httpx
 
 from .base import (
     BaseModel,
+    Message,
     ModelConfig,
     ModelProvider,
-    ModelTier,
-    Message,
     ModelResponse,
+    ModelTier,
     Usage,
 )
-
 
 # 通义千问模型配置
 TONGYI_MODELS = {
@@ -49,7 +50,9 @@ TONGYI_MODELS = {
 }
 
 # 通义千问 API 端点
-TONGYI_API_URL = "https://dashscope.aliyuncs.com/api/v1/services/aigc/text-generation/generation"
+TONGYI_API_URL = (
+    "https://dashscope.aliyuncs.com/api/v1/services/aigc/text-generation/generation"
+)
 
 
 class TongyiModel(BaseModel):
@@ -58,7 +61,7 @@ class TongyiModel(BaseModel):
 
     API 兼容 OpenAI 格式，使用 DashScope API
     """
-    
+
     def __init__(
         self,
         config: ModelConfig,
@@ -73,19 +76,19 @@ class TongyiModel(BaseModel):
         model_info = TONGYI_MODELS[tier]
         config.cost_per_1k_prompt = model_info["cost_per_1k_prompt"]
         config.cost_per_1k_completion = model_info["cost_per_1k_completion"]
-        
+
         super().__init__(config, tier)
-        
+
         self._client: Optional[httpx.AsyncClient] = None
-    
+
     @property
     def provider(self) -> ModelProvider:
         return ModelProvider.TONGYI
-    
+
     @property
     def model_name(self) -> str:
         return TONGYI_MODELS[self.tier]["name"]
-    
+
     async def _get_client(self) -> httpx.AsyncClient:
         """获取或创建 HTTP 客户端"""
         if self._client is None or self._client.is_closed:
@@ -97,13 +100,13 @@ class TongyiModel(BaseModel):
                 timeout=self.config.timeout,
             )
         return self._client
-    
+
     async def close(self):
         """关闭 HTTP 客户端"""
         if self._client and not self._client.is_closed:
             await self._client.aclose()
             self._client = None
-    
+
     def _format_messages(self, messages: List[Message]) -> List[Dict[str, str]]:
         """将统一消息格式转换为通义千问 API 格式"""
         formatted = []
@@ -111,15 +114,11 @@ class TongyiModel(BaseModel):
             item = {"role": msg.role, "content": msg.content}
             formatted.append(item)
         return formatted
-    
-    async def generate(
-        self,
-        messages: List[Message],
-        **kwargs
-    ) -> ModelResponse:
+
+    async def generate(self, messages: List[Message], **kwargs) -> ModelResponse:
         """非流式生成"""
         client = await self._get_client()
-        
+
         # 构建请求体
         request_body = {
             "model": self.model_name,
@@ -129,26 +128,26 @@ class TongyiModel(BaseModel):
             "parameters": {
                 "temperature": kwargs.get("temperature", self.config.temperature),
                 "max_tokens": kwargs.get("max_tokens", self.config.max_tokens),
-            }
+            },
         }
-        
+
         start_time = time.time()
-        
+
         try:
             response = await client.post(
                 TONGYI_API_URL,
                 json=request_body,
             )
             response.raise_for_status()
-            
+
             data = response.json()
             latency_ms = (time.time() - start_time) * 1000
-            
+
             # 解析响应
             output = data.get("output", {})
             content = output.get("text", "")
             finish_reason = output.get("finish_reason", "stop")
-            
+
             # 使用统计
             usage_data = data.get("usage", {})
             usage = Usage(
@@ -156,9 +155,9 @@ class TongyiModel(BaseModel):
                 completion_tokens=usage_data.get("output_tokens", 0),
                 total_tokens=usage_data.get("total_tokens", 0),
             )
-            
+
             self.update_usage(usage)
-            
+
             return ModelResponse(
                 content=content,
                 model=self.model_name,
@@ -171,7 +170,7 @@ class TongyiModel(BaseModel):
                     "request_id": data.get("request_id"),
                 },
             )
-            
+
         except httpx.HTTPStatusError as e:
             error_detail = ""
             try:
@@ -179,19 +178,15 @@ class TongyiModel(BaseModel):
                 error_detail = error_body.get("message", str(e))
             except:
                 error_detail = str(e)
-            
+
             raise TongyiAPIError(f"通义千问 API 错误: {error_detail}")
         except httpx.RequestError as e:
             raise TongyiAPIError(f"网络请求失败: {e}")
-    
-    async def stream(
-        self,
-        messages: List[Message],
-        **kwargs
-    ) -> AsyncIterator[str]:
+
+    async def stream(self, messages: List[Message], **kwargs) -> AsyncIterator[str]:
         """流式生成"""
         client = await self._get_client()
-        
+
         request_body = {
             "model": self.model_name,
             "input": {
@@ -200,9 +195,9 @@ class TongyiModel(BaseModel):
             "parameters": {
                 "temperature": kwargs.get("temperature", self.config.temperature),
                 "incremental_output": True,  # 增量输出
-            }
+            },
         }
-        
+
         try:
             async with client.stream(
                 "POST",
@@ -210,21 +205,21 @@ class TongyiModel(BaseModel):
                 json=request_body,
             ) as response:
                 response.raise_for_status()
-                
+
                 async for line in response.aiter_lines():
                     if not line:
                         continue
-                    
+
                     try:
                         data = json.loads(line)
                         output = data.get("output", {})
                         content = output.get("text", "")
-                        
+
                         if content:
                             yield content
                     except json.JSONDecodeError:
                         continue
-                        
+
         except httpx.HTTPStatusError as e:
             error_detail = ""
             try:
@@ -232,7 +227,7 @@ class TongyiModel(BaseModel):
                 error_detail = error_body.get("message", str(e))
             except:
                 error_detail = str(e)
-            
+
             raise TongyiAPIError(f"通义千问 API 错误: {error_detail}")
         except httpx.RequestError as e:
             raise TongyiAPIError(f"网络请求失败: {e}")
@@ -240,4 +235,5 @@ class TongyiModel(BaseModel):
 
 class TongyiAPIError(Exception):
     """通义千问 API 错误"""
+
     pass

@@ -11,21 +11,21 @@ API 地址：https://api.baichuan-ai.com
 - 兼容 OpenAI 格式
 """
 
-import httpx
-from typing import List, AsyncIterator, Dict, Any, Optional
 import json
 import time
+from typing import Any, AsyncIterator, Dict, List, Optional
+
+import httpx
 
 from .base import (
     BaseModel,
+    Message,
     ModelConfig,
     ModelProvider,
-    ModelTier,
-    Message,
     ModelResponse,
+    ModelTier,
     Usage,
 )
-
 
 # 百川智能模型配置
 BAICHUAN_MODELS = {
@@ -146,9 +146,7 @@ class BaichuanModel(BaseModel):
             )
 
         except httpx.HTTPStatusError as e:
-            raise BaichuanAPIError(
-                f"百川智能 API 错误 ({e.response.status_code}): {e}"
-            )
+            raise BaichuanAPIError(f"百川智能 API 错误 ({e.response.status_code}): {e}")
         except httpx.RequestError as e:
             raise BaichuanAPIError(f"网络请求失败: {e}")
 
@@ -185,13 +183,12 @@ class BaichuanModel(BaseModel):
                         continue
 
         except httpx.HTTPStatusError as e:
-            raise BaichuanAPIError(
-                f"百川智能 API 错误 ({e.response.status_code}): {e}"
-            )
+            raise BaichuanAPIError(f"百川智能 API 错误 ({e.response.status_code}): {e}")
         except httpx.RequestError as e:
             raise BaichuanAPIError(f"网络请求失败: {e}")
 
 
 class BaichuanAPIError(Exception):
     """百川智能 API 错误"""
+
     pass

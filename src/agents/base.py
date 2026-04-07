@@ -14,13 +14,13 @@ Agent 生命周期：
 4. 输出结果
 """
 
+import json
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import List, Optional, Dict, Any, Callable, Type
 from pathlib import Path
-import json
+from typing import Any, Dict, List, Optional, Type
 
 
 class AgentStatus(Enum):

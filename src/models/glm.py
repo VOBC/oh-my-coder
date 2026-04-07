@@ -11,21 +11,21 @@ API: https://open.bigmodel.cn/api/paas/v4
 - 支持工具调用（Function Calling）
 """
 
-import httpx
-from typing import List, AsyncIterator, Dict, Any, Optional
 import json
 import time
+from typing import Any, AsyncIterator, Dict, List, Optional
+
+import httpx
 
 from .base import (
     BaseModel,
+    Message,
     ModelConfig,
     ModelProvider,
-    ModelTier,
-    Message,
     ModelResponse,
+    ModelTier,
     Usage,
 )
-
 
 # GLM 模型配置
 GLM_MODELS = {
@@ -202,4 +202,5 @@ class GLMModel(BaseModel):
 
 class GLMAPIError(Exception):
     """智谱 GLM API 错误"""
+
     pass

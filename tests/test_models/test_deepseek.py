@@ -4,15 +4,15 @@
 运行: pytest tests/test_models/test_deepseek.py -v
 """
 
-import pytest
-import asyncio
-from unittest.mock import AsyncMock, patch, MagicMock
-
 import sys
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
+
 sys.path.insert(0, "/Users/vobc/.qclaw/workspace-agent-bf627e2b/projects/oh-my-coder")
 
-from src.models.base import ModelConfig, ModelProvider, ModelTier, Message
-from src.models.deepseek import DeepSeekModel, DeepSeekAPIError
+from src.models.base import Message, ModelConfig, ModelProvider, ModelTier
+from src.models.deepseek import DeepSeekAPIError, DeepSeekModel
 
 
 class TestDeepSeekModelInit:
@@ -87,11 +87,13 @@ def _mock_response(content: str, tokens: int = 30):
     mock_resp = MagicMock()
     mock_resp.json.return_value = {
         "id": "chatcmpl-test",
-        "choices": [{
-            "message": {"content": content},
-            "finish_reason": "stop",
-            "index": 0,
-        }],
+        "choices": [
+            {
+                "message": {"content": content},
+                "finish_reason": "stop",
+                "index": 0,
+            }
+        ],
         "usage": {
             "prompt_tokens": 10,
             "completion_tokens": tokens,
@@ -149,11 +151,14 @@ class TestDeepSeekGenerate:
             # Simulate HTTP 401 by having post raise an exception that
             # the model code's error handler will catch
             import httpx
-            client.post = AsyncMock(side_effect=httpx.HTTPStatusError(
-                "401 Unauthorized",
-                request=MagicMock(),
-                response=MagicMock(status_code=401),
-            ))
+
+            client.post = AsyncMock(
+                side_effect=httpx.HTTPStatusError(
+                    "401 Unauthorized",
+                    request=MagicMock(),
+                    response=MagicMock(status_code=401),
+                )
+            )
             mock_get.return_value = client
 
             messages = [Message(role="user", content="Hello")]
@@ -174,11 +179,13 @@ class TestDeepSeekStream:
             yield "data: [DONE]"
 
         mock_ctx = MagicMock()
+
         async def enter_async():
             mock_stream = MagicMock()
             mock_stream.raise_for_status = MagicMock()
             mock_stream.aiter_lines = fake_lines
             return mock_stream
+
         mock_ctx.__aenter__ = AsyncMock(side_effect=enter_async)
         mock_ctx.__aexit__ = AsyncMock()
 
@@ -197,17 +204,19 @@ class TestDeepSeekStream:
         model = DeepSeekModel(ModelConfig(api_key="test_key"))
 
         async def fake_lines():
-            yield ""            # empty -> skip
-            yield ": comment"   # comment -> skip
+            yield ""  # empty -> skip
+            yield ": comment"  # comment -> skip
             yield 'data: {"choices":[{"delta":{"content":"A"}}]}'
             yield "data: [DONE]"
 
         mock_ctx = MagicMock()
+
         async def enter_async():
             mock_stream = MagicMock()
             mock_stream.raise_for_status = MagicMock()
             mock_stream.aiter_lines = fake_lines
             return mock_stream
+
         mock_ctx.__aenter__ = AsyncMock(side_effect=enter_async)
         mock_ctx.__aexit__ = AsyncMock()
 
@@ -216,7 +225,9 @@ class TestDeepSeekStream:
             client.stream = MagicMock(return_value=mock_ctx)
             mock_get.return_value = client
 
-            chunks = [c async for c in model.stream([Message(role="user", content="x")])]
+            chunks = [
+                c async for c in model.stream([Message(role="user", content="x")])
+            ]
         assert "".join(chunks) == "A"
 
 

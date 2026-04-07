@@ -7,18 +7,19 @@
 3. 模型路由器
 4. CLI 入口（通过 subprocess）
 """
-import pytest
-import asyncio
+
 import sys
 from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
+
+import pytest
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src.core.orchestrator import Orchestrator, WORKFLOW_TEMPLATES, WorkflowStep
-from src.core.router import ModelRouter, RouterConfig, TaskType
-from src.core.router import _TASK_TIER_MAPPING as TASK_TIER_MAPPING
 from src.agents.base import AgentContext, AgentOutput, AgentStatus
+from src.core.orchestrator import WORKFLOW_TEMPLATES, Orchestrator
+from src.core.router import _TASK_TIER_MAPPING as TASK_TIER_MAPPING
+from src.core.router import ModelRouter, RouterConfig, TaskType
 
 
 # ============================================================
@@ -29,10 +30,16 @@ class MockModelResponse:
 
     def __init__(self, content: str, usage: dict = None):
         self.content = content
-        self.usage = usage or {"total_tokens": 100, "prompt_tokens": 50, "completion_tokens": 50}
+        self.usage = usage or {
+            "total_tokens": 100,
+            "prompt_tokens": 50,
+            "completion_tokens": 50,
+        }
 
 
-def create_mock_agent(name: str, result: str, status: AgentStatus = AgentStatus.COMPLETED):
+def create_mock_agent(
+    name: str, result: str, status: AgentStatus = AgentStatus.COMPLETED
+):
     """创建模拟 Agent"""
     agent = MagicMock()
     agent.name = name
@@ -300,7 +307,10 @@ async def test_full_build_workflow_mock():
     mock_responses = {
         "explore": ("## 项目结构\n- src/\n- tests/", AgentStatus.COMPLETED),
         "analyst": ("## 需求分析\n需要实现用户认证功能", AgentStatus.COMPLETED),
-        "planner": ("## 执行计划\n1. 创建 User 模型\n2. 实现注册接口", AgentStatus.COMPLETED),
+        "planner": (
+            "## 执行计划\n1. 创建 User 模型\n2. 实现注册接口",
+            AgentStatus.COMPLETED,
+        ),
         "architect": ("## 架构设计\n使用 FastAPI + SQLAlchemy", AgentStatus.COMPLETED),
         "executor": ("```python\nclass User(Base): ...", AgentStatus.COMPLETED),
         "verifier": ("✅ 验证通过，所有功能正常", AgentStatus.COMPLETED),
@@ -311,8 +321,7 @@ async def test_full_build_workflow_mock():
         orch.register_agent(agent)
 
     result = await orch.execute_workflow(
-        "build",
-        {"project_path": ".", "task": "实现用户认证系统"}
+        "build", {"project_path": ".", "task": "实现用户认证系统"}
     )
 
     # 验证所有步骤完成

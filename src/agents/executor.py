@@ -21,19 +21,17 @@ Executor Agent - 代码实现智能体
 import re
 import subprocess
 from pathlib import Path
-from typing import List, Dict, Any, Optional, Tuple
-import tempfile
-import shutil
+from typing import Any, Dict, List, Optional, Tuple
 
+from ..core.router import TaskType
 from .base import (
-    BaseAgent,
     AgentContext,
+    AgentLane,
     AgentOutput,
     AgentStatus,
-    AgentLane,
+    BaseAgent,
     register_agent,
 )
-from ..core.router import TaskType
 
 
 @register_agent
@@ -153,18 +151,17 @@ def test_add():
         self._inject_relevant_files(context, prompt)
 
         # 3. 添加实现指导
-        prompt.append({
-            "role": "user",
-            "content": self._build_implementation_hint(context),
-        })
+        prompt.append(
+            {
+                "role": "user",
+                "content": self._build_implementation_hint(context),
+            }
+        )
 
         # 4. 调用模型
         from ..models.base import Message
 
-        messages = [
-            Message(role=msg["role"], content=msg["content"])
-            for msg in prompt
-        ]
+        messages = [Message(role=msg["role"], content=msg["content"]) for msg in prompt]
 
         response = await self.model_router.route_and_call(
             task_type=TaskType.CODE_GENERATION,
@@ -197,7 +194,9 @@ def test_add():
         files = context.relevant_files or []
         if not files:
             # 自动查找相关文件
-            files = self._find_relevant_files(context.project_path, context.task_description)
+            files = self._find_relevant_files(
+                context.project_path, context.task_description
+            )
 
         if not files:
             return
@@ -224,7 +223,9 @@ def test_add():
 
         # 简单关键词匹配
         file_patterns = []
-        if any(k in keywords for k in ["用户", "user", "认证", "auth", "登录", "login"]):
+        if any(
+            k in keywords for k in ["用户", "user", "认证", "auth", "登录", "login"]
+        ):
             file_patterns.extend(["auth", "user", "login", "signup"])
         if any(k in keywords for k in ["api", "rest", "接口"]):
             file_patterns.extend(["api", "route", "endpoint"])
@@ -234,9 +235,13 @@ def test_add():
         if not file_patterns:
             return []
 
-        for root, _, files in project_path.walk() if hasattr(project_path, 'walk') else []:
+        for root, _, files in (
+            project_path.walk() if hasattr(project_path, "walk") else []
+        ):
             for f in files:
-                if any(p in f.lower() for p in file_patterns) and f.endswith((".py", ".js", ".ts", ".go")):
+                if any(p in f.lower() for p in file_patterns) and f.endswith(
+                    (".py", ".js", ".ts", ".go")
+                ):
                     relevant.append(root / f)
 
         return relevant[:8]
@@ -249,7 +254,9 @@ def test_add():
         hint.append("请根据以上信息和任务描述，实现所需功能。")
         hint.append("")
         hint.append("注意：")
-        hint.append("1. 使用 markdown 代码块标记文件路径，格式：` ```language:path/to/file.ext `")
+        hint.append(
+            "1. 使用 markdown 代码块标记文件路径，格式：` ```language:path/to/file.ext `"
+        )
         hint.append("2. 代码块中的第一行必须是文件路径（相对于项目根目录）")
         hint.append("3. 每个主要文件单独一个代码块")
         hint.append("4. 测试文件用 `test:` 前缀标记，如 `test:tests/test_feature.py`")
@@ -312,18 +319,18 @@ def test_add():
         # 5. 构建推荐后续步骤
         recommendations = []
         if saved_files:
-            recommendations.append(
-                f"已保存 {len(saved_files)} 个代码文件"
-            )
+            recommendations.append(f"已保存 {len(saved_files)} 个代码文件")
         if test_result["ran"]:
             if test_result["passed"]:
                 recommendations.append("✅ 所有测试通过")
             else:
                 recommendations.append(f"⚠️ 测试有问题: {test_result['output'][:200]}")
-        recommendations.extend([
-            "使用 verifier Agent 验证实现",
-            "使用 code-reviewer Agent 审查代码",
-        ])
+        recommendations.extend(
+            [
+                "使用 verifier Agent 验证实现",
+                "使用 code-reviewer Agent 审查代码",
+            ]
+        )
 
         return AgentOutput(
             agent_name=self.name,
@@ -360,8 +367,11 @@ def test_add():
                     file_path = match.group(2) or ""
                     if not file_path:
                         # 尝试从下一行获取路径
-                        if i + 1 < len(lines) and not lines[i + 1].startswith("#") \
-                           and not lines[i + 1].startswith("```"):
+                        if (
+                            i + 1 < len(lines)
+                            and not lines[i + 1].startswith("#")
+                            and not lines[i + 1].startswith("```")
+                        ):
                             file_path = lines[i + 1].strip()
                             i += 1
                 else:
@@ -400,7 +410,9 @@ def test_add():
 
         return blocks
 
-    def _try_format_code(self, project_path: Path, saved_files: List[str]) -> Dict[str, Any]:
+    def _try_format_code(
+        self, project_path: Path, saved_files: List[str]
+    ) -> Dict[str, Any]:
         """尝试格式化代码"""
         result = {"formatted": [], "errors": []}
 
@@ -433,7 +445,9 @@ def test_add():
 
         return result
 
-    def _try_run_tests(self, project_path: Path, saved_files: List[str]) -> Dict[str, Any]:
+    def _try_run_tests(
+        self, project_path: Path, saved_files: List[str]
+    ) -> Dict[str, Any]:
         """尝试运行测试"""
         result = {
             "ran": False,

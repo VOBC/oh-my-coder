@@ -4,15 +4,15 @@
 运行: pytest tests/test_models/test_glm.py -v
 """
 
-import pytest
-import asyncio
-from unittest.mock import AsyncMock, patch, MagicMock
-
 import sys
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
+
 sys.path.insert(0, "/Users/vobc/.qclaw/workspace-agent-bf627e2b/projects/oh-my-coder")
 
-from src.models.base import ModelConfig, ModelProvider, ModelTier, Message
-from src.models.glm import GLMModel, GLMAPIError
+from src.models.base import Message, ModelConfig, ModelProvider, ModelTier
+from src.models.glm import GLMAPIError, GLMModel
 
 
 class TestGLMModelInit:
@@ -55,11 +55,13 @@ class TestGLMGenerate:
         mock_resp = MagicMock()
         mock_resp.json.return_value = {
             "id": "glm-test-001",
-            "choices": [{
-                "message": {"content": content},
-                "finish_reason": "stop",
-                "index": 0,
-            }],
+            "choices": [
+                {
+                    "message": {"content": content},
+                    "finish_reason": "stop",
+                    "index": 0,
+                }
+            ],
             "usage": {
                 "prompt_tokens": 10,
                 "completion_tokens": tokens,
@@ -110,11 +112,13 @@ class TestGLMGenerate:
 
         with patch.object(model, "_get_client") as mock_get:
             client = AsyncMock()
-            client.post = AsyncMock(side_effect=httpx.HTTPStatusError(
-                "403 Forbidden",
-                request=MagicMock(),
-                response=MagicMock(status_code=403),
-            ))
+            client.post = AsyncMock(
+                side_effect=httpx.HTTPStatusError(
+                    "403 Forbidden",
+                    request=MagicMock(),
+                    response=MagicMock(status_code=403),
+                )
+            )
             mock_get.return_value = client
 
             with pytest.raises(GLMAPIError):
@@ -129,16 +133,18 @@ class TestGLMStream:
         model = GLMModel(ModelConfig(api_key="test_key"))
 
         async def fake_lines():
-            yield "data: {\"choices\":[{\"delta\":{\"content\":\"Chunk1\"}}]}"
-            yield "data: {\"choices\":[{\"delta\":{\"content\":\"Chunk2\"}}]}"
+            yield 'data: {"choices":[{"delta":{"content":"Chunk1"}}]}'
+            yield 'data: {"choices":[{"delta":{"content":"Chunk2"}}]}'
             yield "data: [DONE]"
 
         mock_ctx = MagicMock()
+
         async def enter_async():
             mock_stream = MagicMock()
             mock_stream.raise_for_status = MagicMock()
             mock_stream.aiter_lines = fake_lines
             return mock_stream
+
         mock_ctx.__aenter__ = AsyncMock(side_effect=enter_async)
 
         with patch.object(model, "_get_client") as mock_get:
@@ -146,7 +152,9 @@ class TestGLMStream:
             client.stream = MagicMock(return_value=mock_ctx)
             mock_get.return_value = client
 
-            chunks = [c async for c in model.stream([Message(role="user", content="Hi")])]
+            chunks = [
+                c async for c in model.stream([Message(role="user", content="Hi")])
+            ]
 
         assert "".join(chunks) == "Chunk1Chunk2"
 

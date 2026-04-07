@@ -11,22 +11,18 @@ API 地址：https://spark-api.xf-yun.com
 - 需三个凭证：API Key / App ID / Secret Key
 """
 
-import httpx
-from typing import List, AsyncIterator, Dict, Any, Optional
-import json
 import time
-import base64
-import hashlib
-import hmac
-from datetime import datetime, timezone, timedelta
+from typing import Any, AsyncIterator, Dict, List, Optional
+
+import httpx
 
 from .base import (
     BaseModel,
+    Message,
     ModelConfig,
     ModelProvider,
-    ModelTier,
-    Message,
     ModelResponse,
+    ModelTier,
     Usage,
 )
 
@@ -154,4 +150,5 @@ class SparkModel(BaseModel):
 
 class SparkAPIError(Exception):
     """讯飞星火 API 错误"""
+
     pass

@@ -11,22 +11,19 @@ Oh My Coder CLI - 命令行入口
 - omc --version          # 显示版本
 - omc --help             # 帮助信息
 """
+
 import asyncio
 import os
-import sys
 from pathlib import Path
-from typing import Optional
 
 import typer
 from rich.console import Console
-from rich.table import Table
 from rich.panel import Panel
 from rich.progress import Progress, SpinnerColumn, TextColumn
-from rich.style import Style
+from rich.table import Table
 
-from .core.router import ModelRouter, RouterConfig
 from .core.orchestrator import Orchestrator
-from .agents.base import list_agents
+from .core.router import ModelRouter, RouterConfig
 
 # 版本信息
 __version__ = "0.2.0"
@@ -59,19 +56,23 @@ def main(
         _print_version()
         raise typer.Exit(0)
     if ctx.invoked_subcommand is None:
-        console.print(Panel.fit(
-            f"[bold cyan]Oh My Coder[/bold cyan] v{__version__}\n"
-            f"[dim]多智能体 AI 编程助手[/dim]\n\n"
-            f"[dim]使用 [bold]omc --help[/bold] 查看所有命令[/dim]\n"
-            f"[dim]仓库: {__repo__}[/dim]",
-            border_style="cyan",
-        ))
+        console.print(
+            Panel.fit(
+                f"[bold cyan]Oh My Coder[/bold cyan] v{__version__}\n"
+                f"[dim]多智能体 AI 编程助手[/dim]\n\n"
+                f"[dim]使用 [bold]omc --help[/bold] 查看所有命令[/dim]\n"
+                f"[dim]仓库: {__repo__}[/dim]",
+                border_style="cyan",
+            )
+        )
         raise typer.Exit(0)
 
 
 def _print_version():
     """打印版本信息"""
-    console.print(f"[bold cyan]oh-my-coder[/bold cyan] version [green]{__version__}[/green]")
+    console.print(
+        f"[bold cyan]oh-my-coder[/bold cyan] version [green]{__version__}[/green]"
+    )
     console.print(f"[dim]Author: {__author__}[/dim]")
     console.print(f"[dim]Repo: {__repo__}[/dim]")
 
@@ -88,13 +89,15 @@ def run(
     if not _check_env():
         raise typer.Exit(1)
 
-    console.print(Panel.fit(
-        f"[bold green]Oh My Coder[/bold green]\n"
-        f"任务: {task}\n"
-        f"项目: {project_path}\n"
-        f"工作流: {workflow}",
-        title="🚀 启动",
-    ))
+    console.print(
+        Panel.fit(
+            f"[bold green]Oh My Coder[/bold green]\n"
+            f"任务: {task}\n"
+            f"项目: {project_path}\n"
+            f"工作流: {workflow}",
+            title="🚀 启动",
+        )
+    )
 
     # 初始化路由器和编排器
     try:
@@ -113,13 +116,15 @@ def run(
         progress.add_task("执行工作流...", total=None)
 
         try:
-            result = asyncio.run(orchestrator.execute_workflow(
-                workflow,
-                {
-                    "project_path": str(project_path.absolute()),
-                    "task": task,
-                }
-            ))
+            result = asyncio.run(
+                orchestrator.execute_workflow(
+                    workflow,
+                    {
+                        "project_path": str(project_path.absolute()),
+                        "task": task,
+                    },
+                )
+            )
 
             # 显示结果
             _display_result(result)
@@ -128,9 +133,9 @@ def run(
             _print_fatal(
                 f"工作流执行出错: {e}",
                 hint="可尝试以下方法：\n"
-                     "  1. 检查网络连接\n"
-                     "  2. 确认 API Key 有效：omc status\n"
-                     "  3. 查看详细日志",
+                "  1. 检查网络连接\n"
+                "  2. 确认 API Key 有效：omc status\n"
+                "  3. 查看详细日志",
             )
             raise typer.Exit(1)
 
@@ -153,13 +158,15 @@ def explore(
     orchestrator = Orchestrator(router)
 
     try:
-        result = asyncio.run(orchestrator.execute_single_agent(
-            "explore",
-            {
-                "project_path": str(project_path.absolute()),
-                "task": "探索代码库并生成项目地图",
-            }
-        ))
+        result = asyncio.run(
+            orchestrator.execute_single_agent(
+                "explore",
+                {
+                    "project_path": str(project_path.absolute()),
+                    "task": "探索代码库并生成项目地图",
+                },
+            )
+        )
 
         if result.result:
             console.print(Panel(result.result, title="项目地图"))
@@ -178,15 +185,29 @@ def agents():
     table.add_column("名称", style="cyan")
     table.add_column("描述")
     table.add_column("层级", style="green")
-    
+
     # 导入所有 Agent
     from .agents import (
-        ExploreAgent, AnalystAgent, PlannerAgent, ArchitectAgent, ExecutorAgent,
-        VerifierAgent, TestEngineerAgent, CodeReviewerAgent, DebuggerAgent, CriticAgent,
-        WriterAgent, DesignerAgent, SecurityReviewerAgent, GitMasterAgent,
-        CodeSimplifierAgent, TracerAgent, ScientistAgent, QATesterAgent
+        AnalystAgent,
+        ArchitectAgent,
+        CodeReviewerAgent,
+        CodeSimplifierAgent,
+        CriticAgent,
+        DebuggerAgent,
+        DesignerAgent,
+        ExecutorAgent,
+        ExploreAgent,
+        GitMasterAgent,
+        PlannerAgent,
+        QATesterAgent,
+        ScientistAgent,
+        SecurityReviewerAgent,
+        TestEngineerAgent,
+        TracerAgent,
+        VerifierAgent,
+        WriterAgent,
     )
-    
+
     agents_list = [
         ("explore", ExploreAgent.description, ExploreAgent.default_tier),
         ("analyst", AnalystAgent.description, AnalystAgent.default_tier),
@@ -194,25 +215,41 @@ def agents():
         ("architect", ArchitectAgent.description, ArchitectAgent.default_tier),
         ("executor", ExecutorAgent.description, ExecutorAgent.default_tier),
         ("verifier", VerifierAgent.description, VerifierAgent.default_tier),
-        ("test-engineer", TestEngineerAgent.description, TestEngineerAgent.default_tier),
-        ("code-reviewer", CodeReviewerAgent.description, CodeReviewerAgent.default_tier),
+        (
+            "test-engineer",
+            TestEngineerAgent.description,
+            TestEngineerAgent.default_tier,
+        ),
+        (
+            "code-reviewer",
+            CodeReviewerAgent.description,
+            CodeReviewerAgent.default_tier,
+        ),
         ("debugger", DebuggerAgent.description, DebuggerAgent.default_tier),
         ("tracer", TracerAgent.description, TracerAgent.default_tier),
         ("critic", CriticAgent.description, CriticAgent.default_tier),
         ("writer", WriterAgent.description, WriterAgent.default_tier),
         ("designer", DesignerAgent.description, DesignerAgent.default_tier),
-        ("security-reviewer", SecurityReviewerAgent.description, SecurityReviewerAgent.default_tier),
+        (
+            "security-reviewer",
+            SecurityReviewerAgent.description,
+            SecurityReviewerAgent.default_tier,
+        ),
         ("git-master", GitMasterAgent.description, GitMasterAgent.default_tier),
-        ("code-simplifier", CodeSimplifierAgent.description, CodeSimplifierAgent.default_tier),
+        (
+            "code-simplifier",
+            CodeSimplifierAgent.description,
+            CodeSimplifierAgent.default_tier,
+        ),
         ("scientist", ScientistAgent.description, ScientistAgent.default_tier),
         ("qa-tester", QATesterAgent.description, QATesterAgent.default_tier),
     ]
-    
+
     for name, desc, tier in agents_list:
         table.add_row(name, desc, tier)
-    
+
     console.print(table)
-    
+
     console.print(f"\n[dim]共 {len(agents_list)} 个智能体[/dim]")
 
 
@@ -246,19 +283,23 @@ def status():
     try:
         router = _init_router()
         stats = router.get_stats()
-        console.print(Panel(
-            f"[green]✓ 路由器就绪[/green]\n"
-            f"总请求数: [cyan]{stats['total_requests']}[/cyan]\n"
-            f"总成本:   [cyan]¥{stats['total_cost']:.4f}[/cyan]",
-            title="路由器",
-            border_style="green",
-        ))
+        console.print(
+            Panel(
+                f"[green]✓ 路由器就绪[/green]\n"
+                f"总请求数: [cyan]{stats['total_requests']}[/cyan]\n"
+                f"总成本:   [cyan]¥{stats['total_cost']:.4f}[/cyan]",
+                title="路由器",
+                border_style="green",
+            )
+        )
     except Exception as e:
-        console.print(Panel(
-            f"[red]✗ 路由器初始化失败[/red]\n\n{e}",
-            title="路由器",
-            border_style="red",
-        ))
+        console.print(
+            Panel(
+                f"[red]✗ 路由器初始化失败[/red]\n\n{e}",
+                title="路由器",
+                border_style="red",
+            )
+        )
 
 
 def _init_router() -> ModelRouter:
@@ -276,35 +317,37 @@ def _init_router() -> ModelRouter:
 
 def _print_missing_key_hint(key: str, reason: str = ""):
     """打印缺失 API Key 的友好提示"""
-    from rich.columns import Columns
-    from rich.text import Text
 
     console.print()
-    console.print(Panel(
-        f"[bold red]✗ 未找到 {key}[/bold red]\n\n"
-        f"[yellow]请先配置 API Key[/yellow]\n\n"
-        f"[dim]推荐:[/dim] DeepSeek — {reason}\n\n"
-        f"[cyan]方法一:[/cyan] 设置环境变量\n"
-        f"  [green]export {key}=your_key_here[green]\n\n"
-        f"[cyan]方法二:[/cyan] 写入 .env 文件\n"
-        f"  [green]echo '{key}=your_key_here' >> .env[green]\n\n"
-        f"[dim]获取地址:[/dim] https://platform.deepseek.com/",
-        title="⚠️ 缺少 API Key",
-        border_style="red",
-    ))
+    console.print(
+        Panel(
+            f"[bold red]✗ 未找到 {key}[/bold red]\n\n"
+            f"[yellow]请先配置 API Key[/yellow]\n\n"
+            f"[dim]推荐:[/dim] DeepSeek — {reason}\n\n"
+            f"[cyan]方法一:[/cyan] 设置环境变量\n"
+            f"  [green]export {key}=your_key_here[green]\n\n"
+            f"[cyan]方法二:[/cyan] 写入 .env 文件\n"
+            f"  [green]echo '{key}=your_key_here' >> .env[green]\n\n"
+            f"[dim]获取地址:[/dim] https://platform.deepseek.com/",
+            title="⚠️ 缺少 API Key",
+            border_style="red",
+        )
+    )
     console.print()
 
 
 def _print_fatal(msg: str, hint: str = ""):
     """打印致命错误并退出"""
-    from rich.markdown import Markdown
 
     console.print()
-    console.print(Panel(
-        f"[bold red]✗ {msg}[/bold red]" + (f"\n\n[cyan]提示:[/cyan] {hint}" if hint else ""),
-        title="❌ 执行失败",
-        border_style="red",
-    ))
+    console.print(
+        Panel(
+            f"[bold red]✗ {msg}[/bold red]"
+            + (f"\n\n[cyan]提示:[/cyan] {hint}" if hint else ""),
+            title="❌ 执行失败",
+            border_style="red",
+        )
+    )
     console.print()
 
 
@@ -325,17 +368,17 @@ def _display_result(result):
     console.print(f"状态: {_status_color(result.status.value)}")
     console.print(f"执行时间: {result.execution_time:.2f}s")
     console.print(f"Token 使用: {result.total_tokens:,}")
-    
+
     if result.steps_completed:
-        console.print(f"\n[green]✓ 已完成步骤:[/green]")
+        console.print("\n[green]✓ 已完成步骤:[/green]")
         for step in result.steps_completed:
             console.print(f"  - {step}")
-    
+
     if result.steps_failed:
-        console.print(f"\n[red]✗ 失败步骤:[/red]")
+        console.print("\n[red]✗ 失败步骤:[/red]")
         for step in result.steps_failed:
             console.print(f"  - {step}")
-    
+
     if result.error:
         console.print(f"\n[red]错误: {result.error}[/red]")
 

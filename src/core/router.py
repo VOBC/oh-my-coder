@@ -14,26 +14,23 @@
 我们扩展为多提供商路由，优先使用 DeepSeek（免费），必要时才调用付费模型。
 """
 
-from dataclasses import dataclass, field
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any
+import asyncio
 import hashlib
 import logging
 import os
-import asyncio
+from dataclasses import dataclass, field
+from datetime import datetime
+from typing import Any, Dict, List, Optional
 
 from ..models.base import (
     BaseModel,
-    ModelConfig,
-    ModelProvider,
-    ModelTier,
     Message,
+    ModelConfig,
     ModelResponse,
+    ModelTier,
     Usage,
 )
-
 from ..models.deepseek import DeepSeekModel
-
 
 # ============================================================
 # Logger
@@ -62,9 +59,17 @@ class TaskType:
     @classmethod
     def all(cls) -> List[str]:
         return [
-            cls.EXPLORE, cls.SIMPLE_QA, cls.FORMATTING,
-            cls.CODE_GENERATION, cls.DEBUGGING, cls.TESTING, cls.REFACTORING,
-            cls.ARCHITECTURE, cls.SECURITY_REVIEW, cls.CODE_REVIEW, cls.PLANNING,
+            cls.EXPLORE,
+            cls.SIMPLE_QA,
+            cls.FORMATTING,
+            cls.CODE_GENERATION,
+            cls.DEBUGGING,
+            cls.TESTING,
+            cls.REFACTORING,
+            cls.ARCHITECTURE,
+            cls.SECURITY_REVIEW,
+            cls.CODE_REVIEW,
+            cls.PLANNING,
         ]
 
 
@@ -131,14 +136,14 @@ class RouterConfig:
         # 默认故障转移顺序（优先免费/便宜的）
         if not self.fallback_order:
             self.fallback_order = [
-                "deepseek",   # 免费额度高
-                "kimi",       # 长上下文
-                "doubao",     # 性价比高
-                "minimax",    # 海螺
-                "glm",        # 智谱
-                "tongyi",     # 通义千问
-                "wenxin",     # 文心一言
-                "hunyuan",    # 混元
+                "deepseek",  # 免费额度高
+                "kimi",  # 长上下文
+                "doubao",  # 性价比高
+                "minimax",  # 海螺
+                "glm",  # 智谱
+                "tongyi",  # 通义千问
+                "wenxin",  # 文心一言
+                "hunyuan",  # 混元
             ]
 
 
@@ -224,7 +229,8 @@ class ResponseCache:
         """缓存统计"""
         total = len(self._cache)
         expired = sum(
-            1 for e in self._cache.values()
+            1
+            for e in self._cache.values()
             if (datetime.now() - e["cached_at"]).total_seconds() > self._ttl
         )
         return {
@@ -253,10 +259,14 @@ class ModelRouter:
         self._models: Dict[str, Dict[str, BaseModel]] = {}
         self._decision_history: List[RoutingDecision] = []
         self._total_cost = 0.0
-        self._cache = ResponseCache(
-            max_entries=self.config.cache_max_entries,
-            ttl_seconds=self.config.cache_ttl_seconds,
-        ) if self.config.cache_enabled else None
+        self._cache = (
+            ResponseCache(
+                max_entries=self.config.cache_max_entries,
+                ttl_seconds=self.config.cache_ttl_seconds,
+            )
+            if self.config.cache_enabled
+            else None
+        )
 
         self._initialize_models()
 
@@ -279,6 +289,7 @@ class ModelRouter:
         if self.config.wenxin_api_key and wenxin_secret:
             try:
                 from ..models.wenxin import WenxinModel
+
                 for tier in ["low", "medium", "high"]:
                     cfg = ModelConfig(api_key=self.config.wenxin_api_key)
                     self._models.setdefault("wenxin", {})[tier] = WenxinModel(
@@ -292,6 +303,7 @@ class ModelRouter:
         if self.config.tongyi_api_key:
             try:
                 from ..models.tongyi import TongyiModel
+
                 for tier in ["low", "medium", "high"]:
                     cfg = ModelConfig(api_key=self.config.tongyi_api_key)
                     self._models.setdefault("tongyi", {})[tier] = TongyiModel(
@@ -305,9 +317,12 @@ class ModelRouter:
         if self.config.glm_api_key:
             try:
                 from ..models.glm import GLMModel
+
                 for tier in ["low", "medium", "high"]:
                     cfg = ModelConfig(api_key=self.config.glm_api_key)
-                    self._models.setdefault("glm", {})[tier] = GLMModel(cfg, ModelTier(tier))
+                    self._models.setdefault("glm", {})[tier] = GLMModel(
+                        cfg, ModelTier(tier)
+                    )
                 logger.info("智谱 GLM 模型已初始化")
             except Exception as e:
                 logger.warning(f"智谱 GLM 初始化失败: {e}")
@@ -316,9 +331,12 @@ class ModelRouter:
         if self.config.minimax_api_key:
             try:
                 from ..models.minimax import MiniMaxModel
+
                 for tier in ["low", "medium", "high"]:
                     cfg = ModelConfig(api_key=self.config.minimax_api_key)
-                    self._models.setdefault("minimax", {})[tier] = MiniMaxModel(cfg, ModelTier(tier))
+                    self._models.setdefault("minimax", {})[tier] = MiniMaxModel(
+                        cfg, ModelTier(tier)
+                    )
                 logger.info("MiniMax 模型已初始化")
             except Exception as e:
                 logger.warning(f"MiniMax 初始化失败: {e}")
@@ -327,9 +345,12 @@ class ModelRouter:
         if self.config.kimi_api_key:
             try:
                 from ..models.kimi import KimiModel
+
                 for tier in ["low", "medium", "high"]:
                     cfg = ModelConfig(api_key=self.config.kimi_api_key)
-                    self._models.setdefault("kimi", {})[tier] = KimiModel(cfg, ModelTier(tier))
+                    self._models.setdefault("kimi", {})[tier] = KimiModel(
+                        cfg, ModelTier(tier)
+                    )
                 logger.info("Kimi 模型已初始化")
             except Exception as e:
                 logger.warning(f"Kimi 初始化失败: {e}")
@@ -338,6 +359,7 @@ class ModelRouter:
         if self.config.hunyuan_api_key:
             try:
                 from ..models.hunyuan import HunyuanModel
+
                 hunyuan_secret = os.getenv("HUNYUAN_SECRET_KEY")
                 for tier in ["low", "medium", "high"]:
                     cfg = ModelConfig(api_key=self.config.hunyuan_api_key)
@@ -352,9 +374,12 @@ class ModelRouter:
         if self.config.doubao_api_key:
             try:
                 from ..models.doubao import DoubaoModel
+
                 for tier in ["low", "medium", "high"]:
                     cfg = ModelConfig(api_key=self.config.doubao_api_key)
-                    self._models.setdefault("doubao", {})[tier] = DoubaoModel(cfg, ModelTier(tier))
+                    self._models.setdefault("doubao", {})[tier] = DoubaoModel(
+                        cfg, ModelTier(tier)
+                    )
                 logger.info("字节豆包模型已初始化")
             except Exception as e:
                 logger.warning(f"字节豆包初始化失败: {e}")
@@ -473,7 +498,8 @@ class ModelRouter:
 
         # 4. 故障转移：按 fallback 顺序尝试
         fallback_order = [
-            p for p in self.config.fallback_order
+            p
+            for p in self.config.fallback_order
             if p in self._models and decision.selected_tier in self._models[p]
         ]
         # 确保当前选择的在最前
