@@ -86,6 +86,8 @@ asyncio_mode = "auto"
 [tool.ruff]
 line-length = 88
 target-version = "py39"
+
+[tool.ruff.lint]
 select = ["E", "F", "W", "I", "N"]
 ignore = [
     "E501",   # line too long (handled by formatter)
