@@ -438,6 +438,84 @@ flowchart TD
 
 ---
 
+## 📊 任务总结
+
+每个任务完成后自动生成结构化总结，记录执行全过程：
+
+### 核心功能
+
+| 功能 | 说明 |
+|------|------|
+| 全流程记录 | 每个 Agent 的执行时间、Token 消耗、执行结果 |
+| 成本统计 | 自动计算总成本，支持多模型费用对比 |
+| 优化建议 | 根据执行情况智能推荐优化策略 |
+| 多格式导出 | JSON（机器解析）、TXT（快速查看）、HTML（报告分享） |
+
+### 使用示例
+
+```python
+from src.core.summary import generate_summary, print_summary, save_summary
+
+# 任务完成后生成总结
+summary = generate_summary(
+    task="为电商系统实现订单模块",
+    workflow="build",
+    completed_steps=[
+        {"agent": "ExploreAgent", "status": "completed", "duration": 2.3, "tokens": 1200, "result": "发现 45 个文件"},
+        {"agent": "AnalystAgent", "status": "completed", "duration": 5.1, "tokens": 3500, "result": "识别 3 个实体"},
+        {"agent": "ArchitectAgent", "status": "completed", "duration": 8.2, "tokens": 5200, "result": "设计 REST API"},
+        {"agent": "ExecutorAgent", "status": "completed", "duration": 15.7, "tokens": 12000, "result": "生成 8 个文件"},
+        {"agent": "VerifierAgent", "status": "completed", "duration": 10.3, "tokens": 4800, "result": "pytest 18/18 通过"},
+    ],
+)
+
+# 打印到终端
+print_summary(summary)
+
+# 保存为 HTML 报告
+save_path = save_summary(summary, format="html")
+# 输出: reports/summary_build_电商系统实现订单模块_20260407_113800.html
+```
+
+### 总结输出示例
+
+```
+✅ 任务: 为电商系统实现订单模块
+📋 工作流: build
+⏱️  耗时: 41.6s
+💰 成本: ¥0.03
+🔢 Token: 26,700
+🤖 Agent 数: 5
+🔧 模型: deepseek-chat, deepseek-chat, deepseek-reasoner
+
+📊 执行步骤：
+  1. ✅ Explore       - 2.3s | 1,200 tokens | 发现 45 个文件
+  2. ✅ Analyst       - 5.1s | 3,500 tokens | 识别 3 个实体
+  3. ✅ Architect     - 8.2s | 5,200 tokens | 设计 REST API
+  4. ✅ Executor      - 15.7s | 12,000 tokens | 生成 8 个文件
+  5. ✅ Verifier      - 10.3s | 4,800 tokens | pytest 18/18 通过
+
+💡 优化建议：
+  ✅ 执行效率良好，无需特殊优化
+```
+
+### 高级用法
+
+```python
+from src.core.summary import load_summary, print_summary_compact
+
+# 从历史报告加载
+summary = load_summary(Path("reports/summary_xxx.json"))
+
+# 紧凑模式（单行，适合日志）
+print_summary_compact(summary)
+# 输出: ✅ [build] 为电商系统实现订单模块 | 41.6s | ¥0.03 | 5 agents
+```
+
+> 📌 总结文件默认保存在 `reports/` 目录，可通过 `output_dir` 参数自定义路径。
+
+---
+
 ## 🔒 安全特性
 
 Oh My Coder 高度重视代码安全：
@@ -464,7 +542,8 @@ oh-my-coder/
 │   │   └── ...
 │   ├── core/                # 核心引擎
 │   │   ├── router.py        # 三层模型路由器
-│   │   └── orchestrator.py  # 智能编排引擎
+│   │   ├── orchestrator.py  # 智能编排引擎
+│   │   └── summary.py       # 任务总结生成器
 │   ├── models/              # 模型适配层（11 个厂商）
 │   │   ├── base.py          # 统一接口
 │   │   ├── deepseek.py      # DeepSeek 适配器
@@ -489,7 +568,8 @@ oh-my-coder/
 │   └── test_integration.py   # 集成测试
 ├── examples/                # 示例代码
 │   ├── web_demo.py          # Web API 使用示例
-│   └── cli_demo.py          # CLI 使用示例
+│   ├── cli_demo.py          # CLI 使用示例
+│   └── advanced_demo.py     # 高级示例（多模型/Agent协作/总结）
 ├── docs/                    # 文档
 ├── requirements.txt         # 依赖
 └── pyproject.toml          # 项目配置
@@ -500,20 +580,23 @@ oh-my-coder/
 ## 🧪 测试
 
 ```bash
-# 运行所有测试
+# 运行所有测试（78 个测试）
 pytest
 
 # 运行指定测试
 pytest tests/test_web.py -v
 
 # 带覆盖率
-pytest --cov=src --cov-report=html
+pytest --cov=src --cov-report=term-missing
 
 # 仅 Web 界面测试
 pytest tests/test_web.py -v
 
 # 仅集成测试
 pytest tests/test_integration.py -v
+
+# 仅单元测试
+pytest -m unit -v
 ```
 
 ---
@@ -528,9 +611,10 @@ pytest tests/test_integration.py -v
 - [x] CLI 入口
 - [x] Web 界面（SSE 实时推送）
 - [x] 测试套件
-- [x] 示例代码
+- [x] 示例代码（基础 + 高级）
 - [x] Docker 部署
-- [ ] 更多测试覆盖
+- [x] 任务总结功能
+- [x] CI/CD 完整测试（lint + build + multi-python）
 
 ---
 
