@@ -689,6 +689,19 @@ MIT License - 详见 [LICENSE](LICENSE)
 
 ---
 
+## ❤️ 支持这个项目
+
+如果你觉得这个项目对你有帮助，可以通过以下方式支持我们：
+
+### ⭐ 其他帮助方式
+
+- **给项目点个 Star** — 让更多人看到这个项目
+- **提交 Issue** — 反馈问题或建议新功能
+- **提交 PR** — 贡献代码，帮助项目变得更好
+- **分享给朋友** — 让更多需要的人知道这个工具
+
+---
+
 ## 📈 Star History
 
 [![Star History](https://api.star-history.com/svg?repos=VOBC/oh-my-coder&type=Date&theme=dark)](https://star-history.com/#VOBC/oh-my-coder&Date)
