@@ -24,6 +24,7 @@ sys.path.insert(0, str(project_root))
 from src.agents.base import AgentContext, AgentOutput, AgentStatus, get_agent
 from src.core.orchestrator import WORKFLOW_TEMPLATES, Orchestrator
 from src.core.router import ModelRouter, RouterConfig
+from src.web.history_api import history_router, agent_router, history_store
 
 # ========================================
 # FastAPI App
@@ -38,6 +39,10 @@ app = FastAPI(
 web_dir = Path(__file__).parent
 app.mount("/static", StaticFiles(directory=web_dir / "static"), name="static")
 templates = Jinja2Templates(directory=web_dir / "templates")
+
+# 注册增强路由
+app.include_router(history_router)
+app.include_router(agent_router)
 
 
 # ========================================
@@ -217,6 +222,18 @@ async def index(request: Request):
     return templates.TemplateResponse(request, "index.html")
 
 
+@app.get("/history", response_class=HTMLResponse)
+async def history_page(request: Request):
+    """历史记录页面"""
+    return templates.TemplateResponse(request, "history.html")
+
+
+@app.get("/agents", response_class=HTMLResponse)
+async def agents_page(request: Request):
+    """Agent 状态页面"""
+    return templates.TemplateResponse(request, "agents.html")
+
+
 @app.get("/api/tasks")
 async def list_tasks():
     """列出所有任务"""
@@ -363,8 +380,37 @@ async def run_task(
 
         task_manager.complete_task(task_id, result=result)
 
+        # 保存历史记录
+        history_record = {
+            "task_id": task_id,
+            "task": task,
+            "workflow": workflow_name,
+            "project_path": project_path,
+            "model": model,
+            "status": "completed",
+            "started_at": task_manager._tasks[task_id].get("started_at"),
+            "completed_at": datetime.now().isoformat(),
+            "stats": task_manager._tasks[task_id]["stats"],
+            "result": result,
+        }
+        history_store.save(task_id, history_record)
+
     except Exception as e:
         task_manager.complete_task(task_id, error=str(e))
+
+        # 保存失败记录
+        history_record = {
+            "task_id": task_id,
+            "task": task,
+            "workflow": workflow_name,
+            "project_path": project_path,
+            "model": model,
+            "status": "failed",
+            "started_at": task_manager._tasks[task_id].get("started_at"),
+            "completed_at": datetime.now().isoformat(),
+            "error": str(e),
+        }
+        history_store.save(task_id, history_record)
 
 
 # ===== 同步执行端点（适用于小任务）=====

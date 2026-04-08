@@ -1,0 +1,217 @@
+{
+  "name": "oh-my-coder",
+  "displayName": "Oh My Coder",
+  "description": "多智能体 AI 编程助手 - 支持 11 个国产大模型",
+  "version": "0.1.0",
+  "publisher": "vobc",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Machine Learning",
+    "Other"
+  ],
+  "keywords": [
+    "ai",
+    "agent",
+    "coding",
+    "chinese",
+    "deepseek",
+    "multi-agent"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "icon": "resources/icon.png",
+  "contributes": {
+    "commands": [
+      {
+        "command": "omc.runTask",
+        "title": "Oh My Coder: 运行任务",
+        "icon": "$(play)"
+      },
+      {
+        "command": "omc.exploreCode",
+        "title": "Oh My Coder: 探索代码库"
+      },
+      {
+        "command": "omc.reviewCode",
+        "title": "Oh My Coder: 代码审查"
+      },
+      {
+        "command": "omc.debugCode",
+        "title": "Oh My Coder: 调试代码"
+      },
+      {
+        "command": "omc.generateTest",
+        "title": "Oh My Coder: 生成测试"
+      },
+      {
+        "command": "omc.showHistory",
+        "title": "Oh My Coder: 显示历史"
+      },
+      {
+        "command": "omc.openPanel",
+        "title": "Oh My Coder: 打开面板"
+      },
+      {
+        "command": "omc.stopTask",
+        "title": "Oh My Coder: 停止任务",
+        "icon": "$(debug-stop)"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "command": "omc.runTask",
+          "when": "editorHasSelection",
+          "group": "omc@1"
+        },
+        {
+          "command": "omc.reviewCode",
+          "when": "editorHasSelection",
+          "group": "omc@2"
+        },
+        {
+          "command": "omc.generateTest",
+          "when": "editorHasSelection",
+          "group": "omc@3"
+        }
+      ],
+      "editor/title": [
+        {
+          "command": "omc.runTask",
+          "when": "editorHasSelection",
+          "group": "navigation"
+        }
+      ]
+    },
+    "keybindings": [
+      {
+        "command": "omc.runTask",
+        "key": "ctrl+shift+enter",
+        "mac": "cmd+shift+enter",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "omc.reviewCode",
+        "key": "ctrl+shift+r",
+        "mac": "cmd+shift+r",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "omc.openPanel",
+        "key": "ctrl+shift+o",
+        "mac": "cmd+shift+o"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "omc-sidebar",
+          "title": "Oh My Coder",
+          "icon": "resources/icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "omc-sidebar": [
+        {
+          "id": "omc-tasks",
+          "name": "任务"
+        },
+        {
+          "id": "omc-history",
+          "name": "历史"
+        },
+        {
+          "id": "omc-agents",
+          "name": "Agents"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Oh My Coder",
+      "properties": {
+        "omc.apiKey": {
+          "type": "string",
+          "default": "",
+          "description": "默认 API Key（DeepSeek）"
+        },
+        "omc.defaultModel": {
+          "type": "string",
+          "enum": [
+            "deepseek",
+            "qwen",
+            "glm",
+            "kimi",
+            "hunyuan",
+            "wenxin",
+            "doubao",
+            "minimax",
+            "tiangong",
+            "spark",
+            "baichuan"
+          ],
+          "default": "deepseek",
+          "description": "默认使用的模型"
+        },
+        "omc.autoSave": {
+          "type": "boolean",
+          "default": true,
+          "description": "自动保存生成的代码"
+        },
+        "omc.showStatusBar": {
+          "type": "boolean",
+          "default": true,
+          "description": "显示状态栏"
+        },
+        "omc.maxTokens": {
+          "type": "number",
+          "default": 4096,
+          "description": "最大输出 Token 数"
+        },
+        "omc.temperature": {
+          "type": "number",
+          "default": 0.7,
+          "minimum": 0,
+          "maximum": 2,
+          "description": "生成温度"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile",
+    "lint": "eslint src --ext ts",
+    "test": "node ./out/test/runTest.js",
+    "package": "vsce package"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "@types/vscode": "^1.85.0",
+    "@typescript-eslint/eslint-plugin": "^6.13.0",
+    "@typescript-eslint/parser": "^6.13.0",
+    "eslint": "^8.54.0",
+    "typescript": "^5.3.2",
+    "@vscode/test-electron": "^2.3.8",
+    "@vscode/vsce": "^2.22.0"
+  },
+  "dependencies": {
+    "axios": "^1.6.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/VOBC/oh-my-coder.git"
+  },
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/VOBC/oh-my-coder/issues"
+  },
+  "homepage": "https://github.com/VOBC/oh-my-coder#readme"
+}
