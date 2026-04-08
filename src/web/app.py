@@ -26,6 +26,7 @@ from src.core.orchestrator import WORKFLOW_TEMPLATES, Orchestrator
 from src.core.router import ModelRouter, RouterConfig
 from src.web.history_api import history_router, agent_router, history_store
 from src.web.dashboard_api import router as dashboard_router
+from src.web.team_api import router as team_router
 
 # ========================================
 # FastAPI App
@@ -45,6 +46,7 @@ templates = Jinja2Templates(directory=web_dir / "templates")
 app.include_router(history_router)
 app.include_router(agent_router)
 app.include_router(dashboard_router)
+app.include_router(team_router)
 
 
 # ========================================
