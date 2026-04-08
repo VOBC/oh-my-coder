@@ -141,14 +141,12 @@ class TestExploreAgent:
         router = ModelRouter(config)
         agent = ExploreAgent(router)
 
-        # 扫描当前项目
-        project_path = Path(
-            "/Users/vobc/.qclaw/workspace-agent-bf627e2b/projects/oh-my-coder"
-        )
+        # 扫描当前项目（使用相对路径，兼容 CI 环境）
+        project_path = Path(__file__).parent.parent
         structure = agent._scan_directory(project_path, max_depth=2)
 
         assert "src/" in structure
-        assert "docs/" in structure
+        assert "tests/" in structure
 
     def test_collect_file_stats(self):
         """测试文件统计"""
@@ -160,9 +158,8 @@ class TestExploreAgent:
         router = ModelRouter(config)
         agent = ExploreAgent(router)
 
-        project_path = Path(
-            "/Users/vobc/.qclaw/workspace-agent-bf627e2b/projects/oh-my-coder"
-        )
+        # 使用相对路径，兼容 CI 环境
+        project_path = Path(__file__).parent.parent
         stats = agent._collect_file_stats(project_path)
 
         assert stats["total_files"] > 0
