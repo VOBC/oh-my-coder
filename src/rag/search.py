@@ -17,6 +17,7 @@ import re
 @dataclass
 class SearchResult:
     """搜索结果"""
+
     element_id: str
     file_path: str
     name: str
@@ -34,22 +35,23 @@ class SearchResult:
 @dataclass
 class SearchConfig:
     """搜索配置"""
+
     max_results: int = 10
     min_score: float = 0.3
     hybrid_alpha: float = 0.5  # 语义搜索权重（0-1），剩余为关键词权重
-    context_lines: int = 3    # 上下文行数
+    context_lines: int = 3  # 上下文行数
 
 
 class SemanticSearch:
     """
     语义搜索
-    
+
     支持：
     1. 纯语义搜索（向量相似度）
     2. 纯关键词搜索（BM25）
     3. 混合搜索（语义 + 关键词）
     """
-    
+
     def __init__(self, indexer, config: Optional[SearchConfig] = None):
         """
         Args:
@@ -58,7 +60,7 @@ class SemanticSearch:
         """
         self.indexer = indexer
         self.config = config or SearchConfig()
-    
+
     def search(
         self,
         query: str,
@@ -67,12 +69,12 @@ class SemanticSearch:
     ) -> List[SearchResult]:
         """
         执行搜索
-        
+
         Args:
             query: 搜索查询
             search_type: 搜索类型（semantic/keyword/hybrid）
             filters: 过滤条件
-            
+
         Returns:
             搜索结果列表
         """
@@ -82,7 +84,7 @@ class SemanticSearch:
             return self._keyword_search(query, filters)
         else:
             return self._hybrid_search(query, filters)
-    
+
     def _semantic_search(
         self,
         query: str,
@@ -90,38 +92,38 @@ class SemanticSearch:
     ) -> List[SearchResult]:
         """语义搜索（向量相似度）"""
         results = []
-        
+
         # 获取查询嵌入
         query_embedding = self._get_embedding(query)
-        
+
         if not query_embedding:
             # 没有嵌入，降级为关键词搜索
             return self._keyword_search(query, filters)
-        
+
         # 计算与所有元素的相似度
         similarities = []
         for element in self.indexer.element_index.values():
             if not element.embedding:
                 continue
-            
+
             # 应用过滤
             if filters and not self._match_filters(element, filters):
                 continue
-            
+
             similarity = self._cosine_similarity(query_embedding, element.embedding)
             similarities.append((element, similarity))
-        
+
         # 排序并返回 top-k
         similarities.sort(key=lambda x: x[1], reverse=True)
-        
-        for element, score in similarities[:self.config.max_results]:
+
+        for element, score in similarities[: self.config.max_results]:
             if score < self.config.min_score:
                 continue
-            
+
             results.append(self._element_to_result(element, score))
-        
+
         return results
-    
+
     def _keyword_search(
         self,
         query: str,
@@ -129,28 +131,28 @@ class SemanticSearch:
     ) -> List[SearchResult]:
         """关键词搜索（BM25 风格）"""
         results = []
-        
+
         # 分词
         query_terms = self._tokenize(query)
-        
+
         # 计算每个元素的 BM25 分数
         scores = []
         for element in self.indexer.element_index.values():
             if filters and not self._match_filters(element, filters):
                 continue
-            
+
             score = self._bm25_score(element, query_terms)
             if score > 0:
                 scores.append((element, score))
-        
+
         # 排序并返回 top-k
         scores.sort(key=lambda x: x[1], reverse=True)
-        
-        for element, score in scores[:self.config.max_results]:
+
+        for element, score in scores[: self.config.max_results]:
             results.append(self._element_to_result(element, score))
-        
+
         return results
-    
+
     def _hybrid_search(
         self,
         query: str,
@@ -159,35 +161,37 @@ class SemanticSearch:
         """混合搜索（语义 + 关键词）"""
         semantic_results = self._semantic_search(query, filters)
         keyword_results = self._keyword_search(query, filters)
-        
+
         # 合并结果
         combined = {}
-        
+
         # 语义搜索结果
         for result in semantic_results:
             combined[result.element_id] = result
             result.relevance_score *= self.config.hybrid_alpha
-        
+
         # 关键词搜索结果
         for result in keyword_results:
             if result.element_id in combined:
                 # 合并分数
-                combined[result.element_id].relevance_score += (
-                    result.relevance_score * (1 - self.config.hybrid_alpha)
+                combined[
+                    result.element_id
+                ].relevance_score += result.relevance_score * (
+                    1 - self.config.hybrid_alpha
                 )
             else:
-                result.relevance_score *= (1 - self.config.hybrid_alpha)
+                result.relevance_score *= 1 - self.config.hybrid_alpha
                 combined[result.element_id] = result
-        
+
         # 排序
         results = sorted(
             combined.values(),
             key=lambda x: x.relevance_score,
             reverse=True,
         )
-        
-        return results[:self.config.max_results]
-    
+
+        return results[: self.config.max_results]
+
     def search_context(
         self,
         query: str,
@@ -196,14 +200,14 @@ class SemanticSearch:
     ) -> List[SearchResult]:
         """
         上下文相关搜索
-        
+
         根据当前上下文（如正在编辑的代码）搜索相关元素
-        
+
         Args:
             query: 搜索查询
             context_elements: 上下文元素 ID 列表
             max_results: 最大结果数
-            
+
         Returns:
             与上下文相关的搜索结果
         """
@@ -213,53 +217,48 @@ class SemanticSearch:
             element = self.indexer.element_index.get(eid)
             if element and element.embedding:
                 context_embeddings.append(element.embedding)
-        
+
         if not context_embeddings:
             return self.search(query)
-        
+
         # 计算上下文平均嵌入
         avg_embedding = self._average_embeddings(context_embeddings)
-        
+
         # 获取查询嵌入
         query_embedding = self._get_embedding(query)
-        
+
         if not query_embedding:
             return self._keyword_search(query)
-        
+
         # 结合查询嵌入和上下文嵌入
         combined_embedding = [
             (q + c) / 2 for q, c in zip(query_embedding, avg_embedding)
         ]
-        
+
         # 搜索
         results = []
         for element in self.indexer.element_index.values():
             if not element.embedding:
                 continue
-            
+
             if element.id in context_elements:
                 continue  # 排除已在上下文中的元素
-            
-            similarity = self._cosine_similarity(
-                combined_embedding, element.embedding
-            )
-            
+
+            similarity = self._cosine_similarity(combined_embedding, element.embedding)
+
             if similarity >= self.config.min_score:
                 results.append((element, similarity))
-        
+
         # 排序并返回
         results.sort(key=lambda x: x[1], reverse=True)
-        
-        return [
-            self._element_to_result(e, s)
-            for e, s in results[:max_results]
-        ]
-    
+
+        return [self._element_to_result(e, s) for e, s in results[:max_results]]
+
     def _get_embedding(self, text: str) -> Optional[List[float]]:
         """获取文本嵌入"""
         # TODO: 调用嵌入 API
         return None
-    
+
     def _cosine_similarity(
         self,
         vec1: List[float],
@@ -268,16 +267,16 @@ class SemanticSearch:
         """计算余弦相似度"""
         if not vec1 or not vec2 or len(vec1) != len(vec2):
             return 0.0
-        
+
         dot_product = sum(a * b for a, b in zip(vec1, vec2))
         norm1 = math.sqrt(sum(a * a for a in vec1))
         norm2 = math.sqrt(sum(b * b for b in vec2))
-        
+
         if norm1 == 0 or norm2 == 0:
             return 0.0
-        
+
         return dot_product / (norm1 * norm2)
-    
+
     def _average_embeddings(
         self,
         embeddings: List[List[float]],
@@ -285,22 +284,19 @@ class SemanticSearch:
         """计算平均嵌入"""
         if not embeddings:
             return []
-        
+
         n = len(embeddings)
         dim = len(embeddings[0])
-        
-        return [
-            sum(e[i] for e in embeddings) / n
-            for i in range(dim)
-        ]
-    
+
+        return [sum(e[i] for e in embeddings) / n for i in range(dim)]
+
     def _tokenize(self, text: str) -> List[str]:
         """分词"""
         # 简单分词：小写化 + 按非字母数字分割
         text = text.lower()
-        tokens = re.findall(r'[a-z0-9_]+', text)
+        tokens = re.findall(r"[a-z0-9_]+", text)
         return tokens
-    
+
     def _bm25_score(
         self,
         element,
@@ -312,37 +308,37 @@ class SemanticSearch:
         # 获取元素文本
         text = f"{element.name} {element.signature or ''} {element.docstring or ''}"
         text = text.lower()
-        
+
         # 分词
         element_terms = self._tokenize(text)
         if not element_terms:
             return 0.0
-        
+
         # 计算词频
         term_freq = {}
         for term in element_terms:
             term_freq[term] = term_freq.get(term, 0) + 1
-        
+
         # 计算文档长度
         doc_length = len(element_terms)
         avg_doc_length = 50  # 简化假设
-        
+
         # 计算分数
         score = 0.0
         for term in query_terms:
             if term not in term_freq:
                 continue
-            
+
             tf = term_freq[term]
             idf = 1.0  # 简化，没有文档频率
-            
+
             numerator = tf * (k1 + 1)
             denominator = tf + k1 * (1 - b + b * doc_length / avg_doc_length)
-            
+
             score += idf * numerator / denominator
-        
+
         return score
-    
+
     def _match_filters(
         self,
         element,
@@ -359,9 +355,9 @@ class SemanticSearch:
             elif key == "name_pattern":
                 if not re.search(value, element.name):
                     return False
-        
+
         return True
-    
+
     def _element_to_result(
         self,
         element,
@@ -372,7 +368,7 @@ class SemanticSearch:
         highlights = []
         if element.docstring:
             highlights.append(element.docstring[:100])
-        
+
         return SearchResult(
             element_id=element.id,
             file_path=element.file_path,
@@ -391,14 +387,14 @@ class SemanticSearch:
 class ContextBuilder:
     """
     上下文构建器
-    
+
     为 Agent 构建项目上下文
     """
-    
+
     def __init__(self, indexer, search: SemanticSearch):
         self.indexer = indexer
         self.search = search
-    
+
     def build_context(
         self,
         task: str,
@@ -407,38 +403,42 @@ class ContextBuilder:
     ) -> str:
         """
         构建项目上下文
-        
+
         Args:
             task: 任务描述
             relevant_files: 相关文件列表
             max_tokens: 最大 token 数
-            
+
         Returns:
             格式化的上下文字符串
         """
         parts = []
-        
+
         # 1. 项目概述
         stats = self.indexer.get_stats()
-        parts.append(f"""## 项目概述
+        parts.append(
+            f"""## 项目概述
 - 文件数: {stats['files_indexed']}
 - 代码元素: {stats['elements_indexed']}
 - 语言分布: {stats['languages']}
-""")
-        
+"""
+        )
+
         # 2. 相关代码搜索
         search_results = self.search.search(task, search_type="hybrid")
-        
+
         if search_results:
             parts.append("## 相关代码\n")
             for result in search_results[:5]:
-                parts.append(f"""### {result.name} ({result.type})
+                parts.append(
+                    f"""### {result.name} ({result.type})
 文件: {result.file_path}:{result.start_line}-{result.end_line}
 ```python
 {result.source_code[:500]}{'...' if len(result.source_code) > 500 else ''}
 ```
-""")
-        
+"""
+                )
+
         # 3. 相关文件结构
         if relevant_files:
             parts.append("## 文件结构\n")
@@ -447,14 +447,14 @@ class ContextBuilder:
                 if file_index:
                     elements_summary = self._summarize_elements(file_index.elements)
                     parts.append(f"- {file_path}\n  {elements_summary}\n")
-        
-        return '\n'.join(parts)
-    
+
+        return "\n".join(parts)
+
     def _summarize_elements(self, elements) -> str:
         """总结元素"""
         counts = {}
         for e in elements:
             type_name = e.type.value
             counts[type_name] = counts.get(type_name, 0) + 1
-        
-        return ', '.join(f"{count} {type_name}" for type_name, count in counts.items())
+
+        return ", ".join(f"{count} {type_name}" for type_name, count in counts.items())
