@@ -3,7 +3,6 @@
 """
 
 import pytest
-from datetime import datetime, timedelta
 import uuid
 
 from src.team import (
