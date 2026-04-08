@@ -121,10 +121,15 @@ class TestTeamAuth:
         )
 
         # 所有者有权限
-        assert team_auth.check_permission(owner_id, team.team_id, MemberRole.ADMIN) is True
+        assert (
+            team_auth.check_permission(owner_id, team.team_id, MemberRole.ADMIN) is True
+        )
 
         # 普通成员没有管理员权限
-        assert team_auth.check_permission(member_id, team.team_id, MemberRole.ADMIN) is False
+        assert (
+            team_auth.check_permission(member_id, team.team_id, MemberRole.ADMIN)
+            is False
+        )
 
 
 # ========================================
