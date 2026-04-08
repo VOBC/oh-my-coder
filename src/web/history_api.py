@@ -19,6 +19,7 @@ from pydantic import BaseModel
 history_router = APIRouter(prefix="/api/history", tags=["history"])
 agent_router = APIRouter(prefix="/api/agents", tags=["agents"])
 
+
 # ========================================
 # 历史记录存储
 # ========================================
@@ -97,15 +98,21 @@ class HistoryStore:
         total_tasks = len(all_records)
         completed_tasks = sum(1 for r in all_records if r.get("status") == "completed")
         failed_tasks = sum(1 for r in all_records if r.get("status") == "failed")
-        total_tokens = sum(r.get("stats", {}).get("total_tokens", 0) for r in all_records)
+        total_tokens = sum(
+            r.get("stats", {}).get("total_tokens", 0) for r in all_records
+        )
         total_cost = sum(r.get("stats", {}).get("total_cost", 0) for r in all_records)
-        total_duration = sum(r.get("stats", {}).get("execution_time", 0) for r in all_records)
+        total_duration = sum(
+            r.get("stats", {}).get("execution_time", 0) for r in all_records
+        )
 
         return {
             "total_tasks": total_tasks,
             "completed_tasks": completed_tasks,
             "failed_tasks": failed_tasks,
-            "success_rate": round(completed_tasks / total_tasks * 100, 1) if total_tasks > 0 else 0,
+            "success_rate": (
+                round(completed_tasks / total_tasks * 100, 1) if total_tasks > 0 else 0
+            ),
             "total_tokens": total_tokens,
             "total_cost": round(total_cost, 4),
             "total_duration_hours": round(total_duration / 3600, 2),

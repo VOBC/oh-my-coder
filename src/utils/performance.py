@@ -202,9 +202,7 @@ def cache_result(ttl_seconds: int = 300):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
             # 生成缓存键
-            key = hashlib.md5(
-                f"{func.__name__}:{args}:{kwargs}".encode()
-            ).hexdigest()
+            key = hashlib.md5(f"{func.__name__}:{args}:{kwargs}".encode()).hexdigest()
 
             current_time = time.time()
 

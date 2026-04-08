@@ -73,7 +73,9 @@ class TestStepExecution:
             description="生成代码",
             input_context={"task": "test"},
         )
-        complete_step_execution(step, output={"code": "print('hello')"}, tokens_used=200)
+        complete_step_execution(
+            step, output={"code": "print('hello')"}, tokens_used=200
+        )
         assert step.status == StepStatus.COMPLETED
         assert step.output["code"] == "print('hello')"
         assert step.tokens_used == 200
@@ -373,7 +375,9 @@ class TestHistoryManager:
                 workflow_name="build",
                 tags=["test"],
             )
-            assert history.history_id.startswith("hist-") or len(history.history_id) == 8
+            assert (
+                history.history_id.startswith("hist-") or len(history.history_id) == 8
+            )
             assert history.workflow_name == "build"
 
     def test_save_and_load(self):
@@ -486,7 +490,9 @@ class TestHelperFunctions:
     def test_complete_step_execution(self):
         """测试完成步骤"""
         step = create_step_execution("A", "test", {})
-        result = complete_step_execution(step, {"output": "result"}, tokens_used=500, cost=0.05)
+        result = complete_step_execution(
+            step, {"output": "result"}, tokens_used=500, cost=0.05
+        )
         assert result.status == StepStatus.COMPLETED
         assert result.tokens_used == 500
         assert result.cost == 0.05

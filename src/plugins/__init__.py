@@ -18,6 +18,7 @@ from pydantic import BaseModel
 
 class PluginStatus(str, Enum):
     """插件状态"""
+
     ENABLED = "enabled"
     DISABLED = "disabled"
     ERROR = "error"
@@ -26,6 +27,7 @@ class PluginStatus(str, Enum):
 
 class PluginMetadata(BaseModel):
     """插件元数据"""
+
     name: str
     version: str
     description: str = ""
@@ -40,6 +42,7 @@ class PluginMetadata(BaseModel):
 @dataclass
 class Plugin:
     """插件实例"""
+
     metadata: PluginMetadata
     status: PluginStatus = PluginStatus.DISABLED
     module: Optional[Any] = None

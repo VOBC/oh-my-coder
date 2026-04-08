@@ -15,6 +15,7 @@ from pydantic import BaseModel
 
 class TemplateCategory(str, Enum):
     """模板分类"""
+
     BUILD = "build"
     REVIEW = "review"
     DEBUG = "debug"
@@ -28,6 +29,7 @@ class TemplateCategory(str, Enum):
 @dataclass
 class WorkflowStep:
     """工作流步骤"""
+
     agent_name: str
     description: str = ""
     dependencies: List[str] = field(default_factory=list)
@@ -39,6 +41,7 @@ class WorkflowStep:
 
 class TemplateMetadata(BaseModel):
     """模板元数据"""
+
     name: str
     display_name: str
     description: str
@@ -54,6 +57,7 @@ class TemplateMetadata(BaseModel):
 @dataclass
 class WorkflowTemplate:
     """工作流模板"""
+
     metadata: TemplateMetadata
     steps: List[WorkflowStep]
     variables: Dict[str, Any] = field(default_factory=dict)
@@ -119,9 +123,21 @@ BUILTIN_TEMPLATES: List[WorkflowTemplate] = [
         ),
         steps=[
             WorkflowStep(agent_name="Planner", description="制定开发计划"),
-            WorkflowStep(agent_name="Architect", description="设计系统架构", dependencies=["Planner"]),
-            WorkflowStep(agent_name="Executor", description="生成代码", dependencies=["Architect"]),
-            WorkflowStep(agent_name="Verifier", description="验证和测试", dependencies=["Executor"]),
+            WorkflowStep(
+                agent_name="Architect",
+                description="设计系统架构",
+                dependencies=["Planner"],
+            ),
+            WorkflowStep(
+                agent_name="Executor",
+                description="生成代码",
+                dependencies=["Architect"],
+            ),
+            WorkflowStep(
+                agent_name="Verifier",
+                description="验证和测试",
+                dependencies=["Executor"],
+            ),
         ],
     ),
     WorkflowTemplate(
@@ -172,7 +188,11 @@ BUILTIN_TEMPLATES: List[WorkflowTemplate] = [
             WorkflowStep(agent_name="CodeReviewer", description="代码质量审查"),
             WorkflowStep(agent_name="SecurityReviewer", description="安全审查"),
             WorkflowStep(agent_name="TestEngineer", description="测试覆盖检查"),
-            WorkflowStep(agent_name="Writer", description="生成审查报告", dependencies=["CodeReviewer", "SecurityReviewer", "TestEngineer"]),
+            WorkflowStep(
+                agent_name="Writer",
+                description="生成审查报告",
+                dependencies=["CodeReviewer", "SecurityReviewer", "TestEngineer"],
+            ),
         ],
     ),
     # 调试模板
@@ -189,9 +209,15 @@ BUILTIN_TEMPLATES: List[WorkflowTemplate] = [
         ),
         steps=[
             WorkflowStep(agent_name="Debugger", description="定位问题"),
-            WorkflowStep(agent_name="Tracer", description="追踪根因", dependencies=["Debugger"]),
-            WorkflowStep(agent_name="Executor", description="修复问题", dependencies=["Tracer"]),
-            WorkflowStep(agent_name="Verifier", description="验证修复", dependencies=["Executor"]),
+            WorkflowStep(
+                agent_name="Tracer", description="追踪根因", dependencies=["Debugger"]
+            ),
+            WorkflowStep(
+                agent_name="Executor", description="修复问题", dependencies=["Tracer"]
+            ),
+            WorkflowStep(
+                agent_name="Verifier", description="验证修复", dependencies=["Executor"]
+            ),
         ],
     ),
     # 测试模板
@@ -223,8 +249,14 @@ BUILTIN_TEMPLATES: List[WorkflowTemplate] = [
         ),
         steps=[
             WorkflowStep(agent_name="TestEngineer", description="生成单元测试"),
-            WorkflowStep(agent_name="Executor", description="生成集成测试", dependencies=["TestEngineer"]),
-            WorkflowStep(agent_name="Verifier", description="运行测试", dependencies=["Executor"]),
+            WorkflowStep(
+                agent_name="Executor",
+                description="生成集成测试",
+                dependencies=["TestEngineer"],
+            ),
+            WorkflowStep(
+                agent_name="Verifier", description="运行测试", dependencies=["Executor"]
+            ),
         ],
     ),
     # 重构模板
@@ -241,9 +273,19 @@ BUILTIN_TEMPLATES: List[WorkflowTemplate] = [
         ),
         steps=[
             WorkflowStep(agent_name="CodeReviewer", description="识别重构点"),
-            WorkflowStep(agent_name="Architect", description="设计重构方案", dependencies=["CodeReviewer"]),
-            WorkflowStep(agent_name="Executor", description="执行重构", dependencies=["Architect"]),
-            WorkflowStep(agent_name="Verifier", description="验证功能", dependencies=["Executor"]),
+            WorkflowStep(
+                agent_name="Architect",
+                description="设计重构方案",
+                dependencies=["CodeReviewer"],
+            ),
+            WorkflowStep(
+                agent_name="Executor",
+                description="执行重构",
+                dependencies=["Architect"],
+            ),
+            WorkflowStep(
+                agent_name="Verifier", description="验证功能", dependencies=["Executor"]
+            ),
         ],
     ),
     # 文档模板
@@ -275,7 +317,11 @@ BUILTIN_TEMPLATES: List[WorkflowTemplate] = [
         ),
         steps=[
             WorkflowStep(agent_name="Explorer", description="分析 API 结构"),
-            WorkflowStep(agent_name="Writer", description="生成 API 文档", dependencies=["Explorer"]),
+            WorkflowStep(
+                agent_name="Writer",
+                description="生成 API 文档",
+                dependencies=["Explorer"],
+            ),
         ],
     ),
     # 探索模板
@@ -292,7 +338,11 @@ BUILTIN_TEMPLATES: List[WorkflowTemplate] = [
         ),
         steps=[
             WorkflowStep(agent_name="Explorer", description="探索代码库"),
-            WorkflowStep(agent_name="Writer", description="生成分析报告", dependencies=["Explorer"]),
+            WorkflowStep(
+                agent_name="Writer",
+                description="生成分析报告",
+                dependencies=["Explorer"],
+            ),
         ],
     ),
 ]
@@ -439,7 +489,11 @@ class TemplateMarket:
         for template in self._templates.values():
             cat = template.metadata.category.value
             if cat not in categories:
-                categories[cat] = {"name": cat, "icon": template.metadata.icon, "count": 0}
+                categories[cat] = {
+                    "name": cat,
+                    "icon": template.metadata.icon,
+                    "count": 0,
+                }
             categories[cat]["count"] += 1
 
         return list(categories.values())
