@@ -25,6 +25,7 @@ from src.agents.base import AgentContext, AgentOutput, AgentStatus, get_agent
 from src.core.orchestrator import WORKFLOW_TEMPLATES, Orchestrator
 from src.core.router import ModelRouter, RouterConfig
 from src.web.history_api import history_router, agent_router, history_store
+from src.web.dashboard_api import router as dashboard_router
 
 # ========================================
 # FastAPI App
@@ -43,6 +44,7 @@ templates = Jinja2Templates(directory=web_dir / "templates")
 # 注册增强路由
 app.include_router(history_router)
 app.include_router(agent_router)
+app.include_router(dashboard_router)
 
 
 # ========================================
@@ -232,6 +234,12 @@ async def history_page(request: Request):
 async def agents_page(request: Request):
     """Agent 状态页面"""
     return templates.TemplateResponse(request, "agents.html")
+
+
+@app.get("/dashboard", response_class=HTMLResponse)
+async def dashboard_page(request: Request):
+    """项目仪表板页面"""
+    return templates.TemplateResponse(request, "dashboard.html")
 
 
 @app.get("/api/tasks")

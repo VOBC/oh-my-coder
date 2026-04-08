@@ -1,0 +1,24 @@
+# Railway 部署配置
+# 一键部署到 Railway 平台
+
+[build]
+builder = "nixpacks"
+buildCommand = "pip install -e .[dev]"
+
+[deploy]
+startCommand = "uvicorn src.web.app:app --host 0.0.0.0 --port $PORT"
+healthcheckPath = "/health"
+healthcheckTimeout = 300
+restartPolicyType = "on_failure"
+
+[[services]]
+name = "oh-my-coder"
+env = "python"
+
+[services.variables]
+# 在 Railway Dashboard 中设置以下环境变量：
+# DEEPSEEK_API_KEY
+# TONGYI_API_KEY
+# WENXIN_API_KEY
+# KIMI_API_KEY
+# GLM_API_KEY

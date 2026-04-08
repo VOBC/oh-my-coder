@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Oh My Coder - 项目仪表板</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        .header p { opacity: 0.9; }
+        
+        /* 统计卡片 */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            background: white;
+            border-radius: 16px;
+            padding: 25px;
+            text-align: center;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+        }
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+        .stat-icon {
+            font-size: 3em;
+            margin-bottom: 10px;
+        }
+        .stat-value {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #333;
+        }
+        .stat-label {
+            color: #666;
+            margin-top: 5px;
+        }
+        .stat-change {
+            font-size: 0.9em;
+            margin-top: 10px;
+            padding: 4px 12px;
+            border-radius: 20px;
+        }
+        .stat-change.up { background: #d4edda; color: #155724; }
+        .stat-change.down { background: #f8d7da; color: #721c24; }
+        
+        /* 内容区域 */
+        .content-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
+        }
+        @media (max-width: 1024px) {
+            .content-grid { grid-template-columns: 1fr; }
+        }
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+        .card-title {
+            font-size: 1.3em;
+            margin-bottom: 20px;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        /* 活动图表 */
+        .activity-chart {
+            height: 200px;
+            display: flex;
+            align-items: flex-end;
+            gap: 8px;
+            padding: 20px 0;
+        }
+        .chart-bar {
+            flex: 1;
+            background: linear-gradient(to top, #667eea, #764ba2);
+            border-radius: 4px 4px 0 0;
+            min-height: 20px;
+            position: relative;
+            transition: all 0.3s;
+        }
+        .chart-bar:hover {
+            opacity: 0.8;
+        }
+        .chart-bar::after {
+            content: attr(data-day);
+            position: absolute;
+            bottom: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.8em;
+            color: #666;
+        }
+        
+        /* 最近任务 */
+        .task-list { list-style: none; }
+        .task-item {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            transition: background 0.3s;
+        }
+        .task-item:hover { background: #f8f9fa; }
+        .task-item:last-child { border-bottom: none; }
+        .task-status {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+        .task-status.completed { background: #28a745; }
+        .task-status.running { background: #ffc107; animation: pulse 1s infinite; }
+        .task-status.failed { background: #dc3545; }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .task-info { flex: 1; }
+        .task-name { font-weight: 500; color: #333; }
+        .task-meta { font-size: 0.85em; color: #666; margin-top: 3px; }
+        .task-time { font-size: 0.85em; color: #999; }
+        
+        /* Agent 状态 */
+        .agent-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+        .agent-item {
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .agent-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+        .agent-dot.idle { background: #6c757d; }
+        .agent-dot.running { background: #28a745; }
+        .agent-dot.error { background: #dc3545; }
+        .agent-name { font-size: 0.9em; color: #333; }
+        
+        /* 快速操作 */
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .action-btn {
+            padding: 12px;
+            border: 2px solid #667eea;
+            border-radius: 10px;
+            background: white;
+            color: #667eea;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .action-btn:hover {
+            background: #667eea;
+            color: white;
+        }
+        .action-btn.primary {
+            background: #667eea;
+            color: white;
+        }
+        .action-btn.primary:hover {
+            background: #5a6fd6;
+        }
+        
+        /* 导航 */
+        .nav {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .nav a {
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            background: rgba(255,255,255,0.2);
+            transition: background 0.3s;
+        }
+        .nav a:hover, .nav a.active {
+            background: rgba(255,255,255,0.4);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 Oh My Coder</h1>
+            <p>多智能体 AI 编程助手 - 项目仪表板</p>
+        </div>
+        
+        <div class="nav">
+            <a href="/">🏠 首页</a>
+            <a href="/dashboard" class="active">📊 仪表板</a>
+            <a href="/history">📜 历史记录</a>
+            <a href="/agents">🤖 Agents</a>
+        </div>
+        
+        <!-- 统计卡片 -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon">📝</div>
+                <div class="stat-value" id="totalTasks">156</div>
+                <div class="stat-label">总任务数</div>
+                <div class="stat-change up">↑ 12% 本周</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">✅</div>
+                <div class="stat-value" id="completedTasks">142</div>
+                <div class="stat-label">已完成</div>
+                <div class="stat-change up">91% 成功率</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">🔄</div>
+                <div class="stat-value" id="runningTasks">3</div>
+                <div class="stat-label">执行中</div>
+                <div class="stat-change down">2 个排队等待</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">⚡</div>
+                <div class="stat-value" id="avgTime">45s</div>
+                <div class="stat-label">平均耗时</div>
+                <div class="stat-change up">↓ 8% 优化</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">🪙</div>
+                <div class="stat-value" id="totalTokens">2.3M</div>
+                <div class="stat-label">总 Token</div>
+                <div class="stat-change up">本月消耗</div>
+            </div>
+        </div>
+        
+        <!-- 内容区域 -->
+        <div class="content-grid">
+            <!-- 左侧：活动和任务 -->
+            <div class="card">
+                <div class="card-title">📈 最近 7 天活动</div>
+                <div class="activity-chart" id="activityChart">
+                    <!-- JavaScript 填充 -->
+                </div>
+                
+                <div class="card-title" style="margin-top: 30px;">📋 最近任务</div>
+                <ul class="task-list" id="recentTasks">
+                    <li class="task-item">
+                        <div class="task-status completed"></div>
+                        <div class="task-info">
+                            <div class="task-name">实现用户登录功能</div>
+                            <div class="task-meta">build 工作流 · DeepSeek</div>
+                        </div>
+                        <div class="task-time">5 分钟前</div>
+                    </li>
+                    <li class="task-item">
+                        <div class="task-status running"></div>
+                        <div class="task-info">
+                            <div class="task-name">生成 API 文档</div>
+                            <div class="task-meta">document 工作流 · 通义千问</div>
+                        </div>
+                        <div class="task-time">执行中...</div>
+                    </li>
+                    <li class="task-item">
+                        <div class="task-status completed"></div>
+                        <div class="task-info">
+                            <div class="task-name">代码审查 PR #42</div>
+                            <div class="task-meta">review 工作流 · 文心一言</div>
+                        </div>
+                        <div class="task-time">1 小时前</div>
+                    </li>
+                    <li class="task-item">
+                        <div class="task-status failed"></div>
+                        <div class="task-info">
+                            <div class="task-name">修复数据库连接问题</div>
+                            <div class="task-meta">debug 工作流 · Kimi</div>
+                        </div>
+                        <div class="task-time">2 小时前</div>
+                    </li>
+                </ul>
+            </div>
+            
+            <!-- 右侧：Agent 状态和快速操作 -->
+            <div>
+                <div class="card">
+                    <div class="card-title">🤖 Agent 状态</div>
+                    <div class="agent-grid" id="agentStatus">
+                        <div class="agent-item">
+                            <div class="agent-dot idle"></div>
+                            <span class="agent-name">Planner</span>
+                        </div>
+                        <div class="agent-item">
+                            <div class="agent-dot running"></div>
+                            <span class="agent-name">Writer</span>
+                        </div>
+                        <div class="agent-item">
+                            <div class="agent-dot idle"></div>
+                            <span class="agent-name">Executor</span>
+                        </div>
+                        <div class="agent-item">
+                            <div class="agent-dot idle"></div>
+                            <span class="agent-name">Reviewer</span>
+                        </div>
+                        <div class="agent-item">
+                            <div class="agent-dot idle"></div>
+                            <span class="agent-name">Debugger</span>
+                        </div>
+                        <div class="agent-item">
+                            <div class="agent-dot idle"></div>
+                            <span class="agent-name">Architect</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card" style="margin-top: 20px;">
+                    <div class="card-title">⚡ 快速操作</div>
+                    <div class="quick-actions">
+                        <button class="action-btn primary" onclick="newTask()">
+                            ➕ 新建任务
+                        </button>
+                        <button class="action-btn" onclick="location.href='/history'">
+                            📜 查看历史
+                        </button>
+                        <button class="action-btn" onclick="location.href='/agents'">
+                            🤖 管理 Agents
+                        </button>
+                        <button class="action-btn" onclick="showSettings()">
+                            ⚙️ 设置
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // 渲染活动图表
+        function renderActivityChart() {
+            const chart = document.getElementById('activityChart');
+            const days = ['一', '二', '三', '四', '五', '六', '日'];
+            const data = [12, 19, 8, 15, 22, 18, 14];
+            const max = Math.max(...data);
+            
+            chart.innerHTML = data.map((value, i) => {
+                const height = (value / max) * 150;
+                return `<div class="chart-bar" style="height: ${height}px" data-day="${days[i]}" title="${value} 个任务"></div>`;
+            }).join('');
+        }
+        
+        // 新建任务
+        function newTask() {
+            const task = prompt('请输入任务描述：');
+            if (task) {
+                fetch('/api/execute', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({task: task, workflow: 'build'})
+                }).then(r => r.json()).then(data => {
+                    alert('任务已创建: ' + data.task_id);
+                    location.reload();
+                });
+            }
+        }
+        
+        // 显示设置
+        function showSettings() {
+            alert('设置功能开发中...');
+        }
+        
+        // 初始化
+        renderActivityChart();
+        
+        // 自动刷新
+        setInterval(() => {
+            // 可以添加实时数据刷新逻辑
+        }, 30000);
+    </script>
+</body>
+</html>

@@ -1,52 +1,49 @@
-# Oh My Coder - Docker Compose 配置
-# ==========================================
-# 一键启动 Oh My Coder Web 服务
-#
-# 用法：
-#   cp .env.example .env        # 复制并填入 API Key
-#   docker compose up -d        # 后台启动
-#   docker compose logs -f      # 查看日志
-#   docker compose down         # 停止服务
-#
-# 访问：http://localhost:8000
-# ==========================================
+# Docker Compose 部署配置
+# 一键启动完整服务
+
+version: '3.8'
 
 services:
-  oh-my-coder:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: oh-my-coder
-    restart: unless-stopped
-
+  # Web 服务
+  web:
+    build: .
     ports:
-      - "8000:8000"               # Web 界面
-
-    # API Key 通过环境变量传入
+      - "8000:8000"
     environment:
-      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY:-}
-      - WENXIN_API_KEY=${WENXIN_API_KEY:-}
-      - WENXIN_SECRET_KEY=${WENXIN_SECRET_KEY:-}
-      - TONGYI_API_KEY=${TONGYI_API_KEY:-}
-      - GLM_API_KEY=${GLM_API_KEY:-}
-      - MINIMAX_API_KEY=${MINIMAX_API_KEY:-}
-      - KIMI_API_KEY=${KIMI_API_KEY:-}
-      - HUNYUAN_API_KEY=${HUNYUAN_API_KEY:-}
-      - HUNYUAN_SECRET_KEY=${HUNYUAN_SECRET_KEY:-}
-      - DOUBAO_API_KEY=${DOUBAO_API_KEY:-}
-
-    # 源码目录挂载，修改代码后无需重新构建
+      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}
+      - TONGYI_API_KEY=${TONGYI_API_KEY}
+      - WENXIN_API_KEY=${WENXIN_API_KEY}
+      - KIMI_API_KEY=${KIMI_API_KEY}
+      - GLM_API_KEY=${GLM_API_KEY}
+      - BAICHUAN_API_KEY=${BAICHUAN_API_KEY}
+      - MINIMAX_API_KEY=${MINIMAX_API_KEY}
+      - SPARK_API_KEY=${SPARK_API_KEY}
+      - TIANGONG_API_KEY=${TIANGONG_API_KEY}
+      - DOUBAO_API_KEY=${DOUBAO_API_KEY}
+      - HUNYUAN_API_KEY=${HUNYUAN_API_KEY}
     volumes:
-      - .:/app:cached
-
-    # 友好的启动日志
-    command: >
-      sh -c "echo '🚀 Oh My Coder 启动中...' &&
-             python -m src.web.app"
-
+      - ./data:/app/data
+      - ./.omc:/app/.omc
+    restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 10s
+
+  # Redis（可选，用于缓存）
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  redis_data:

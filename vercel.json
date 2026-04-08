@@ -1,0 +1,27 @@
+# Vercel 部署配置
+# 一键部署到 Vercel 平台
+
+{
+  "$schema": "https://openapi.vercel.sh/vercel.schema.json",
+  "version": 2,
+  "name": "oh-my-coder",
+  "builds": [
+    {
+      "src": "src/web/app.py",
+      "use": "@vercel/python"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "src/web/app.py"
+    }
+  ],
+  "env": {
+    "DEEPSEEK_API_KEY": "@deepseek_api_key",
+    "TONGYI_API_KEY": "@tongyi_api_key",
+    "WENXIN_API_KEY": "@wenxin_api_key",
+    "KIMI_API_KEY": "@kimi_api_key",
+    "GLM_API_KEY": "@glm_api_key"
+  }
+}
