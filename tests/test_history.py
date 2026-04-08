@@ -2,12 +2,9 @@
 任务历史模块测试
 """
 
-import json
 import tempfile
-from datetime import datetime
 from pathlib import Path
 
-import pytest
 
 from src.core.history import (
     HistoryManager,
