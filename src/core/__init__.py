@@ -10,7 +10,7 @@ Core 模块 - 核心功能
 - 上下文管理
 """
 
-from .router import ModelRouter, TaskRouter, TaskType
+from .router import ModelRouter, TaskType
 from .orchestrator import Orchestrator, WorkflowResult, WorkflowStep
 from .history import (
     HistoryManager,
@@ -26,7 +26,6 @@ from .history import (
 __all__ = [
     # Router
     "ModelRouter",
-    "TaskRouter",
     "TaskType",
     # Orchestrator
     "Orchestrator",
