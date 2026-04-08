@@ -6,6 +6,7 @@ Oh My Coder CLI - 命令行入口
 主要命令：
 - omc run <task>         # 执行任务
 - omc explore            # 探索代码库
+- omc wiki               # 生成项目 Wiki
 - omc agents             # 列出所有 Agent
 - omc status             # 查看状态
 - omc --version          # 显示版本
@@ -24,6 +25,7 @@ from rich.table import Table
 
 from .core.orchestrator import Orchestrator
 from .core.router import ModelRouter, RouterConfig
+from .wiki import WikiGenerator
 
 # 版本信息
 __version__ = "0.2.0"
@@ -176,6 +178,90 @@ def explore(
     except Exception as e:
         _print_fatal(f"探索出错: {e}", hint="确认项目路径存在且可读")
         raise typer.Exit(1)
+
+
+@app.command()
+def wiki(
+    project_path: Path = typer.Argument(".", help="项目路径"),
+    output: Path = typer.Option(
+        None, "--output", "-o", help="输出文件路径，默认 REPO_WIKI.md"
+    ),
+):
+    """生成项目 Wiki 文档"""
+    project_path = project_path.resolve()
+
+    if not project_path.exists():
+        _print_fatal(f"项目路径不存在: {project_path}")
+        raise typer.Exit(1)
+
+    # 确定输出路径
+    if output is None:
+        output = project_path / "REPO_WIKI.md"
+
+    console.print(f"[bold]📝 生成 Wiki: {project_path}[/bold]")
+
+    try:
+        # 从 pyproject.toml 或目录名获取项目名
+        project_name = _detect_project_name(project_path)
+
+        # 生成 Wiki
+        generator = WikiGenerator(
+            project_name=project_name,
+            project_path=project_path,
+        )
+
+        with Progress(
+            SpinnerColumn(),
+            TextColumn("[progress.description]{task.description}"),
+            console=console,
+        ) as progress:
+            progress.add_task("解析代码...", total=None)
+            content = generator.generate(output)
+
+        console.print(
+            Panel.fit(
+                f"[green]✓ Wiki 已生成[/green]\n\n"
+                f"文件: [cyan]{output}[/cyan]\n\n"
+                f"[dim]使用 `omc wiki` 重新生成[/dim]",
+                title="📚 Wiki",
+            )
+        )
+
+    except Exception as e:
+        _print_fatal(f"Wiki 生成失败: {e}")
+        raise typer.Exit(1)
+
+
+def _detect_project_name(project_path: Path) -> str:
+    """检测项目名称"""
+    # 尝试从 pyproject.toml 读取
+    pyproject = project_path / "pyproject.toml"
+    if pyproject.exists():
+        try:
+            import tomllib
+
+            with open(pyproject, "rb") as f:
+                data = tomllib.load(f)
+            if "project" in data and "name" in data["project"]:
+                return data["project"]["name"]
+        except Exception:
+            pass
+
+    # 尝试从 setup.py 读取
+    setup_py = project_path / "setup.py"
+    if setup_py.exists():
+        try:
+            content = setup_py.read_text()
+            import re
+
+            match = re.search(r'name\s*=\s*["\']([^"\']+)["\']', content)
+            if match:
+                return match.group(1)
+        except Exception:
+            pass
+
+    # 默认使用目录名
+    return project_path.name
 
 
 @app.command()
