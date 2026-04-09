@@ -17,6 +17,7 @@ from .models import (
     QuestStep,
     SpecSection,
 )
+from .notifications import NotificationChannel, NotificationConfig, NotificationManager
 from .spec_generator import SpecGenerator
 from .store import QuestStore
 
@@ -35,4 +36,8 @@ __all__ = [
     "QuestDisplay",
     "SpecSection",
     "AcceptanceCriteria",
+    # Notifications
+    "NotificationManager",
+    "NotificationConfig",
+    "NotificationChannel",
 ]

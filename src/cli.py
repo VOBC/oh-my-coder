@@ -86,6 +86,7 @@ def run(
     project_path: Path = typer.Option(".", "--project", "-p", help="项目路径"),
     model: str = typer.Option("deepseek", "--model", "-m", help="模型选择"),
     workflow: str = typer.Option("build", "--workflow", "-w", help="工作流名称"),
+    dry_run: bool = typer.Option(False, "--dry-run", help="仅预览执行计划，不实际运行"),
 ):
     """执行编程任务"""
     # 前置检查
@@ -101,6 +102,24 @@ def run(
             title="🚀 启动",
         )
     )
+
+    # Dry-run 模式：只展示计划
+    if dry_run:
+        console.print(
+            Panel.fit(
+                "[yellow]🔍 Dry-run 模式 — 仅展示执行计划[/yellow]\n\n"
+                "[bold]工作流:[/bold] "
+                + workflow
+                + "\n[bold]任务:[/bold] "
+                + task
+                + "\n[bold]项目:[/bold] "
+                + str(project_path.absolute())
+                + "\n\n[dim]实际执行请去掉 --dry-run 参数[/dim]",
+                title="📋 执行计划预览",
+                border_style="yellow",
+            )
+        )
+        raise typer.Exit(0)
 
     # 初始化路由器和编排器
     try:
@@ -568,6 +587,323 @@ def quest_cancel(
         raise typer.Exit(1)
 
 
+@app.command("quest-pause")
+def quest_pause(
+    quest_id: str = typer.Argument(..., help="Quest ID"),
+    project_path: Path = typer.Option(".", "--project", "-p", help="项目路径"),
+):
+    """
+    ⏸️ 暂停 Quest（在当前步骤完成后暂停）
+    """
+    from .quest import QuestManager
+
+    project_path = project_path.resolve()
+    manager = QuestManager(project_path)
+
+    if manager.pause(quest_id):
+        console.print(f"[yellow]⏸️ Quest {quest_id[:8]} 已暂停[/yellow]")
+        console.print("[dim]使用 [green]omc quest resume {id}[/dim] 恢复[/dim]")
+    else:
+        _print_fatal(f"Quest {quest_id} 不存在或无法暂停")
+        raise typer.Exit(1)
+
+
+@app.command("quest-resume")
+def quest_resume(
+    quest_id: str = typer.Argument(..., help="Quest ID"),
+    project_path: Path = typer.Option(".", "--project", "-p", help="项目路径"),
+):
+    """
+    ▶️ 恢复已暂停的 Quest（从断点继续）
+    """
+    from .quest import QuestManager
+
+    project_path = project_path.resolve()
+    manager = QuestManager(project_path)
+
+    quest = manager.resume(quest_id)
+    if quest:
+        console.print(f"[green]▶️ Quest {quest_id[:8]} 已恢复[/green]")
+        console.print("[dim]使用 [green]omc quest status {id}[/dim] 查看进度[/dim]")
+    else:
+        _print_fatal(f"Quest {quest_id} 不存在或未处于暂停状态")
+        raise typer.Exit(1)
+
+
+@app.command("quest-notify")
+def quest_notify(
+    quest_id: str = typer.Argument(..., help="Quest ID"),
+    project_path: Path = typer.Option(".", "--project", "-p", help="项目路径"),
+    dingtalk_webhook: str = typer.Option(
+        None, "--dingtalk", "-d", help="钉钉 Webhook URL"
+    ),
+    dingtalk_secret: str = typer.Option(None, "--secret", "-s", help="钉钉加签密钥"),
+):
+    """
+    🔔 订阅 Quest 通知（桌面 + 可选钉钉）
+    """
+    import asyncio
+
+    from .quest import NotificationConfig, NotificationManager, QuestManager
+
+    project_path = project_path.resolve()
+    manager = QuestManager(project_path)
+
+    quest = manager.get_quest(quest_id)
+    if quest is None:
+        _print_fatal(f"Quest {quest_id} 不存在")
+        raise typer.Exit(1)
+
+    # 配置通知
+    config = NotificationConfig(
+        desktop=True,
+        dingtalk_webhook=dingtalk_webhook,
+        dingtalk_secret=dingtalk_secret,
+    )
+    notifier = NotificationManager(config)
+
+    def on_progress(title: str, body: str, level: str) -> None:
+        """实时显示进度（控制台回调）"""
+        color_map = {
+            "info": "cyan",
+            "success": "green",
+            "warning": "yellow",
+            "error": "red",
+        }
+        color = color_map.get(level, "white")
+        console.print(f"[{color}]{title}[/{color}]: {body}")
+
+    # 添加控制台回调渠道
+    from .quest.notifications import ConsoleNotificationChannel
+
+    notifier._channels.append(ConsoleNotificationChannel(callback=on_progress))
+
+    # 跟踪进度直到完成
+    last_status = quest.status.value
+    last_step = -1
+
+    async def watch():
+        nonlocal last_status, last_step
+        console.print(f"[dim]⏳ 监控 Quest {quest_id[:8]}，按 Ctrl+C 退出...[/dim]\n")
+        try:
+            while True:
+                await asyncio.sleep(5)
+                fresh = manager.get_quest(quest_id)
+                if fresh is None:
+                    break
+
+                # 实时进度（步骤变化时输出）
+                if fresh.steps:
+                    completed = sum(
+                        1 for s in fresh.steps if s.status == QuestStatus.COMPLETED
+                    )
+                    total = len(fresh.steps)
+                    if completed != last_step:
+                        last_step = completed
+                        bar = "█" * completed + "░" * (total - completed)
+                        console.print(
+                            f"  [{fresh.status.value:12}] "
+                            f"{bar} {completed}/{total} 步骤"
+                        )
+
+                # 状态变化时发送桌面/钉钉通知
+                if fresh.status.value != last_status:
+                    last_status = fresh.status.value
+                    if fresh.status.value == "completed":
+                        notifier.notify_completed(
+                            fresh.title, fresh.result_summary or "", fresh.id
+                        )
+                    elif fresh.status.value == "failed":
+                        notifier.notify_failed(
+                            fresh.title,
+                            fresh.error_message or "未知错误",
+                            fresh.id,
+                        )
+                    elif fresh.status.value == "paused":
+                        notifier.send(
+                            "⏸️ Quest 已暂停",
+                            fresh.title,
+                            event="paused",
+                            quest_id=fresh.id,
+                        )
+
+                # 完成或终止
+                if fresh.status.value in ("completed", "failed", "cancelled"):
+                    console.print(f"\n[bold]最终状态: {fresh.status.value}[/bold]")
+                    break
+        except asyncio.CancelledError:
+            pass
+
+    try:
+        asyncio.run(watch())
+    except KeyboardInterrupt:
+        console.print("\n[dim]监控已退出[/dim]")
+
+
+@app.command("quest-wait")
+def quest_wait(
+    quest_id: str = typer.Argument(..., help="Quest ID"),
+    project_path: Path = typer.Option(".", "--project", "-p", help="项目路径"),
+    timeout: int = typer.Option(0, "--timeout", "-t", help="超时秒数（0=无限）"),
+):
+    """
+    ⏳ 阻塞等待 Quest 完成并展示验收结果
+
+    完成后展示详细验收报告，包括各步骤通过情况、结果摘要。
+    """
+    import asyncio
+    from .quest import QuestManager, QuestStatus
+
+    project_path = project_path.resolve()
+    manager = QuestManager(project_path)
+
+    quest = manager.get_quest(quest_id)
+    if quest is None:
+        _print_fatal(f"Quest {quest_id} 不存在")
+        raise typer.Exit(1)
+
+    # 已完成的情况直接显示结果
+    if quest.status in (
+        QuestStatus.COMPLETED,
+        QuestStatus.FAILED,
+        QuestStatus.CANCELLED,
+    ):
+        _show_acceptance_report(quest, console)
+        return
+
+    # 实时跟踪直到完成
+    elapsed = 0
+
+    async def watch():
+        nonlocal elapsed
+        try:
+            while True:
+                await asyncio.sleep(3)
+                elapsed += 3
+                fresh = manager.get_quest(quest_id)
+                if fresh is None:
+                    break
+
+                # 实时进度
+                if fresh.steps:
+                    completed = sum(
+                        1 for s in fresh.steps if s.status == QuestStatus.COMPLETED
+                    )
+                    total = len(fresh.steps)
+                    progress = int(completed / total * 100)
+                    bar = "█" * completed + "░" * (total - completed)
+                    console.print(
+                        f"\r  [{fresh.status.value:12}] "
+                        f"{bar} {completed}/{total} | {elapsed}s",
+                        end="",
+                    )
+
+                if fresh.status in (
+                    QuestStatus.COMPLETED,
+                    QuestStatus.FAILED,
+                    QuestStatus.CANCELLED,
+                ):
+                    console.print()  # 换行
+                    _show_acceptance_report(fresh, console)
+                    break
+
+                if timeout > 0 and elapsed >= timeout:
+                    console.print(f"\n[yellow]⏰ 超时（{timeout}s）[/yellow]")
+                    break
+        except asyncio.CancelledError:
+            console.print()
+
+    try:
+        asyncio.run(watch())
+    except KeyboardInterrupt:
+        console.print("\n[dim]等待已中断[/dim]")
+
+
+def _show_acceptance_report(quest, console):
+    """展示 Quest 验收报告"""
+    from rich.panel import Panel
+    from rich.table import Table
+    from .quest import QuestStatus
+
+    status_color_map = {
+        QuestStatus.COMPLETED: "bold green",
+        QuestStatus.FAILED: "bold red",
+        QuestStatus.CANCELLED: "dim",
+        QuestStatus.EXECUTING: "yellow",
+        QuestStatus.PAUSED: "yellow",
+    }
+    sc = status_color_map.get(quest.status, "white")
+
+    # 标题
+    emoji = {
+        QuestStatus.COMPLETED: "✅",
+        QuestStatus.FAILED: "❌",
+        QuestStatus.CANCELLED: "⏹️",
+    }.get(quest.status, "⏳")
+    console.print(
+        Panel.fit(
+            f"[bold]{emoji} {quest.title}[/bold]",
+            title=f"验收报告 — {quest.status.value}",
+            border_style=sc.value if hasattr(sc, "value") else "green",
+        )
+    )
+
+    # 基本信息
+    duration = quest.duration()
+    duration_str = f"{duration:.1f}s" if duration else "—"
+    console.print(
+        f"  [cyan]ID:[/cyan]     {quest.id[:8]}\n"
+        f"  [cyan]耗时:[/cyan]   {duration_str}\n"
+        + (
+            f"  [cyan]摘要:[/cyan]  {quest.result_summary}\n"
+            if quest.result_summary
+            else ""
+        )
+        + (
+            f"  [red]错误:[/red]   {quest.error_message}\n"
+            if quest.error_message
+            else ""
+        )
+    )
+
+    # 步骤验收表格
+    if quest.steps:
+        table = Table(title="📋 步骤验收", show_header=True)
+        table.add_column("步骤", width=6)
+        table.add_column("标题", width=30)
+        table.add_column("状态", width=12)
+
+        step_sc_map = {
+            QuestStatus.PENDING: "dim",
+            QuestStatus.EXECUTING: "yellow",
+            QuestStatus.COMPLETED: "bold green",
+            QuestStatus.FAILED: "bold red",
+        }
+
+        for step in quest.steps:
+            sc2 = step_sc_map.get(step.status, "white")
+            status_icon = {
+                QuestStatus.COMPLETED: "✅",
+                QuestStatus.FAILED: "❌",
+                QuestStatus.PENDING: "⏳",
+                QuestStatus.EXECUTING: "⚙️",
+            }.get(step.status, "?")
+            table.add_row(
+                step.step_id,
+                step.title[:30],
+                f"[{sc2}]{status_icon} {step.status.value}[/{sc2}]",
+            )
+
+        console.print(table)
+
+        # 失败步骤详情
+        failed_steps = [s for s in quest.steps if s.status == QuestStatus.FAILED]
+        if failed_steps:
+            console.print("\n[bold red]❌ 失败详情:[/bold red]")
+            for s in failed_steps:
+                console.print(f"  [{s.step_id}] {s.title}: {s.error}")
+
+
 @app.command()
 def agents():
     """列出所有可用 Agent"""
@@ -771,6 +1107,112 @@ def _display_result(result):
 
     if result.error:
         console.print(f"\n[red]错误: {result.error}[/red]")
+
+
+@app.command()
+def config(
+    action: str = typer.Argument(
+        "show",
+        help="操作: show（查看）/ set（设置）/ list（列出可用配置项）",
+    ),
+    key: str = typer.Option(None, "--key", "-k", help="配置项名称"),
+    value: str = typer.Option(None, "--value", "-v", help="配置值"),
+):
+    """
+    ⚙️ 管理配置
+
+    用法:
+      omc config show          # 查看当前配置
+      omc config list         # 列出所有配置项
+      omc config set -k DEEPSEEK_API_KEY -v xxx   # 设置配置项
+    """
+    import os
+    from pathlib import Path
+    from dotenv import load_dotenv
+
+    config_path = Path(".env")
+    if config_path.exists():
+        load_dotenv(config_path)
+
+    if action == "list":
+        console.print("[bold]可用配置项:[/bold]\n")
+        items = [
+            ("DEEPSEEK_API_KEY", "DeepSeek API Key（推荐，性价比高）"),
+            ("DEEPSEEK_BASE_URL", "DeepSeek API 地址（默认官方）"),
+            ("KIMI_API_KEY", "KIMI API Key"),
+            ("DOUBAO_API_KEY", "豆包 API Key"),
+            ("DINGTALK_WEBHOOK_URL", "钉钉 Webhook URL（Quest 通知）"),
+            ("DINGTALK_SECRET", "钉钉加签密钥"),
+            ("DEFAULT_MODEL", "默认模型（默认 deepseek）"),
+            ("DEFAULT_WORKFLOW", "默认工作流（默认 build）"),
+        ]
+        for k, desc in items:
+            val = os.getenv(k, "")
+            masked = _mask_secret(val)
+            status = "[green]✓[/green]" if val else "[red]✗[/red]"
+            console.print(f"  {status} [cyan]{k}[/cyan]")
+            console.print(f"       [dim]{desc}[/dim]")
+            if val:
+                console.print(f"       当前值: {masked}")
+            console.print()
+        return
+
+    if action == "show":
+        console.print("[bold]当前配置:[/bold]\n")
+        keys_to_show = [
+            "DEEPSEEK_API_KEY",
+            "DEEPSEEK_BASE_URL",
+            "KIMI_API_KEY",
+            "DOUBAO_API_KEY",
+            "DINGTALK_WEBHOOK_URL",
+            "DINGTALK_SECRET",
+            "DEFAULT_MODEL",
+            "DEFAULT_WORKFLOW",
+        ]
+        for key_name in keys_to_show:
+            val = os.getenv(key_name, "")
+            masked = _mask_secret(val)
+            status = "[green]✓[/green]" if val else "[dim]—[/dim]"
+            console.print(f"  {status} [cyan]{key_name}[/cyan] = {masked}")
+        return
+
+    if action == "set":
+        if not key or not value:
+            console.print(
+                "[red]❗ 需要同时提供 --key 和 --value[/red]\n"
+                "示例: [green]omc config set -k DEFAULT_MODEL -v kimi[/green]"
+            )
+            raise typer.Exit(1)
+
+        # 写到 .env 文件
+        env_path = Path(".env")
+        env_vars: dict[str, str] = {}
+        if env_path.exists():
+            for line in env_path.read_text().splitlines():
+                if "=" in line:
+                    k, v = line.split("=", 1)
+                    env_vars[k.strip()] = v.strip()
+
+        env_vars[key] = value
+        lines = [f"{k}={v}" for k, v in env_vars.items()]
+        env_path.write_text("\n".join(lines) + "\n")
+        console.print(
+            f"[green]✓ 已设置[/green] [cyan]{key}[/cyan] = {_mask_secret(value)}"
+        )
+        console.print("[dim]已写入 .env 文件[/dim]")
+        return
+
+    console.print("[red]未知操作[/red]，可用: show / list / set")
+    raise typer.Exit(1)
+
+
+def _mask_secret(value: str) -> str:
+    """脱敏显示密钥"""
+    if not value:
+        return ""
+    if len(value) <= 8:
+        return "****"
+    return value[:4] + "****" + value[-4:]
 
 
 def _status_color(status: str) -> str:
