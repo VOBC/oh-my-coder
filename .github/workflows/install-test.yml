@@ -1,0 +1,136 @@
+name: Install Script Test
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "install.sh"
+      - ".github/workflows/install-test.yml"
+  pull_request:
+    paths:
+      - "install.sh"
+      - ".github/workflows/install-test.yml"
+
+jobs:
+  test-install:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.9", "3.10", "3.11", "3.12"]
+        include:
+          - python-version: "3.9"
+            expected-min: "3.9"
+          - python-version: "3.12"
+            expected-min: "3.9"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # ── 测试 1: 语法检查 ──────────────────────────────────────────────
+      - name: ShellCheck install.sh
+        uses: ludeeus/action-shellcheck@master
+        with:
+          filename: install.sh
+
+      # ── 测试 2: 指定版本 Python（需要 >= 3.9）─────────────────────────
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Check Python version meets minimum
+        run: |
+          PYTHON_VERSION=$(python3 --version | sed 's/Python //')
+          echo "Python version: $PYTHON_VERSION"
+          # Extract major.minor
+          VERSION_NUM=$(echo $PYTHON_VERSION | awk -F. '{print $1*100+$2}')
+          if [ "$VERSION_NUM" -lt 109 ]; then
+            echo "ERROR: Python $PYTHON_VERSION is below minimum 3.9"
+            exit 1
+          fi
+          echo "Python version check passed"
+
+      # ── 测试 3: 模拟完整安装流程（无需 API Key）────────────────────────
+      - name: Simulate install (no git clone, use local repo)
+        env:
+          HOME: /root
+        run: |
+          set -e
+          
+          # 使用本地代码模拟克隆后的状态
+          REPO_DIR="$HOME/oh-my-coder"
+          cp -r "${{ github.workspace }}" "$REPO_DIR"
+          
+          # 进入目录
+          cd "$REPO_DIR"
+          
+          # 创建虚拟环境
+          python3 -m venv .venv
+          source .venv/bin/activate
+          
+          # 升级 pip
+          pip install --upgrade pip --quiet
+          
+          # 安装依赖（不含 dev，避免 pytest 拉太多）
+          pip install -e . --quiet
+          
+          # 验证安装
+          omc --version
+          omc --help | head -5
+          
+          echo "✓ CLI 安装成功"
+          
+          # 验证 Python 模块
+          python -c "import src.memory; import src.agents; import src.core"
+          echo "✓ Python 模块导入成功"
+          
+          # 清理
+          rm -rf "$REPO_DIR"
+          echo "✓ 清理完成"
+
+      # ── 测试 4: install.sh --help ────────────────────────────────────
+      - name: Test install.sh --help
+        run: |
+          bash install.sh --help | grep -q "usage:" && echo "✓ --help works"
+
+      # ── 测试 5: API Key 跳过逻辑 ────────────────────────────────────
+      - name: Test API key skip (empty input = skip)
+        env:
+          HOME: /tmp/test-home-$$
+        run: |
+          mkdir -p "$HOME"
+          REPO_DIR="$HOME/oh-my-coder"
+          cp -r "${{ github.workspace }}" "$REPO_DIR"
+          cd "$REPO_DIR"
+          
+          # 模拟跳过 API 配置（输入空行）
+          printf '\n' | bash install.sh --dir "$REPO_DIR" 2>&1 | grep -E "(跳过|已创建)" || true
+          
+          # 验证 .env.example 被复制
+          ls "$REPO_DIR/.env" && echo "✓ .env created"
+          rm -rf "$HOME"
+
+  # ── 单独 job: macOS 测试（macOS runner）────────────────────────────
+  macos-test:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Simulate macOS install
+        run: |
+          set -e
+          REPO_DIR="/tmp/oh-my-coder-test"
+          rm -rf "$REPO_DIR"
+          cp -r "${{ github.workspace }}" "$REPO_DIR"
+          
+          cd "$REPO_DIR"
+          python3 -m venv .venv
+          source .venv/bin/activate
+          pip install --upgrade pip -q
+          pip install -e . -q
+          
+          omc --version
+          echo "✓ macOS install test passed"
+          rm -rf "$REPO_DIR"
