@@ -3,8 +3,7 @@ Quest 执行结果验收 UI 测试
 """
 
 import asyncio
-from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
@@ -55,7 +54,9 @@ class TestStepReview:
 
         # Mock quest 和 step
         quest = MagicMock(spec=Quest)
-        quest.steps = [MagicMock(spec=QuestStep, step_id="step_1", result="test result")]
+        quest.steps = [
+            MagicMock(spec=QuestStep, step_id="step_1", result="test result")
+        ]
         mock_store.get.return_value = quest
 
         # 运行异步方法

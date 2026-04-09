@@ -1,10 +1,14 @@
 """
-系统通知工具 - 零依赖，使用 macOS 原生 osascript
+系统通知工具 - 零依赖，使用 macOS 原生 osascript + 钉钉 webhook
 """
 
+import json
+import os
 import subprocess
 import sys
 from typing import Optional
+
+import urllib.request
 
 
 def send_notification(
@@ -80,5 +84,116 @@ def notify_quest_update(quest_name: str, message: str) -> bool:
     """通知 Quest 更新（用于异步任务）"""
     return send_notification(
         title=f"📋 Quest: {quest_name}",
+        message=message,
+    )
+
+
+# ============================================================
+# 钉钉通知
+# ============================================================
+
+
+def send_dingtalk_notification(
+    webhook_url: str,
+    title: str,
+    message: str,
+    at_all: bool = False,
+) -> bool:
+    """
+    发送钉钉群机器人通知。
+
+    Args:
+        webhook_url: 钉钉机器人 webhook URL
+        title: 消息标题
+        message: 消息内容
+        at_all: 是否 @所有人
+
+    Returns:
+        True 发送成功，False 失败
+    """
+    try:
+        data = {
+            "msgtype": "markdown",
+            "markdown": {
+                "title": title,
+                "text": f"### {title}\n\n{message}",
+            },
+            "at": {
+                "isAtAll": at_all,
+            },
+        }
+
+        req = urllib.request.Request(
+            webhook_url,
+            data=json.dumps(data).encode("utf-8"),
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            result = json.loads(resp.read().decode("utf-8"))
+            return result.get("errcode") == 0
+
+    except Exception:
+        return False
+
+
+def notify_workflow_complete_dingtalk(
+    webhook_url: Optional[str],
+    workflow: str,
+    status: str,
+    steps_completed: int,
+    execution_time: float,
+    project_path: str = "",
+) -> bool:
+    """通过钉钉通知工作流完成"""
+    if not webhook_url:
+        webhook_url = os.environ.get("DINGTALK_WEBHOOK")
+
+    if not webhook_url:
+        return False
+
+    status_icon = "✅" if status == "completed" else "❌"
+    status_text = "成功" if status == "completed" else "失败"
+
+    message = f"""**工作流**: {workflow}
+**状态**: {status_text} {status_icon}
+**完成步骤**: {steps_completed}
+**执行时间**: {execution_time:.1f}s
+"""
+    if project_path:
+        message += f"**项目路径**: `{project_path}`"
+
+    return send_dingtalk_notification(
+        webhook_url=webhook_url,
+        title="Oh My Coder - 工作流完成通知",
+        message=message,
+    )
+
+
+def notify_quest_update_dingtalk(
+    webhook_url: Optional[str],
+    quest_name: str,
+    message: str,
+    status: str = "running",
+) -> bool:
+    """通过钉钉通知 Quest 更新"""
+    if not webhook_url:
+        webhook_url = os.environ.get("DINGTALK_WEBHOOK")
+
+    if not webhook_url:
+        return False
+
+    status_icons = {
+        "completed": "✅",
+        "failed": "❌",
+        "running": "⏳",
+        "pending_review": "👀",
+    }
+    icon = status_icons.get(status, "📋")
+
+    return send_dingtalk_notification(
+        webhook_url=webhook_url,
+        title=f"{icon} Quest: {quest_name}",
         message=message,
     )

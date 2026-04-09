@@ -87,6 +87,9 @@ def run(
     model: str = typer.Option("deepseek", "--model", "-m", help="模型选择"),
     workflow: str = typer.Option("build", "--workflow", "-w", help="工作流名称"),
     dry_run: bool = typer.Option(False, "--dry-run", help="仅预览执行计划，不实际运行"),
+    notify: bool = typer.Option(
+        False, "--notify", "-n", help="完成后发送通知（桌面+钉钉）"
+    ),
 ):
     """执行编程任务"""
     # 前置检查
@@ -150,6 +153,24 @@ def run(
 
             # 显示结果
             _display_result(result)
+
+            # 发送通知
+            if notify:
+                from .utils.notify import (
+                    notify_workflow_complete,
+                    notify_workflow_complete_dingtalk,
+                )
+
+                status = "completed" if result.success else "failed"
+                steps = len(result.steps) if hasattr(result, "steps") else 1
+                exec_time = getattr(result, "execution_time", 0.0)
+
+                # 桌面通知
+                notify_workflow_complete(workflow, status, steps, exec_time)
+                # 钉钉通知
+                notify_workflow_complete_dingtalk(
+                    None, workflow, status, steps, exec_time, str(project_path)
+                )
 
         except Exception as e:
             _print_fatal(
