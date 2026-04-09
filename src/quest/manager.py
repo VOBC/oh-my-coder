@@ -5,7 +5,7 @@ Quest 管理器
 """
 
 from pathlib import Path
-from typing import Callable, List, Optional
+from typing import Awaitable, Callable, List, Optional
 
 from ..core.router import ModelRouter, RouterConfig
 from .executor import QuestExecutor
@@ -30,10 +30,12 @@ class QuestManager:
         self,
         project_path: Path,
         notify_callback: Optional[Callable[[QuestNotification], None]] = None,
+        review_callback: Optional[Callable[[str, str, str], Awaitable[str]]] = None,
     ):
         self.project_path = Path(project_path)
         self.store = QuestStore(self.project_path)
         self.notify_callback = notify_callback
+        self.review_callback = review_callback
 
         # 延迟初始化 ModelRouter
         self._router: Optional[ModelRouter] = None
@@ -52,6 +54,7 @@ class QuestManager:
                 project_path=self.project_path,
                 store=self.store,
                 notify_callback=self.notify_callback,
+                review_callback=self.review_callback,
             )
         return self._executor
 

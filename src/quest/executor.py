@@ -10,7 +10,7 @@ import os
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Callable, List, Optional
+from typing import Awaitable, Callable, List, Optional
 
 from .models import Quest, QuestNotification, QuestStatus, QuestStep
 from .store import QuestStore
@@ -25,12 +25,15 @@ class QuestExecutor:
         store: QuestStore,
         notify_callback: Optional[Callable[[QuestNotification], None]] = None,
         replan_callback: Optional[Callable[[str, str], None]] = None,
+        review_callback: Optional[Callable[[str, str, str], Awaitable[str]]] = None,
     ):
         self.project_path = Path(project_path)
         self.store = store
         self.notify_callback = notify_callback
         # 失败时触发重规划回调（传入 quest_id, failed_step_id）
         self.replan_callback = replan_callback
+        # 验收回调：传入 quest_id, step_id, result_preview，返回 "pass"/"retry"/"skip"
+        self.review_callback = review_callback
         # 运行时状态（内存中）：存储当前正在等待输入的步骤
         self._running_quests: dict[str, asyncio.Task] = {}
         # 断点记录：quest_id -> 当前步骤索引
@@ -114,15 +117,48 @@ class QuestExecutor:
 
                 try:
                     result = await self._execute_step(step, fresh)
-                    step.status = QuestStatus.COMPLETED
-                    step.completed_at = datetime.now()
                     step.result = result
+                    # 进入验收状态，等待用户确认
+                    step.status = QuestStatus.PENDING_REVIEW
+                    fresh.status = QuestStatus.PENDING_REVIEW
                     self.store.save(fresh)
                     self._notify(
                         fresh,
-                        "step_completed",
-                        f"✅ 步骤 [{step.step_id}] {step.title} 已完成",
+                        "pending_review",
+                        f"⏳ 步骤 [{step.step_id}] {step.title} 执行完成，等待验收",
+                        details={
+                            "step_id": step.step_id,
+                            "result_preview": result[:200] if result else "",
+                        },
                     )
+                    # 等待用户验收（阻塞）
+                    review_result = await self._wait_for_review(fresh.id, step.step_id)
+                    if review_result == "retry":
+                        # 重试当前步骤
+                        step.status = QuestStatus.PENDING
+                        step.result = None
+                        self.store.save(fresh)
+                        i -= 1  # 回退索引重试
+                        continue
+                    elif review_result == "skip":
+                        # 跳过（标记为警告）
+                        step.status = QuestStatus.COMPLETED
+                        step.completed_at = datetime.now()
+                        step.notes = "用户跳过验收"
+                        self.store.save(fresh)
+                        self._notify(
+                            fresh, "step_skipped", f"⏭️ 步骤 [{step.step_id}] 已跳过"
+                        )
+                    else:
+                        # 通过
+                        step.status = QuestStatus.COMPLETED
+                        step.completed_at = datetime.now()
+                        self.store.save(fresh)
+                        self._notify(
+                            fresh,
+                            "step_completed",
+                            f"✅ 步骤 [{step.step_id}] {step.title} 已验收通过",
+                        )
                 except asyncio.CancelledError:
                     # 被暂停/取消打断
                     self.store.save(fresh)
@@ -191,6 +227,30 @@ class QuestExecutor:
         finally:
             self._running_quests.pop(quest.id, None)
             self._breakpoint.pop(quest.id, None)
+
+    async def _wait_for_review(self, quest_id: str, step_id: str) -> str:
+        """等待用户验收步骤结果
+
+        Returns:
+            "pass" - 验收通过
+            "retry" - 重试该步骤
+            "skip" - 跳过该步骤
+        """
+        if self.review_callback:
+            quest = self.store.get(quest_id)
+            step = (
+                next((s for s in quest.steps if s.step_id == step_id), None)
+                if quest
+                else None
+            )
+            preview = step.result[:500] if step and step.result else ""
+            try:
+                return await self.review_callback(quest_id, step_id, preview)
+            except Exception as e:
+                self._notify(quest, "review_error", f"验收回调失败: {e}")
+                return "pass"  # 默认通过
+        # 没有回调时默认通过
+        return "pass"
 
     def _generate_steps(self, quest: Quest) -> List[QuestStep]:
         """从 SPEC 生成执行步骤"""

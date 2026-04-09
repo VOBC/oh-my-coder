@@ -327,7 +327,26 @@ def quest(
 
     from .quest import QuestManager
 
-    manager = QuestManager(project_path)
+    # 步骤验收回调（交互式）
+    async def review_callback(quest_id: str, step_id: str, preview: str) -> str:
+        console.print(f"\n[bold cyan]📋 步骤验收: {step_id}[/bold cyan]")
+        if preview:
+            console.print(
+                Panel.fit(preview[:500], title="执行结果预览", border_style="dim")
+            )
+
+        from rich.prompt import Prompt
+
+        choice = Prompt.ask(
+            "请选择",
+            choices=["p", "r", "s"],
+            default="p",
+            show_choices=True,
+        )
+        mapping = {"p": "pass", "r": "retry", "s": "skip"}
+        return mapping.get(choice, "pass")
+
+    manager = QuestManager(project_path, review_callback=review_callback)
 
     async def run():
         # 1. 创建 Quest

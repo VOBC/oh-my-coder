@@ -20,6 +20,7 @@ class QuestStatus(str, Enum):
     SPEC_GENERATING = "spec_generating"  # 正在生成 SPEC
     SPEC_READY = "spec_ready"  # SPEC 已就绪，等待用户确认
     EXECUTING = "executing"  # 后台执行中
+    PENDING_REVIEW = "pending_review"  # 步骤执行完，等待用户验收
     COMPLETED = "completed"  # 完成
     FAILED = "failed"  # 失败
     CANCELLED = "cancelled"  # 取消
