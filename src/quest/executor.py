@@ -24,10 +24,13 @@ class QuestExecutor:
         project_path: Path,
         store: QuestStore,
         notify_callback: Optional[Callable[[QuestNotification], None]] = None,
+        replan_callback: Optional[Callable[[str, str], None]] = None,
     ):
         self.project_path = Path(project_path)
         self.store = store
         self.notify_callback = notify_callback
+        # 失败时触发重规划回调（传入 quest_id, failed_step_id）
+        self.replan_callback = replan_callback
         # 运行时状态（内存中）：存储当前正在等待输入的步骤
         self._running_quests: dict[str, asyncio.Task] = {}
         # 断点记录：quest_id -> 当前步骤索引
@@ -136,7 +139,15 @@ class QuestExecutor:
                         f"⚠️ 步骤 [{step.step_id}] {step.title} 失败: {e}",
                         details={"step_id": step.step_id, "error": str(e)},
                     )
-                    # 继续执行后续步骤（可配置是否容错）
+                    # 触发重规划回调
+                    if self.replan_callback:
+                        try:
+                            self.replan_callback(fresh.id, step.step_id)
+                        except Exception as cb_err:
+                            self._notify(
+                                fresh, "replan_error", f"重规划回调失败: {cb_err}"
+                            )
+                    # 继续执行后续步骤
                     continue
 
             # 所有步骤完成

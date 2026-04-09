@@ -296,22 +296,10 @@ class PlannerAgent(BaseAgent):
 **步骤 2: 分析上下文**
 - 项目的技术栈是什么？
 - 现有代码结构如何？
-- 有哪些相关文件？
 
-**步骤 3: 分解任务**
-- 任务可以分解为哪些阶段？
-- 每个阶段包含哪些子任务？
-- 子任务间的依赖关系是什么？
-
-**步骤 4: 规划执行**
-- 最优执行顺序是什么？
-- 哪些任务可以并行？
-- 关键路径是什么？
-
-**步骤 5: 风险评估**
+**步骤 3: 风险评估**
 - 有哪些潜在风险？
 - 如何规避或缓解？
-- 备选方案是什么？
 
 ## 输出格式
 
@@ -431,7 +419,8 @@ class PlannerAgent(BaseAgent):
         plan.total_tasks = sum(len(p.tasks) for p in plan.phases)
         return plan
 
-    def _build_dependency_graph(self, plan: ExecutionPlan) -> DependencyGraph:
+    @staticmethod
+    def _build_dependency_graph(plan: ExecutionPlan) -> DependencyGraph:
         """构建依赖图"""
         graph = DependencyGraph()
 
@@ -464,11 +453,6 @@ class PlannerAgent(BaseAgent):
                 observation=context_prompt[:500],
                 conclusion="已获取项目结构和技术栈信息",
             )
-
-        # 步骤 3: 分解任务
-        cot.add_step(
-            thought="分解任务为阶段和子任务", action="使用结构化格式输出任务表格"
-        )
 
         # 构建完整 prompt
         full_prompt = [
@@ -537,8 +521,8 @@ class PlannerAgent(BaseAgent):
             next_agent="architect" if plan.phases else None,
         )
 
+    @staticmethod
     def adjust_plan(
-        self,
         plan: ExecutionPlan,
         completed_tasks: Set[str],
         failed_tasks: Set[str],
@@ -556,7 +540,7 @@ class PlannerAgent(BaseAgent):
         Returns:
             调整后的计划
         """
-        graph = self._build_dependency_graph(plan)
+        graph = PlannerAgent._build_dependency_graph(plan)
 
         # 获取就绪任务
         ready_tasks = graph.get_ready_tasks(completed_tasks)
