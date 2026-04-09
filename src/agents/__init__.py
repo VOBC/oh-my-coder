@@ -20,6 +20,7 @@ from .planner import PlannerAgent
 from .qa_tester import QATesterAgent
 from .scientist import ScientistAgent
 from .security import SecurityReviewerAgent
+from .self_improving import LearningStore, SelfImprovingAgent
 from .test_engineer import TestEngineerAgent
 from .tracer import TracerAgent
 from .verifier import VerifierAgent
@@ -53,4 +54,7 @@ __all__ = [
     "QATesterAgent",
     # Coordination Lane
     "CriticAgent",
+    # Self-Improving
+    "LearningStore",
+    "SelfImprovingAgent",
 ]
