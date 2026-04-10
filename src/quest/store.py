@@ -56,12 +56,19 @@ class QuestStore:
         if not path.exists():
             return None
 
-        with open(path, "r", encoding="utf-8") as f:
-            data = json.load(f)
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+        except (json.JSONDecodeError, IOError):
+            # 文件损坏，返回 None
+            return None
 
-        quest = Quest(**data)
-        self._quests_cache[quest_id] = quest
-        return quest
+        try:
+            quest = Quest(**data)
+            self._quests_cache[quest_id] = quest
+            return quest
+        except Exception:
+            return None
 
     def save(self, quest: Quest) -> None:
         """保存 Quest"""
