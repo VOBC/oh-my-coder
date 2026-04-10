@@ -2,8 +2,6 @@
 测试沙箱安全模块
 """
 
-import subprocess
-import tempfile
 from pathlib import Path
 
 import pytest

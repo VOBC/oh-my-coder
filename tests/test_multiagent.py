@@ -2,7 +2,6 @@
 测试多 Agent 协作模块
 """
 
-import asyncio
 
 import pytest
 

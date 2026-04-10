@@ -2,12 +2,10 @@
 测试权限治理模块
 """
 
-import pytest
 
 from src.security.permissions import (
     PermissionRule,
     PermissionGuard,
-    CheckResult,
     check_command,
     needs_approval,
 )

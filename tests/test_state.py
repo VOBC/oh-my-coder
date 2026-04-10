@@ -2,11 +2,9 @@
 测试任务状态管理模块
 """
 
-import json
 import tempfile
 from pathlib import Path
 
-import pytest
 
 from src.state.task_state import (
     TaskState,
