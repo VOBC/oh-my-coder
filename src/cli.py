@@ -29,6 +29,10 @@ from .wiki import WikiGenerator
 from .quest import QuestStatus
 from .cli_context import context_app
 from .capabilities import app as cap_app
+from .cli_config_ext import app as config_ext_app
+from .cli_task import app as task_app
+from .cli_multiagent import app as multiagent_app
+from .cli_security import app as security_app
 
 # 版本信息
 __version__ = "0.2.0"
@@ -44,6 +48,10 @@ app = typer.Typer(
 
 # 注册子命令
 app.add_typer(context_app, name="context")
+app.add_typer(config_ext_app, name="agent-config")
+app.add_typer(task_app, name="task")
+app.add_typer(multiagent_app, name="multiagent")
+app.add_typer(security_app, name="security")
 
 console = Console()
 
