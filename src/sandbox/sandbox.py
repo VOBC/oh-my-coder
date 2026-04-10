@@ -189,9 +189,7 @@ class Sandbox:
         if check_dangerous:
             result = check_command(cmd)
             if result.risk.value == "block":
-                raise BlockedCommandError(
-                    cmd, result.reason, result.risk
-                )
+                raise BlockedCommandError(cmd, result.reason, result.risk)
 
         if check_permission:
             ok, reason = self.validate_command(cmd)
