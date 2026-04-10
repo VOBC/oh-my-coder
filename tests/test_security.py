@@ -2,7 +2,6 @@
 测试权限治理模块
 """
 
-
 from src.security.permissions import (
     PermissionRule,
     PermissionGuard,

@@ -78,7 +78,9 @@ class TestAgentConfig:
             },
         )
 
-        rendered = config.render_template("review_template", diff="@@ test", file="main.py")
+        rendered = config.render_template(
+            "review_template", diff="@@ test", file="main.py"
+        )
         assert "@@ test" in rendered
         assert "main.py" in rendered
 
@@ -117,9 +119,7 @@ class TestLoadConfigFile:
             "model": "deepseek",
         }
 
-        with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".json", delete=False
-        ) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
             json.dump(data, f)
             path = f.name
 
@@ -132,11 +132,9 @@ class TestLoadConfigFile:
 
     def test_load_yaml_simple(self) -> None:
         """测试简单 YAML 解析（标准库 fallback）"""
-        yaml_content = 'name: yaml-agent\ndescription: YAML 测试\nmodel: kimi\n'
+        yaml_content = "name: yaml-agent\ndescription: YAML 测试\nmodel: kimi\n"
 
-        with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".yaml", delete=False
-        ) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
             f.write(yaml_content)
             path = f.name
 
@@ -158,9 +156,7 @@ class TestLoadConfigFile:
             "  - shell\n"
         )
 
-        with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".yaml", delete=False
-        ) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
             f.write(yaml_content)
             path = f.name
 
@@ -189,9 +185,7 @@ class TestLoadConfigFile:
     def test_validate_config_file(self) -> None:
         """验证合法配置文件"""
         data = {"name": "valid-agent", "description": "合法"}
-        with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".json", delete=False
-        ) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
             json.dump(data, f)
             path = f.name
 

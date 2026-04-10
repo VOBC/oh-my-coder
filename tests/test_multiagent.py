@@ -2,7 +2,6 @@
 测试多 Agent 协作模块
 """
 
-
 import pytest
 
 from src.multiagent.coordinator import (
@@ -86,10 +85,7 @@ class TestMultiAgentCoordinator:
 
     def test_spawn_multiple(self) -> None:
         coordinator = MultiAgentCoordinator()
-        agents = [
-            coordinator.spawn("coder", f"coder-{i}")
-            for i in range(3)
-        ]
+        agents = [coordinator.spawn("coder", f"coder-{i}") for i in range(3)]
 
         assert len(coordinator.agents) == 3
         ids = {a.agent_id for a in agents}
