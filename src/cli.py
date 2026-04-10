@@ -27,6 +27,8 @@ from .core.orchestrator import Orchestrator
 from .core.router import ModelRouter, RouterConfig
 from .wiki import WikiGenerator
 from .quest import QuestStatus
+from .cli_context import context_app
+from .capabilities import app as cap_app
 
 # 版本信息
 __version__ = "0.2.0"
@@ -39,6 +41,9 @@ app = typer.Typer(
     add_completion=False,
     no_args_is_help=True,
 )
+
+# 注册子命令
+app.add_typer(context_app, name="context")
 
 console = Console()
 
@@ -1265,6 +1270,9 @@ def _status_color(status: str) -> str:
     }
     return colors.get(status, status)
 
+
+# 注册子命令
+app.add_typer(cap_app, name="cap", help="能力包管理 - 导出、导入和分享 Agent 配置")
 
 if __name__ == "__main__":
     app()
