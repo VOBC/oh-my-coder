@@ -42,8 +42,8 @@ def demo_multi_model_routing():
     # 初始化路由器（可配置多个模型）
     config = RouterConfig(
         deepseek_api_key="your-deepseek-key",  # 替换为真实 Key
-        kimi_api_key="your-kimi-key",          # 替换为真实 Key
-        glm_api_key="your-glm-key",            # 替换为真实 Key
+        kimi_api_key="your-kimi-key",  # 替换为真实 Key
+        glm_api_key="your-glm-key",  # 替换为真实 Key
     )
     router = ModelRouter(config)
 
@@ -65,8 +65,10 @@ def demo_multi_model_routing():
     print("-" * 50)
     for task_type, desc in tasks:
         decision = router.select(task_type)
-        print(f"  {desc:<30} → {decision.selected_tier:>6} tier "
-              f"({decision.provider.value:>10}, ¥{decision.estimated_cost:.4f})")
+        print(
+            f"  {desc:<30} → {decision.selected_tier:>6} tier "
+            f"({decision.provider.value:>10}, ¥{decision.estimated_cost:.4f})"
+        )
 
     # 手动强制使用特定模型
     print("\n🔧 手动指定模型示例：")
@@ -79,8 +81,9 @@ def demo_multi_model_routing():
         tier=ModelTier.HIGH,
     )
     kimi_model = KimiModel(kimi_config, ModelTier.HIGH)
-    print(f"  强制使用 Kimi: {kimi_model.model_name} "
-          f"(适合 128K 上下文的大代码库分析)")
+    print(
+        f"  强制使用 Kimi: {kimi_model.model_name} " f"(适合 128K 上下文的大代码库分析)"
+    )
 
     # 强制使用 DeepSeek（低成本任务）
     deepseek_config = ModelConfig(
@@ -89,8 +92,9 @@ def demo_multi_model_routing():
         tier=ModelTier.LOW,
     )
     deepseek_model = DeepSeekModel(deepseek_config, ModelTier.LOW)
-    print(f"  强制使用 DeepSeek: {deepseek_model.model_name} "
-          f"(性价比最高，免费额度)")
+    print(
+        f"  强制使用 DeepSeek: {deepseek_model.model_name} " f"(性价比最高，免费额度)"
+    )
 
     # 强制使用 GLM（快速响应）
     glm_config = ModelConfig(
@@ -99,8 +103,7 @@ def demo_multi_model_routing():
         tier=ModelTier.MEDIUM,
     )
     glm_model = GLMModel(glm_config, ModelTier.MEDIUM)
-    print(f"  强制使用 GLM: {glm_model.model_name} "
-          f"(函数调用支持好)")
+    print(f"  强制使用 GLM: {glm_model.model_name} " f"(函数调用支持好)")
 
     return router
 
@@ -334,7 +337,6 @@ def demo_custom_workflow():
     print("示例 5: 自定义工作流")
     print("=" * 60)
 
-
     # 查看内置工作流
     print("\n📦 内置工作流模板：")
     print("-" * 50)
@@ -376,12 +378,14 @@ def demo_custom_workflow():
 # 主函数
 # ============================================================
 async def main():
-    print("""
+    print(
+        """
 ╔══════════════════════════════════════════════════════╗
 ║        Oh My Coder 高级示例                         ║
 ║  多模型切换 · Agent 协作 · 复杂任务 · 任务总结        ║
 ╚══════════════════════════════════════════════════════╝
-    """)
+    """
+    )
 
     demos = [
         ("多模型动态切换", demo_multi_model_routing),
@@ -400,9 +404,11 @@ async def main():
         except Exception as e:
             print(f"\n⚠️  示例 {i} 执行时出现非关键错误: {e}")
             import traceback
+
             traceback.print_exc()
 
-    print("""
+    print(
+        """
 ╔══════════════════════════════════════════════════════╗
 ║                   示例运行完毕                        ║
 ║                                                        ║
@@ -411,7 +417,8 @@ async def main():
 ║  • 查看 src/core/summary.py 了解总结功能               ║
 ║  • 查看 src/agents/ 了解所有 Agent                    ║
 ╚══════════════════════════════════════════════════════╝
-    """)
+    """
+    )
 
 
 if __name__ == "__main__":

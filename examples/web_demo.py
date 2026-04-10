@@ -208,7 +208,9 @@ async def demo_list_tasks():
         tasks = response.json()
         print(f"\n当前任务数: {len(tasks['tasks'])}")
         for task in tasks["tasks"]:
-            print(f"  - {task['task_id']} | {task['status']} | {task.get('started_at', 'N/A')}")
+            print(
+                f"  - {task['task_id']} | {task['status']} | {task.get('started_at', 'N/A')}"
+            )
 
 
 # ============================================================

@@ -155,6 +155,7 @@ from ..database import Base
 
 class Product(Base):
     """商品模型"""
+
     __tablename__ = "products"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -185,6 +186,7 @@ from datetime import datetime
 
 class ProductBase(BaseModel):
     """商品基础 Schema"""
+
     name: str = Field(..., min_length=1, max_length=100)
     description: Optional[str] = None
     price: float = Field(..., gt=0)
@@ -195,11 +197,13 @@ class ProductBase(BaseModel):
 
 class ProductCreate(ProductBase):
     """创建商品 Schema"""
+
     stock: int = Field(default=0, ge=0)
 
 
 class ProductUpdate(BaseModel):
     """更新商品 Schema"""
+
     name: Optional[str] = Field(None, min_length=1, max_length=100)
     description: Optional[str] = None
     price: Optional[float] = Field(None, gt=0)
@@ -212,6 +216,7 @@ class ProductUpdate(BaseModel):
 
 class ProductResponse(ProductBase):
     """商品响应 Schema"""
+
     id: int
     stock: int
     is_active: int
