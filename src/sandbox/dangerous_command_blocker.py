@@ -75,6 +75,8 @@ CRITICAL_PATTERNS: List[Tuple[str, str]] = [
     # 危险网络下载执行
     (r"(curl|wget).*\|.*(bash|sh)", "下载并直接执行脚本（Pipe to Bash）"),
     (r"bash\s+<\(", "Process Substitution 执行远程脚本"),
+    (r"curl.*>.*&&.*bash", "下载脚本后执行"),
+    (r"wget.*>.*&&.*bash", "下载脚本后执行"),
     # 修改 /etc/hosts
     (r"echo.*>>\s*/etc/hosts", "修改 hosts 文件"),
     # 添加可疑 cron
