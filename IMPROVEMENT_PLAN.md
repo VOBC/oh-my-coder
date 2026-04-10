@@ -202,12 +202,35 @@ powershell -c "irm https://raw.githubusercontent.com/vobc/oh-my-coder/main/insta
 
 ---
 
+## 七、新竞品借鉴分析
+
+### Claude Managed Agents（2026-04-09）
+- **发布**：2026-04-09 公测版
+- **定位**：企业级云端托管 AI Agent
+- **借鉴点**：长时任务支持、多 Agent 协作、权限治理、沙箱隔离
+- **参考**：https://new.qq.com/rain/a/20260409A06THN00
+
+### EvoMap
+- **定位**：AI Agent 能力交易市场（GEP 协议）
+- **借鉴点**：「能力包」系统的商业模式，能力即服务（Capabilities-as-a-Service）
+- **参考**：EvoMap 官网 / GEP 协议文档
+
+### Floatboat
+- **定位**：AI Agent 原生工作环境（融资 200 万美元）
+- **借鉴点**：三件套架构（文件管理器、浏览器、超级 Agent），原生环境集成
+- **参考**：Floatboat 官网融资公告
+
+---
+
 ## 六、参考链接
 
 - Qoder 官网：https://qoder.ai
 - Qoder 功能介绍：https://new.qq.com/rain/a/20250822A088HA00
 - Claude Code 记忆架构：https://github.com/anthropics/claude-code
+- Claude Managed Agents 发布：https://new.qq.com/rain/a/20260409A06THN00
+- EvoMap（GEP 协议）：https://evomap.ai
+- Floatboat 融资：https://floatboat.io
 
 ---
 
-*本文档由小麦整理，2026-04-08*
+*本文档由小麦整理，2026-04-10*
