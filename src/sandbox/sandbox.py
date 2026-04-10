@@ -16,6 +16,11 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+from .dangerous_command_blocker import (
+    BlockedCommandError,
+    check_command,
+)
+
 
 # ─────────────────────────────────────────────────────────────
 # 配置
@@ -160,6 +165,7 @@ class Sandbox:
         cmd: str,
         timeout: int | None = None,
         check_permission: bool = True,
+        check_dangerous: bool = True,
     ) -> subprocess.CompletedProcess:
         """
         在沙箱内运行命令
@@ -168,15 +174,25 @@ class Sandbox:
             cmd: shell 命令
             timeout: 超时秒数（默认用 config.timeout）
             check_permission: 是否先检查权限
+            check_dangerous: 是否启用危险命令拦截
 
         Returns:
             subprocess.CompletedProcess
 
         Raises:
+            BlockedCommandError: 命令被危险命令拦截器阻止
             PermissionError: 权限检查未通过
             TimeoutError: 命令执行超时
             ValueError: 路径检查未通过
         """
+        # P0：危险命令拦截（最早检查，最高优先级）
+        if check_dangerous:
+            result = check_command(cmd)
+            if result.risk.value == "block":
+                raise BlockedCommandError(
+                    cmd, result.reason, result.risk
+                )
+
         if check_permission:
             ok, reason = self.validate_command(cmd)
             if not ok:
@@ -251,6 +267,15 @@ class Sandbox:
                 "returncode": -1,
                 "truncated": False,
                 "duration": timeout_val,
+                "success": False,
+            }
+        except BlockedCommandError as e:
+            return {
+                "output": "",
+                "stderr": f"[BLOCKED] {e.reason}",
+                "returncode": -3,
+                "truncated": False,
+                "duration": time.time() - start,
                 "success": False,
             }
         except PermissionError as e:
