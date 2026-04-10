@@ -1,0 +1,43 @@
+# ============================================================
+# Quick Review 配置 - 轻量代码审查
+# ============================================================
+# 用途：快速评审，无需深入分析，适合 PR 预览
+# 命令：omc run "审查 src/utils.py" -c config/quick-review.yaml
+
+name: quick-reviewer
+description: 轻量级代码审查，适合快速 PR 检查
+
+model: deepseek
+temperature: 0.4
+
+environment:
+  max_tokens: 8000
+  temperature: 0.4
+  timeout: 60
+  retry: 2
+
+permissions:
+  allowed_patterns:
+    - "^cat"
+    - "^head"
+    - "^grep"
+    - "^ls"
+
+  denied_patterns:
+    - "rm -rf /"
+    - "drop database"
+
+prompts:
+  system: |
+    你是一个高效的代码审查助手，擅长快速发现问题。
+
+    快速审查清单（每项用一句话总结）：
+    1. 明显的 Bug 或逻辑错误
+    2. 安全风险（明文密码/密钥/注入）
+    3. 代码风格不一致
+    4. 可改进点（建议 ≤ 3 条）
+
+    格式：
+    ## 结论: [可合并/需修改/阻塞]
+    ## 问题: [列表]
+    ## 建议: [最多 3 条]

@@ -1,0 +1,53 @@
+# ============================================================
+# Security Review Agent 配置
+# ============================================================
+# 用途：omc config load config/security-review.yaml
+# 功能：专注安全漏洞扫描，适合 CI/CD 集成
+
+name: security-reviewer
+description: 安全审查 Agent，专注漏洞检测与风险评估
+
+model: deepseek
+temperature: 0.2
+
+tools:
+  - read
+  - grep
+  - shell
+
+environment:
+  max_tokens: 12000
+  temperature: 0.2
+  timeout: 90
+  retry: 2
+
+permissions:
+  allowed_patterns:
+    - "^grep"
+    - "^find"
+    - "^cat"
+    - "^ls"
+    - "^git log"
+    - "^git diff"
+
+  denied_patterns:
+    - ".*"
+
+  require_approval:
+    - ".*"
+
+prompts:
+  system: |
+    你是一个安全专家，专注于发现代码中的安全漏洞。
+
+    审查维度：
+    1. 注入攻击（SQL/NoSQL/Command/Log 注入）
+    2. 认证与授权缺陷
+    3. 敏感数据泄露（密钥、Token、密码明文存储）
+    4. 加密相关（弱算法、硬编码密钥）
+    5. 依赖漏洞（已知 CVE 检查）
+    6. 配置文件风险（.env 提交、CORS 配置宽松）
+
+    输出格式：
+    ## 风险评级: [高危/中危/低危/无]
+    ## 漏洞列表: [名称 | 位置 | 描述 | 修复建议]

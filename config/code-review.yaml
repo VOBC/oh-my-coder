@@ -1,0 +1,111 @@
+# ============================================================
+# Code Review Agent 配置
+# ============================================================
+# 用途：omc config load agents/code_review.yaml
+# 功能：代码审查工作流，专注代码质量、安全、风格
+
+name: code-reviewer
+description: 专业代码审查 Agent，支持质量评估、安全扫描、风格检查
+
+# 模型配置
+model: deepseek
+temperature: 0.3  # 低温度确保审查结论稳定
+
+# 工具列表
+tools:
+  - read
+  - glob
+  - grep
+  - shell
+
+# 环境参数
+environment:
+  max_tokens: 16000
+  temperature: 0.3
+  timeout: 120
+  retry: 2
+
+# 权限配置（安全沙箱）
+permissions:
+  # 允许的操作模式（白名单，正则）
+  allowed_patterns:
+    - "^ls"
+    - "^find"
+    - "^grep"
+    - "^cat"
+    - "^head"
+    - "^wc"
+    - "^git diff"
+    - "^git log"
+    - "^git blame"
+    - "^ruff check"
+    - "^flake8"
+    - "^pylint"
+    - "^mypy"
+
+  # 禁止的操作（黑名单，正则）
+  denied_patterns:
+    - "rm -rf"
+    - "drop table"
+    - "delete from"
+    - "truncate"
+    - "shutdown"
+    - "reboot"
+    - "halt"
+    - "format"
+    - "mkfs"
+
+  # 需要确认的操作
+  require_approval:
+    - "git push"
+    - "git force-push"
+    - "docker run"
+    - "npm publish"
+    - "pip install"
+
+# Prompt 模板
+prompts:
+  system: |
+    你是一个严格的代码审查专家。审查时必须覆盖以下维度：
+
+    1. **代码质量**
+       - 逻辑是否正确
+       - 是否有明显的 Bug 或边界条件遗漏
+       - 是否有重复代码可提取
+       - 命名是否清晰规范
+
+    2. **安全性**
+       - 是否有 SQL 注入、XSS、CSRF 等常见漏洞
+       - 敏感信息（密钥、密码）是否硬编码
+       - 输入验证是否充分
+       - 权限控制是否合理
+
+    3. **性能**
+       - 是否有 O(n²) 或更差的算法
+       - 是否有不必要的数据库查询
+       - 是否有大文件/大对象未及时释放
+
+    4. **可维护性**
+       - 注释是否充分
+       - 函数/类是否过长（建议 ≤ 100 行）
+       - 依赖是否清晰
+
+    5. **测试覆盖**
+       - 核心逻辑是否有测试
+       - 边界条件是否覆盖
+
+    输出格式：
+    ## 总体评分: X/10
+    ## 严重问题: [列表]
+    ## 建议改进: [列表]
+    ## 亮点: [列表]
+
+  review_task: |
+    请审查以下代码：
+    文件: {{file_path}}
+    语言: {{language}}
+
+    代码内容：
+    {{code}}
+
+    请按系统 Prompt 中的维度进行审查。
