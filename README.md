@@ -807,6 +807,7 @@ A: 请访问对应模型的官方网站注册账号后获取：
    - 智谱 GLM: https://open.bigmodel.cn/
    - 天工AI: https://model-platform.tiangong.cn/
    - 百川智能: https://platform.baichuan-ai.com/
+   - MiniMax 海螺: https://api.minimax.chat/
 
 **Q: 模型调用超时怎么办？**
 A: 可通过以下方式解决：
