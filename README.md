@@ -2,7 +2,7 @@
 
 > 🤖 多智能体 AI 编程助手，支持国内大模型
 
-🎯 **11 个国产大模型 | 18 个专业 Agent | 优先使用低成本/免费模型**
+🎯 **GLM-4.7-Flash 永久免费 · 11 个国产大模型 · 18 个专业 Agent · 多 Agent 协作 · 完全开源**
 
 [![Python](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
@@ -16,7 +16,7 @@
 
 ## 🎯 为什么选择 Oh My Coder？
 
-> **DeepSeek 免费额度 · 11 家国产模型 · 18 个专业 Agent · 多 Agent 协作 · 完全开源**
+> **GLM-4.7-Flash 永久免费 · 2000万 Tokens 新手额度 · 11 家国产模型 · 18 个专业 Agent · 多 Agent 协作 · 完全开源**
 
 ### 完整竞品对比（2025年AI编程工具生态）
 
@@ -48,7 +48,7 @@
 | 多 Agent 协作 | ✅ 18个专业Agent | ❌ | ❌ | ❌ | ❌ |
 | 开源可定制 | ✅ MIT 许可证 | ❌ | ❌ | ❌ | ❌ |
 | 国内直连 | ✅ 11家国产模型 | ❌ | ❌ | ❌ | ✅ |
-| 完全免费 | ✅ 深度集成 DeepSeek | ❌ $20/月 | ❌ $19/月 | ⚠️ 限制多 | ✅ |
+| 完全免费 | ✅ GLM-4.7-Flash 永久免费 | ❌ $20/月 | ❌ $19/月 | ⚠️ 限制多 | ✅ |
 | 中文优化 | ✅ 原生中文 | ⚠️ 一般 | ⚠️ 一般 | ⚠️ 一般 | ✅ |
 | 自托管 | ✅ 支持 | ❌ | ❌ | ❌ | ❌ |
 | 本地执行 | ✅ | ❌ | ❌ | ❌ | ❌ |
