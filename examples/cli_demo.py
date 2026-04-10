@@ -9,7 +9,6 @@ CLI 使用示例
 """
 import subprocess
 import sys
-import time
 
 
 def run(cmd: list[str], desc: str = ""):

@@ -238,17 +238,12 @@ class Comment(models.Model):
 # 示例：生成的 Django 视图
 # ============================================================
 
-from django.shortcuts import render, get_object_or_404, redirect
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib import messages
-from django.http import JsonResponse
-from django.views.decorators.http import require_POST
-from django.views.decorators.csrf import csrf_exempt
 from django.core.cache import cache
-from django.db.models import Q
 
-from .models import Article, Category, Tag, Comment
+from .models import Article, Category, Tag
 from .forms import ArticleForm, CommentForm
 
 
@@ -355,13 +350,13 @@ class ArticleDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
 # 示例：DRF API 视图集
 # ============================================================
 
-from rest_framework import viewsets, filters, status
+from rest_framework import viewsets, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from django_filters.rest_framework import DjangoFilterBackend
 
-from .models import Article, Category, Tag, Comment
+from .models import Article, Category, Tag
 from .serializers import ArticleSerializer, ArticleListSerializer
 
 

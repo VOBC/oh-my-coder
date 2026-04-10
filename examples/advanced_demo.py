@@ -28,10 +28,6 @@ from src.models.glm import GLMModel
 from src.core.router import ModelRouter, RouterConfig, TaskType
 from src.core.orchestrator import Orchestrator, WORKFLOW_TEMPLATES
 from src.core.summary import TaskSummary, generate_summary, print_summary
-from src.agents.explore import ExploreAgent
-from src.agents.analyst import AnalystAgent
-from src.agents.architect import ArchitectAgent
-from src.agents.executor import ExecutorAgent
 
 
 # ============================================================
@@ -207,7 +203,7 @@ def demo_complex_task():
     5. 更新 Swagger 文档
     """
 
-    print(f"\n📋 复杂任务分解：")
+    print("\n📋 复杂任务分解：")
     print("-" * 50)
     steps = [
         ("探索", "ExploreAgent", "分析现有 user 模块结构"),
@@ -263,7 +259,7 @@ def demo_summary_feature():
     print("示例 4: 任务总结功能")
     print("=" * 60)
 
-    from src.core.summary import generate_summary, save_summary, load_summary
+    from src.core.summary import save_summary, load_summary
 
     # 场景：记录一次完整的工作流执行
     completed_steps = [
@@ -338,7 +334,6 @@ def demo_custom_workflow():
     print("示例 5: 自定义工作流")
     print("=" * 60)
 
-    from src.core.orchestrator import WORKFLOW_TEMPLATES
 
     # 查看内置工作流
     print("\n📦 内置工作流模板：")

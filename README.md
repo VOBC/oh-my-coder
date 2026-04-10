@@ -161,6 +161,43 @@ python -m src.cli run "修复登录接口偶发的超时问题" -w debug
 
 # 查看所有 Agent
 python -m src.cli agents
+
+# === Quest Mode (异步自主编程) ===
+# 创建 Quest
+python -m src.cli run "实现用户认证模块" --quest
+
+# 查看 Quest 列表
+python -m src.cli quest-list
+
+# 查看 Quest 状态
+python -m src.cli quest-status <quest-id>
+
+# 暂停/恢复 Quest
+python -m src.cli quest-pause <quest-id>
+python -m src.cli quest-resume <quest-id>
+
+# 订阅桌面通知 + 钉钉
+python -m src.cli quest-notify --dingtalk https://oapi.dingtalk.com/robot/send?access_token=xxx
+
+# === 工作目录上下文感知 ===
+# 扫描项目文件
+python -m src.cli context scan
+
+# 获取项目摘要
+python -m src.cli context summary
+
+# 查看浏览器上下文（当前打开的标签页）
+python -m src.cli context browser
+
+# === 配置管理 ===
+# 查看当前配置
+python -m src.cli config show
+
+# 设置 API Key
+python -m src.cli config set deepseek.api_key <your-key>
+
+# 列出可用模型
+python -m src.cli config list-models
 ```
 
 ### Web API 示例
@@ -406,6 +443,122 @@ flowchart TD
 - **LOW** - 快速便宜（DeepSeek-V3 / GLM-4-Flash / Qwen-Turbo）
 - **MEDIUM** - 平衡性能和成本（DeepSeek-R1 / Qwen-Max）
 - **HIGH** - 最高质量推理（DeepSeek-R1-Reasoner / Qwen-Plus）
+
+---
+
+## 🧙 Quest Mode（异步自主编程）
+
+Oh My Coder 支持**异步自主编程任务**，可以后台执行、暂停/恢复、实时通知。
+
+### 核心特性
+
+| 特性 | 说明 |
+|------|------|
+| **SPEC 生成** | 自动生成任务规格文档 |
+| **步骤拆分** | 智能拆分任务为可执行步骤 |
+| **断点续跑** | 支持暂停/恢复，从断点继续 |
+| **验收确认** | 每个步骤执行完需要用户验收 |
+| **失败重试** | 步骤失败自动触发重规划 |
+| **桌面通知** | macOS 原生通知 + 可选钉钉 |
+
+### 工作流程
+
+```
+创建 Quest → 生成 SPEC → 用户确认 → 后台执行 → 步骤验收 → 完成
+                                                      ↓
+                                              失败 → 重试/跳过
+```
+
+### 使用方式
+
+```bash
+# 创建并执行 Quest（自动生成 SPEC）
+python -m src.cli run "实现用户认证模块" --quest
+
+# 查看 Quest 列表
+python -m src.cli quest-list
+
+# 查看详细状态
+python -m src.cli quest-status <quest-id>
+
+# 暂停/恢复
+python -m src.cli quest-pause <quest-id>
+python -m src.cli quest-resume <quest-id>
+
+# 订阅通知（桌面 + 钉钉）
+python -m src.cli quest-notify --dingtalk https://oapi.dingtalk.com/robot/send?access_token=xxx
+
+# 阻塞等待完成
+python -m src.cli quest-wait <quest-id>
+```
+
+### 通知渠道
+
+| 渠道 | 配置 | 说明 |
+|------|------|------|
+| **桌面通知** | 默认开启 | macOS 原生通知 |
+| **钉钉** | `--dingtalk <url>` | 自定义机器人 Webhook |
+
+---
+
+## 🧠 主动学习模块
+
+Oh My Coder 内置**主动学习**能力，可以从执行结果中学习并优化策略。
+
+### 功能
+
+| 模块 | 说明 |
+|------|------|
+| **反馈收集** | 收集成功/失败/用户修正反馈 |
+| **模式分析** | 分析失败类型（理解错误、执行错误、验证错误） |
+| **策略适配** | 根据模式类型推荐不同策略 |
+| **提示词调优** | 根据反馈自动调整 Agent system prompt |
+
+### 使用方式
+
+```python
+from src.agents.self_improving import SelfImprovingAgent
+
+learner = SelfImprovingAgent(router)
+
+# 收集反馈
+learner.collect_feedback(task_id, "success", agent="planner", context={...})
+learner.collect_feedback(task_id, "failed", agent="executor", error="timeout")
+
+# 分析并适应
+learner.analyze_and_adapt(task_id)
+```
+
+数据存储在 `~/.omc/learning/` 目录。
+
+---
+
+## 🌐 工作目录上下文感知
+
+Oh My Coder 可以感知当前工作目录和浏览器上下文，为 Agent 提供更准确的信息。
+
+### 功能
+
+| 命令 | 说明 |
+|------|------|
+| `context scan` | 扫描项目文件结构，生成文件树 |
+| `context summary` | 生成项目摘要（语言统计、关键文件） |
+| `context tree` | 显示项目文件树 |
+| `context stats` | 显示项目统计信息 |
+| `context browser` | 获取浏览器当前打开的页面 |
+
+### 使用示例
+
+```bash
+# 扫描项目
+python -m src.cli context scan
+
+# 获取摘要
+python -m src.cli context summary
+
+# 查看浏览器
+python -m src.cli context browser
+```
 
 ---
 

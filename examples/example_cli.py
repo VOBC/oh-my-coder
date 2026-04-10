@@ -54,8 +54,7 @@ from pathlib import Path
 from enum import Enum
 from rich.console import Console
 from rich.table import Table
-from rich.progress import track
-from datetime import datetime, timedelta
+from datetime import datetime
 import json
 
 app = typer.Typer(
@@ -95,7 +94,7 @@ def create_project(
     db = Database()
     project = db.create_project(name, description)
     
-    console.print(f"✅ 项目创建成功！", style="green")
+    console.print("✅ 项目创建成功！", style="green")
     console.print(f"   项目ID: {project['id']}")
     console.print(f"   名称: {project['name']}")
     
@@ -169,7 +168,7 @@ def add_task(
     # 根据优先级显示不同颜色
     color = {"high": "red", "medium": "yellow", "low": "blue"}[priority.value]
     
-    console.print(f"✅ 任务已添加", style="green")
+    console.print("✅ 任务已添加", style="green")
     console.print(f"   #{task['id']} [{priority.value}]", style=color)
     console.print(f"   {name}")
 
@@ -223,7 +222,7 @@ def list_tasks(
     
     # 显示统计
     stats = db.get_task_stats(project_id)
-    console.print(f"\n📊 统计: ", style="bold")
+    console.print("\n📊 统计: ", style="bold")
     console.print(f"   ⏳ 待办: {stats['todo']}  🔄 进行中: {stats['doing']}  ✅ 已完成: {stats['done']}")
 
 
@@ -352,8 +351,6 @@ if __name__ == "__main__":
 # ============================================================
 
 from dataclasses import dataclass
-from datetime import datetime
-from typing import Optional
 
 
 @dataclass
