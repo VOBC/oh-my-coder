@@ -13,7 +13,7 @@
 import asyncio
 import os
 from dataclasses import dataclass, field
-from typing import Optional, List
+from typing import List
 
 
 @dataclass
@@ -130,9 +130,7 @@ class BrowserAwareness:
             browser = None
             try:
                 # 尝试连接 Chrome DevTools Protocol
-                browser = await p.chromium.connect_over_cdp(
-                    "http://localhost:9222"
-                )
+                browser = await p.chromium.connect_over_cdp("http://localhost:9222")
             except Exception:
                 try:
                     browser = await p.chromium.launch(headless=True)

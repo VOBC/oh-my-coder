@@ -5,7 +5,6 @@
 支持语言检测、文件摘要、深度控制。
 """
 
-import os
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -232,9 +231,7 @@ class WorkspaceScanner:
         }
         return self._scan_recursive(self.root, depth=0, max_depth=max_depth)
 
-    def _scan_recursive(
-        self, path: Path, depth: int, max_depth: int
-    ) -> FileNode:
+    def _scan_recursive(self, path: Path, depth: int, max_depth: int) -> FileNode:
         """递归扫描"""
         node = FileNode(
             name=path.name or str(path),
@@ -302,9 +299,7 @@ class WorkspaceScanner:
                 if name.startswith("."):
                     continue
 
-            child = self._scan_recursive(
-                entry, depth=depth + 1, max_depth=max_depth
-            )
+            child = self._scan_recursive(entry, depth=depth + 1, max_depth=max_depth)
             children.append(child)
 
             if entry.is_file():
@@ -430,9 +425,7 @@ class WorkspaceScanner:
 
         for line in lines:
             stripped = line.strip()
-            if stripped.startswith("import ") or stripped.startswith(
-                "from "
-            ):
+            if stripped.startswith("import ") or stripped.startswith("from "):
                 if len(imports) < 10:
                     imports.append(stripped)
             elif stripped.startswith("class "):
@@ -448,11 +441,16 @@ class WorkspaceScanner:
                     functions.append(fname)
 
         if imports:
-            result.append(f"导入: {', '.join(imports[:5])}" + (" ..." if len(imports) > 5 else ""))
+            result.append(
+                f"导入: {', '.join(imports[:5])}" + (" ..." if len(imports) > 5 else "")
+            )
         if classes:
             result.append(f"类: {', '.join(classes)}")
         if functions:
-            result.append(f"函数: {', '.join(functions[:10])}" + (" ..." if len(functions) > 10 else ""))
+            result.append(
+                f"函数: {', '.join(functions[:10])}"
+                + (" ..." if len(functions) > 10 else "")
+            )
 
         # 如果没提取到，返回前几行
         if not result:
@@ -478,15 +476,24 @@ class WorkspaceScanner:
             elif "function " in stripped or "=> {" in stripped:
                 if len(functions) < 10:
                     # 提取函数名
-                    fn_match = stripped.split("function")[1].split("(")[0].strip() if "function" in stripped else ""
+                    fn_match = (
+                        stripped.split("function")[1].split("(")[0].strip()
+                        if "function" in stripped
+                        else ""
+                    )
                     functions.append(fn_match or stripped[:50])
 
         if imports:
             result.append(f"导入: {len(imports)} 个依赖")
         if exports:
-            result.append(f"导出: {', '.join(exports[:5])}" + (" ..." if len(exports) > 5 else ""))
+            result.append(
+                f"导出: {', '.join(exports[:5])}" + (" ..." if len(exports) > 5 else "")
+            )
         if functions:
-            result.append(f"函数: {', '.join(functions[:10])}" + (" ..." if len(functions) > 10 else ""))
+            result.append(
+                f"函数: {', '.join(functions[:10])}"
+                + (" ..." if len(functions) > 10 else "")
+            )
 
         if not result:
             result = lines[:10]
@@ -505,7 +512,9 @@ class WorkspaceScanner:
                 keys = list(data.keys())[:20]
                 return [f"键: {', '.join(keys)}" + (" ..." if len(data) > 20 else "")]
             elif isinstance(data, list):
-                return [f"数组: {len(data)} 项，示例: {str(data[0])[:100] if data else '[]'}"]
+                return [
+                    f"数组: {len(data)} 项，示例: {str(data[0])[:100] if data else '[]'}"
+                ]
             else:
                 return [str(data)[:200]]
         except Exception:
@@ -546,9 +555,12 @@ class WorkspaceScanner:
         result = ["FROM / 指令:"]
         for line in lines:
             stripped = line.strip()
-            if stripped.startswith("FROM ") or stripped.startswith(
-                "RUN "
-            ) or stripped.startswith("COPY ") or stripped.startswith("WORKDIR "):
+            if (
+                stripped.startswith("FROM ")
+                or stripped.startswith("RUN ")
+                or stripped.startswith("COPY ")
+                or stripped.startswith("WORKDIR ")
+            ):
                 result.append(f"  {stripped}")
         return result[:15]
 
@@ -581,7 +593,9 @@ class WorkspaceScanner:
 
         # 添加统计信息
         stats = self._scan_stats
-        lines.append(f"共扫描 {stats['files_scanned']} 个文件，{stats['dirs_scanned']} 个目录")
+        lines.append(
+            f"共扫描 {stats['files_scanned']} 个文件，{stats['dirs_scanned']} 个目录"
+        )
         lines.append(f"总大小: {self._format_size(stats['bytes_scanned'])}")
 
         if stats["errors"]:
@@ -589,9 +603,7 @@ class WorkspaceScanner:
 
         return "\n".join(lines)
 
-    def _render_tree(
-        self, node: FileNode, prefix: str, is_last: bool
-    ) -> List[str]:
+    def _render_tree(self, node: FileNode, prefix: str, is_last: bool) -> List[str]:
         """渲染文件树"""
         lines = []
 
@@ -601,7 +613,9 @@ class WorkspaceScanner:
         lang_str = f" [{node.language}]" if node.language else ""
         modified_str = f" {node.modified}" if node.modified else ""
 
-        lines.append(f"{prefix}{connector}{node.name}{size_str}{lang_str}{modified_str}")
+        lines.append(
+            f"{prefix}{connector}{node.name}{size_str}{lang_str}{modified_str}"
+        )
 
         # 子节点
         if node.children:

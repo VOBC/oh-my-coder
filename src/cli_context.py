@@ -13,7 +13,7 @@ from pathlib import Path
 
 import typer
 
-from .context import WorkspaceScanner, BrowserAwareness
+from .context import WorkspaceScanner, BrowserAwareness, FileNode
 
 context_app = typer.Typer(
     name="context",
@@ -170,9 +170,7 @@ def summary(
             lang = line.split("]")[0][1:]
             break
 
-    console.print(
-        Panel(header, title=f"📄 {file_path.name}", border_style="green")
-    )
+    console.print(Panel(header, title=f"📄 {file_path.name}", border_style="green"))
 
     if content_lines:
         # 如果是代码，尝试语法高亮
@@ -203,10 +201,8 @@ def browser_cmd(
         omc context browser
         omc context browser --watch
     """
-    import asyncio
     from rich.console import Console
     from rich.panel import Panel
-    from rich.table import Table
 
     console = Console()
 
@@ -371,9 +367,7 @@ def stats(
             # 统计行数
             try:
                 with open(node.path, "r", encoding="utf-8", errors="replace") as f:
-                    lang_stats[lang]["lines"] += sum(
-                        1 for _ in f if _.strip()
-                    )
+                    lang_stats[lang]["lines"] += sum(1 for _ in f if _.strip())
             except Exception:
                 pass
 

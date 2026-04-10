@@ -114,6 +114,7 @@ class BaseAgent(ABC):
         # 初始化工作目录上下文扫描器
         try:
             from ..context import WorkspaceScanner
+
             project_path = config.get("project_path") if config else None
             if project_path:
                 self.workspace_scanner = WorkspaceScanner(Path(project_path))
