@@ -1,6 +1,6 @@
 # MEMORY.md - 长期记忆
 
-> 最后更新：2026-04-09
+> 最后更新：2026-04-11
 
 ---
 
@@ -92,6 +92,27 @@ git status                           # 4. 确认所有更改都已暂存
 ---
 
 ## 🐍 Python 编码规范（踩坑记录）
+
+### ⚠️ 今天反复出现的错误（2026-04-11）
+
+| 次数 | CI 错误 | 根因 | 教训 |
+|------|---------|------|------|
+| 1 | black 格式化 test_vision_agent.py | 只修 CI 点名的文件，全量未格式化 | **每次修完全部 `src/ tests/` 再提交**，不要只修 CI 报的那一个 |
+| 2 | black 格式化 test_document_agent.py | 同上 | 同上 |
+| 3 | ruff F401 pytest 未使用导入 | 测试文件写了 import pytest 但没用到 | 测试文件顶部也不要留未使用导入 |
+| 4 | git push 超时（Empty reply from server） | 没加系统代理 | **git push 前先 `scutil --proxy` 查系统代理**，有 HTTPEnable 就加 `-c http.proxy=http://127.0.0.1:4780` |
+
+**结论：提交前必须跑完整套**
+
+```bash
+python3 -m black src/ tests/          # 全量格式化，不要只修一个文件
+python3 -m ruff check --fix src/ tests/  # 自动修复 lint
+python3 -m pytest tests/ -q           # 测试通过
+git diff HEAD src/ tests/              # 确认没有未提交修改
+git push -c http.proxy=http://127.0.0.1:4780 origin main  # 有代理就用
+```
+
+---
 
 ### Python 3.9 兼容性问题
 
@@ -218,10 +239,10 @@ def show_status():
 
 ### 写完代码后
 
-- [ ] `ruff check --fix` 自动修复
-- [ ] `black` 格式化
-- [ ] `pytest` 跑测试
-- [ ] `ruff check` 确认无错误
+- [ ] `python3 -m ruff check --fix src/ tests/` 自动修复 lint
+- [ ] `python3 -m black src/ tests/` **全量格式化，不要只修 CI 报的那一个文件**
+- [ ] `python3 -m pytest tests/ -q` 跑测试
+- [ ] `git diff HEAD src/ tests/` 确认没有未提交修改
 - [ ] `git status` 确认所有文件已暂存
 
 ### 提交时
@@ -274,27 +295,33 @@ dev = ["pytest", "ruff", "black"]
 | 团队协作功能 | ✅ | 3ee8557 |
 | Quest Mode MVP | ✅ | 762de27 |
 
-**测试覆盖率**：176 passed
+### 2026-04-10 完成
+
+| 功能 | 状态 | Commit |
+|------|------|--------|
+| Quest Mode 测试套件（78 测试） | ✅ | 244ca69 |
+| 安装脚本 CI 验证 + entry point 修复 | ✅ | d7ea9f1 |
+| README 文档补全 | ✅ | 8de94d2 |
+| 工作目录上下文感知模块 + CLI + 测试 | ✅ | 077cbd0, f046cb7 |
+| 主动学习模块（SelfImprovingAgent） | ✅ | 30bdabe |
+| 5 大功能模块 + 115 测试 | ✅ | 206a27d |
+| 质量清理（ruff + black） | ✅ | 7a0ea3d, 1804376 |
+| 配置示例 + CI/CD 示例 | ✅ | aee3147 |
+| dangerous_command_blocker 源码修复（2 pattern 缺失） | ✅ | 17752de |
+
+**测试覆盖率**：498 passed（含 1 预存 test_web.py asyncio 失败）
 
 ### 待完成任务
 
-1. **Quest Mode 完善**
-   - 通知机制（桌面通知 / 钉钉）
-   - 执行结果验收 UI
-   - 支持暂停 / 恢复
-
-2. **CLI 增强**
-   - `--model` 参数指定模型
-   - `omc run --dry-run`
-   - `omc config` 命令
-
-3. **Agent 能力增强**
-   - 长期记忆系统
-   - 主动学习模块
-   - Planner Agent 改进
-
-4. **一键安装脚本完善**
-   - CI/CD 集成测试
+1. ~~安装脚本 CI 验证~~ ✅ (`d7ea9f1`)
+2. ~~README 文档~~ ✅ (`8de94d2`)
+3. ~~Quest Mode 测试~~ ✅ (`244ca69`)
+4. ~~上下文感知模块~~ ✅ (`077cbd0`)
+5. ~~主动学习模块~~ ✅ (`30bdabe`)
+6. ~~5 大功能模块~~ ✅ (`206a27d`)
+7. ~~文档完善（examples/ 用法示例）~~ ✅ (`aee3147`)
+8. ~~code-review.yaml 示例配置~~ ✅ (`aee3147`)
+9. 持续迭代新功能
 
 ---
 
@@ -309,3 +336,50 @@ dev = ["pytest", "ruff", "black"]
 - Typer 命令命名规范（显式指定 kebab-case）
 - CLI 导入规范（统一放顶部）
 - 更新项目进度（Wiki ✅、Quest Mode ✅）
+
+### 2026-04-10
+
+**今日完成（8 个 commit，465 测试）：**
+- Quest Mode 测试套件（78 测试）
+- 安装脚本 CI 验证 + entry point 修复（`main` → `app`）
+- README 文档补全（+165 行）
+- 工作目录上下文感知模块 + CLI + 测试（44 测试）
+- 主动学习模块（SelfImprovingAgent）
+- 5 大功能模块（配置/状态/多Agent/安全/沙箱）+ 115 测试
+
+**今日教训：**
+
+1. **测试要按实际行为写，不要按预期写**
+   - `test_blacklist_overrides`：测试写 `rm -rf /tmp` 期望"黑名单"，但实际上内置危险模式优先级更高，理由变成"内置危险模式"
+   - 教训：写测试前先验证模块的实际行为，而不是假设行为
+   - 教训：路径测试要分清 builtin vs custom pattern 的优先级
+
+2. **pytest 跑单文件时用绝对路径，避免 macOS symlink 问题**
+   - `pytest tests/test_memory.py` vs `python3 -m pytest tests/test_memory.py`
+   - 用 `python3 -m pytest` 更可靠
+
+3. **GitHub push 代理问题（macOS 系统代理 vs 终端）**
+   - macOS 系统代理在 `System Preferences > Network > Proxies`，浏览器用，终端/git 默认不用
+   - 查系统代理：`scutil --proxy`
+   - 解决方案：`git -c http.proxy=http://127.0.0.1:4780 push origin main`
+   - 永久方案：`git config --global http.proxy http://127.0.0.1:4780`
+   - **网络通了但 git push 443 超时 → 先用 `scutil --proxy` 查系统代理**
+
+4. **macOS 网络诊断命令**
+   ```bash
+   scutil --proxy          # 查看系统代理配置
+   dig github.com         # DNS 解析
+   nc -z -w 3 host port   # 测试端口连通性（macOS 用 -w 不是 -W）
+   curl -I --connect-timeout 5 https://github.com  # 测试 HTTPS
+   ```
+
+5. **多个文件批量修复用 ruff --fix 一次性搞定**
+   ```bash
+   python3 -m ruff check --fix src/ tests/
+   python3 -m black src/ tests/
+   ```
+   不要逐个文件手动修。
+
+6. **本地源码与 git HEAD 不一致**：用 `git diff HEAD src/` 对比确认所有修改已提交，避免 CI 报本地可过但 CI 不通过的问题。
+
+7. **CI 测 black --check 会扫描全部文件**：新文件也要格式化后再提交，不要只修被 CI 点名的那个。

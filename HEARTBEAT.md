@@ -1,44 +1,48 @@
 # HEARTBEAT.md
 
-## 今日完成（2026-04-09）
+## 今日完成（2026-04-11）
 
-### CLI 增强 ✅
-- [x] `--model` 参数：`deepseek`、`kimi:high` 格式
-- [x] `--dry-run` 预览
-- [x] `omc config` show/set/list
-- [x] 桌面通知（osascript 零依赖）
-- [x] 结果验收 UI + 下一步建议
-- [x] `load_dotenv()` 让 .env 生效
+### ✅ 5 AI 评测 README 改进（P0全部通过，P1部分完成）
+### ✅ notifications.py 标准库导入补全（commit b469fc5）
+### ✅ vision.py f-string 多余前缀移除（commit e1dc6bd）
+### ✅ 通知渠道扩展至 7 种新平台（commit e1e3283）
+### ✅ README 改进 + 配套文件完善（commit 026023e）
+### ✅ 文档年份 2025 → 2026（commit d95b2c9）
+### ✅ CI 修复：test_document_agent.py 未使用导入、black 格式化（commit 0d61e10）
+### ✅ CI 修复：test_vision_agent.py black 格式化（commit e9ea459）
 
-### 今日教训
+## 待完成任务
+- P1-2 README 目录导航（Table of Contents）：未完成，待后续迭代
 
-**F541 f-string 无占位符（又犯了！）**：
-```python
-# ❌ 错误 - ruff F541
-console.print(f"[dim]text[/dim]")
+## 今日教训（已存 MEMORY.md）
 
-# ✅ 正确
-console.print("[dim]text[/dim]")
-```
-→ 快速修复：`ruff check --fix`
+1. **black 格式化必须全量**：只修 CI 报的一个文件不够，CI 每次都报新的文件，因为每次 CI 只测全部文件中的一个子集
+2. **git push 超时** → `scutil --proxy` 查系统代理，有 HTTPEnable 就加 `-c http.proxy=http://127.0.0.1:4780`
+3. **提交前必须跑完整套**：
+   ```bash
+   python3 -m black src/ tests/
+   python3 -m ruff check --fix src/ tests/
+   python3 -m pytest tests/ -q
+   git diff HEAD src/ tests/
+   ```
 
-## 待完成
+## 提交前必跑（无豁免）
 
-1. **git push**（网络超时，手动补）
-2. **测试覆盖**：为 `notify.py` 加测试
-3. **安装脚本 CI**：验证 `install.sh` 干净环境
-
-## 经验教训提醒
-
-**提交前必须运行**：
 ```bash
-pytest && ruff check && black
+# 1. 代码质量三件套（全量，不要只修一个文件）
+python3 -m black src/ tests/
+python3 -m ruff check --fix src/ tests/
+python3 -m pytest tests/ -q
+
+# 2. 本地检查
+git diff HEAD src/ tests/ | head -20   # 无输出 = 没有未提交修改
+git status
+
+# 3. push（有系统代理时）
+git -c http.proxy=http://127.0.0.1:4780 push origin main
 ```
-（每次都要跑，不要偷懒）
 
-**Rich console.print**：无 `{}` 占位符时不用 `f` 前缀
+## 项目状态
 
-**Python 3.9**：`Union[X, Y]` 不要用 `X | Y`
-
-**Typer 命令**：`@app.command("kebab-case")` 显式指定
-
+- HEAD: `e9ea459`（已推送）
+- GitHub: https://github.com/VOBC/oh-my-coder
