@@ -205,10 +205,12 @@ A: xxx
                 try:
                     content = doc.read_text(encoding="utf-8")
                     if len(content) < 5000:
-                        prompt.append({
-                            "role": "system",
-                            "content": f"## 已有文档: {doc.name}\n```\n{content}\n```",
-                        })
+                        prompt.append(
+                            {
+                                "role": "system",
+                                "content": f"## 已有文档: {doc.name}\n```\n{content}\n```",
+                            }
+                        )
                 except Exception:
                     pass
 
