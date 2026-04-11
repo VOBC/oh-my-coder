@@ -691,9 +691,21 @@ def quest_notify(
         None, "--dingtalk", "-d", help="钉钉 Webhook URL"
     ),
     dingtalk_secret: str = typer.Option(None, "--secret", "-s", help="钉钉加签密钥"),
+    telegram_bot_token: str = typer.Option(
+        None, "--telegram-bot-token", help="Telegram Bot Token"
+    ),
+    telegram_chat_id: str = typer.Option(None, "--telegram-chat-id", help="Telegram Chat ID"),
+    discord_webhook: str = typer.Option(
+        None, "--discord", help="Discord Webhook URL"
+    ),
+    slack_webhook: str = typer.Option(None, "--slack", help="Slack Incoming Webhook URL"),
+    teams_webhook: str = typer.Option(None, "--teams", help="Microsoft Teams Webhook URL"),
+    feishu_webhook: str = typer.Option(None, "--feishu", help="飞书（Lark）Webhook URL"),
+    wecom_webhook: str = typer.Option(None, "--wecom", help="企业微信 Webhook URL"),
+    pushplus_token: str = typer.Option(None, "--pushplus", help="PushPlus Token"),
 ):
     """
-    🔔 订阅 Quest 通知（桌面 + 可选钉钉）
+    🔔 订阅 Quest 通知（桌面 + 多种 Webhook 渠道）
     """
     import asyncio
 
@@ -712,6 +724,14 @@ def quest_notify(
         desktop=True,
         dingtalk_webhook=dingtalk_webhook,
         dingtalk_secret=dingtalk_secret,
+        telegram_bot_token=telegram_bot_token,
+        telegram_chat_id=telegram_chat_id,
+        discord_webhook=discord_webhook,
+        slack_webhook=slack_webhook,
+        teams_webhook=teams_webhook,
+        feishu_webhook=feishu_webhook,
+        wecom_webhook=wecom_webhook,
+        pushplus_token=pushplus_token,
     )
     notifier = NotificationManager(config)
 

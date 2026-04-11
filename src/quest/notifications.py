@@ -93,11 +93,6 @@ class DingTalkNotificationChannel(NotificationChannel):
             return False
 
         try:
-            import hashlib
-            import hmac
-            import time
-            import urllib.parse
-            import urllib.request
 
             # 钉钉签名
             if self.secret:
@@ -141,6 +136,302 @@ class DingTalkNotificationChannel(NotificationChannel):
             return False
 
 
+class TelegramNotificationChannel(NotificationChannel):
+    """Telegram Bot API 通知"""
+
+    name = "telegram"
+
+    def __init__(
+        self,
+        bot_token: Optional[str] = None,
+        chat_id: Optional[str] = None,
+    ):
+        self.bot_token = bot_token or os.environ.get("TELEGRAM_BOT_TOKEN", "")
+        self.chat_id = chat_id or os.environ.get("TELEGRAM_CHAT_ID", "")
+
+    def send(self, title: str, body: str, level: str = "info") -> bool:
+        if not self.bot_token or not self.chat_id:
+            return False
+
+        try:
+
+            emoji = {"info": "ℹ️", "success": "✅", "warning": "⚠️", "error": "🚨"}.get(
+                level, "ℹ️"
+            )
+            text = f"{emoji} **{title}**\n\n{body}\n\n_{datetime.now().strftime('%H:%M:%S')}_"
+            payload = {
+                "chat_id": self.chat_id,
+                "text": text,
+                "parse_mode": "Markdown",
+            }
+            data = json.dumps(payload).encode("utf-8")
+            url = f"https://api.telegram.org/bot{self.bot_token}/sendMessage"
+            req = urllib.request.Request(
+                url, data=data, headers={"Content-Type": "application/json"}
+            )
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                result = json.loads(resp.read().decode("utf-8"))
+                return result.get("ok", False) is True
+        except Exception as e:
+            logger.warning(f"Telegram notification failed: {e}")
+            return False
+
+
+class DiscordNotificationChannel(NotificationChannel):
+    """Discord Webhook 通知"""
+
+    name = "discord"
+
+    def __init__(self, webhook_url: Optional[str] = None):
+        self.webhook_url = webhook_url or os.environ.get("DISCORD_WEBHOOK", "")
+
+    def send(self, title: str, body: str, level: str = "info") -> bool:
+        if not self.webhook_url:
+            return False
+
+        try:
+
+            color_map = {
+                "info": 3447003,      # 蓝色
+                "success": 3066993,   # 绿色
+                "warning": 16761527,  # 橙色
+                "error": 15158332,   # 红色
+            }
+            color = color_map.get(level, 3447003)
+            payload = {
+                "embeds": [
+                    {
+                        "title": title,
+                        "description": body,
+                        "color": color,
+                        "footer": {"text": f"Oh My Coder • {datetime.now().strftime('%H:%M:%S')}"},
+                    }
+                ]
+            }
+            data = json.dumps(payload).encode("utf-8")
+            req = urllib.request.Request(
+                self.webhook_url,
+                data=data,
+                headers={"Content-Type": "application/json"},
+            )
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                return resp.status == 200 or resp.status == 204
+        except Exception as e:
+            logger.warning(f"Discord notification failed: {e}")
+            return False
+
+
+class SlackNotificationChannel(NotificationChannel):
+    """Slack Incoming Webhook 通知"""
+
+    name = "slack"
+
+    def __init__(self, webhook_url: Optional[str] = None):
+        self.webhook_url = webhook_url or os.environ.get("SLACK_WEBHOOK", "")
+
+    def send(self, title: str, body: str, level: str = "info") -> bool:
+        if not self.webhook_url:
+            return False
+
+        try:
+
+            emoji = {"info": ":information_source:", "success": ":white_check_mark:",
+                     "warning": ":warning:", "error": ":x:"}.get(level, ":information_source:")
+            payload = {
+                "blocks": [
+                    {
+                        "type": "header",
+                        "text": {"type": "plain_text", "text": emoji + " " + title, "emoji": True},
+                    },
+                    {
+                        "type": "section",
+                        "text": {"type": "mrkdwn", "text": body},
+                    },
+                    {
+                        "type": "context",
+                        "elements": [
+                            {"type": "mrkdwn", "text": f"_Oh My Coder • {datetime.now().strftime('%H:%M:%S')}_"},
+                        ],
+                    },
+                ]
+            }
+            data = json.dumps(payload).encode("utf-8")
+            req = urllib.request.Request(
+                self.webhook_url,
+                data=data,
+                headers={"Content-Type": "application/json"},
+            )
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                return resp.status == 200
+        except Exception as e:
+            logger.warning(f"Slack notification failed: {e}")
+            return False
+
+
+class TeamsNotificationChannel(NotificationChannel):
+    """Microsoft Teams Incoming Webhook 通知"""
+
+    name = "teams"
+
+    def __init__(self, webhook_url: Optional[str] = None):
+        self.webhook_url = webhook_url or os.environ.get("TEAMS_WEBHOOK", "")
+
+    def send(self, title: str, body: str, level: str = "info") -> bool:
+        if not self.webhook_url:
+            return False
+
+        try:
+
+            color_map = {"info": "0078D4", "success": "107C10",
+                         "warning": "FF8C00", "error": "D13438"}
+            color = color_map.get(level, "0078D4")
+            payload = {
+                "type": "message",
+                "attachments": [
+                    {
+                        "contentType": "application/vnd.microsoft.card.adaptive",
+                        "content": {
+                            "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+                            "type": "AdaptiveCard",
+                            "version": "1.4",
+                            "body": [
+                                {
+                                    "type": "Container",
+                                    "style": color,
+                                    "items": [
+                                        {"type": "TextBlock", "text": title, "weight": "Bolder", "size": "Medium"},
+                                        {"type": "TextBlock", "text": body, "wrap": True},
+                                        {"type": "TextBlock", "text": f"Oh My Coder • {datetime.now().strftime('%H:%M:%S')}", "size": "Small", "isSubtle": True},
+                                    ],
+                                }
+                            ],
+                        },
+                    }
+                ],
+            }
+            data = json.dumps(payload).encode("utf-8")
+            req = urllib.request.Request(
+                self.webhook_url,
+                data=data,
+                headers={"Content-Type": "application/json"},
+            )
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                return resp.status == 200
+        except Exception as e:
+            logger.warning(f"Teams notification failed: {e}")
+            return False
+
+
+class FeishuNotificationChannel(NotificationChannel):
+    """飞书（Lark）自定义机器人 Webhook 通知"""
+
+    name = "feishu"
+
+    def __init__(self, webhook_url: Optional[str] = None):
+        self.webhook_url = webhook_url or os.environ.get("FEISHU_WEBHOOK", "")
+
+    def send(self, title: str, body: str, level: str = "info") -> bool:
+        if not self.webhook_url:
+            return False
+
+        try:
+
+            emoji = {"info": "ℹ️", "success": "✅", "warning": "⚠️", "error": "🚨"}.get(
+                level, "ℹ️"
+            )
+            payload = {
+                "msg_type": "interactive",
+                "card": {
+                    "header": {
+                        "title": {"tag": "plain_text", "text": f"{emoji} {title}"},
+                        "template": "blue",
+                    },
+                    "elements": [
+                        {"tag": "div", "text": {"tag": "lark_md", "content": body}},
+                        {
+                            "tag": "note",
+                            "elements": [{"tag": "plain_text", "text": datetime.now().strftime("%H:%M:%S")}],
+                        },
+                    ],
+                },
+            }
+            data = json.dumps(payload).encode("utf-8")
+            req = urllib.request.Request(
+                self.webhook_url,
+                data=data,
+                headers={"Content-Type": "application/json"},
+            )
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                result = json.loads(resp.read().decode("utf-8"))
+                return result.get("code", 1) == 0
+        except Exception as e:
+            logger.warning(f"Feishu notification failed: {e}")
+            return False
+
+
+class WeComNotificationChannel(NotificationChannel):
+    """企业微信 Webhook 通知"""
+
+    name = "wecom"
+
+    def __init__(self, webhook_url: Optional[str] = None):
+        self.webhook_url = webhook_url or os.environ.get("WECOM_WEBHOOK", "")
+
+    def send(self, title: str, body: str, level: str = "info") -> bool:
+        if not self.webhook_url:
+            return False
+
+        try:
+
+            emoji = {"info": "ℹ️", "success": "✅", "warning": "⚠️", "error": "🚨"}.get(
+                level, "ℹ️"
+            )
+            payload = {
+                "msgtype": "markdown",
+                "markdown": {
+                    "content": f"{emoji} **{title}**\n\n{body}\n\n> Oh My Coder • {datetime.now().strftime('%H:%M:%S')}",
+                },
+            }
+            data = json.dumps(payload).encode("utf-8")
+            req = urllib.request.Request(
+                self.webhook_url,
+                data=data,
+                headers={"Content-Type": "application/json"},
+            )
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                result = json.loads(resp.read().decode("utf-8"))
+                return result.get("errcode", 1) == 0
+        except Exception as e:
+            logger.warning(f"WeCom notification failed: {e}")
+            return False
+
+
+class PushPlusNotificationChannel(NotificationChannel):
+    """PushPlus 微信公众号推送通知"""
+
+    name = "pushplus"
+
+    def __init__(self, token: Optional[str] = None):
+        self.token = token or os.environ.get("PUSHPLUS_TOKEN", "")
+
+    def send(self, title: str, body: str, level: str = "info") -> bool:
+        if not self.token:
+            return False
+
+        try:
+
+            text = f"**{title}**\n\n{body}\n\n_{datetime.now().strftime('%H:%M:%S')}_"
+            encoded = urllib.parse.urlencode({"token": self.token, "content": text, "type": "text"})
+            url = f"https://www.pushplus.plus/send?{encoded}"
+            req = urllib.request.Request(url, headers={"Content-Type": "application/json"})
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                result = json.loads(resp.read().decode("utf-8"))
+                return result.get("code", 1) == 200
+        except Exception as e:
+            logger.warning(f"PushPlus notification failed: {e}")
+            return False
+
+
 class ConsoleNotificationChannel(NotificationChannel):
     """控制台通知（CLI 实时输出）"""
 
@@ -167,6 +458,14 @@ class NotificationConfig:
     desktop: bool = True  # 桌面通知
     dingtalk_webhook: Optional[str] = None
     dingtalk_secret: Optional[str] = None
+    telegram_bot_token: Optional[str] = None
+    telegram_chat_id: Optional[str] = None
+    discord_webhook: Optional[str] = None
+    slack_webhook: Optional[str] = None
+    teams_webhook: Optional[str] = None
+    feishu_webhook: Optional[str] = None
+    wecom_webhook: Optional[str] = None
+    pushplus_token: Optional[str] = None
     console_callback: Optional[Callable[[str, str, str], None]] = None
 
 
@@ -193,6 +492,39 @@ class NotificationManager:
                     secret=self.config.dingtalk_secret,
                 )
             )
+
+        # Telegram
+        if self.config.telegram_bot_token and self.config.telegram_chat_id:
+            self._channels.append(
+                TelegramNotificationChannel(
+                    bot_token=self.config.telegram_bot_token,
+                    chat_id=self.config.telegram_chat_id,
+                )
+            )
+
+        # Discord
+        if self.config.discord_webhook:
+            self._channels.append(DiscordNotificationChannel(webhook_url=self.config.discord_webhook))
+
+        # Slack
+        if self.config.slack_webhook:
+            self._channels.append(SlackNotificationChannel(webhook_url=self.config.slack_webhook))
+
+        # Microsoft Teams
+        if self.config.teams_webhook:
+            self._channels.append(TeamsNotificationChannel(webhook_url=self.config.teams_webhook))
+
+        # 飞书
+        if self.config.feishu_webhook:
+            self._channels.append(FeishuNotificationChannel(webhook_url=self.config.feishu_webhook))
+
+        # 企业微信
+        if self.config.wecom_webhook:
+            self._channels.append(WeComNotificationChannel(webhook_url=self.config.wecom_webhook))
+
+        # PushPlus
+        if self.config.pushplus_token:
+            self._channels.append(PushPlusNotificationChannel(token=self.config.pushplus_token))
 
         # 控制台
         if self.config.console_callback:
