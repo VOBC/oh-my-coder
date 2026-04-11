@@ -2,8 +2,6 @@
 DocumentAgent 测试
 """
 
-import pytest
-
 from src.agents.base import AgentLane, get_agent
 from src.agents.document import DocumentAgent
 
@@ -66,6 +64,7 @@ class TestDocumentAgentSystemPrompt:
     def test_prompt_requires_1500_words(self):
         """要求文档长度 ≥ 1500 字（在 _run 的 doc_hint 中）"""
         import inspect
+
         agent = DocumentAgent.__new__(DocumentAgent)
         src = inspect.getsource(agent._run)
         assert "1500" in src
