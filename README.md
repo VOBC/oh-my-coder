@@ -129,7 +129,7 @@ export WENXIN_API_KEY=your_key           # 文心一言
 export WENXIN_SECRET_KEY=your_secret     # 文心一言（需要两个）
 export TONGYI_API_KEY=your_key           # 通义千问
 export GLM_API_KEY=your_key              # 智谱 GLM
-export MINIMAX_API_KEY=your_key          # MiniMax 海螺
+export MINIMAX_API_KEY=your_key          # MiniMax
 export KIMI_API_KEY=your_key             # Kimi 月暗
 export HUNYUAN_API_KEY=your_key          # 腾讯混元
 export HUNYUAN_SECRET_KEY=your_secret    # 腾讯混元（需要两个）
@@ -795,7 +795,7 @@ oh-my-coder/
 │   │   ├── glm.py           # 智谱 GLM
 │   │   ├── kimi.py          # Kimi 月暗
 │   │   ├── doubao.py        # 字节豆包
-│   │   ├── minimax.py       # MiniMax 海螺
+│   │   ├── minimax.py       # MiniMax
 │   │   ├── hunyuan.py       # 腾讯混元
 │   │   ├── tiangong.py      # 天工AI
 │   │   ├── spark.py         # 讯飞星火
@@ -872,7 +872,7 @@ A: 请访问对应模型的官方网站注册账号后获取：
    - 智谱 GLM: https://open.bigmodel.cn/
    - 天工AI: https://model-platform.tiangong.cn/
    - 百川智能: https://platform.baichuan-ai.com/
-   - MiniMax 海螺: https://api.minimax.chat/
+   - MiniMax: https://api.minimax.chat/
 
 **Q: 模型调用超时怎么办？**
 A: 可通过以下方式解决：

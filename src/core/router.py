@@ -139,7 +139,7 @@ class RouterConfig:
                 "deepseek",  # 免费额度高
                 "kimi",  # 长上下文
                 "doubao",  # 性价比高
-                "minimax",  # 海螺
+                "minimax",  # MiniMax
                 "glm",  # 智谱
                 "tongyi",  # 通义千问
                 "wenxin",  # 文心一言
