@@ -53,7 +53,12 @@ def _load_image_meta(image_path: Path) -> Optional[Dict]:
                         f.read(1)
                         h = struct.unpack(">H", f.read(2))[0]
                         w = struct.unpack(">H", f.read(2))[0]
-                        return {"format": "JPEG", "width": w, "height": h, "path": str(image_path)}
+                        return {
+                            "format": "JPEG",
+                            "width": w,
+                            "height": h,
+                            "path": str(image_path),
+                        }
                     else:
                         length = struct.unpack(">H", f.read(2))[0]
                         f.read(length - 2)
@@ -191,17 +196,24 @@ class VisionAgent(BaseAgent):
         if context.project_path and context.project_path.exists():
             image_extensions = {".png", ".jpg", ".jpeg", ".webp", ".svg", ".gif"}
             images = [
-                str(p) for p in context.project_path.rglob("*")
+                str(p)
+                for p in context.project_path.rglob("*")
                 if p.suffix.lower() in image_extensions and p.is_file()
             ]
             if images:
-                extra_context += f"## 📁 项目中的图片文件\n" + "\n".join(f"- {i}" for i in images[:10]) + "\n"
+                extra_context += (
+                    "## 📁 项目中的图片文件\n"
+                    + "\n".join(f"- {i}" for i in images[:10])
+                    + "\n"
+                )
 
         if extra_context:
-            prompt.append({
-                "role": "system",
-                "content": f"## 额外信息\n{extra_context}",
-            })
+            prompt.append(
+                {
+                    "role": "system",
+                    "content": f"## 额外信息\n{extra_context}",
+                }
+            )
 
         # 分析提示
         analysis_hint = """
