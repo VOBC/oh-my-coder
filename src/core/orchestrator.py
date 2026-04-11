@@ -97,7 +97,44 @@ WORKFLOW_TEMPLATES = {
         WorkflowStep("executor", "实现测试", dependencies=["test-engineer"]),
         WorkflowStep("verifier", "运行测试", dependencies=["executor"]),
     ],
+    # ---- 新增工作流（2026-04-11）----
+    # 全自动路由：根据任务描述自动识别类型，选择最合适的工作流
+    "autopilot": [
+        WorkflowStep("analyst", "任务类型识别 + 选择最合适工作流"),
+    ],
+    # 结对编程：实时对话式 Code Review，Explorer + Critic 交替协作
+    "pair": [
+        WorkflowStep("explore", "探索代码库"),
+        WorkflowStep("critic", "代码审查（结对）", dependencies=["explore"]),
+        WorkflowStep("explorer", "问题澄清（探索者）", dependencies=["critic"]),
+        WorkflowStep("critic", "确认修复（评审者）", dependencies=["explorer"]),
+    ],
+    # 重构模式：分析热点 → 制定重构计划 → 执行 → 验证
+    "refactor": [
+        WorkflowStep("analyst", "分析代码热点和坏味道"),
+        WorkflowStep("planner", "制定重构计划", dependencies=["analyst"]),
+        WorkflowStep("code-simplifier", "执行重构", dependencies=["planner"]),
+        WorkflowStep("verifier", "验证重构正确性", dependencies=["code-simplifier"]),
+        WorkflowStep("test-engineer", "运行测试确保无回归", dependencies=["verifier"]),
+    ],
 }
+
+
+def _detect_workflow_for_autopilot(task: str) -> str:
+    """
+    根据任务描述自动识别应使用的工作流
+    Keyword → Workflow 映射
+    """
+    task_lower = task.lower()
+    if any(k in task_lower for k in ["bug", "崩溃", "报错", "fix", "修复", "错误", "crash"]):
+        return "debug"
+    if any(k in task_lower for k in ["test", "测试", "用例", "coverage"]):
+        return "test"
+    if any(k in task_lower for k in ["refactor", "重构", "优化", "简化", "cleanup"]):
+        return "refactor"
+    if any(k in task_lower for k in ["review", "审查", "cr", "review"]):
+        return "review"
+    return "build"  # 默认走 build 流程
 
 
 class Orchestrator:
@@ -175,7 +212,14 @@ class Orchestrator:
 
         # 获取工作流模板
         if isinstance(workflow_name, str):
-            steps = WORKFLOW_TEMPLATES.get(workflow_name, [])
+            # autopilot 特殊处理：自动检测任务类型并路由
+            if workflow_name == "autopilot":
+                actual = _detect_workflow_for_autopilot(context.get("task", ""))
+                steps = WORKFLOW_TEMPLATES.get(actual, [])
+                # 记录路由日志（写入 context 供后续使用）
+                context["_autopilot_routed_to"] = actual
+            else:
+                steps = WORKFLOW_TEMPLATES.get(workflow_name, [])
         else:
             steps = workflow_name
 
@@ -266,9 +310,72 @@ class Orchestrator:
         context: Dict[str, Any],
         result: WorkflowResult,
     ):
-        """并行执行步骤"""
-        # TODO: 实现并行执行
-        await self._execute_sequential(steps, context, result)
+        """
+        并行执行步骤
+
+        实现思路：
+        1. 对步骤按依赖拓扑分层
+        2. 同一层的所有步骤并发执行（asyncio.gather）
+        3. 等待整层完成后再进入下一层
+        这样 review 工作流的 code-reviewer + security-reviewer 可以同时跑，
+        比顺序执行快约一倍。
+        """
+        from ..agents.base import AgentContext
+
+        # 建立步骤字典
+        step_map: Dict[str, WorkflowStep] = {s.agent_name: s for s in steps}
+
+        # 拓扑分层
+        levels: List[List[WorkflowStep]] = []
+        remaining = set(step_map.keys())
+
+        while remaining:
+            # 找到所有依赖都已完成的步骤（作为当前层）
+            current_level = [
+                step_map[name]
+                for name in remaining
+                if all(dep in result.steps_completed for dep in step_map[name].dependencies)
+            ]
+            if not current_level:
+                # 有循环依赖或无效依赖
+                break
+
+            levels.append(current_level)
+            for step in current_level:
+                remaining.remove(step.agent_name)
+
+        # 按层执行：同层并行，层间顺序
+        for level in levels:
+            tasks = []
+            for step in level:
+                agent = self.get_agent(step.agent_name)
+                agent_context = AgentContext(
+                    project_path=Path(context.get("project_path", ".")),
+                    task_description=context.get("task", ""),
+                    previous_outputs=result.outputs,
+                )
+                tasks.append(
+                    asyncio.wait_for(
+                        agent.execute(agent_context),
+                        timeout=step.timeout,
+                    )
+                )
+
+            results = await asyncio.gather(*tasks, return_exceptions=True)
+
+            for step, task_result in zip(level, results):
+                if isinstance(task_result, Exception):
+                    result.steps_failed.append(step.agent_name)
+                    raise Exception(f"Agent {step.agent_name} 并行执行失败: {task_result}")
+
+                output = task_result
+                if output.status.value == "completed":
+                    result.steps_completed.append(step.agent_name)
+                    result.outputs[step.agent_name] = output
+                    result.total_tokens += output.usage.get("total_tokens", 0)
+                else:
+                    result.steps_failed.append(step.agent_name)
+                    raise Exception(f"Agent {step.agent_name} 执行失败: {output.error}")
 
     async def _execute_conditional(
         self,
@@ -276,9 +383,65 @@ class Orchestrator:
         context: Dict[str, Any],
         result: WorkflowResult,
     ):
-        """条件执行步骤"""
-        # TODO: 实现条件执行
-        await self._execute_sequential(steps, context, result)
+        """
+        条件执行步骤
+
+        实现思路：
+        - 对每个步骤，执行前检查 step.condition(result.outputs)
+        - condition 为 None → 总是执行
+        - condition 返回 True → 执行
+        - condition 返回 False → 跳过（不计入 completed，但也不报错）
+        - condition 抛异常 → 标记失败
+        """
+        from ..agents.base import AgentContext
+
+        for step in steps:
+            # 检查依赖
+            for dep in step.dependencies:
+                if dep not in result.steps_completed:
+                    raise ValueError(
+                        f"步骤 {step.agent_name} 的依赖 {dep} 未完成"
+                    )
+
+            # 执行条件检查
+            if step.condition is not None:
+                try:
+                    should_run = step.condition(result.outputs)
+                except Exception as cond_err:
+                    result.steps_failed.append(step.agent_name)
+                    raise Exception(
+                        f"步骤 {step.agent_name} 条件执行异常: {cond_err}"
+                    )
+                if not should_run:
+                    # 条件不满足，跳过此步骤
+                    continue
+
+            try:
+                agent = self.get_agent(step.agent_name)
+                agent_context = AgentContext(
+                    project_path=Path(context.get("project_path", ".")),
+                    task_description=context.get("task", ""),
+                    previous_outputs=result.outputs,
+                )
+
+                output = await asyncio.wait_for(
+                    agent.execute(agent_context),
+                    timeout=step.timeout,
+                )
+
+                if output.status.value == "completed":
+                    result.steps_completed.append(step.agent_name)
+                    result.outputs[step.agent_name] = output
+                    result.total_tokens += output.usage.get("total_tokens", 0)
+                else:
+                    result.steps_failed.append(step.agent_name)
+                    raise Exception(
+                        f"Agent {step.agent_name} 执行失败: {output.error}"
+                    )
+
+            except asyncio.TimeoutError:
+                result.steps_failed.append(step.agent_name)
+                raise Exception(f"Agent {step.agent_name} 执行超时")
 
     async def execute_single_agent(
         self,

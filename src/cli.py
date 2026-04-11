@@ -98,7 +98,15 @@ def run(
     task: str = typer.Argument(..., help="任务描述"),
     project_path: Path = typer.Option(".", "--project", "-p", help="项目路径"),
     model: str = typer.Option("deepseek", "--model", "-m", help="模型选择"),
-    workflow: str = typer.Option("build", "--workflow", "-w", help="工作流名称"),
+    workflow: str = typer.Option(
+        "build",
+        "--workflow",
+        "-w",
+        help=(
+            "工作流名称：build（开发）/ review（审查）/ debug（调试）/ test（测试）"
+            " / autopilot（自动路由）/ pair（结对编程）/ refactor（重构）"
+        ),
+    ),
     dry_run: bool = typer.Option(False, "--dry-run", help="仅预览执行计划，不实际运行"),
     notify: bool = typer.Option(
         False, "--notify", "-n", help="完成后发送通知（桌面+钉钉）"
