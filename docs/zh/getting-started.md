@@ -136,7 +136,7 @@ curl http://localhost:8000/health
 
 ## 🤖 Agent 介绍
 
-Oh My Coder 有 18 个专业 Agent，分工协作完成复杂任务。
+Oh My Coder 有 21 个专业 Agent，分工协作完成复杂任务。
 
 ### 构建类 Agent（BUILD）
 
