@@ -13,6 +13,7 @@ from .code_simplifier import CodeSimplifierAgent
 from .critic import CriticAgent
 from .debugger import DebuggerAgent
 from .designer import DesignerAgent
+from .document import DocumentAgent
 from .executor import ExecutorAgent
 from .explore import ExploreAgent
 from .git_master import GitMasterAgent
@@ -24,6 +25,7 @@ from .self_improving import LearningStore, SelfImprovingAgent
 from .test_engineer import TestEngineerAgent
 from .tracer import TracerAgent
 from .verifier import VerifierAgent
+from .vision import VisionAgent
 from .writer import WriterAgent
 
 # 导出所有 Agent
@@ -47,6 +49,8 @@ __all__ = [
     # Domain Lane
     "TestEngineerAgent",
     "DesignerAgent",
+    "VisionAgent",
+    "DocumentAgent",
     "WriterAgent",
     "GitMasterAgent",
     "CodeSimplifierAgent",
