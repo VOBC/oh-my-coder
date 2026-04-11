@@ -694,13 +694,19 @@ def quest_notify(
     telegram_bot_token: str = typer.Option(
         None, "--telegram-bot-token", help="Telegram Bot Token"
     ),
-    telegram_chat_id: str = typer.Option(None, "--telegram-chat-id", help="Telegram Chat ID"),
-    discord_webhook: str = typer.Option(
-        None, "--discord", help="Discord Webhook URL"
+    telegram_chat_id: str = typer.Option(
+        None, "--telegram-chat-id", help="Telegram Chat ID"
     ),
-    slack_webhook: str = typer.Option(None, "--slack", help="Slack Incoming Webhook URL"),
-    teams_webhook: str = typer.Option(None, "--teams", help="Microsoft Teams Webhook URL"),
-    feishu_webhook: str = typer.Option(None, "--feishu", help="飞书（Lark）Webhook URL"),
+    discord_webhook: str = typer.Option(None, "--discord", help="Discord Webhook URL"),
+    slack_webhook: str = typer.Option(
+        None, "--slack", help="Slack Incoming Webhook URL"
+    ),
+    teams_webhook: str = typer.Option(
+        None, "--teams", help="Microsoft Teams Webhook URL"
+    ),
+    feishu_webhook: str = typer.Option(
+        None, "--feishu", help="飞书（Lark）Webhook URL"
+    ),
     wecom_webhook: str = typer.Option(None, "--wecom", help="企业微信 Webhook URL"),
     pushplus_token: str = typer.Option(None, "--pushplus", help="PushPlus Token"),
 ):

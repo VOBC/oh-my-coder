@@ -1,3 +1,9 @@
+import hashlib
+import hmac
+import time
+import urllib.parse
+import urllib.request
+
 """
 Quest 通知系统
 
@@ -192,10 +198,10 @@ class DiscordNotificationChannel(NotificationChannel):
         try:
 
             color_map = {
-                "info": 3447003,      # 蓝色
-                "success": 3066993,   # 绿色
+                "info": 3447003,  # 蓝色
+                "success": 3066993,  # 绿色
                 "warning": 16761527,  # 橙色
-                "error": 15158332,   # 红色
+                "error": 15158332,  # 红色
             }
             color = color_map.get(level, 3447003)
             payload = {
@@ -204,7 +210,9 @@ class DiscordNotificationChannel(NotificationChannel):
                         "title": title,
                         "description": body,
                         "color": color,
-                        "footer": {"text": f"Oh My Coder • {datetime.now().strftime('%H:%M:%S')}"},
+                        "footer": {
+                            "text": f"Oh My Coder • {datetime.now().strftime('%H:%M:%S')}"
+                        },
                     }
                 ]
             }
@@ -235,13 +243,21 @@ class SlackNotificationChannel(NotificationChannel):
 
         try:
 
-            emoji = {"info": ":information_source:", "success": ":white_check_mark:",
-                     "warning": ":warning:", "error": ":x:"}.get(level, ":information_source:")
+            emoji = {
+                "info": ":information_source:",
+                "success": ":white_check_mark:",
+                "warning": ":warning:",
+                "error": ":x:",
+            }.get(level, ":information_source:")
             payload = {
                 "blocks": [
                     {
                         "type": "header",
-                        "text": {"type": "plain_text", "text": emoji + " " + title, "emoji": True},
+                        "text": {
+                            "type": "plain_text",
+                            "text": emoji + " " + title,
+                            "emoji": True,
+                        },
                     },
                     {
                         "type": "section",
@@ -250,7 +266,10 @@ class SlackNotificationChannel(NotificationChannel):
                     {
                         "type": "context",
                         "elements": [
-                            {"type": "mrkdwn", "text": f"_Oh My Coder • {datetime.now().strftime('%H:%M:%S')}_"},
+                            {
+                                "type": "mrkdwn",
+                                "text": f"_Oh My Coder • {datetime.now().strftime('%H:%M:%S')}_",
+                            },
                         ],
                     },
                 ]
@@ -282,8 +301,12 @@ class TeamsNotificationChannel(NotificationChannel):
 
         try:
 
-            color_map = {"info": "0078D4", "success": "107C10",
-                         "warning": "FF8C00", "error": "D13438"}
+            color_map = {
+                "info": "0078D4",
+                "success": "107C10",
+                "warning": "FF8C00",
+                "error": "D13438",
+            }
             color = color_map.get(level, "0078D4")
             payload = {
                 "type": "message",
@@ -299,9 +322,23 @@ class TeamsNotificationChannel(NotificationChannel):
                                     "type": "Container",
                                     "style": color,
                                     "items": [
-                                        {"type": "TextBlock", "text": title, "weight": "Bolder", "size": "Medium"},
-                                        {"type": "TextBlock", "text": body, "wrap": True},
-                                        {"type": "TextBlock", "text": f"Oh My Coder • {datetime.now().strftime('%H:%M:%S')}", "size": "Small", "isSubtle": True},
+                                        {
+                                            "type": "TextBlock",
+                                            "text": title,
+                                            "weight": "Bolder",
+                                            "size": "Medium",
+                                        },
+                                        {
+                                            "type": "TextBlock",
+                                            "text": body,
+                                            "wrap": True,
+                                        },
+                                        {
+                                            "type": "TextBlock",
+                                            "text": f"Oh My Coder • {datetime.now().strftime('%H:%M:%S')}",
+                                            "size": "Small",
+                                            "isSubtle": True,
+                                        },
                                     ],
                                 }
                             ],
@@ -350,7 +387,12 @@ class FeishuNotificationChannel(NotificationChannel):
                         {"tag": "div", "text": {"tag": "lark_md", "content": body}},
                         {
                             "tag": "note",
-                            "elements": [{"tag": "plain_text", "text": datetime.now().strftime("%H:%M:%S")}],
+                            "elements": [
+                                {
+                                    "tag": "plain_text",
+                                    "text": datetime.now().strftime("%H:%M:%S"),
+                                }
+                            ],
                         },
                     ],
                 },
@@ -421,9 +463,13 @@ class PushPlusNotificationChannel(NotificationChannel):
         try:
 
             text = f"**{title}**\n\n{body}\n\n_{datetime.now().strftime('%H:%M:%S')}_"
-            encoded = urllib.parse.urlencode({"token": self.token, "content": text, "type": "text"})
+            encoded = urllib.parse.urlencode(
+                {"token": self.token, "content": text, "type": "text"}
+            )
             url = f"https://www.pushplus.plus/send?{encoded}"
-            req = urllib.request.Request(url, headers={"Content-Type": "application/json"})
+            req = urllib.request.Request(
+                url, headers={"Content-Type": "application/json"}
+            )
             with urllib.request.urlopen(req, timeout=10) as resp:
                 result = json.loads(resp.read().decode("utf-8"))
                 return result.get("code", 1) == 200
@@ -504,27 +550,39 @@ class NotificationManager:
 
         # Discord
         if self.config.discord_webhook:
-            self._channels.append(DiscordNotificationChannel(webhook_url=self.config.discord_webhook))
+            self._channels.append(
+                DiscordNotificationChannel(webhook_url=self.config.discord_webhook)
+            )
 
         # Slack
         if self.config.slack_webhook:
-            self._channels.append(SlackNotificationChannel(webhook_url=self.config.slack_webhook))
+            self._channels.append(
+                SlackNotificationChannel(webhook_url=self.config.slack_webhook)
+            )
 
         # Microsoft Teams
         if self.config.teams_webhook:
-            self._channels.append(TeamsNotificationChannel(webhook_url=self.config.teams_webhook))
+            self._channels.append(
+                TeamsNotificationChannel(webhook_url=self.config.teams_webhook)
+            )
 
         # 飞书
         if self.config.feishu_webhook:
-            self._channels.append(FeishuNotificationChannel(webhook_url=self.config.feishu_webhook))
+            self._channels.append(
+                FeishuNotificationChannel(webhook_url=self.config.feishu_webhook)
+            )
 
         # 企业微信
         if self.config.wecom_webhook:
-            self._channels.append(WeComNotificationChannel(webhook_url=self.config.wecom_webhook))
+            self._channels.append(
+                WeComNotificationChannel(webhook_url=self.config.wecom_webhook)
+            )
 
         # PushPlus
         if self.config.pushplus_token:
-            self._channels.append(PushPlusNotificationChannel(token=self.config.pushplus_token))
+            self._channels.append(
+                PushPlusNotificationChannel(token=self.config.pushplus_token)
+            )
 
         # 控制台
         if self.config.console_callback:
