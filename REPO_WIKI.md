@@ -1725,7 +1725,7 @@ API: https://api.hunyuan.cn
 
 ### `src/models/kimi.py`
 
-Kimi（月暗）模型适配器
+Kimi模型适配器
 
 API: https://api.moonshot.cn
 文档: https://platform.moonshot.cn/docs
@@ -1740,7 +1740,7 @@ API: https://api.moonshot.cn
 
 ##### `KimiModel`
 
-Kimi（月暗）模型适配器
+Kimi模型适配器
 
 **继承**: BaseModel
 

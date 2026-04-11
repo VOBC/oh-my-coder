@@ -1,5 +1,5 @@
 """
-Kimi（月暗）模型适配器
+Kimi模型适配器
 
 API: https://api.moonshot.cn
 文档: https://platform.moonshot.cn/docs
@@ -49,7 +49,7 @@ KIMI_MODELS = {
 
 class KimiModel(BaseModel):
     """
-    Kimi（月暗）模型适配器
+    Kimi模型适配器
 
     兼容 OpenAI 格式，base URL: https://api.moonshot.cn/v1
     """

@@ -2,7 +2,7 @@
 
 > 🤖 多智能体 AI 编程助手，支持国内大模型
 
-🎯 **GLM-4.7-Flash 永久免费 · 11 个国产大模型 · 18 个专业 Agent · 多 Agent 协作 · 完全开源**
+🎯 **GLM-4.7-Flash 永久免费 · 11 个国产大模型 · 19 个专业 Agent · 多 Agent 协作 · 完全开源**
 
 [![Python](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
@@ -24,7 +24,7 @@
 - [🎬 效果演示](#-效果演示)
 - [🌐 Web 界面预览](#-web-界面预览)
 - [🏗️ 架构设计](#️-架构设计)
-- [🤖 Agent 系统（18 个专业 Agent）](#-agent-系统18-个专业-agent)
+- [🤖 Agent 系统（19 个专业 Agent）](#-agent-系统19-个专业-agent)
 - [🧙 Quest Mode（异步自主编程）](#️-quest-mode异步自主编程)
 - [🧠 主动学习模块](#-主动学习模块)
 - [🌐 工作目录上下文感知](#️-工作目录上下文感知)
@@ -44,7 +44,7 @@
 
 ## 🎯 为什么选择 Oh My Coder？
 
-> **GLM-4.7-Flash 永久免费 · 2000万 Tokens 新手额度 · 11 家国产模型 · 18 个专业 Agent · 多 Agent 协作 · 完全开源**
+> **GLM-4.7-Flash 永久免费 · DeepSeek 新用户赠送 2000万 Tokens² · 11 家国产模型 · 19 个专业 Agent · 多 Agent 协作 · 完全开源**
 
 ### 完整竞品对比（2026年AI编程工具生态）
 
@@ -64,20 +64,19 @@
 | **Bolt** | 云IDE | 免费 | ❌ | ⚠️ 需翻墙 | ❌ | 1 |
 | **Claude Code** | AI编程CLI | 免费 | ❌ | ⚠️ 需翻墙 | ✅ | 1 |
 | **Qoder** | 多Agent编程 | 免费+付费 | ❌ | ✅ | ✅ | ✅ |
-| **oh-my-coder** | **多Agent框架** | **免费** | **✅** | **✅** | **✅ 18个** | **✅ 11家** |
-
-> 💡 **关于 Claude Managed Agents**：Anthropic 于 2026-04-09 发布的云端托管 Agent 平台，
+| **oh-my-coder** | **多Agent框架** | **免费** | **✅** | **✅** | **✅ 19个** | **✅ 11家** |
 
 > 📌 **价格说明**：
 > 1. Cursor: $20/月（以官网 https://cursor.sh 为准）
 > 2. GitHub Copilot: $19/月（以官网 https://github.com/features/copilot 为准）
+> 3. DeepSeek 新用户赠送 2000万 Tokens（以 DeepSeek 官网活动为准）
 > 定位偏企业云服务，oh-my-coder 未来可借鉴其「任务持久化」和「权限治理」能力。
 
 ### 核心优势对比
 
 | 特性 | Oh My Coder | Cursor | Copilot | Windsurf | 通义灵码 |
 |------|:-----------:|:------:|:--------:|:--------:|:--------:|
-| 多 Agent 协作 | ✅ 18个专业Agent | ❌ | ❌ | ❌ | ❌ |
+| 多 Agent 协作 | ✅ 19个专业Agent | ❌ | ❌ | ❌ | ❌ |
 | 开源可定制 | ✅ MIT 许可证 | ❌ | ❌ | ❌ | ❌ |
 | 国内直连 | ✅ 11家国产模型 | ❌ | ❌ | ❌ | ✅ |
 | 完全免费 | ✅ GLM-4.7-Flash 永久免费 | ❌ $20/月 | ❌ $19/月 | ⚠️ 限制多 | ✅ |
@@ -106,7 +105,7 @@ Oh My Coder 是一个**多智能体协作编程系统**，通过多个专业 Age
 ```bash
 git clone https://github.com/VOBC/oh-my-coder.git
 cd oh-my-coder
-pip install -r requirements.txt
+pip install -e .
 ```
 
 ### 2. 配置 API Key
@@ -130,7 +129,7 @@ export WENXIN_SECRET_KEY=your_secret     # 文心一言（需要两个）
 export TONGYI_API_KEY=your_key           # 通义千问
 export GLM_API_KEY=your_key              # 智谱 GLM
 export MINIMAX_API_KEY=your_key          # MiniMax
-export KIMI_API_KEY=your_key             # Kimi 月暗
+export KIMI_API_KEY=your_key             # Kimi
 export HUNYUAN_API_KEY=your_key          # 腾讯混元
 export HUNYUAN_SECRET_KEY=your_secret    # 腾讯混元（需要两个）
 export DOUBAO_API_KEY=your_key           # 字节豆包
@@ -447,7 +446,7 @@ flowchart TD
 
 ---
 
-## 🤖 Agent 系统（18 个专业 Agent）
+## 🤖 Agent 系统（19 个专业 Agent）
 
 ### 构建 / 分析通道
 | Agent | 功能描述 |
@@ -482,6 +481,7 @@ flowchart TD
 | Agent | 功能描述 |
 |-------|---------|
 | `CriticAgent` | 审查计划和设计，提供改进建议 |
+| `SelfImprovingAgent` | 从执行结果中学习，优化路由策略 |
 
 **模型层级说明：**
 - **LOW** - 快速便宜（DeepSeek-V3 / GLM-4-Flash / Qwen-Turbo）
@@ -776,7 +776,7 @@ Oh My Coder 高度重视代码安全：
 ```
 oh-my-coder/
 ├── src/
-│   ├── agents/              # 智能体模块（18 个 Agent）
+│   ├── agents/              # 智能体模块（19 个 Agent）
 │   │   ├── base.py          # Agent 基类 & 注册机制
 │   │   ├── explore.py       # 代码探索
 │   │   ├── analyst.py       # 需求分析
@@ -793,7 +793,7 @@ oh-my-coder/
 │   │   ├── wenxin.py        # 文心一言
 │   │   ├── tongyi.py        # 通义千问
 │   │   ├── glm.py           # 智谱 GLM
-│   │   ├── kimi.py          # Kimi 月暗
+│   │   ├── kimi.py          # Kimi
 │   │   ├── doubao.py        # 字节豆包
 │   │   ├── minimax.py       # MiniMax
 │   │   ├── hunyuan.py       # 腾讯混元
@@ -849,7 +849,7 @@ pytest -m unit -v
 - [x] 核心架构设计
 - [x] 模型适配层（DeepSeek / 文心 / 通义 / GLM / Kimi / 豆包 / MiniMax / 混元）
 - [x] Agent 基类和注册机制
-- [x] 核心 Agent（18 个专业 Agent）
+- [x] 核心 Agent（19 个专业 Agent）
 - [x] 编排引擎（顺序/并行/条件执行）
 - [x] CLI 入口
 - [x] Web 界面（SSE 实时推送）

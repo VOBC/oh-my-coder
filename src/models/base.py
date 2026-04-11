@@ -32,7 +32,7 @@ class ModelProvider(Enum):
     OPENAI = "openai"  # OpenAI GPT
     CLAUDE = "claude"  # Anthropic Claude
     MINIMAX = "minimax"  # MiniMax
-    KIMI = "kimi"  # 月暗 Kimi
+    KIMI = "kimi"  # Kimi
     HUNYUAN = "hunyuan"  # 腾讯混元
     DOUBAO = "doubao"  # 字节豆包
     TIANGONG = "tiangong"  # 天工AI

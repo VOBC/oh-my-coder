@@ -48,7 +48,7 @@ export GLM_API_KEY=your_glm_key
 # 通义千问
 export TONGYI_API_KEY=your_tongyi_key
 
-# Kimi 月暗（128K 长上下文）
+# Kimi （128K 长上下文）
 export KIMI_API_KEY=your_kimi_key
 ```
 
@@ -240,7 +240,7 @@ A: 支持 11 家国产大模型：
 - 智谱 GLM
 - 通义千问
 - 文心一言
-- Kimi 月暗
+- Kimi 
 - 腾讯混元
 - 字节豆包
 - MiniMax
