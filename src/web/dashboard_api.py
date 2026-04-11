@@ -64,28 +64,31 @@ _stats_cache_time: float = 0.0
 
 
 def _get_real_stats(days: int = 7) -> DashboardStats:
-    """
-    从 .omc/state/ 目录读取真实工作流数据统计
+    """从 .omc/state/ 目录读取真实工作流数据统计
 
     优先使用缓存（5 分钟有效），减少磁盘 IO。
     """
-    import time, json
+    global _stats_cache, _stats_cache_time
+    import time
+    import json
     from pathlib import Path
 
     now = time.time()
     cache_key = f"stats_{days}"
-    if (
-        cache_key in _stats_cache
-        and now - _stats_cache_time < 300
-    ):
+    if cache_key in _stats_cache and now - _stats_cache_time < 300:
         return _stats_cache[cache_key]
 
     state_dir = Path(".omc/state")
     if not state_dir.exists():
         return DashboardStats(
-            total_tasks=0, completed_tasks=0, running_tasks=0,
-            failed_tasks=0, success_rate=0.0, avg_execution_time=0.0,
-            total_tokens=0, period_days=days,
+            total_tasks=0,
+            completed_tasks=0,
+            running_tasks=0,
+            failed_tasks=0,
+            success_rate=0.0,
+            avg_execution_time=0.0,
+            total_tokens=0,
+            period_days=days,
         )
 
     cutoff = datetime.now().timestamp() - days * 86400
@@ -93,7 +96,9 @@ def _get_real_stats(days: int = 7) -> DashboardStats:
     for wf_file in state_dir.glob("workflow_*.json"):
         try:
             wf = json.loads(wf_file.read_text())
-            wf_time = datetime.fromisoformat(wf.get("timestamp", "2000-01-01")).timestamp()
+            wf_time = datetime.fromisoformat(
+                wf.get("timestamp", "2000-01-01")
+            ).timestamp()
             if wf_time >= cutoff:
                 workflows.append(wf)
         except Exception:
@@ -104,7 +109,9 @@ def _get_real_stats(days: int = 7) -> DashboardStats:
     running = sum(1 for w in workflows if w.get("status") == "running")
     failed = sum(1 for w in workflows if w.get("status") == "failed")
     tokens = sum(w.get("total_tokens", 0) for w in workflows)
-    exec_times = [w.get("execution_time", 0) for w in workflows if w.get("execution_time")]
+    exec_times = [
+        w.get("execution_time", 0) for w in workflows if w.get("execution_time")
+    ]
     avg_time = sum(exec_times) / len(exec_times) if exec_times else 0.0
     rate = completed / total * 100 if total > 0 else 0.0
 
@@ -124,19 +131,16 @@ def _get_real_stats(days: int = 7) -> DashboardStats:
 
 
 def _get_real_activity(days: int = 7) -> List[ActivityData]:
-    """
-    从 .omc/state/ 读取最近 days 天的每日工作流活动数据
-    """
-    import time, json
+    """从 .omc/state/ 读取最近 days 天的每日工作流活动数据"""
+    global _activity_cache, _stats_cache, _stats_cache_time
+    import time
+    import json
     from collections import defaultdict
     from pathlib import Path
 
     now = time.time()
     cache_key = f"activity_{days}"
-    if (
-        cache_key in _stats_cache
-        and now - _stats_cache_time < 300
-    ):
+    if cache_key in _stats_cache and now - _stats_cache_time < 300:
         return _activity_cache or _build_mock_activity(days)
 
     state_dir = Path(".omc/state")
@@ -147,7 +151,9 @@ def _get_real_activity(days: int = 7) -> List[ActivityData]:
         for wf_file in state_dir.glob("workflow_*.json"):
             try:
                 wf = json.loads(wf_file.read_text())
-                wf_time = datetime.fromisoformat(wf.get("timestamp", "2000-01-01")).timestamp()
+                wf_time = datetime.fromisoformat(
+                    wf.get("timestamp", "2000-01-01")
+                ).timestamp()
                 if wf_time >= cutoff:
                     day = wf.get("timestamp", "")[:10]
                     if day:
@@ -164,11 +170,13 @@ def _get_real_activity(days: int = 7) -> List[ActivityData]:
             - __import__("datetime").timedelta(days=i - 1)
         ).strftime("%Y-%m-%d")
         entry = daily.get(day_str, {"tasks": 0, "tokens": 0})
-        result.append(ActivityData(
-            day=day_str,
-            tasks=entry["tasks"],
-            tokens=entry["tokens"],
-        ))
+        result.append(
+            ActivityData(
+                day=day_str,
+                tasks=entry["tasks"],
+                tokens=entry["tokens"],
+            )
+        )
 
     _stats_cache[cache_key] = True
     _activity_cache = result
@@ -178,10 +186,14 @@ def _get_real_activity(days: int = 7) -> List[ActivityData]:
 def _build_mock_activity(days: int) -> List[ActivityData]:
     """兜底：返回空活动数据"""
     return [
-        ActivityData(day=(
-            datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
-            - __import__("datetime").timedelta(days=i)
-        ).strftime("%Y-%m-%d"), tasks=0, tokens=0)
+        ActivityData(
+            day=(
+                datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+                - __import__("datetime").timedelta(days=i)
+            ).strftime("%Y-%m-%d"),
+            tasks=0,
+            tokens=0,
+        )
         for i in range(days, 0, -1)
     ]
 

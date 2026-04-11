@@ -126,7 +126,9 @@ def _detect_workflow_for_autopilot(task: str) -> str:
     Keyword → Workflow 映射
     """
     task_lower = task.lower()
-    if any(k in task_lower for k in ["bug", "崩溃", "报错", "fix", "修复", "错误", "crash"]):
+    if any(
+        k in task_lower for k in ["bug", "崩溃", "报错", "fix", "修复", "错误", "crash"]
+    ):
         return "debug"
     if any(k in task_lower for k in ["test", "测试", "用例", "coverage"]):
         return "test"
@@ -334,7 +336,9 @@ class Orchestrator:
             current_level = [
                 step_map[name]
                 for name in remaining
-                if all(dep in result.steps_completed for dep in step_map[name].dependencies)
+                if all(
+                    dep in result.steps_completed for dep in step_map[name].dependencies
+                )
             ]
             if not current_level:
                 # 有循环依赖或无效依赖
@@ -366,7 +370,9 @@ class Orchestrator:
             for step, task_result in zip(level, results):
                 if isinstance(task_result, Exception):
                     result.steps_failed.append(step.agent_name)
-                    raise Exception(f"Agent {step.agent_name} 并行执行失败: {task_result}")
+                    raise Exception(
+                        f"Agent {step.agent_name} 并行执行失败: {task_result}"
+                    )
 
                 output = task_result
                 if output.status.value == "completed":
@@ -399,9 +405,7 @@ class Orchestrator:
             # 检查依赖
             for dep in step.dependencies:
                 if dep not in result.steps_completed:
-                    raise ValueError(
-                        f"步骤 {step.agent_name} 的依赖 {dep} 未完成"
-                    )
+                    raise ValueError(f"步骤 {step.agent_name} 的依赖 {dep} 未完成")
 
             # 执行条件检查
             if step.condition is not None:
@@ -409,9 +413,7 @@ class Orchestrator:
                     should_run = step.condition(result.outputs)
                 except Exception as cond_err:
                     result.steps_failed.append(step.agent_name)
-                    raise Exception(
-                        f"步骤 {step.agent_name} 条件执行异常: {cond_err}"
-                    )
+                    raise Exception(f"步骤 {step.agent_name} 条件执行异常: {cond_err}")
                 if not should_run:
                     # 条件不满足，跳过此步骤
                     continue
@@ -435,9 +437,7 @@ class Orchestrator:
                     result.total_tokens += output.usage.get("total_tokens", 0)
                 else:
                     result.steps_failed.append(step.agent_name)
-                    raise Exception(
-                        f"Agent {step.agent_name} 执行失败: {output.error}"
-                    )
+                    raise Exception(f"Agent {step.agent_name} 执行失败: {output.error}")
 
             except asyncio.TimeoutError:
                 result.steps_failed.append(step.agent_name)
