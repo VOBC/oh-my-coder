@@ -7,10 +7,38 @@
 [![Python](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Stars](https://img.shields.io/github/stars/VOBC/oh-my-coder?style=flat-square&logo=github)](https://github.com/VOBC/oh-my-coder/stargazers)
+[![Forks](https://img.shields.io/github/forks/VOBC/oh-my-coder?style=flat-square&logo=github)](https://github.com/VOBC/oh-my-coder/network/members)
 [![Last Commit](https://img.shields.io/github/last-commit/VOBC/oh-my-coder?style=flat-square&logo=github)](https://github.com/VOBC/oh-my-coder/commits)
 [![Issues](https://img.shields.io/github/issues/VOBC/oh-my-coder?style=flat-square&logo=github)](https://github.com/VOBC/oh-my-coder/issues)
 
 **灵感来源**: [oh-my-claudecode](https://github.com/Yeachan-Heo/oh-my-claudecode) (17.8k ⭐)
+
+---
+
+## 📖 目录
+
+- [🎯 为什么选择 Oh My Coder？](#-为什么选择-oh-my-coder)
+- [🎯 项目简介](#-项目简介)
+- [🚀 快速开始](#-快速开始)
+- [📖 快速示例](#-快速示例)
+- [🎬 效果演示](#-效果演示)
+- [🌐 Web 界面预览](#-web-界面预览)
+- [🏗️ 架构设计](#️-架构设计)
+- [🤖 Agent 系统（18 个专业 Agent）](#-agent-系统18-个专业-agent)
+- [🧙 Quest Mode（异步自主编程）](#️-quest-mode异步自主编程)
+- [🧠 主动学习模块](#-主动学习模块)
+- [🌐 工作目录上下文感知](#️-工作目录上下文感知)
+- [🧠 支持的模型](#-支持的模型)
+- [🔄 工作流](#-工作流)
+- [📊 任务总结](#-任务总结)
+- [🔒 安全特性](#-安全特性)
+- [📁 项目结构](#-项目结构)
+- [🧪 测试](#-测试)
+- [📊 开发进度](#-开发进度)
+- [❓ 常见问题](#-常见问题)
+- [🤝 贡献](#-贡献)
+- [📄 License](#-license)
+- [🙏 致谢](#-致谢)
 
 ---
 
@@ -22,10 +50,10 @@
 
 | 工具 | 类型 | 价格 | 开源 | 国内可用 | 多Agent | AI模型数 |
 |------|------|------|------|----------|---------|----------|
-| **Cursor** | AI原生IDE | $20/月 | ❌ | ⚠️ 需翻墙 | ❌ | 3 |
+| **Cursor** | AI原生IDE | $20/月¹ | ❌ | ⚠️ 需翻墙 | ❌ | 3 |
 | **Trae** | AI原生IDE | 免费+付费 | ❌ | ✅ | ❌ | 2 |
 | **Windsurf** | AI原生IDE | 免费+付费 | ❌ | ⚠️ 需翻墙 | ❌ | 1 |
-| **GitHub Copilot** | 编辑器插件 | $19/月 | ❌ | ⚠️ 需翻墙 | ❌ | 1 |
+| **GitHub Copilot** | 编辑器插件 | $19/月² | ❌ | ⚠️ 需翻墙 | ❌ | 1 |
 | **通义灵码** | 编辑器插件 | 免费 | ❌ | ✅ | ❌ | 1 |
 | **Codeium** | 编辑器插件 | 免费 | ❌ | ✅ | ❌ | 1 |
 | **Sourcery** | 代码重构 | 免费+付费 | ❌ | ✅ | ❌ | 1 |
@@ -39,6 +67,10 @@
 | **oh-my-coder** | **多Agent框架** | **免费** | **✅** | **✅** | **✅ 18个** | **✅ 11家** |
 
 > 💡 **关于 Claude Managed Agents**：Anthropic 于 2026-04-09 发布的云端托管 Agent 平台，
+
+> 📌 **价格说明**：
+> 1. Cursor: $20/月（以官网 https://cursor.sh 为准）
+> 2. GitHub Copilot: $19/月（以官网 https://github.com/features/copilot 为准）
 > 定位偏企业云服务，oh-my-coder 未来可借鉴其「任务持久化」和「权限治理」能力。
 
 ### 核心优势对比
@@ -60,7 +92,7 @@
 Oh My Coder 是一个**多智能体协作编程系统**，通过多个专业 Agent 协作完成复杂开发任务。
 
 **核心优势：**
-- 🧠 **智能路由** - 根据任务类型自动选择合适模型，智能路由可优化 Token 消耗
+- 🧠 **智能路由** - 根据任务类型自动选择合适模型，通过三层模型路由自动选择性价比最高的模型
 - 🔄 **协作模式** - 多个 Agent 分工协作，像真实团队一样工作
 - 🇨🇳 **中文优先** - 本土化设计，支持国内主流大模型
 - ⚡ **成本优化** - 优先使用低成本/免费模型，支持 DeepSeek 等高性价比选项
@@ -78,6 +110,15 @@ pip install -r requirements.txt
 ```
 
 ### 2. 配置 API Key
+
+> ⚠️ **首次使用**：请将 `examples/.env.example` 复制为 `.env` 并填入真实 API Key，再运行以下命令加载：
+> ```bash
+> cp examples/.env.example .env
+> # 编辑 .env，填入真实 Key 后：
+> export $(cat .env | grep -v '^#' | xargs)
+> ```
+>
+> 或直接在终端设置环境变量（见下方）。
 
 ```bash
 # DeepSeek（推荐，性价比高）
@@ -176,10 +217,6 @@ python -m src.cli quest-list
 
 # 查看 Quest 状态
 python -m src.cli quest-status <quest-id>
-
-# 暂停/恢复 Quest
-python -m src.cli quest-pause <quest-id>
-python -m src.cli quest-resume <quest-id>
 
 # 订阅桌面通知 + 钉钉
 python -m src.cli quest-notify --dingtalk https://oapi.dingtalk.com/robot/send?access_token=xxx
@@ -294,6 +331,8 @@ $ omc run "为商品模块添加分页查询接口" -w build
 ## 🌐 Web 界面预览
 
 启动后访问 **http://localhost:8000**：
+
+> 📸 截图位置：`docs/screenshots/`（运行后请添加 `web-ui.png` 和 `cli-demo.png`）
 
 | 功能 | 说明 |
 |------|------|
@@ -453,7 +492,7 @@ flowchart TD
 
 ## 🧙 Quest Mode（异步自主编程）
 
-Oh My Coder 支持**异步自主编程任务**，可以后台执行、暂停/恢复、实时通知。
+Oh My Coder 支持**异步自主编程任务**，可以后台执行、实时通知。
 
 ### 核心特性
 
@@ -461,7 +500,7 @@ Oh My Coder 支持**异步自主编程任务**，可以后台执行、暂停/恢
 |------|------|
 | **SPEC 生成** | 自动生成任务规格文档 |
 | **步骤拆分** | 智能拆分任务为可执行步骤 |
-| **断点续跑** | 支持暂停/恢复，从断点继续 |
+| **断点续跑** | 支持从断点继续执行 |
 | **验收确认** | 每个步骤执行完需要用户验收 |
 | **失败重试** | 步骤失败自动触发重规划 |
 | **桌面通知** | macOS 原生通知 + 可选钉钉 |
@@ -485,10 +524,6 @@ python -m src.cli quest-list
 
 # 查看详细状态
 python -m src.cli quest-status <quest-id>
-
-# 暂停/恢复
-python -m src.cli quest-pause <quest-id>
-python -m src.cli quest-resume <quest-id>
 
 # 订阅通知（桌面 + 钉钉）
 python -m src.cli quest-notify --dingtalk https://oapi.dingtalk.com/robot/send?access_token=xxx
