@@ -56,13 +56,13 @@ class TestImageMetadata:
         # bytes[5:7] = 0x01,0x2c = 300 (height)
         # bytes[7:9] = 0x01,0x90 = 400 (width)
         jpg = (
-            b'\xff\xd8'       # SOI
-            b'\xff\xc0'        # SOF0 marker
-            b'\x00'            # discarded by f.read(1)
-            b'\x01\x2c'       # height = 300 (bytes 5-6)
-            b'\x01\x90'       # width = 400 (bytes 7-8)
-            b'\x00\x00'       # padding
-            b'\xff\xd9'       # EOI
+            b"\xff\xd8"  # SOI
+            b"\xff\xc0"  # SOF0 marker
+            b"\x00"  # discarded by f.read(1)
+            b"\x01\x2c"  # height = 300 (bytes 5-6)
+            b"\x01\x90"  # width = 400 (bytes 7-8)
+            b"\x00\x00"  # padding
+            b"\xff\xd9"  # EOI
         )
         temp_jpg.write_bytes(jpg)
 
