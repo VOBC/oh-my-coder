@@ -44,7 +44,7 @@
 
 ## 🎯 为什么选择 Oh My Coder？
 
-> **GLM-4.7-Flash 永久免费 · DeepSeek 新用户赠送 2000万 Tokens² · 11 家国产模型 · 19 个专业 Agent · 多 Agent 协作 · 完全开源**
+> **GLM-4.7-Flash 永久免费 · 11 家国产模型 · 19 个专业 Agent · 多 Agent 协作 · 完全开源**
 
 ### 完整竞品对比（2026年AI编程工具生态）
 
@@ -69,7 +69,7 @@
 > 📌 **价格说明**：
 > 1. Cursor: $20/月（以官网 https://cursor.sh 为准）
 > 2. GitHub Copilot: $19/月（以官网 https://github.com/features/copilot 为准）
-> 3. DeepSeek 新用户赠送 2000万 Tokens（以 DeepSeek 官网活动为准）
+> 3. DeepSeek API 赠送额度（以 DeepSeek 官网活动为准）
 > 定位偏企业云服务，oh-my-coder 未来可借鉴其「任务持久化」和「权限治理」能力。
 
 ### 核心优势对比
