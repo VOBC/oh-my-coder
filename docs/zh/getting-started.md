@@ -164,7 +164,9 @@ Oh My Coder 有 21 个专业 Agent，分工协作完成复杂任务。
 |-------|------|------|
 | **test-engineer** | MEDIUM | 测试工程 |
 | **designer** | MEDIUM | UI/UX 设计 |
-| **writer** | LOW | 文档编写 |
+| **vision** | MEDIUM | 截图/UI 视觉分析 |
+| **document** | LOW | 长篇技术文档（架构/API/手册） |
+| **writer** | LOW | 快速文档（README/注释） |
 | **git-master** | LOW | Git 操作 |
 | **code-simplifier** | MEDIUM | 代码简化重构 |
 | **scientist** | HIGH | 数据分析 |
