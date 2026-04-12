@@ -10,6 +10,15 @@ from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional
 
+from .base import (
+    AgentContext,
+    AgentLane,
+    AgentOutput,
+    AgentStatus,
+    BaseAgent,
+    register_agent,
+)
+
 
 @dataclass
 class ExecutionFeedback:
@@ -225,7 +234,8 @@ class LearningStore:
             return [StrategyAdjustment(**dict(row)) for row in rows]
 
 
-class SelfImprovingAgent:
+@register_agent
+class SelfImprovingAgent(BaseAgent):
     """
     主动学习 Agent
 
@@ -236,8 +246,22 @@ class SelfImprovingAgent:
     4. 跟踪调整效果
     """
 
-    def __init__(self, store: LearningStore):
-        self.store = store
+    name = "self-improving"
+    description = "主动学习智能体 - 收集反馈、分析模式、优化策略"
+    lane = AgentLane.COORDINATION
+    default_tier = "low"
+    icon = "🧠"
+    tools = ["file_read", "file_write"]
+
+    def __init__(self, context: AgentContext, store: Optional[LearningStore] = None):
+        super().__init__(context)
+        db_path = Path.home() / ".omc" / "learning.db"
+        self.store = store or LearningStore(str(db_path))
+
+    @property
+    def system_prompt(self) -> str:
+        return """你是一个主动学习的优化助手。分析执行反馈，识别失败模式，生成策略调整建议。
+关注：错误类型分布、成功率趋势、重试效果、prompt 优化方向。"""
 
     def record_execution(
         self,
@@ -404,3 +428,22 @@ class SelfImprovingAgent:
                 "SELECT DISTINCT agent_type FROM execution_feedback"
             ).fetchall()
             return [row[0] for row in rows]
+
+    async def _run(self, task: str) -> AgentOutput:
+        """执行自我改进任务"""
+        import json
+
+        parts = task.lower().split()
+        if "report" in parts or "报告" in parts:
+            data = self.report()
+        elif "analyze" in parts or "分析" in parts:
+            agent_type = parts[-1] if len(parts) > 1 else None
+            adjustments = self.analyze_and_improve(agent_type) if agent_type else []
+            data = {"adjustments": [str(a) for a in adjustments]}
+        else:
+            data = self.report()
+
+        return AgentOutput(
+            status=AgentStatus.SUCCESS,
+            content=json.dumps(data, ensure_ascii=False, indent=2),
+        )
