@@ -2,7 +2,7 @@
 
 > 🤖 多智能体 AI 编程助手，支持国内大模型
 
-🎯 **GLM-4.7-Flash 永久免费 · 11 个国产大模型 · 21 个专业 Agent · 多 Agent 协作 · 完全开源**
+🎯 **GLM-4.7-Flash 永久免费 · 11 个国产大模型 · 30 个专业 Agent · 多 Agent 协作 · 完全开源**
 
 [![Python](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
@@ -24,7 +24,7 @@
 - [🎬 效果演示](#-效果演示)
 - [🌐 Web 界面预览](#-web-界面预览)
 - [🏗️ 架构设计](#️-架构设计)
-- [🤖 Agent 系统（21 个专业 Agent）](#-agent-系统21-个专业-agent)
+- [🤖 Agent 系统（30 个专业 Agent）](#-agent-系统30-个专业-agent)
 - [🧙 Quest Mode（异步自主编程）](#️-quest-mode异步自主编程)
 - [🧠 主动学习模块](#-主动学习模块)
 - [🌐 工作目录上下文感知](#️-工作目录上下文感知)
@@ -44,7 +44,7 @@
 
 ## 🎯 为什么选择 Oh My Coder？
 
-> **GLM-4.7-Flash 永久免费 · 11 家国产模型 · 21 个专业 Agent · 多 Agent 协作 · 完全开源**
+> **GLM-4.7-Flash 永久免费 · 11 家国产模型 · 30 个专业 Agent · 多 Agent 协作 · 完全开源**
 
 ### 完整竞品对比（2026年AI编程工具生态）
 
@@ -53,7 +53,7 @@
 | 工具 | 类型 | Stars | 价格 | 开源 | 国内可用 | 多Agent | 模型支持 |
 |------|------|-------|------|------|----------|---------|----------|
 | **oh-my-claudecode** | Claude Code插件 | 18,963 ⭐ | 需Claude Pro ($25/月) | ✅ | ⚠️ 需翻墙 | ✅ 32个Agent | 仅Claude |
-| **oh-my-coder** | 多Agent框架 | 较少 | **免费** | **✅ MIT** | **✅** | ✅ 21个Agent | ✅ 11家国产模型 |
+| **oh-my-coder** | 多Agent框架 | 较少 | **免费** | **✅ MIT** | **✅** | ✅ 30个Agent | ✅ 11家国产模型 |
 | **AutoGen** | 微软多Agent框架 | 大 | 免费 | ✅ | ✅ | ✅ | 多模型 |
 | **OpenCode** | 开源CLI | 中 | 免费 | ✅ | ✅ | ✅ | 75+模型 |
 | **MyClaude** | 多后端编排 | 小 | 免费 | ✅ | ✅ | ✅ | Claude/Codex/Gemini |
@@ -87,7 +87,7 @@
 
 | 特性 | Oh My Coder | oh-my-claudecode | 腾讯CodeBuddy | Cursor | Copilot | AutoGen |
 |------|:-----------:|:----------------:|:-------------:|:------:|:-------:|:-------:|
-| 多Agent协作 | ✅ 21个 | ✅ 32个 | ❌ | ❌ | ❌ | ✅ |
+| 多Agent协作 | ✅ 30个 | ✅ 32个 | ❌ | ❌ | ❌ | ✅ |
 | 开源免费 | ✅ MIT | ✅ | ⚠️ 企业版付费 | ❌ $20/月 | ❌ $19/月 | ✅ |
 | 国内直连 | ✅ | ❌ 需翻墙 | ✅ | ❌ 需翻墙 | ❌ 需翻墙 | ✅ |
 | 国产模型支持 | ✅ 11家 | ❌ | ✅ 混元 | ❌ | ❌ | ❌ |
@@ -462,7 +462,7 @@ flowchart TD
 
 ---
 
-## 🤖 Agent 系统（21 个专业 Agent）<a id="-agent-系统21-个专业-agent"></a>
+## 🤖 Agent 系统（30 个专业 Agent）<a id="-agent-系统30-个专业-agent"></a>
 
 ### 构建 / 分析通道
 | Agent | 功能描述 |
@@ -494,6 +494,15 @@ flowchart TD
 | `GitMasterAgent` | Git 操作自动化 |
 | `CodeSimplifierAgent` | 代码简化优化 |
 | `QATesterAgent` | QA 测试和质量验证 |
+| `DatabaseAgent` | 数据库设计、SQL 优化和迁移 |
+| `APIAgent` | REST API 设计、接口规范和文档 |
+| `DevOpsAgent` | CI/CD 流水线、容器化和部署 |
+| `UMLAgent` | UML 图表生成（类图/时序图/流程图） |
+| `PerformanceAgent` | 性能分析、瓶颈定位和优化建议 |
+| `MigrationAgent` | 代码迁移、框架升级和技术债清理 |
+| `PromptAgent` | Prompt 工程优化和模板管理 |
+| `AuthAgent` | 认证授权设计、安全策略审查 |
+| `DataAgent` | 数据处理、ETL 流程和数据质量 |
 
 ### 协调通道
 | Agent | 功能描述 |
@@ -797,7 +806,7 @@ Oh My Coder 高度重视代码安全：
 ```
 oh-my-coder/
 ├── src/
-│   ├── agents/              # 智能体模块（21 个 Agent）
+│   ├── agents/              # 智能体模块（30 个 Agent）
 │   │   ├── base.py          # Agent 基类 & 注册机制
 │   │   ├── explore.py       # 代码探索
 │   │   ├── analyst.py       # 需求分析
@@ -870,7 +879,7 @@ pytest -m unit -v
 - [x] 核心架构设计
 - [x] 模型适配层（DeepSeek / 文心 / 通义 / GLM / Kimi / 豆包 / MiniMax / 混元）
 - [x] Agent 基类和注册机制
-- [x] 核心 Agent（21 个专业 Agent）
+- [x] 核心 Agent（30 个专业 Agent）
 - [x] 编排引擎（顺序/并行/条件执行）
 - [x] CLI 入口
 - [x] Web 界面（SSE 实时推送）
