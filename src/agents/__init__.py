@@ -28,6 +28,17 @@ from .verifier import VerifierAgent
 from .vision import VisionAgent
 from .writer import WriterAgent
 
+# ---- 新增 Agent（2026-04-12）----
+from .database import DatabaseAgent
+from .api_agent import APIAgent
+from .devops import DevOpsAgent
+from .uml import UMLAgent
+from .performance import PerformanceAgent
+from .migration import MigrationAgent
+from .prompt_agent import PromptAgent
+from .auth_agent import AuthAgent
+from .data_agent import DataAgent
+
 # 导出所有 Agent
 __all__ = [
     "BaseAgent",
@@ -56,6 +67,16 @@ __all__ = [
     "CodeSimplifierAgent",
     "ScientistAgent",
     "QATesterAgent",
+    # 新增 Domain Agent（2026-04-12）
+    "DatabaseAgent",
+    "APIAgent",
+    "DevOpsAgent",
+    "UMLAgent",
+    "PerformanceAgent",
+    "MigrationAgent",
+    "PromptAgent",
+    "AuthAgent",
+    "DataAgent",
     # Coordination Lane
     "CriticAgent",
     # Self-Improving

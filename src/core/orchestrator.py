@@ -102,6 +102,23 @@ WORKFLOW_TEMPLATES = {
     "autopilot": [
         WorkflowStep("analyst", "任务类型识别 + 选择最合适工作流"),
     ],
+    # ---- 文档生成模式（2026-04-12）----
+    # 架构师 → 写手 → 文档专家，三阶段流水线，专注长篇结构化文档
+    "doc": [
+        WorkflowStep("architect", "架构设计与文档框架", dependencies=[]),
+        WorkflowStep("writer", "内容初稿撰写", dependencies=["architect"]),
+        WorkflowStep("document", "长篇文档精修与格式化", dependencies=["writer"]),
+        WorkflowStep("verifier", "文档完整性校验", dependencies=["document"]),
+    ],
+    # ---- 顺序执行编排（2026-04-12）----
+    # 通用顺序执行：用户定义各 Agent，按顺序依次执行，每步产出作为下一步输入
+    "sequential": [
+        WorkflowStep("explore", "探索代码库结构", dependencies=[]),
+        WorkflowStep("analyst", "深度分析需求与现状", dependencies=["explore"]),
+        WorkflowStep("planner", "制定详细执行计划", dependencies=["analyst"]),
+        WorkflowStep("executor", "执行实现", dependencies=["planner"]),
+        WorkflowStep("verifier", "验证结果正确性", dependencies=["executor"]),
+    ],
     # 结对编程：实时对话式 Code Review，Explorer + Critic 交替协作
     "pair": [
         WorkflowStep("explore", "探索代码库"),

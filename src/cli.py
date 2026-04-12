@@ -105,6 +105,7 @@ def run(
         help=(
             "工作流名称：build（开发）/ review（审查）/ debug（调试）/ test（测试）"
             " / autopilot（自动路由）/ pair（结对编程）/ refactor（重构）"
+            " / doc（文档生成）/ sequential（顺序执行编排）"
         ),
     ),
     dry_run: bool = typer.Option(False, "--dry-run", help="仅预览执行计划，不实际运行"),
@@ -1006,19 +1007,29 @@ def agents():
         CodeReviewerAgent,
         CodeSimplifierAgent,
         CriticAgent,
+        DatabaseAgent,
         DebuggerAgent,
         DesignerAgent,
+        DevOpsAgent,
         ExecutorAgent,
         ExploreAgent,
         GitMasterAgent,
+        MigrationAgent,
+        PerformanceAgent,
         PlannerAgent,
+        PromptAgent,
         QATesterAgent,
         ScientistAgent,
         SecurityReviewerAgent,
         TestEngineerAgent,
         TracerAgent,
+        UMLAgent,
         VerifierAgent,
+        VisionAgent,
         WriterAgent,
+        APIAgent,
+        AuthAgent,
+        DataAgent,
     )
 
     agents_list = [
@@ -1056,6 +1067,16 @@ def agents():
         ),
         ("scientist", ScientistAgent.description, ScientistAgent.default_tier),
         ("qa-tester", QATesterAgent.description, QATesterAgent.default_tier),
+        ("database", DatabaseAgent.description, DatabaseAgent.default_tier),
+        ("api", APIAgent.description, APIAgent.default_tier),
+        ("devops", DevOpsAgent.description, DevOpsAgent.default_tier),
+        ("uml", UMLAgent.description, UMLAgent.default_tier),
+        ("performance", PerformanceAgent.description, PerformanceAgent.default_tier),
+        ("migration", MigrationAgent.description, MigrationAgent.default_tier),
+        ("prompt", PromptAgent.description, PromptAgent.default_tier),
+        ("vision", VisionAgent.description, VisionAgent.default_tier),
+        ("auth", AuthAgent.description, AuthAgent.default_tier),
+        ("data", DataAgent.description, DataAgent.default_tier),
     ]
 
     for name, desc, tier in agents_list:
