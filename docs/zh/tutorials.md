@@ -4,6 +4,18 @@
 
 ---
 
+## 🎯 实战场景教程
+
+跟着做，照着跑，三分钟上手 Oh My Coder。
+
+| 场景 | 教程 | 说明 |
+|------|------|------|
+| 🔨 **重构 Flask 项目** | [场景一：flask-restructure](./tutorials/flask-restructure.md) | 用 `refactor` 工作流重构单文件 Flask，分层 + 类型注解 + 测试 |
+| 🧪 **为开源项目写测试** | [场景二：open-source-test](./tutorials/open-source-test.md) | 用 `test` 工作流为任意项目生成 14 个测试用例，输出可合并 PR |
+| 🔍 **Code Review** | [场景三：code-review](./tutorials/code-review.md) | 用 `review` 工作流做安全 + 性能 + 质量 Review，自动生成修复补丁 |
+
+---
+
 ## 🔄 多 Agent 协作原理
 
 ### 工作流执行流程
