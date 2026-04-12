@@ -59,6 +59,38 @@ omc run "重构这个项目" -w refactor
 3. `workflow-run.png` — 实际运行效果
 4. `quest-mode.png` — 异步自主编程亮点
 
+## 🖼️ VisionAgent UI 代码生成
+
+VisionAgent 支持**截图转 UI 代码**，参考 Windsurf / Claude Computer Use 模式。
+
+### 使用方式
+
+```bash
+# 视觉审查（默认）
+omc vision "docs/screenshots/mockup.png"
+
+# UI 代码生成（传截图，生成 HTML/CSS/React）
+omc vision "docs/screenshots/mockup.png" --mode ui_code
+```
+
+### 输出示例
+
+```
+📁 已生成 3 个文件:
+- `index.html` → `/path/to/generated_ui/index.html`
+- `style.css` → `/path/to/generated_ui/style.css`
+- `PageLayout.tsx` → `/path/to/generated_ui/components/PageLayout.tsx`
+
+输出目录: `generated_ui/`
+```
+
+### 工作原理
+
+1. 分析截图识别 UI 元素（颜色、字体、间距、组件）
+2. 生成 HTML/CSS 单文件（默认）或 React/Vue 组件
+3. 代码块以 `language:filename` 格式输出（如 `html:index.html`）
+4. VisionAgent 自动提取并保存到 `generated_ui/` 目录
+
 ## ⚠️ 注意事项
 
 - 截图前请先配置 `.env` 文件，不要包含真实 API Key

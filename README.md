@@ -414,7 +414,7 @@ flowchart TD
     subgraph Domain["🎯 领域通道"]
         TE[TestEngineerAgent<br/>测试生成]
         DS[DesignerAgent<br/>设计]
-        VI[VisionAgent<br/>视觉分析]
+        VI[VisionAgent<br/>视觉分析<br/>UI代码生成]
         DC[DocumentAgent<br/>长文档]
         WT[WriterAgent<br/>快速文档]
         SC[ScientistAgent<br/>技术调研]
@@ -487,7 +487,7 @@ flowchart TD
 |-------|---------|
 | `TestEngineerAgent` | 生成单元测试和集成测试 |
 | `DesignerAgent` | 界面和交互设计 |
-| `VisionAgent` | 截图/UI 图片分析与修改建议 |
+| `VisionAgent` | 截图布局分析 + UI 代码自动生成（HTML/CSS/React） |
 | `DocumentAgent` | 长篇技术文档、API 参考、架构文档 |
 | `WriterAgent` | 快速文档、README、注释生成 |
 | `ScientistAgent` | 技术调研和可行性分析 |

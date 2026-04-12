@@ -9,7 +9,131 @@ from pathlib import Path
 import pytest
 
 from src.agents.base import AgentLane, get_agent
-from src.agents.vision import VisionAgent, _load_image_meta
+from src.agents.vision import (
+    VisionAgent,
+    _default_filename,
+    _extract_code_blocks,
+    _infer_output_dir,
+    _load_image_meta,
+)
+
+
+# ---------------------------------------------------------------------------
+# 辅助函数测试
+# ---------------------------------------------------------------------------
+
+
+class TestExtractCodeBlocks:
+    """测试代码块提取"""
+
+    def test_basic_html_block(self):
+        text = "```html:index.html\n<!DOCTYPE html>\n</html>\n```"
+        blocks = _extract_code_blocks(text)
+        assert len(blocks) == 1
+        assert blocks[0]["language"] == "html"
+        assert blocks[0]["filename"] == "index.html"
+        assert "<!DOCTYPE html>" in blocks[0]["code"]
+
+    def test_multiple_blocks(self):
+        text = """```html:index.html
+<html></html>
+```
+```css:style.css
+body { margin: 0; }
+```
+```tsx:App.tsx
+const App = () => <div />;
+```"""
+        blocks = _extract_code_blocks(text)
+        assert len(blocks) == 3
+        assert blocks[0]["filename"] == "index.html"
+        assert blocks[1]["filename"] == "style.css"
+        assert blocks[2]["filename"] == "App.tsx"
+
+    def test_no_language(self):
+        text = "```\ncode without language\n```"
+        blocks = _extract_code_blocks(text)
+        assert len(blocks) == 1
+        assert blocks[0]["language"] == "text"
+
+    def test_no_filename_uses_default(self):
+        text = "```tsx\nconst x = 1;\n```"
+        blocks = _extract_code_blocks(text)
+        assert len(blocks) == 1
+        assert blocks[0]["filename"] == "Component.tsx"
+
+    def test_python_with_path(self):
+        text = "```python:src/utils/helper.py\ndef foo(): pass\n```"
+        blocks = _extract_code_blocks(text)
+        assert len(blocks) == 1
+        assert blocks[0]["filename"] == "src/utils/helper.py"
+        assert blocks[0]["language"] == "python"
+
+    def test_empty_input(self):
+        assert _extract_code_blocks("no code here") == []
+
+
+class TestDefaultFilename:
+    """测试默认文件名推断"""
+
+    def test_all_formats(self):
+        assert _default_filename("html") == "index.html"
+        assert _default_filename("css") == "style.css"
+        assert _default_filename("js") == "script.js"
+        assert _default_filename("jsx") == "Component.jsx"
+        assert _default_filename("tsx") == "Component.tsx"
+        assert _default_filename("vue") == "Component.vue"
+        assert _default_filename("svelte") == "Component.svelte"
+        assert _default_filename("svg") == "icon.svg"
+        assert _default_filename("python") == "generated.py"
+        assert _default_filename("json") == "data.json"
+        assert _default_filename("unknown_lang") == "generated.unknown_lang"
+
+
+class TestInferOutputDir:
+    """测试输出目录推断"""
+
+    def test_working_directory_takes_precedence(self, tmp_path):
+        from src.agents.base import AgentContext
+
+        work_dir = tmp_path / "work"
+        work_dir.mkdir()
+        proj_dir = tmp_path / "project"
+        proj_dir.mkdir()
+
+        context = AgentContext(
+            project_path=proj_dir,
+            task_description="test",
+            working_directory=work_dir,
+        )
+        assert _infer_output_dir(context) == work_dir
+
+    def test_falls_back_to_project_path(self, tmp_path):
+        from src.agents.base import AgentContext
+
+        proj_dir = tmp_path / "project"
+        proj_dir.mkdir()
+
+        context = AgentContext(
+            project_path=proj_dir,
+            task_description="test",
+        )
+        assert _infer_output_dir(context) == proj_dir
+
+    def test_falls_back_to_cwd(self):
+        from src.agents.base import AgentContext
+
+        context = AgentContext(
+            project_path=Path("/nonexistent"),
+            task_description="test",
+        )
+        result = _infer_output_dir(context)
+        assert result.name == "vision_output"
+
+
+# ---------------------------------------------------------------------------
+# 图片元数据测试
+# ---------------------------------------------------------------------------
 
 
 class TestImageMetadata:
@@ -50,11 +174,6 @@ class TestImageMetadata:
 
     def test_jpeg_metadata(self, temp_jpg):
         """JPEG 文件元数据提取"""
-        # Minimal JPEG that works with the actual parser logic:
-        # Parser after SOF0 match: f.read(1) discards byte4,
-        # then h = f.read(2) from byte5, w = f.read(2) from byte7
-        # bytes[5:7] = 0x01,0x2c = 300 (height)
-        # bytes[7:9] = 0x01,0x90 = 400 (width)
         jpg = (
             b"\xff\xd8"  # SOI
             b"\xff\xc0"  # SOF0 marker
@@ -90,6 +209,11 @@ class TestImageMetadata:
         assert meta is None
 
 
+# ---------------------------------------------------------------------------
+# VisionAgent 元数据和注册测试
+# ---------------------------------------------------------------------------
+
+
 class TestVisionAgentMetadata:
     """测试 VisionAgent 元数据和注册"""
 
@@ -121,13 +245,58 @@ class TestVisionAgentMetadata:
         assert "P2" in prompt
         assert "视觉审查报告" in prompt
 
-    def test_post_process(self):
-        """后处理返回正确的 AgentOutput"""
+    def test_vision_agent_system_prompt_ui_code_mode(self):
+        """system_prompt 包含 UI 代码生成模式"""
+        agent = VisionAgent.__new__(VisionAgent)
+        prompt = agent.system_prompt
+        assert "UI 代码生成" in prompt
+        assert "html:index.html" in prompt
+        assert "tsx" in prompt
+        assert "Flexbox" in prompt
+
+    def test_mode_constants(self):
+        """模式常量正确"""
+        agent = VisionAgent.__new__(VisionAgent)
+        assert agent.MODE_ANALYSIS == "analysis"
+        assert agent.MODE_UI_CODE == "ui_code"
+
+    def test_description_contains_ui_code(self):
+        """description 包含 UI 代码生成描述"""
+        agent = VisionAgent.__new__(VisionAgent)
+        assert "UI 代码生成" in agent.description
+
+    def test_post_process_analysis_mode(self):
+        """后处理（分析模式）返回正确的 AgentOutput"""
         from src.agents.base import AgentStatus
 
         agent = VisionAgent.__new__(VisionAgent)
         agent.name = "vision"
-        output = agent._post_process("分析结果", None)
+        from src.agents.base import AgentContext
+
+        context = AgentContext(
+            project_path=Path("/tmp"),
+            task_description="test",
+            metadata={"output_format": VisionAgent.MODE_ANALYSIS},
+        )
+        output = agent._post_process("分析结果", context)
         assert output.status == AgentStatus.COMPLETED
         assert output.result == "分析结果"
         assert "应用视觉修改建议" in output.recommendations[0]
+
+    def test_post_process_ui_code_mode(self):
+        """后处理（UI 代码生成模式）返回正确的推荐"""
+        from src.agents.base import AgentStatus
+
+        agent = VisionAgent.__new__(VisionAgent)
+        agent.name = "vision"
+        from src.agents.base import AgentContext
+
+        context = AgentContext(
+            project_path=Path("/tmp"),
+            task_description="test",
+            metadata={"output_format": VisionAgent.MODE_UI_CODE},
+        )
+        output = agent._post_process("生成完毕", context)
+        assert output.status == AgentStatus.COMPLETED
+        assert "浏览器中打开" in output.recommendations[0]
+        assert output.artifacts is not None
