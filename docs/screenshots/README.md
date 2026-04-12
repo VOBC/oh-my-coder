@@ -55,7 +55,7 @@ omc run "重构这个项目" -w refactor
 ## 🎯 推荐截图顺序
 
 1. `cli-help.png` — 让用户一眼看懂 CLI 能力
-2. `cli-agents.png` — 展示 21 个专业 Agent
+2. `cli-agents.png` — 展示 30 个专业 Agent
 3. `workflow-run.png` — 实际运行效果
 4. `quest-mode.png` — 异步自主编程亮点
 
