@@ -33,6 +33,7 @@ from .cli_config_ext import app as config_ext_app
 from .cli_task import app as task_app
 from .cli_multiagent import app as multiagent_app
 from .cli_security import app as security_app
+from .cli_checkpoint import app as checkpoint_app
 
 # 版本信息
 __version__ = "0.2.0"
@@ -52,6 +53,7 @@ app.add_typer(config_ext_app, name="agent-config")
 app.add_typer(task_app, name="task")
 app.add_typer(multiagent_app, name="multiagent")
 app.add_typer(security_app, name="security")
+app.add_typer(checkpoint_app, name="checkpoint")
 
 console = Console()
 
@@ -112,6 +114,9 @@ def run(
     notify: bool = typer.Option(
         False, "--notify", "-n", help="完成后发送通知（桌面+钉钉）"
     ),
+    no_checkpoint: bool = typer.Option(
+        False, "--no-checkpoint", help="跳过自动快照（断点续传）"
+    ),
 ):
     """执行编程任务"""
     # 前置检查
@@ -170,6 +175,7 @@ def run(
                         "project_path": str(project_path.absolute()),
                         "task": task,
                     },
+                    skip_checkpoint=no_checkpoint,
                 )
             )
 

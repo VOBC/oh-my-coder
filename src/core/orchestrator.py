@@ -198,6 +198,9 @@ class Orchestrator:
         self.skills_dir = skills_dir or self.state_dir.parent / "skills"
         self._skill_manager: Optional[SkillManager] = None
 
+        # Checkpoint 管理器（懒加载）
+        self._checkpoint_manager = None  # type: ignore
+
         # Agent 实例缓存
         self._agents: Dict[str, Any] = {}
 
@@ -216,6 +219,17 @@ class Orchestrator:
 
             self._skill_manager = SkillManager(skills_dir=self.skills_dir)
         return self._skill_manager
+
+    @property
+    def checkpoint_manager(self):
+        """懒加载 CheckpointManager"""
+        if self._checkpoint_manager is None:
+            from .checkpoint import CheckpointManager
+
+            self._checkpoint_manager = CheckpointManager(
+                project_path=self.state_dir.parent
+            )
+        return self._checkpoint_manager
 
     def get_skill_inventory(self, max_chars: int = 500) -> str:
         """
@@ -349,6 +363,7 @@ class Orchestrator:
         workflow_name: str,
         context: Dict[str, Any],
         mode: ExecutionMode = ExecutionMode.SEQUENTIAL,
+        skip_checkpoint: bool = False,
     ) -> WorkflowResult:
         """
         执行工作流
@@ -396,6 +411,18 @@ class Orchestrator:
         )
 
         self._active_workflows[workflow_id] = result
+
+        # ---- 自动快照：任务开始前记录 checkpoint ----
+        if not skip_checkpoint:
+            try:
+                task_id = context.get("task", "unknown").replace(" ", "-")[:30]
+                cp_id = self.checkpoint_manager.create(
+                    task_id=task_id,
+                    description=f"Workflow 开始: {workflow_name} | {context.get('task', '')}",
+                )
+                context["_checkpoint_id"] = cp_id
+            except Exception:
+                pass  # 静默，不阻塞工作流
 
         try:
             # 根据模式执行
