@@ -8,10 +8,9 @@ import sqlite3
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 from .base import (
-    AgentContext,
     AgentLane,
     AgentOutput,
     AgentStatus,
@@ -253,10 +252,19 @@ class SelfImprovingAgent(BaseAgent):
     icon = "🧠"
     tools = ["file_read", "file_write"]
 
-    def __init__(self, context: AgentContext, store: Optional[LearningStore] = None):
-        super().__init__(context)
+    def __init__(
+        self,
+        model_router=None,
+        config: Optional[Dict[str, Any]] = None,
+        store: Optional[LearningStore] = None,
+    ):
+        super().__init__(model_router, config)
         db_path = Path.home() / ".omc" / "learning.db"
         self.store = store or LearningStore(str(db_path))
+        # LearningsMemory 用于 best-practice → Skill 升级（懒导入避免循环）
+        from ..memory.learnings import LearningsMemory
+
+        self._memory = LearningsMemory(Path.home() / ".omc")
 
     @property
     def system_prompt(self) -> str:
@@ -440,6 +448,9 @@ class SelfImprovingAgent(BaseAgent):
             agent_type = parts[-1] if len(parts) > 1 else None
             adjustments = self.analyze_and_improve(agent_type) if agent_type else []
             data = {"adjustments": [str(a) for a in adjustments]}
+        elif "promote" in parts or "升级" in parts or "skill" in parts:
+            # 将 best-practice 条目升级为 Skill 文件
+            data = self.promote_best_practices_to_skills()
         else:
             data = self.report()
 
@@ -447,3 +458,47 @@ class SelfImprovingAgent(BaseAgent):
             status=AgentStatus.SUCCESS,
             content=json.dumps(data, ensure_ascii=False, indent=2),
         )
+
+    def promote_best_practices_to_skills(
+        self,
+        dry_run: bool = False,
+    ) -> Dict[str, Any]:
+        """
+        将 LearningsMemory 中标记为 best-practice 的条目
+        自动升级为 .omc/skills/best-practices/*.md Skill 文件。
+
+        用于：LearningsMemory.best_practices → SkillManager → .omc/skills/
+
+        Args:
+            dry_run: True = 只报告，不实际创建
+
+        Returns:
+            操作结果摘要
+        """
+        from ..memory.skill_manager import SkillManager
+
+        sm = SkillManager()
+        best_practices = self._memory.get_by_category("best-practice")
+        results = {"created": [], "skipped": [], "errors": []}
+
+        for entry in best_practices:
+            skill_id = entry.id
+            if not dry_run:
+                try:
+                    sm.patch(
+                        skill_id=skill_id,
+                        body=entry.content,
+                        description=entry.title,
+                        tags=entry.tags,
+                        triggers=[entry.context] if entry.context else [],
+                        category="best-practices",
+                    )
+                    results["created"].append(skill_id)
+                except Exception as e:
+                    results["errors"].append({"skill_id": skill_id, "error": str(e)})
+            else:
+                results["skipped"].append(skill_id)
+
+        results["total_best_practices"] = len(best_practices)
+        results["total_skills"] = len(sm.list_skills())
+        return results

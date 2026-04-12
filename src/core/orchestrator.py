@@ -165,27 +165,165 @@ class Orchestrator:
     - execute_step(): 执行单个步骤
     - save_state(): 保存状态
     - load_state(): 加载状态
+
+    Tier 0 自动注入（2026-04-12）：
+    - 每次工作流完成后，自动读取 .omc/skills/index.json
+    - 将所有 Skill 的名字+描述追加到系统 Prompt 底部
+    - 让 Agent 知道有哪些经验可用
+
+    自动沉淀（2026-04-12）：
+    - 工作流完成后调用 evaluate_skill_worthy 判断是否值得沉淀
+    - 满足条件时自动创建 SKILL.md
     """
 
     def __init__(
         self,
         model_router,
         state_dir: Optional[Path] = None,
+        skills_dir: Optional[Path] = None,
     ):
         """
         Args:
             model_router: 模型路由器
             state_dir: 状态持久化目录
+            skills_dir: Skill 文件根目录（默认 .omc/skills）
         """
         self.model_router = model_router
         self.state_dir = state_dir or Path(".omc/state")
         self.state_dir.mkdir(parents=True, exist_ok=True)
+
+        # Skill 自进化管理器
+        from ..memory.skill_manager import SkillManager
+
+        self.skills_dir = skills_dir or self.state_dir.parent / "skills"
+        self._skill_manager: Optional[SkillManager] = None
 
         # Agent 实例缓存
         self._agents: Dict[str, Any] = {}
 
         # 工作流状态
         self._active_workflows: Dict[str, WorkflowResult] = {}
+
+    # ------------------------------------------------------------------
+    # Skill 自进化（Tier 0 自动注入）
+    # ------------------------------------------------------------------
+
+    @property
+    def skill_manager(self):
+        """懒加载 SkillManager"""
+        if self._skill_manager is None:
+            from ..memory.skill_manager import SkillManager
+
+            self._skill_manager = SkillManager(skills_dir=self.skills_dir)
+        return self._skill_manager
+
+    def get_skill_inventory(self, max_chars: int = 500) -> str:
+        """
+        获取所有 Skill 的名字+一句话描述。
+        供 Tier 0 注入到 Agent 系统 Prompt 底部。
+        """
+        return self.skill_manager.get_skill_inventory(max_chars=max_chars)
+
+    def inject_skill_context(self, agent_class: str, max_chars: int = 500) -> str:
+        """
+        为指定 Agent 生成 Skill 上下文注入文本。
+
+        追加到 agent.system_prompt 底部，实现 Tier 0 自动注入。
+        """
+        inventory = self.get_skill_inventory(max_chars=max_chars)
+        if not inventory or "(none)" in inventory:
+            return ""
+        return (
+            f"\n\n{'='*50}\n"
+            f"## 📚 可用经验（来自历史沉淀）\n"
+            f"{inventory}\n"
+            f"如当前任务与上述经验相关，请优先参考或调用 skill-manage 工具。\n"
+            f"{'='*50}"
+        )
+
+    # ------------------------------------------------------------------
+    # 自动沉淀
+    # ------------------------------------------------------------------
+
+    async def _maybe_learn_from_workflow(
+        self,
+        workflow_name: str,
+        context: Dict[str, Any],
+        result: WorkflowResult,
+    ) -> None:
+        """
+        工作流完成后评估是否值得沉淀为 Skill。
+
+        满足以下任一条件时自动创建 SKILL.md：
+        1. 工具调用 ≥5 次且成功
+        2. 错误 → 解决
+        3. 用户纠正
+        4. 非平凡工作流（≥3 步骤）
+
+        结果写入 .omc/skills/<category>/<name>/SKILL.md。
+        """
+        from ..memory.skill_manager import SkillManager
+
+        # 统计工具调用次数（从 outputs 估算）
+        tool_call_count = sum(
+            len(getattr(o, "artifacts", {}).get("tool_calls", []))
+            for o in result.outputs.values()
+        )
+        # 如果无法精确统计，至少按步骤数估算
+        if tool_call_count == 0:
+            tool_call_count = len(result.steps_completed)
+
+        had_error = result.status == WorkflowStatus.FAILED
+        had_fix = had_error and False  # 无法从 WorkflowResult 直接判断，需外部注入
+        had_user_correction = context.get("_had_user_correction", False)
+        is_nontrivial = len(result.steps_completed) >= 3
+
+        if not SkillManager.evaluate_skill_worthy(
+            tool_call_count=tool_call_count,
+            had_error=had_error,
+            had_fix=had_fix,
+            had_user_correction=had_user_correction,
+            is_nontrivial_workflow=is_nontrivial,
+        ):
+            return
+
+        # 生成 Skill 草稿
+        final_result = ""
+        if result.outputs:
+            last = list(result.outputs.values())[-1]
+            final_result = getattr(last, "result", "")[:300] or str(last)[:300]
+
+        draft = SkillManager.build_skill_from_execution(
+            agent_name=(
+                result.steps_completed[-1] if result.steps_completed else "orchestrator"
+            ),
+            task_description=context.get("task", ""),
+            workflow_name=workflow_name,
+            final_result=final_result,
+            key_steps=result.steps_completed,
+            error_context=str(result.error) if result.error else None,
+        )
+
+        # 自动创建（patch 优先）
+        try:
+            self.skill_manager.patch(
+                skill_id=draft["name"],
+                body=draft["body"],
+                category=draft["category"],
+                description=draft["description"],
+                tags=draft["tags"],
+                triggers=draft["triggers"],
+            )
+        except Exception:
+            # 兜底 create
+            try:
+                self.skill_manager.create(**draft)
+            except Exception:
+                pass  # 静默失败，不阻塞工作流
+
+    # ------------------------------------------------------------------
+    # Agent 注册与获取
+    # ------------------------------------------------------------------
 
     def register_agent(self, agent):
         """注册 Agent 实例"""
@@ -278,6 +416,12 @@ class Orchestrator:
             result.execution_time = time.time() - start_time
             self._save_workflow_result(result)
 
+        # ---- 自动沉淀：评估是否值得生成 Skill（Tier 0）----
+        try:
+            await self._maybe_learn_from_workflow(workflow_name, context, result)
+        except Exception:
+            pass  # 静默，不阻塞工作流
+
         return result
 
     async def _execute_sequential(
@@ -299,11 +443,12 @@ class Orchestrator:
                 # 执行步骤
                 agent = self.get_agent(step.agent_name)
 
-                # 构建上下文
+                # 构建上下文（Tier 0: 注入 Skill 经验）
                 agent_context = AgentContext(
                     project_path=Path(context.get("project_path", ".")),
                     task_description=context.get("task", ""),
                     previous_outputs=result.outputs,
+                    skill_context=self.inject_skill_context(step.agent_name),
                 )
 
                 output = await asyncio.wait_for(
@@ -374,6 +519,7 @@ class Orchestrator:
                     project_path=Path(context.get("project_path", ".")),
                     task_description=context.get("task", ""),
                     previous_outputs=result.outputs,
+                    skill_context=self.inject_skill_context(step.agent_name),
                 )
                 tasks.append(
                     asyncio.wait_for(
@@ -441,6 +587,7 @@ class Orchestrator:
                     project_path=Path(context.get("project_path", ".")),
                     task_description=context.get("task", ""),
                     previous_outputs=result.outputs,
+                    skill_context=self.inject_skill_context(step.agent_name),
                 )
 
                 output = await asyncio.wait_for(
@@ -483,6 +630,7 @@ class Orchestrator:
             project_path=Path(context.get("project_path", ".")),
             task_description=context.get("task", ""),
             metadata=context.get("metadata", {}),
+            skill_context=self.inject_skill_context(agent_name),
         )
 
         return await agent.execute(agent_context)

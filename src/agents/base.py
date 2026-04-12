@@ -53,6 +53,7 @@ class AgentContext:
     relevant_files: List[Path] = field(default_factory=list)  # 相关文件
     previous_outputs: Dict[str, Any] = field(default_factory=dict)  # 前序 Agent 输出
     metadata: Dict[str, Any] = field(default_factory=dict)  # 其他元数据
+    skill_context: str = ""  # Tier 0 自动注入：Skill 经验清单（由 Orchestrator 填充）
 
 
 @dataclass
@@ -195,6 +196,10 @@ class BaseAgent(ABC):
             parts.append("## 前序工作成果")
             for agent_name, output in context.previous_outputs.items():
                 parts.append(f"### {agent_name}\n{output}")
+
+        # Tier 0: 追加 Skill 经验上下文
+        if context.skill_context:
+            parts.append(context.skill_context)
 
         return "\n\n".join(parts)
 
