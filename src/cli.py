@@ -34,6 +34,7 @@ from .cli_task import app as task_app
 from .cli_multiagent import app as multiagent_app
 from .cli_security import app as security_app
 from .cli_checkpoint import app as checkpoint_app
+from .cli_mcp import app as mcp_app
 
 # 版本信息
 __version__ = "0.2.0"
@@ -54,6 +55,7 @@ app.add_typer(task_app, name="task")
 app.add_typer(multiagent_app, name="multiagent")
 app.add_typer(security_app, name="security")
 app.add_typer(checkpoint_app, name="checkpoint")
+app.add_typer(mcp_app, name="mcp")
 
 console = Console()
 
