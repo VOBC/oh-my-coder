@@ -218,7 +218,7 @@ def test_execute_workflow_sets_agent_names():
         )
         orch.register_agent(mock_agent)
 
-    result = asyncio.get_event_loop().run_until_complete(
+    result = asyncio.run(
         orch.execute_workflow(
             "build",
             {"task": "test"},
