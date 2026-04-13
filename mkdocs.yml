@@ -1,0 +1,74 @@
+strict: false  # 允许外部 repo 链接（README.md, CONTRIBUTING.md 等）
+
+site_name: Oh My Coder 文档
+site_description: 🤖 多智能体 AI 编程助手，支持国内大模型，30 个专业 Agent，多 Agent 协作
+site_author: VOBC
+site_url: https://vobc.github.io/oh-my-coder/
+
+repo_name: VOBC/oh-my-coder
+repo_url: https://github.com/VOBC/oh-my-coder
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  language: zh
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: 切换到深色模式
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: 切换到浅色模式
+  features:
+    - navigation.instant
+    - navigation.trimming
+    - navigation.sections
+    - navigation.expand
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.action.edit
+    - content.action.view
+
+plugins:
+  - search:
+      lang:
+        - en
+        - zh
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/VOBC/oh-my-coder
+  generator: false
+  analytics:
+    provider: google
+    property: G-XXXXXXXXXX
+
+nav:
+  - Home: index.md
+  - Guide:
+    - guide/install.md
+    - guide/quick-start.md
+    - guide/models.md
+    - guide/agents.md
+    - guide/workflows.md
+  - API:
+    - api/cli.md
+    - api/http-api.md
+  - Features:
+    - features/capability-pack.md
+    - features/checkpoint.md
+    - features/mcp-server.md
+  - 中文:
+    - zh/index.md
+    - zh/getting-started.md
+    - zh/tutorials.md
