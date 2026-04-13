@@ -141,6 +141,20 @@ class TaskManager:
 
 task_manager = TaskManager()
 
+# ========================================
+# Orchestrator Singleton (shared across SSE + task execution)
+# ========================================
+_global_orchestrator = None
+
+
+def get_orchestrator() -> "Orchestrator":
+    """获取全局 Orchestrator 单例（复用已有 router）"""
+    global _global_orchestrator
+    if _global_orchestrator is None:
+        router = create_router()
+        _global_orchestrator = create_orchestrator(router)
+    return _global_orchestrator
+
 
 # ========================================
 # Model & Orchestrator Factory
@@ -195,6 +209,41 @@ async def sse_execute(task_id: str):
                 break
             yield f"data: {json_dumps(data)}\n\n"
             await asyncio.sleep(0.01)
+
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        },
+    )
+
+
+@app.get("/api/agent/live")
+async def agent_live_stream():
+    """
+    SSE 实时推送当前 Agent 协作状态
+
+    Returns:
+        StreamingResponse: text/event-stream，每 2 秒推送一次 orchestrator.get_current_state()
+    """
+    orch = get_orchestrator()
+
+    async def event_generator():
+        while True:
+            try:
+                state = orch.get_current_state()
+                yield f"data: {json_dumps(state)}\n\n"
+                await asyncio.sleep(2)
+            except Exception as e:
+                error_state = {
+                    "error": str(e),
+                    "timestamp": datetime.now().isoformat(),
+                }
+                yield f"data: {json_dumps(error_state)}\n\n"
+                await asyncio.sleep(5)
 
     return StreamingResponse(
         event_generator(),
@@ -304,19 +353,34 @@ async def run_task(
     import time
 
     start_time = time.time()
-    router = None
     orch = None
 
     try:
-        # 初始化
-        router = create_router()
-        orch = create_orchestrator(router)
+        # 复用全局 orchestrator（与 SSE /api/agent/live 共用同一实例）
+        orch = get_orchestrator()
 
         # 确定工作流
         steps = WORKFLOW_TEMPLATES.get(workflow_name, WORKFLOW_TEMPLATES["build"])
 
         # 更新任务状态中的步骤总数
         task_manager._tasks[task_id]["stats"]["steps_total"] = len(steps)
+
+        # 在 orchestrator 中注册当前任务（供 /api/agent/live SSE 消费）
+        from src.core.orchestrator import WorkflowResult, WorkflowStatus
+
+        workflow_id = task_id
+        wf_result = WorkflowResult(
+            workflow_id=workflow_id,
+            status=WorkflowStatus.RUNNING,
+            steps_completed=[],
+            steps_failed=[],
+            outputs={},
+            total_tokens=0,
+            total_cost=0.0,
+            execution_time=0.0,
+            agent_names=[s.agent_name for s in steps],
+        )
+        orch._active_workflows[workflow_id] = wf_result
 
         # 按顺序执行每个步骤
         context = {
@@ -347,6 +411,9 @@ async def run_task(
 
                 if output.status == AgentStatus.COMPLETED:
                     previous_outputs[agent_name] = output
+                    wf_result.steps_completed.append(agent_name)
+                    wf_result.outputs[agent_name] = output
+                    wf_result.total_tokens += output.usage.get("total_tokens", 0)
                     task_manager.update_step(
                         task_id, agent_name, "completed", output.result
                     )
@@ -357,6 +424,7 @@ async def run_task(
                         "total_tokens"
                     ] += output.usage.get("total_tokens", 0)
                 else:
+                    wf_result.steps_failed.append(agent_name)
                     task_manager.update_step(
                         task_id, agent_name, "failed", output.error or "Unknown error"
                     )
@@ -365,11 +433,21 @@ async def run_task(
                     )
 
             except asyncio.TimeoutError:
+                wf_result.steps_failed.append(agent_name)
                 task_manager.update_step(task_id, agent_name, "failed", "执行超时")
                 task_manager._tasks[task_id]["stats"]["steps_failed"].append(agent_name)
             except Exception as e:
+                wf_result.steps_failed.append(agent_name)
                 task_manager.update_step(task_id, agent_name, "failed", str(e))
                 task_manager._tasks[task_id]["stats"]["steps_failed"].append(agent_name)
+
+        # 标记工作流完成
+        wf_result.execution_time = time.time() - start_time
+        wf_result.status = (
+            WorkflowStatus.COMPLETED
+            if not wf_result.steps_failed
+            else WorkflowStatus.FAILED
+        )
 
         # 汇总结果
         total_time = time.time() - start_time
@@ -406,6 +484,8 @@ async def run_task(
         history_store.save(task_id, history_record)
 
     except Exception as e:
+        if orch is not None and workflow_id in orch._active_workflows:
+            orch._active_workflows[workflow_id].status = WorkflowStatus.FAILED
         task_manager.complete_task(task_id, error=str(e))
 
         # 保存失败记录

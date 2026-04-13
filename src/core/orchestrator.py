@@ -69,6 +69,9 @@ class WorkflowResult:
     execution_time: float
     error: Optional[str] = None
     timestamp: str = field(default_factory=lambda: datetime.now().isoformat())
+    agent_names: List[str] = field(
+        default_factory=list
+    )  # 此工作流涉及的 Agent 名称列表
 
 
 # 预定义的工作流模板
@@ -408,6 +411,7 @@ class Orchestrator:
             total_tokens=0,
             total_cost=0.0,
             execution_time=0.0,
+            agent_names=[s.agent_name for s in steps],
         )
 
         self._active_workflows[workflow_id] = result
@@ -714,3 +718,105 @@ class Orchestrator:
     def get_workflow_status(self, workflow_id: str) -> Optional[WorkflowResult]:
         """获取工作流状态"""
         return self._active_workflows.get(workflow_id)
+
+    def get_current_state(self) -> Dict[str, Any]:
+        """获取当前所有 Agent 的协作状态"""
+        active_agents = []
+        completed_agents = []
+        pending_agents = []
+
+        # 遍历所有活跃工作流
+        for workflow_id, workflow_result in self._active_workflows.items():
+            if workflow_result.status == WorkflowStatus.RUNNING:
+                # 活跃：agent_names 中尚未 completed 的
+                completed_set = set(workflow_result.steps_completed)
+                for agent_name in workflow_result.agent_names:
+                    if agent_name not in completed_set:
+                        active_agents.append(
+                            {
+                                "name": agent_name,
+                                "status": "working",
+                                "task": f"执行工作流: {workflow_id}",
+                                "started_at": workflow_result.timestamp,
+                            }
+                        )
+                # 已完成
+                for agent_name in workflow_result.steps_completed:
+                    completed_agents.append(
+                        {
+                            "name": agent_name,
+                            "status": "done",
+                            "task": f"完成工作流: {workflow_id}",
+                            "duration": (
+                                f"{workflow_result.execution_time:.0f}s"
+                                if workflow_result.execution_time > 0
+                                else "N/A"
+                            ),
+                        }
+                    )
+
+            elif workflow_result.status == WorkflowStatus.COMPLETED:
+                # 全量标记为已完成
+                for agent_name in workflow_result.steps_completed:
+                    completed_agents.append(
+                        {
+                            "name": agent_name,
+                            "status": "done",
+                            "task": f"完成工作流: {workflow_id}",
+                            "duration": (
+                                f"{workflow_result.execution_time:.0f}s"
+                                if workflow_result.execution_time > 0
+                                else "N/A"
+                            ),
+                        }
+                    )
+            elif workflow_result.status == WorkflowStatus.FAILED:
+                # 失败的
+                for agent_name in workflow_result.steps_failed:
+                    pending_agents.append(agent_name)
+
+        # 待执行 = agent_names 中不在 active/completed/failed 的
+        all_workflow_names: set = set()
+        for wf in self._active_workflows.values():
+            all_workflow_names.update(wf.agent_names)
+
+        active_names = {a["name"] for a in active_agents}
+        completed_names = {a["name"] for a in completed_agents}
+        failed_names = set(pending_agents)
+
+        for name in all_workflow_names:
+            if (
+                name not in active_names
+                and name not in completed_names
+                and name not in failed_names
+            ):
+                pending_agents.append(name)
+
+        # 去重
+        completed_names_unique = {}
+        for c in completed_agents:
+            completed_names_unique[c["name"]] = c
+        completed_agents = list(completed_names_unique.values())
+
+        active_names_unique = {}
+        for a in active_agents:
+            active_names_unique[a["name"]] = a
+        active_agents = list(active_names_unique.values())
+
+        total = len(all_workflow_names) if all_workflow_names else 0
+        done_count = len(completed_agents)
+        total_progress = f"{done_count}/{total}" if total > 0 else "0/0"
+
+        current_workflow = ""
+        if self._active_workflows:
+            wf = list(self._active_workflows.values())[0]
+            current_workflow = wf.agent_names[0] if wf.agent_names else "unknown"
+
+        return {
+            "active_agents": active_agents,
+            "completed_agents": completed_agents,
+            "pending_agents": pending_agents,
+            "total_progress": total_progress,
+            "workflow": current_workflow,
+            "timestamp": datetime.now().isoformat(),
+        }

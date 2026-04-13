@@ -5,6 +5,7 @@
 """
 
 from datetime import datetime
+from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, Query
@@ -71,7 +72,6 @@ def _get_real_stats(days: int = 7) -> DashboardStats:
     global _stats_cache, _stats_cache_time
     import time
     import json
-    from pathlib import Path
 
     now = time.time()
     cache_key = f"stats_{days}"
@@ -136,7 +136,6 @@ def _get_real_activity(days: int = 7) -> List[ActivityData]:
     import time
     import json
     from collections import defaultdict
-    from pathlib import Path
 
     now = time.time()
     cache_key = f"activity_{days}"
