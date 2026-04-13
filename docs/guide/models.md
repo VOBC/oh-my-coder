@@ -5,7 +5,7 @@
 | 模型 | API Key 环境变量 | 特点 |
 |------|-----------------|------|
 | **DeepSeek** | `DEEPSEEK_API_KEY` | 性价比最高，推荐 |
-| **MiMo** | `MIMOAPIKEY` | 小米 MiMo，mimo-v2-flash 免费，1M 上下文（Beta） |
+| **MiMo** | `MIMOAPIKEY` | 小米 MiMo，mimo-v2-flash 免费，1M 上下文 |
 | **智谱 GLM** | `GLM_API_KEY` | GLM-4-Flash **永久免费** |
 | **文心一言** | `WENXIN_API_KEY` + `WENXIN_SECRET_KEY` | 百度云 |
 | **通义千问** | `TONGYI_API_KEY` | 阿里云 |

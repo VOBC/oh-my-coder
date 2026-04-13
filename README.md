@@ -2,7 +2,7 @@
 
 > 🤖 多智能体 AI 编程助手，支持国内大模型
 
-🎯 **GLM-4.7-Flash 永久免费 · 11 个国产大模型 · 30 个专业 Agent · 多 Agent 协作 · 完全开源**
+🎯 **GLM-4.7-Flash 永久免费 · 12 个国产大模型 · 30 个专业 Agent · 多 Agent 协作 · 完全开源**
 
 [![Python](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
@@ -44,7 +44,7 @@
 
 ## 🎯 为什么选择 Oh My Coder？
 
-> **GLM-4.7-Flash 永久免费 · 11 家国产模型 · 30 个专业 Agent · 多 Agent 协作 · 完全开源**
+> **GLM-4.7-Flash 永久免费 · 12 家国产模型 · 30 个专业 Agent · 多 Agent 协作 · 完全开源**
 
 ### 完整竞品对比（2026年AI编程工具生态）
 
@@ -53,7 +53,7 @@
 | 工具 | 类型 | Stars | 价格 | 开源 | 国内可用 | 多Agent | 模型支持 |
 |------|------|-------|------|------|----------|---------|----------|
 | **oh-my-claudecode** | Claude Code插件 | 18,963 ⭐ | 需Claude Pro ($25/月) | ✅ | ⚠️ 需翻墙 | ✅ 32个Agent | 仅Claude |
-| **oh-my-coder** | 多Agent框架 | 较少 | **免费** | **✅ MIT** | **✅** | ✅ 30个Agent | ✅ 11家国产模型 |
+| **oh-my-coder** | 多Agent框架 | 较少 | **免费** | **✅ MIT** | **✅** | ✅ 30个Agent | ✅ 12家国产模型 |
 | **AutoGen** | 微软多Agent框架 | 大 | 免费 | ✅ | ✅ | ✅ | 多模型 |
 | **OpenCode** | 开源CLI | 中 | 免费 | ✅ | ✅ | ✅ | 75+模型 |
 | **MyClaude** | 多后端编排 | 小 | 免费 | ✅ | ✅ | ✅ | Claude/Codex/Gemini |
@@ -90,7 +90,7 @@
 | 多Agent协作 | ✅ 30个 | ✅ 32个 | ❌ | ❌ | ❌ | ✅ |
 | 开源免费 | ✅ MIT | ✅ | ⚠️ 企业版付费 | ❌ $20/月 | ❌ $19/月 | ✅ |
 | 国内直连 | ✅ | ❌ 需翻墙 | ✅ | ❌ 需翻墙 | ❌ 需翻墙 | ✅ |
-| 国产模型支持 | ✅ 11家 | ❌ | ✅ 混元 | ❌ | ❌ | ❌ |
+| 国产模型支持 | ✅ 12家 | ❌ | ✅ 混元 | ❌ | ❌ | ❌ |
 | 中文交互 | ✅ | ❌ | ✅ | ❌ | ❌ | ⚠️ |
 | 本地运行 | ✅ | ⚠️ 需Claude Code | ❌ | ❌ | ❌ | ✅ |
 | 自托管 | ✅ | ❌ | ❌ | ❌ | ❌ | ✅ |
@@ -699,14 +699,14 @@ python -m src.cli context browser
 
 ## 🧠 支持的模型
 
-共 **11 个**模型提供商，系统自动按性价比选择：
+共 **12 个**模型提供商，系统自动按性价比选择：
 
 ### 模型支持状态
 
 | 提供商 | 支持状态 | 备注 |
 |--------|----------|------|
 | **DeepSeek** | [生产就绪] | 推荐首选，性价比最高 |
-| **MiMo** | [Beta] | 小米 MiMo，mimo-v2-flash 免费，1M 上下文 |
+| **MiMo** | [生产就绪] | 小米 MiMo，mimo-v2-flash 免费，1M 上下文 |
 | **Kimi** | [生产就绪] | 128K 上下文，适合大代码库 |
 | **豆包** | [生产就绪] | 字节自研，响应速度快 |
 | **天工AI** | [生产就绪] | 昆仑万维出品，中文理解强 |
@@ -892,7 +892,7 @@ oh-my-coder/
 │   │   ├── router.py        # 三层模型路由器
 │   │   ├── orchestrator.py  # 智能编排引擎
 │   │   └── summary.py       # 任务总结生成器
-│   ├── models/              # 模型适配层（11 个厂商）
+│   ├── models/              # 模型适配层（12 个厂商）
 │   │   ├── base.py          # 统一接口
 │   │   ├── deepseek.py      # DeepSeek 适配器
 │   │   ├── wenxin.py        # 文心一言

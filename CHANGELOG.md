@@ -24,7 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `review`：代码审查
   - `autopilot`：自动路由
 
-- **多模型支持（11 家国产模型）**
+- **多模型支持（12 家国产模型）**
   - DeepSeek（性价比最高，推荐）
   - 智谱 GLM（GLM-4-Flash 永久免费）
   - 文心一言（百度云）
