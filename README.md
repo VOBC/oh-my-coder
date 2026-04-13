@@ -394,7 +394,7 @@ flowchart TD
     User([用户输入任务])
     Router{智能路由器}
 
-    subgraph Build["🚀 构建通道"]
+    subgraph Build["🚀 构建通道 (6)"]
         E[ExploreAgent<br/>探索代码库]
         A[AnalystAgent<br/>分析需求]
         P[PlannerAgent<br/>制定计划]
@@ -403,17 +403,18 @@ flowchart TD
         V[VerifierAgent<br/>验证测试]
     end
 
-    subgraph Review["🔍 审查通道"]
+    subgraph Review["🔍 审查通道 (3)"]
         CR[CodeReviewerAgent<br/>质量审查]
         SR[SecurityReviewerAgent<br/>安全审查]
+        CT[CriticAgent<br/>批判分析]
     end
 
-    subgraph Debug["🐛 调试通道"]
+    subgraph Debug["🐛 调试通道 (2)"]
         DB[DebuggerAgent<br/>定位问题]
         TR[TracerAgent<br/>追踪根因]
     end
 
-    subgraph Domain["🎯 领域通道"]
+    subgraph Domain1["🎯 领域通道 1/2 (8)"]
         TE[TestEngineerAgent<br/>测试生成]
         DS[DesignerAgent<br/>设计]
         VI[VisionAgent<br/>视觉分析<br/>UI代码生成]
@@ -422,30 +423,72 @@ flowchart TD
         SC[ScientistAgent<br/>技术调研]
         GM[GitMasterAgent<br/>Git操作]
         CS[CodeSimplifierAgent<br/>代码简化]
+    end
+
+    subgraph Domain2["🎯 领域通道 2/2 (7)"]
         QA[QATesterAgent<br/>QA验证]
+        DB2[DatabaseAgent<br/>数据库]
+        API[APIAgent<br/>API开发]
+        DO[DevOpsAgent<br/>部署运维]
+        UML[UMLAgent<br/>UML建模]
+        PF[PerformanceAgent<br/>性能优化]
+        MG[MigrationAgent<br/>迁移]
+    end
+
+    subgraph Wizard["🧙 协调通道 (4)"]
+        PM[PromptAgent<br/>提示词优化]
+        AU[AuthAgent<br/>权限认证]
+        DA[DataAgent<br/>数据处理]
+        SI[SelfImprovingAgent<br/>自我改进]
     end
 
     User --> Router
-    Router --> E
-    Router --> A
-    Router --> P
-    Router --> AR
-    Router --> CR
-    Router --> SR
-    Router --> DB
-    Router --> TR
 
+    %% Router 连接到各通道入口 Agent
+    Router --> E
+    Router --> CR
+    Router --> DB
+    Router --> TE
+    Router --> PM
+
+    %% 构建通道流程
     E --> A
     A --> P
     P --> AR
     AR --> EX
     EX --> V
 
-    DB --> TR
+    %% 审查通道
     CR --> SR
+    SR --> CT
+
+    %% 调试通道
+    DB --> TR
+
+    %% 领域通道内部连接
+    TE --> DS
+    VI --> DC
+    WT --> SC
+    GM --> CS
+
+    %% 领域通道 → 构建通道
+    DS --> AR
+    CS --> AR
+
+    %% 构建通道 → 审查通道
+    V --> CR
+
+    %% 调试通道 → 构建通道
+    TR --> E
+
+    %% 协调通道连接
+    PM --> E
+    AU --> PM
+    DA --> PM
+    SI --> PM
 
     V --> Result([完成])
-    SR --> Result
+    CT --> Result
     TR --> Result
 ```
 
