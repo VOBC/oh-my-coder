@@ -706,6 +706,7 @@ python -m src.cli context browser
 | 提供商 | 支持状态 | 备注 |
 |--------|----------|------|
 | **DeepSeek** | [生产就绪] | 推荐首选，性价比最高 |
+| **MiMo** | [Beta] | 小米 MiMo，mimo-v2-flash 免费，1M 上下文 |
 | **Kimi** | [生产就绪] | 128K 上下文，适合大代码库 |
 | **豆包** | [生产就绪] | 字节自研，响应速度快 |
 | **天工AI** | [生产就绪] | 昆仑万维出品，中文理解强 |
@@ -720,6 +721,7 @@ python -m src.cli context browser
 | 提供商 | 环境变量 | 默认模型 | 特点 |
 |--------|----------|----------|------|
 | **DeepSeek** | `DEEPSEEK_API_KEY` | `deepseek-chat` | 性价比高，推理能力强 |
+| **MiMo** | `MIMOAPIKEY` | `mimo-v2-flash` | 小米 MiMo，免费 256K / Pro 1M 上下文 |
 | **Kimi** | `KIMI_API_KEY` | `moonshot-v1-128k` | 128K 超长上下文 |
 | **豆包** | `DOUBAO_API_KEY` | `doubao-pro-32k` | 字节自研，响应快 |
 | **天工AI** | `TIANGONG_API_KEY` | `skywork-v1.0` | 昆仑万维出品，中文强 |

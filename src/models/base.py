@@ -38,6 +38,7 @@ class ModelProvider(Enum):
     TIANGONG = "tiangong"  # 天工AI
     SPARK = "spark"  # 讯飞星火
     BAICHUAN = "baichuan"  # 百川智能
+    MIMO = "mimo"  # 小米 MiMo
 
 
 @dataclass
