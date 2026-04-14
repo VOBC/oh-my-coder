@@ -418,9 +418,9 @@ class ContextBuilder:
         stats = self.indexer.get_stats()
         parts.append(
             f"""## 项目概述
-- 文件数: {stats['files_indexed']}
-- 代码元素: {stats['elements_indexed']}
-- 语言分布: {stats['languages']}
+- 文件数: {stats["files_indexed"]}
+- 代码元素: {stats["elements_indexed"]}
+- 语言分布: {stats["languages"]}
 """
         )
 
@@ -434,7 +434,7 @@ class ContextBuilder:
                     f"""### {result.name} ({result.type})
 文件: {result.file_path}:{result.start_line}-{result.end_line}
 ```python
-{result.source_code[:500]}{'...' if len(result.source_code) > 500 else ''}
+{result.source_code[:500]}{"..." if len(result.source_code) > 500 else ""}
 ```
 """
                 )

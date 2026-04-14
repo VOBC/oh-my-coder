@@ -2,6 +2,7 @@
 工具模块
 """
 
+from .safe_executor import safe_execute, safe_execute_sync, BlockedError
 from .performance import (
     AsyncExecutor,
     LRUCache,
@@ -20,4 +21,7 @@ __all__ = [
     "measure_time",
     "get_cache",
     "get_monitor",
+    "safe_execute",
+    "safe_execute_sync",
+    "BlockedError",
 ]

@@ -412,7 +412,7 @@ async def record_usage(request: RecordUsageRequest) -> Dict[str, Any]:
 
 @router.get("/{team_id}/stats")
 async def get_team_stats(
-    team_id: str, period: str = Query("week", regex="^(day|week|month)$")
+    team_id: str, period: str = Query("week", pattern="^(day|week|month)$")
 ) -> Dict[str, Any]:
     """
     获取团队统计
@@ -430,7 +430,9 @@ async def get_team_stats(
 
 @router.get("/{team_id}/user/{user_id}/stats")
 async def get_user_stats(
-    team_id: str, user_id: str, period: str = Query("week", regex="^(day|week|month)$")
+    team_id: str,
+    user_id: str,
+    period: str = Query("week", pattern="^(day|week|month)$"),
 ) -> Dict[str, Any]:
     """
     获取用户统计

@@ -11,7 +11,6 @@ import httpx
 import asyncio
 import json
 import time
-from typing import Optional
 
 
 BASE_URL = "http://localhost:8000"
@@ -62,7 +61,7 @@ async def wait_for_task(
                 elif event["type"] == "step_complete":
                     print(f"  ✅ {event['step']} 完成")
                 elif event["type"] == "complete":
-                    print(f"  🎉 任务完成！")
+                    print("  🎉 任务完成！")
                     return event
                 elif event["type"] == "error":
                     print(f"  ❌ 错误: {event['content']}")
@@ -209,7 +208,9 @@ async def demo_list_tasks():
         tasks = response.json()
         print(f"\n当前任务数: {len(tasks['tasks'])}")
         for task in tasks["tasks"]:
-            print(f"  - {task['task_id']} | {task['status']} | {task.get('started_at', 'N/A')}")
+            print(
+                f"  - {task['task_id']} | {task['status']} | {task.get('started_at', 'N/A')}"
+            )
 
 
 # ============================================================
@@ -232,7 +233,7 @@ async def main():
                 return
     except Exception as e:
         print(f"❌ 无法连接服务: {e}")
-        print(f"\n请先启动服务:")
+        print("\n请先启动服务:")
         print("  cd oh-my-coder")
         print("  python -m src.web.app")
         return

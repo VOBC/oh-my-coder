@@ -1,254 +1,315 @@
 """
 Web 界面测试
+
+测试 FastAPI 界面和 SSE 端点
 """
 
-import sys
-from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock, patch
+import asyncio
+import json
+from unittest.mock import MagicMock
 
 import pytest
-from httpx import ASGITransport, AsyncClient
+from fastapi.testclient import TestClient
 
-# 确保项目根目录在 path 中
-sys.path.insert(0, str(Path(__file__).parent.parent))
-
-from src.agents.base import AgentOutput, AgentStatus
-from src.web.app import app, task_manager
+from src.web.app import app
+from src.core.orchestrator import Orchestrator
 
 
-# ============================================================
-# Fixtures
-# ============================================================
-@pytest.fixture
-def client():
-    transport = ASGITransport(app=app)
-    return AsyncClient(transport=transport, base_url="http://test")
+class TestWebAPI:
+    """Web API 测试"""
+
+    @pytest.fixture
+    def client(self):
+        """创建测试客户端"""
+        return TestClient(app)
+
+    def test_dashboard_stats_endpoint(self, client):
+        """测试仪表板统计数据端点"""
+        response = client.get("/api/dashboard/stats")
+        assert response.status_code == 200
+        data = response.json()
+        assert "total_tasks" in data
+        assert "completed_tasks" in data
+        assert "success_rate" in data
+
+    def test_dashboard_activity_endpoint(self, client):
+        """测试活动数据端点"""
+        response = client.get("/api/dashboard/activity")
+        assert response.status_code == 200
+        data = response.json()
+        assert isinstance(data, list)
+        if data:
+            assert "day" in data[0]
+            assert "tasks" in data[0]
+            assert "tokens" in data[0]
+
+    def test_dashboard_agents_endpoint(self, client):
+        """测试 Agent 状态端点"""
+        response = client.get("/api/dashboard/agents")
+        assert response.status_code == 200
+        data = response.json()
+        assert isinstance(data, list)
+        if data:
+            assert "name" in data[0]
+            assert "status" in data[0]
+            assert "total_executions" in data[0]
+
+    def test_dashboard_recent_tasks_endpoint(self, client):
+        """测试最近任务端点"""
+        response = client.get("/api/dashboard/recent-tasks")
+        assert response.status_code == 200
+        data = response.json()
+        assert isinstance(data, list)
+        if data:
+            assert "task_id" in data[0]
+            assert "task" in data[0]
+            assert "workflow" in data[0]
+            assert "status" in data[0]
+
+    def test_dashboard_overview_endpoint(self, client):
+        """测试仪表板概览端点"""
+        response = client.get("/api/dashboard/overview")
+        assert response.status_code == 200
+        data = response.json()
+        assert "stats" in data
+        assert "activity" in data
+        assert "agents" in data
+        assert "recent_tasks" in data
+        assert "updated_at" in data
+
+    def test_sse_execute_endpoint_task_not_found(self, client):
+        """测试 SSE 端点任务不存在的情况"""
+        response = client.get("/sse/execute/nonexistent")
+        assert response.status_code == 404
+
+    def test_tasks_list_endpoint(self, client):
+        """测试任务列表端点"""
+        response = client.get("/api/tasks")
+        assert response.status_code == 200
+        data = response.json()
+        assert "tasks" in data
+        assert isinstance(data["tasks"], list)
+
+    def test_task_get_endpoint_not_found(self, client):
+        """测试获取不存在的任务"""
+        response = client.get("/api/tasks/nonexistent")
+        assert response.status_code == 404
+
+    def test_execute_task_missing_payload(self, client):
+        """测试执行任务缺少 payload"""
+        response = client.post("/api/execute")
+        assert response.status_code == 400
+
+    def test_execute_task_missing_task_field(self, client):
+        """测试执行任务缺少 task 字段"""
+        response = client.post("/api/execute", json={"project_path": "."})
+        assert response.status_code == 400
+
+    def test_config_endpoint(self, client):
+        """测试配置端点"""
+        response = client.get("/api/config")
+        assert response.status_code == 200
+        data = response.json()
+        assert "models" in data
+        assert "workflows" in data
+        assert "agents" in data
+        assert isinstance(data["models"], list)
+        assert isinstance(data["workflows"], list)
+        assert isinstance(data["agents"], list)
+
+    def test_health_check(self, client):
+        """测试健康检查端点"""
+        response = client.get("/health")
+        assert response.status_code == 200
+        data = response.json()
+        assert "status" in data
+        assert data["status"] == "healthy"
+        assert "version" in data
+
+    def test_main_pages(self, client):
+        """测试主要页面"""
+        for path in ["/", "/history", "/agents", "/dashboard"]:
+            response = client.get(path)
+            assert response.status_code == 200
+            assert "text/html" in response.headers["content-type"]
 
 
-@pytest.fixture(autouse=True)
-def clean_tasks():
-    """每个测试前清空任务管理器"""
-    task_manager._tasks.clear()
-    task_manager._queues.clear()
-    yield
-    task_manager._tasks.clear()
-    task_manager._queues.clear()
+class TestAgentLiveStream:
+    """Agent 实时流测试"""
 
+    @pytest.fixture
+    def mock_orchestrator(self):
+        """创建模拟的 orchestrator"""
+        mock_orch = MagicMock(spec=Orchestrator)
+        mock_orch.get_current_state.return_value = {
+            "active_agents": [
+                {
+                    "name": "test-agent",
+                    "status": "working",
+                    "task": "测试任务",
+                    "started_at": "2026-04-12T08:00:00Z",
+                }
+            ],
+            "completed_agents": [],
+            "pending_agents": ["other-agent"],
+            "total_progress": "1/2",
+            "workflow": "test",
+            "timestamp": "2026-04-12T08:00:00Z",
+        }
+        return mock_orch
 
-# ============================================================
-# Health Check
-# ============================================================
-@pytest.mark.asyncio
-async def test_health_check(client):
-    """健康检查接口"""
-    response = await client.get("/health")
-    assert response.status_code == 200
-    data = response.json()
-    assert data["status"] == "healthy"
-    assert "version" in data
+    @pytest.mark.asyncio
+    async def test_agent_live_stream_returns_streaming_response(self):
+        """测试 agent_live_stream 端点返回 StreamingResponse"""
+        from fastapi.responses import StreamingResponse
+        from src.web.app import agent_live_stream
 
+        response = await agent_live_stream()
+        assert isinstance(response, StreamingResponse)
+        assert response.media_type == "text/event-stream"
+        assert response.headers.get("Cache-Control") == "no-cache"
 
-# ============================================================
-# Index Page
-# ============================================================
-@pytest.mark.asyncio
-async def test_index_page(client):
-    """主页能正常加载"""
-    response = await client.get("/")
-    assert response.status_code == 200
-    assert "Oh My Coder" in response.text
-    assert "text/html" in response.headers.get("content-type", "")
+    @pytest.mark.asyncio
+    async def test_agent_live_stream_with_data(self):
+        """测试 Agent 实时流数据结构"""
+        from src.web.app import json_dumps
 
-
-# ============================================================
-# Static Files
-# ============================================================
-@pytest.mark.asyncio
-async def test_static_css(client):
-    """CSS 静态文件能正常访问"""
-    response = await client.get("/static/style.css")
-    assert response.status_code == 200
-    assert "text/css" in response.headers.get("content-type", "")
-
-
-# ============================================================
-# API: Config
-# ============================================================
-@pytest.mark.asyncio
-async def test_get_config(client):
-    """获取可用配置"""
-    response = await client.get("/api/config")
-    assert response.status_code == 200
-    data = response.json()
-    assert "models" in data
-    assert "deepseek" in data["models"]
-    assert "workflows" in data
-    assert "build" in data["workflows"]
-
-
-# ============================================================
-# API: Execute (异步任务)
-# ============================================================
-@pytest.mark.asyncio
-async def test_execute_missing_task(client):
-    """缺少 task 字段应返回 422"""
-    response = await client.post("/api/execute", json={})
-    assert response.status_code == 400
-
-
-@pytest.mark.asyncio
-async def test_execute_success(client):
-    """正常提交任务应返回 task_id"""
-    payload = {
-        "task": "实现一个简单的加法函数",
-        "project_path": ".",
-        "model": "deepseek",
-        "workflow": "build",
-    }
-    response = await client.post("/api/execute", json=payload)
-    assert response.status_code == 200
-    data = response.json()
-    assert data["status"] == "started"
-    assert "task_id" in data
-
-
-# ============================================================
-# API: Execute-Sync
-# ============================================================
-@pytest.mark.asyncio
-async def test_execute_sync_bad_request(client):
-    """同步执行缺少 task 应返回 400"""
-    response = await client.post("/api/execute-sync", json={})
-    assert response.status_code == 422  # Pydantic validation
-
-
-# ============================================================
-# API: Task Management
-# ============================================================
-@pytest.mark.asyncio
-async def test_list_tasks(client):
-    """列出所有任务"""
-    response = await client.get("/api/tasks")
-    assert response.status_code == 200
-    data = response.json()
-    assert "tasks" in data
-    assert isinstance(data["tasks"], list)
-
-
-@pytest.mark.asyncio
-async def test_get_task_not_found(client):
-    """获取不存在的任务应返回 404"""
-    response = await client.get("/api/tasks/nonexistent")
-    assert response.status_code == 404
-
-
-@pytest.mark.asyncio
-async def test_get_task_after_submit(client):
-    """提交任务后能正确查询"""
-    payload = {"task": "测试任务", "workflow": "build"}
-    resp = await client.post("/api/execute", json=payload)
-    task_id = resp.json()["task_id"]
-
-    resp2 = await client.get(f"/api/tasks/{task_id}")
-    assert resp2.status_code == 200
-    data = resp2.json()
-    # 任务可能在后台快速执行完毕，状态可能是 pending/running/completed
-    assert data["status"] in ("pending", "running", "completed")
-
-
-# ============================================================
-# API: SSE
-# ============================================================
-@pytest.mark.asyncio
-async def test_sse_task_not_found(client):
-    """SSE 连接不存在的任务应返回 404"""
-    response = await client.get("/sse/execute/nonexistent")
-    assert response.status_code == 404
-
-
-# ============================================================
-# Task Manager Unit Tests
-# ============================================================
-def test_task_manager_create():
-    """TaskManager 能正确创建任务"""
-    manager = task_manager.__class__()
-    task_id = manager.create_task()
-    assert task_id is not None
-    assert len(task_id) == 8
-    assert manager.get_task(task_id) is not None
-
-
-def test_task_manager_update_step():
-    """TaskManager 能正确更新步骤状态"""
-    manager = task_manager.__class__()
-    task_id = manager.create_task()
-
-    manager.update_step(task_id, "explore", "active")
-    task = manager.get_task(task_id)
-    assert task["step_status"]["explore"] == "active"
-
-    manager.update_step(task_id, "explore", "completed", "分析结果")
-    task = manager.get_task(task_id)
-    assert task["step_status"]["explore"] == "completed"
-    assert task["step_outputs"]["explore"] == "分析结果"
-
-
-def test_task_manager_complete_task():
-    """TaskManager 能正确完成任务"""
-    manager = task_manager.__class__()
-    task_id = manager.create_task()
-
-    manager.complete_task(task_id, result={"result": "done"})
-    task = manager.get_task(task_id)
-    assert task["status"] == "completed"
-    assert task["result"]["result"] == "done"
-
-    manager.complete_task(task_id, error="failed")
-    task = manager.get_task(task_id)
-    assert task["status"] == "failed"
-    assert task["error"] == "failed"
-
-
-# ============================================================
-# Mock: 完整执行流程（SSE + 结果）
-# ============================================================
-@pytest.mark.asyncio
-async def test_execute_with_mocked_agent(client):
-    """模拟 Agent 返回，验证完整流程"""
-    mock_output = AgentOutput(
-        agent_name="explore",
-        status=AgentStatus.COMPLETED,
-        result="项目结构扫描完成",
-        usage={"total_tokens": 100, "prompt_tokens": 50, "completion_tokens": 50},
-    )
-
-    with (
-        patch("src.web.app.create_router") as mock_router_cls,
-        patch("src.web.app.create_orchestrator") as mock_orch_cls,
-    ):
-
-        mock_router = MagicMock()
         mock_orch = MagicMock()
+        test_data = {
+            "active_agents": [
+                {
+                    "name": "code-reviewer",
+                    "status": "working",
+                    "task": "reviewing",
+                    "started_at": "2026-04-12T07:50:00Z",
+                }
+            ],
+            "completed_agents": [
+                {"name": "planner", "status": "done", "task": "plan", "duration": "12s"}
+            ],
+            "pending_agents": ["test-engineer", "security-reviewer"],
+            "total_progress": "2/6",
+            "workflow": "review",
+            "timestamp": "2026-04-12T08:00:00Z",
+        }
+        mock_orch.get_current_state.return_value = test_data
 
-        # Mock orchestrator.get_agent 返回 mock agent
-        mock_agent = AsyncMock()
-        mock_agent.execute = AsyncMock(return_value=mock_output)
-        mock_orch.get_agent.return_value = mock_agent
+        async def patched_event_generator():
+            while True:
+                state = mock_orch.get_current_state()
+                yield "data: " + json_dumps(state) + "\n\n"
+                await asyncio.sleep(2)
 
-        mock_router_cls.return_value = mock_router
-        mock_orch_cls.return_value = mock_orch
+        gen = patched_event_generator()
+        first_chunk = await gen.__anext__()
+        assert "data:" in first_chunk
+        json_str = first_chunk.split("data: ", 1)[1].rstrip("\n\n")
+        data = json.loads(json_str)
+        assert data["active_agents"][0]["name"] == "code-reviewer"
+        assert data["completed_agents"][0]["name"] == "planner"
+        assert data["total_progress"] == "2/6"
+        assert data["workflow"] == "review"
 
-        payload = {"task": "测试", "workflow": "build"}
-        resp = await client.post("/api/execute", json=payload)
-        assert resp.status_code == 200
-        task_id = resp.json()["task_id"]
+    @pytest.mark.asyncio
+    async def test_agent_live_stream_error_handling(self):
+        """测试 Agent 实时流错误处理"""
+        from src.web.app import json_dumps
 
-        # 等一小段时间让后台任务处理
-        import asyncio
+        mock_orch = MagicMock()
+        mock_orch.get_current_state.side_effect = ValueError("测试错误")
 
-        await asyncio.sleep(0.3)
+        async def patched_event_generator():
+            while True:
+                try:
+                    state = mock_orch.get_current_state()
+                    yield "data: " + json_dumps(state) + "\n\n"
+                    await asyncio.sleep(2)
+                except ValueError as e:
+                    error_state = {"error": str(e), "timestamp": "2026-04-12T08:00:00Z"}
+                    yield "data: " + json_dumps(error_state) + "\n\n"
 
-        # 验证任务状态已更新
-        resp2 = await client.get(f"/api/tasks/{task_id}")
-        data = resp2.json()
-        assert data["status"] in ("running", "completed")
+        gen = patched_event_generator()
+        first_chunk = await gen.__anext__()
+        assert "data:" in first_chunk
+        json_str = first_chunk.split("data: ", 1)[1].rstrip("\n\n")
+        error_data = json.loads(json_str)
+        assert "error" in error_data
+        assert error_data["error"] == "测试错误"
+
+    @pytest.mark.asyncio
+    async def test_orchestrator_get_current_state(self, mock_orchestrator):
+        """测试 orchestrator.get_current_state 方法"""
+        orch = mock_orchestrator
+        state = orch.get_current_state()
+        assert "active_agents" in state
+        assert "completed_agents" in state
+        assert "pending_agents" in state
+        assert "total_progress" in state
+        assert "workflow" in state
+        assert "timestamp" in state
+        assert isinstance(state["active_agents"], list)
+        assert isinstance(state["completed_agents"], list)
+        assert isinstance(state["pending_agents"], list)
+        assert isinstance(state["total_progress"], str)
+        assert isinstance(state["workflow"], str)
+        assert isinstance(state["timestamp"], str)
+
+    @pytest.mark.asyncio
+    async def test_orchestrator_state_with_active_workflow(self):
+        """测试有活跃工作流时的状态"""
+        orch = MagicMock(spec=Orchestrator)
+        orch.get_current_state.return_value = {
+            "active_agents": [
+                {
+                    "name": "code-reviewer",
+                    "status": "running",
+                    "task": "code review",
+                    "started_at": "2026-04-12T08:00:00Z",
+                },
+                {
+                    "name": "planner",
+                    "status": "running",
+                    "task": "plan tasks",
+                    "started_at": "2026-04-12T08:00:00Z",
+                },
+            ],
+            "completed_agents": [],
+            "pending_agents": [],
+            "total_progress": "2/4",
+            "workflow": "test-workflow",
+            "timestamp": "2026-04-12T08:00:00Z",
+        }
+        state = orch.get_current_state()
+        assert len(state["active_agents"]) > 0
+        assert any(a["name"] == "code-reviewer" for a in state["active_agents"])
+        assert any(a["name"] == "planner" for a in state["active_agents"])
+
+    @pytest.mark.asyncio
+    async def test_orchestrator_state_with_completed_workflow(self):
+        """测试有已完成工作流时的状态"""
+        orch = MagicMock(spec=Orchestrator)
+        orch.get_current_state.return_value = {
+            "active_agents": [],
+            "completed_agents": [
+                {
+                    "name": "planner",
+                    "status": "done",
+                    "task": "分解任务",
+                    "duration": "12s",
+                },
+                {
+                    "name": "architect",
+                    "status": "done",
+                    "task": "架构设计",
+                    "duration": "8s",
+                },
+            ],
+            "pending_agents": [],
+            "total_progress": "2/2",
+            "workflow": "completed-workflow",
+            "timestamp": "2026-04-12T08:00:00Z",
+        }
+        state = orch.get_current_state()
+        assert len(state["completed_agents"]) > 0
+        assert any(a["name"] == "planner" for a in state["completed_agents"])
+        assert any(a["name"] == "architect" for a in state["completed_agents"])

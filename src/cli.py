@@ -27,6 +27,15 @@ from .core.orchestrator import Orchestrator
 from .core.router import ModelRouter, RouterConfig
 from .wiki import WikiGenerator
 from .quest import QuestStatus
+from .cli_context import context_app
+from .capabilities import app as cap_app
+from .cli_config_ext import app as config_ext_app
+from .cli_task import app as task_app
+from .cli_multiagent import app as multiagent_app
+from .cli_security import app as security_app
+from .cli_checkpoint import app as checkpoint_app
+from .cli_mcp import app as mcp_app
+from .cli_memory import app as memory_app
 
 # 版本信息
 __version__ = "0.2.0"
@@ -39,6 +48,29 @@ app = typer.Typer(
     add_completion=False,
     no_args_is_help=True,
 )
+
+# 注册子命令
+app.add_typer(context_app, name="context")
+app.add_typer(config_ext_app, name="agent-config")
+app.add_typer(task_app, name="task")
+app.add_typer(multiagent_app, name="multiagent")
+app.add_typer(security_app, name="security")
+app.add_typer(checkpoint_app, name="checkpoint")
+app.add_typer(mcp_app, name="mcp")
+app.add_typer(memory_app, name="memory", help="分层记忆管理 - 查看核心/精选/完整记忆")
+
+# model 子命令
+from .cli_model import app as model_app
+
+app.add_typer(model_app, name="model", help="模型管理 - 查看/切换默认模型")
+
+# gateway 子命令（懒导入，避免 gateway 依赖缺失时报错）
+try:
+    from .cli_gateway import app as gateway_app
+
+    app.add_typer(gateway_app, name="gateway", help="多平台网关 - Telegram / Discord")
+except Exception:
+    pass  # gateway 依赖缺失时跳过
 
 console = Console()
 
@@ -85,8 +117,23 @@ def run(
     task: str = typer.Argument(..., help="任务描述"),
     project_path: Path = typer.Option(".", "--project", "-p", help="项目路径"),
     model: str = typer.Option("deepseek", "--model", "-m", help="模型选择"),
-    workflow: str = typer.Option("build", "--workflow", "-w", help="工作流名称"),
+    workflow: str = typer.Option(
+        "build",
+        "--workflow",
+        "-w",
+        help=(
+            "工作流名称：build（开发）/ review（审查）/ debug（调试）/ test（测试）"
+            " / autopilot（自动路由）/ pair（结对编程）/ refactor（重构）"
+            " / doc（文档生成）/ sequential（顺序执行编排）"
+        ),
+    ),
     dry_run: bool = typer.Option(False, "--dry-run", help="仅预览执行计划，不实际运行"),
+    notify: bool = typer.Option(
+        False, "--notify", "-n", help="完成后发送通知（桌面+钉钉）"
+    ),
+    no_checkpoint: bool = typer.Option(
+        False, "--no-checkpoint", help="跳过自动快照（断点续传）"
+    ),
 ):
     """执行编程任务"""
     # 前置检查
@@ -145,11 +192,30 @@ def run(
                         "project_path": str(project_path.absolute()),
                         "task": task,
                     },
+                    skip_checkpoint=no_checkpoint,
                 )
             )
 
             # 显示结果
             _display_result(result)
+
+            # 发送通知
+            if notify:
+                from .utils.notify import (
+                    notify_workflow_complete,
+                    notify_workflow_complete_dingtalk,
+                )
+
+                status = "completed" if result.success else "failed"
+                steps = len(result.steps) if hasattr(result, "steps") else 1
+                exec_time = getattr(result, "execution_time", 0.0)
+
+                # 桌面通知
+                notify_workflow_complete(workflow, status, steps, exec_time)
+                # 钉钉通知
+                notify_workflow_complete_dingtalk(
+                    None, workflow, status, steps, exec_time, str(project_path)
+                )
 
         except Exception as e:
             _print_fatal(
@@ -327,7 +393,26 @@ def quest(
 
     from .quest import QuestManager
 
-    manager = QuestManager(project_path)
+    # 步骤验收回调（交互式）
+    async def review_callback(quest_id: str, step_id: str, preview: str) -> str:
+        console.print(f"\n[bold cyan]📋 步骤验收: {step_id}[/bold cyan]")
+        if preview:
+            console.print(
+                Panel.fit(preview[:500], title="执行结果预览", border_style="dim")
+            )
+
+        from rich.prompt import Prompt
+
+        choice = Prompt.ask(
+            "请选择",
+            choices=["p", "r", "s"],
+            default="p",
+            show_choices=True,
+        )
+        mapping = {"p": "pass", "r": "retry", "s": "skip"}
+        return mapping.get(choice, "pass")
+
+    manager = QuestManager(project_path, review_callback=review_callback)
 
     async def run():
         # 1. 创建 Quest
@@ -441,7 +526,7 @@ def quest_list(
             q.id[:8],
             q.title[:35],
             f"[{color}]{q.status.value}[/{color}]",
-            f"{bar} {int(q.progress()*100)}%",
+            f"{bar} {int(q.progress() * 100)}%",
             f"{q.duration():.0f}s" if q.duration() else "—",
             q.created_at.strftime("%m-%d %H:%M"),
         )
@@ -484,7 +569,7 @@ def quest_status(
         f"[cyan]ID:[/cyan]     {quest.id}",
         f"[cyan]标题:[/cyan]   {quest.title}",
         f"[cyan]状态:[/cyan]   [{sc}]{quest.status.value}[/{sc}]",
-        f"[cyan]进度:[/cyan]   {int(quest.progress()*100)}%",
+        f"[cyan]进度:[/cyan]   {int(quest.progress() * 100)}%",
     ]
 
     if quest.duration():
@@ -638,9 +723,27 @@ def quest_notify(
         None, "--dingtalk", "-d", help="钉钉 Webhook URL"
     ),
     dingtalk_secret: str = typer.Option(None, "--secret", "-s", help="钉钉加签密钥"),
+    telegram_bot_token: str = typer.Option(
+        None, "--telegram-bot-token", help="Telegram Bot Token"
+    ),
+    telegram_chat_id: str = typer.Option(
+        None, "--telegram-chat-id", help="Telegram Chat ID"
+    ),
+    discord_webhook: str = typer.Option(None, "--discord", help="Discord Webhook URL"),
+    slack_webhook: str = typer.Option(
+        None, "--slack", help="Slack Incoming Webhook URL"
+    ),
+    teams_webhook: str = typer.Option(
+        None, "--teams", help="Microsoft Teams Webhook URL"
+    ),
+    feishu_webhook: str = typer.Option(
+        None, "--feishu", help="飞书（Lark）Webhook URL"
+    ),
+    wecom_webhook: str = typer.Option(None, "--wecom", help="企业微信 Webhook URL"),
+    pushplus_token: str = typer.Option(None, "--pushplus", help="PushPlus Token"),
 ):
     """
-    🔔 订阅 Quest 通知（桌面 + 可选钉钉）
+    🔔 订阅 Quest 通知（桌面 + 多种 Webhook 渠道）
     """
     import asyncio
 
@@ -659,6 +762,14 @@ def quest_notify(
         desktop=True,
         dingtalk_webhook=dingtalk_webhook,
         dingtalk_secret=dingtalk_secret,
+        telegram_bot_token=telegram_bot_token,
+        telegram_chat_id=telegram_chat_id,
+        discord_webhook=discord_webhook,
+        slack_webhook=slack_webhook,
+        teams_webhook=teams_webhook,
+        feishu_webhook=feishu_webhook,
+        wecom_webhook=wecom_webhook,
+        pushplus_token=pushplus_token,
     )
     notifier = NotificationManager(config)
 
@@ -919,19 +1030,29 @@ def agents():
         CodeReviewerAgent,
         CodeSimplifierAgent,
         CriticAgent,
+        DatabaseAgent,
         DebuggerAgent,
         DesignerAgent,
+        DevOpsAgent,
         ExecutorAgent,
         ExploreAgent,
         GitMasterAgent,
+        MigrationAgent,
+        PerformanceAgent,
         PlannerAgent,
+        PromptAgent,
         QATesterAgent,
         ScientistAgent,
         SecurityReviewerAgent,
         TestEngineerAgent,
         TracerAgent,
+        UMLAgent,
         VerifierAgent,
+        VisionAgent,
         WriterAgent,
+        APIAgent,
+        AuthAgent,
+        DataAgent,
     )
 
     agents_list = [
@@ -969,6 +1090,16 @@ def agents():
         ),
         ("scientist", ScientistAgent.description, ScientistAgent.default_tier),
         ("qa-tester", QATesterAgent.description, QATesterAgent.default_tier),
+        ("database", DatabaseAgent.description, DatabaseAgent.default_tier),
+        ("api", APIAgent.description, APIAgent.default_tier),
+        ("devops", DevOpsAgent.description, DevOpsAgent.default_tier),
+        ("uml", UMLAgent.description, UMLAgent.default_tier),
+        ("performance", PerformanceAgent.description, PerformanceAgent.default_tier),
+        ("migration", MigrationAgent.description, MigrationAgent.default_tier),
+        ("prompt", PromptAgent.description, PromptAgent.default_tier),
+        ("vision", VisionAgent.description, VisionAgent.default_tier),
+        ("auth", AuthAgent.description, AuthAgent.default_tier),
+        ("data", DataAgent.description, DataAgent.default_tier),
     ]
 
     for name, desc, tier in agents_list:
@@ -1225,6 +1356,9 @@ def _status_color(status: str) -> str:
     }
     return colors.get(status, status)
 
+
+# 注册子命令
+app.add_typer(cap_app, name="cap", help="能力包管理 - 导出、导入和分享 Agent 配置")
 
 if __name__ == "__main__":
     app()

@@ -51,8 +51,8 @@
 - [x] GitHub commits: b63e31d → ba31a57（5 个 commits）
 
 ### ✅ 阶段8：模型适配器扩展
-- [x] `models/minimax.py` - MiniMax 海螺（abab6 系列）
-- [x] `models/kimi.py` - 月暗 Kimi（moonshot-v1，128K 上下文）
+- [x] `models/minimax.py` - MiniMax（abab6 系列）
+- [x] `models/kimi.py` -  Kimi(moonshot-v1，128K 上下文）
 - [x] `models/hunyuan.py` - 腾讯混元（TC3-HMAC-SHA256 签名）
 - [x] `models/doubao.py` - 字节豆包（doubao-pro 系列）
 - [x] `models/glm.py` - 智谱 GLM（glm-4，支持工具调用）

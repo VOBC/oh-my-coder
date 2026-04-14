@@ -17,6 +17,7 @@ from .base import (
 
 # 导出所有模型适配器
 from .deepseek import DeepSeekAPIError, DeepSeekModel
+from .mimo import MimoAPIError, MimoModel
 from .doubao import DoubaoAPIError, DoubaoModel
 from .glm import GLMAPIError, GLMModel
 from .hunyuan import HunyuanAPIError, HunyuanModel
@@ -69,4 +70,7 @@ __all__ = [
     # 百川智能
     "BaichuanModel",
     "BaichuanAPIError",
+    # 小米 MiMo
+    "MimoModel",
+    "MimoAPIError",
 ]

@@ -10,7 +10,6 @@
 
 import asyncio
 from pathlib import Path
-from typing import Dict, List
 
 from src.core.orchestrator import Orchestrator
 from src.core.router import ModelRouter, RouterConfig
@@ -45,7 +44,7 @@ async def example_multi_agent():
         {
             "project_path": ".",
             "task": task,
-        }
+        },
     )
 
     print(f"工作流状态: {result.status}")
@@ -85,7 +84,9 @@ async def example_multi_model():
     print(f"\nEXPLORE 任务选择: {decision.selected_provider} {decision.selected_tier}")
 
     decision = router.select(TaskType.ARCHITECTURE)
-    print(f"ARCHITECTURE 任务选择: {decision.selected_provider} {decision.selected_tier}")
+    print(
+        f"ARCHITECTURE 任务选择: {decision.selected_provider} {decision.selected_tier}"
+    )
 
 
 async def example_workflow_orchestration():
@@ -109,7 +110,7 @@ async def example_workflow_orchestration():
             {"agent": "code-reviewer", "required": True},
             {"agent": "security-reviewer", "required": True},
         ],
-        "execution_mode": "sequential"
+        "execution_mode": "sequential",
     }
 
     # 并行执行示例
@@ -120,7 +121,7 @@ async def example_workflow_orchestration():
             {"agent": "analyst", "required": True},
             {"agent": "explore", "required": True},
         ],
-        "execution_mode": "parallel"
+        "execution_mode": "parallel",
     }
 
     # 条件执行示例
@@ -130,11 +131,15 @@ async def example_workflow_orchestration():
         "steps": [
             {"agent": "explore", "required": True},
             {"agent": "analyst", "required": True},
-            {"agent": "architect", "required": False, "condition": "complexity == 'high'"},
+            {
+                "agent": "architect",
+                "required": False,
+                "condition": "complexity == 'high'",
+            },
             {"agent": "executor", "required": True},
             {"agent": "verifier", "required": True},
         ],
-        "execution_mode": "conditional"
+        "execution_mode": "conditional",
     }
 
     print("工作流模板已定义")
@@ -155,35 +160,35 @@ async def example_task_summary():
             "status": "completed",
             "duration": 2.3,
             "tokens": 1200,
-            "result": "发现 89 个文件，识别为 FastAPI 项目"
+            "result": "发现 89 个文件，识别为 FastAPI 项目",
         },
         {
             "agent": "AnalystAgent",
             "status": "completed",
             "duration": 5.1,
             "tokens": 3500,
-            "result": "识别 3 个实体：Product, Category, Order"
+            "result": "识别 3 个实体：Product, Category, Order",
         },
         {
             "agent": "ArchitectAgent",
             "status": "completed",
             "duration": 8.2,
             "tokens": 5200,
-            "result": "设计 RESTful API 接口规范"
+            "result": "设计 RESTful API 接口规范",
         },
         {
             "agent": "ExecutorAgent",
             "status": "completed",
             "duration": 15.7,
             "tokens": 12000,
-            "result": "生成 8 个文件，共 450 行代码"
+            "result": "生成 8 个文件，共 450 行代码",
         },
         {
             "agent": "VerifierAgent",
             "status": "completed",
             "duration": 10.3,
             "tokens": 4800,
-            "result": "pytest 18/18 通过"
+            "result": "pytest 18/18 通过",
         },
     ]
 
@@ -256,7 +261,7 @@ async def example_custom_agent_workflow():
         "retry_policy": {
             "max_retries": 2,
             "backoff_factor": 2.0,
-        }
+        },
     }
 
     print("自定义工作流定义：")

@@ -202,6 +202,87 @@
             background: #5a6fd6;
         }
         
+        /* 实时协作面板 */
+        .collab-panel {
+            margin-top: 20px;
+        }
+        .collab-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 15px;
+        }
+        .collab-badge {
+            font-size: 0.75em;
+            padding: 2px 8px;
+            border-radius: 10px;
+            background: #28a745;
+            color: white;
+            animation: blink 2s infinite;
+        }
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+        .collab-progress {
+            font-size: 0.85em;
+            color: #666;
+            margin-bottom: 12px;
+            font-weight: 500;
+        }
+        .agent-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 0;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 0.9em;
+        }
+        .agent-row:last-child { border-bottom: none; }
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        .status-dot.active { background: #dc3545; box-shadow: 0 0 4px #dc3545; }
+        .status-dot.done { background: #28a745; }
+        .status-dot.pending { background: #ccc; }
+        .agent-info { flex: 1; }
+        .agent-name { font-weight: 500; color: #333; }
+        .agent-task { font-size: 0.8em; color: #888; margin-top: 1px; }
+        .agent-badge {
+            font-size: 0.75em;
+            padding: 1px 6px;
+            border-radius: 8px;
+        }
+        .agent-badge.working { background: #f8d7da; color: #721c24; }
+        .agent-badge.done { background: #d4edda; color: #155724; }
+        .agent-badge.pending { background: #f8f9fa; color: #666; }
+        
+        /* 实时日志 */
+        .log-stream {
+            margin-top: 15px;
+            background: #1a1a2e;
+            border-radius: 10px;
+            padding: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.8em;
+            line-height: 1.6;
+        }
+        .log-stream::-webkit-scrollbar { width: 6px; }
+        .log-stream::-webkit-scrollbar-track { background: #1a1a2e; }
+        .log-stream::-webkit-scrollbar-thumb { background: #555; border-radius: 3px; }
+        .log-entry { color: #a0a0a0; }
+        .log-entry.ts { color: #6c757d; }
+        .log-entry.active { color: #ffc107; }
+        .log-entry.done { color: #28a745; }
+        .log-entry.error { color: #dc3545; }
+        .log-entry.pending { color: #6c757d; }
+        .log-time { color: #555; margin-right: 6px; }
+        
         /* 导航 */
         .nav {
             display: flex;
@@ -346,7 +427,28 @@
                         </div>
                     </div>
                 </div>
-                
+
+                <!-- 实时协作面板 -->
+                <div class="card collab-panel">
+                    <div class="collab-header">
+                        <div class="card-title" style="margin:0">
+                            🔴 实时协作
+                        </div>
+                        <span class="collab-badge" id="collabBadge">LIVE</span>
+                    </div>
+                    <div class="collab-progress" id="collabProgress">
+                        等待任务开始...
+                    </div>
+                    <div id="collabAgents">
+                        <div style="color:#999;font-size:0.9em;text-align:center;padding:20px 0;">
+                            当前无活跃工作流
+                        </div>
+                    </div>
+                    <div class="log-stream" id="logStream">
+                        <div class="log-entry ts">⏳ 正在连接实时状态...</div>
+                    </div>
+                </div>
+
                 <div class="card" style="margin-top: 20px;">
                     <div class="card-title">⚡ 快速操作</div>
                     <div class="quick-actions">
@@ -402,13 +504,135 @@
             alert('设置功能开发中...');
         }
         
+        // ========================================
+        // 实时协作面板 - SSE 连接
+        // ========================================
+        let collabSource = null;
+        let logSeq = 0;
+
+        function formatTime(isoStr) {
+            try {
+                const d = new Date(isoStr);
+                return d.toLocaleTimeString('zh-CN', {hour: '2-digit', minute: '2-digit', second: '2-digit'});
+            } catch { return ''; }
+        }
+
+        function appendLog(msg, cls) {
+            const stream = document.getElementById('logStream');
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${cls}`;
+            entry.innerHTML = `<span class="log-time">[${formatTime(new Date().toISOString())}]</span> ${msg}`;
+            stream.appendChild(entry);
+            stream.scrollTop = stream.scrollHeight;
+            logSeq++;
+            // 限制最多 100 条
+            while (stream.children.length > 100) stream.removeChild(stream.firstChild);
+        }
+
+        function renderCollabState(state) {
+            const agentsEl = document.getElementById('collabAgents');
+            const progressEl = document.getElementById('collabProgress');
+
+            progressEl.textContent = `进度: ${state.total_progress}`;
+
+            // 合并所有 Agent 状态
+            const nameSet = new Set([
+                ...state.active_agents.map(a => a.name),
+                ...state.completed_agents.map(a => a.name),
+                ...state.pending_agents,
+            ]);
+
+            if (nameSet.size === 0) {
+                agentsEl.innerHTML = `<div style="color:#999;font-size:0.9em;text-align:center;padding:20px 0;">当前无活跃工作流</div>`;
+                return;
+            }
+
+            const rows = [];
+            for (const name of nameSet) {
+                const active = state.active_agents.find(a => a.name === name);
+                const done = state.completed_agents.find(a => a.name === name);
+                const pending = state.pending_agents.includes(name);
+
+                let dot, cls, badge, taskText;
+                if (active) {
+                    dot = 'active'; cls = 'working'; badge = '执行中';
+                    taskText = active.task || 'working...';
+                } else if (done) {
+                    dot = 'done'; cls = 'done'; badge = '完成';
+                    taskText = done.task || 'completed';
+                } else {
+                    dot = 'pending'; cls = 'pending'; badge = '等待';
+                    taskText = 'pending...';
+                }
+
+                rows.push(`
+                    <div class="agent-row">
+                        <div class="status-dot ${dot}"></div>
+                        <div class="agent-info">
+                            <div class="agent-name">${name}</div>
+                            <div class="agent-task">${taskText}</div>
+                        </div>
+                        <span class="agent-badge ${cls}">${badge}</span>
+                    </div>
+                `);
+            }
+            agentsEl.innerHTML = rows.join('');
+        }
+
+        function connectCollabSSE() {
+            // 关闭旧连接
+            if (collabSource) { collabSource.close(); collabSource = null; }
+
+            collabSource = new EventSource('/api/agent/live');
+
+            collabSource.onopen = () => {
+                appendLog('🔗 SSE 连接已建立', 'ts');
+            };
+
+            collabSource.onmessage = (event) => {
+                try {
+                    const state = JSON.parse(event.data);
+
+                    if (state.error) {
+                        appendLog(`⚠️ ${state.error}`, 'error');
+                        return;
+                    }
+
+                    // 日志条目
+                    const active = state.active_agents || [];
+                    const done = (state.completed_agents || []).slice(-active.length > 0 ? 0 : -3);
+                    const pending = state.pending_agents || [];
+
+                    if (active.length > 0) {
+                        appendLog(`🔴 ${active.map(a => a.name).join(', ')} 正在执行`, 'active');
+                    }
+                    if (done.length > 0) {
+                        done.forEach(a => appendLog(`✅ ${a.name} 完成 (${a.duration})`, 'done'));
+                    }
+                    if (pending.length > 0) {
+                        appendLog(`⏳ 等待: ${pending.join(', ')}`, 'pending');
+                    }
+
+                    // 更新 UI
+                    renderCollabState(state);
+                } catch (e) {
+                    appendLog(`⚠️ 解析失败: ${e.message}`, 'error');
+                }
+            };
+
+            collabSource.onerror = () => {
+                appendLog('❌ SSE 连接断开，3秒后重连...', 'error');
+                collabSource.close();
+                collabSource = null;
+                setTimeout(connectCollabSSE, 3000);
+            };
+        }
+
+        // ========================================
         // 初始化
+        // ========================================
         renderActivityChart();
-        
-        // 自动刷新
-        setInterval(() => {
-            // 可以添加实时数据刷新逻辑
-        }, 30000);
+        connectCollabSSE();
     </script>
 </body>
 </html>

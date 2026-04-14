@@ -20,6 +20,7 @@ class QuestStatus(str, Enum):
     SPEC_GENERATING = "spec_generating"  # 正在生成 SPEC
     SPEC_READY = "spec_ready"  # SPEC 已就绪，等待用户确认
     EXECUTING = "executing"  # 后台执行中
+    PENDING_REVIEW = "pending_review"  # 步骤执行完，等待用户验收
     COMPLETED = "completed"  # 完成
     FAILED = "failed"  # 失败
     CANCELLED = "cancelled"  # 取消
@@ -208,7 +209,7 @@ class QuestDisplay:
             title=quest.title[:45],
             status=quest.status,
             priority=quest.priority,
-            progress_bar=f"{bar} {int(quest.progress()*100)}%",
+            progress_bar=f"{bar} {int(quest.progress() * 100)}%",
             duration=duration_str,
             created_at=quest.created_at.strftime("%m-%d %H:%M"),
         )

@@ -217,7 +217,7 @@ class SpecGenerator:
                     desc = re.sub(r"^\[[ x]\]\s*", "", stripped).strip()
                     desc = re.sub(r"\[\*\*[AC?\d+\]\*\*]\s*", "", desc).strip()
                     if desc:
-                        ac_id = f"AC{len(acceptance_criteria)+1}"
+                        ac_id = f"AC{len(acceptance_criteria) + 1}"
                         acceptance_criteria.append(
                             AcceptanceCriteria(id=ac_id, description=desc)
                         )

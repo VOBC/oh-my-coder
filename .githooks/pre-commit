@@ -1,0 +1,49 @@
+#!/bin/bash
+# pre-commit hook - 快速检查，阻止明显问题进入仓库
+# 完整测试仍由 CI 执行
+
+set -euo pipefail
+
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+CYAN='\033[0;36m'
+NC='\033[0m'
+
+echo "======================================"
+echo "🔍 pre-commit 快速检查"
+echo "======================================"
+echo ""
+
+# 只检查被修改的文件，速度更快
+STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(py|sh)$' || true)
+
+if [ -z "$STAGED_FILES" ]; then
+    echo "没有 Python/Shell 文件被修改，跳过检查"
+    exit 0
+fi
+
+echo "待检查文件:"
+echo "$STAGED_FILES"
+echo ""
+
+echo "1️⃣  ruff check..."
+echo "$STAGED_FILES" | xargs python3 -m ruff check --select=E,W,F || {
+    echo -e "${RED}✗ ruff check 失败${NC}"
+    echo "运行 'python3 -m ruff check --fix src/ tests/' 自动修复"
+    exit 1
+}
+echo -e "${GREEN}✓ ruff check 通过${NC}"
+echo ""
+
+echo "2️⃣  black check..."
+echo "$STAGED_FILES" | xargs python3 -m black --check 2>/dev/null || {
+    echo -e "${RED}✗ black 格式检查失败${NC}"
+    echo "运行 'python3 -m black src/ tests/' 自动格式化"
+    exit 1
+}
+echo -e "${GREEN}✓ black 格式通过${NC}"
+echo ""
+
+echo "======================================"
+echo -e "${GREEN}✅ 快速检查通过！可以提交。${NC}"
+echo "======================================"

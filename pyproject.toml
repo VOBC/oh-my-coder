@@ -8,7 +8,7 @@ version = "1.0.0"
 description = "Multi-agent AI programming assistant with Chinese LLM support"
 readme = "README.md"
 license = {text = "MIT"}
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 authors = [{name = "VOBC", email = "vobc@example.com"}]
 keywords = ["ai", "agent", "multi-agent", "coding", "llm", "deepseek"]
 classifiers = [
@@ -27,12 +27,14 @@ dependencies = [
     "uvicorn>=0.24.0",
     "pydantic>=2.5.0",
     "httpx>=0.25.0",
+    "tenacity>=8.0.0",
     "python-dotenv>=1.0.0",
     "rich>=13.7.0",
     "typer>=0.9.0",
     "jinja2>=3.0.0",
     "redis>=4.0.0",
     "websockets>=10.0",
+    "pyyaml>=6.0",
 ]
 
 [project.optional-dependencies]
@@ -46,7 +48,7 @@ dev = [
 ]
 
 [project.scripts]
-omc = "src.cli:main"
+omc = "src.cli:app"
 
 [tool.setuptools.packages.find]
 where = ["."]

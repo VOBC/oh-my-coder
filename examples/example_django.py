@@ -78,24 +78,21 @@ from django.utils import timezone
 
 class Category(models.Model):
     """文章分类"""
-    name = models.CharField('名称', max_length=100)
-    slug = models.SlugField('Slug', unique=True, blank=True)
-    description = models.TextField('描述', blank=True)
+
+    name = models.CharField("名称", max_length=100)
+    slug = models.SlugField("Slug", unique=True, blank=True)
+    description = models.TextField("描述", blank=True)
     parent = models.ForeignKey(
-        'self',
-        on_delete=models.CASCADE,
-        null=True,
-        blank=True,
-        verbose_name='父分类'
+        "self", on_delete=models.CASCADE, null=True, blank=True, verbose_name="父分类"
     )
-    order = models.IntegerField('排序', default=0)
-    is_active = models.BooleanField('是否启用', default=True)
-    created_at = models.DateTimeField('创建时间', auto_now_add=True)
+    order = models.IntegerField("排序", default=0)
+    is_active = models.BooleanField("是否启用", default=True)
+    created_at = models.DateTimeField("创建时间", auto_now_add=True)
 
     class Meta:
-        verbose_name = '分类'
-        verbose_name_plural = '分类'
-        ordering = ['order', 'name']
+        verbose_name = "分类"
+        verbose_name_plural = "分类"
+        ordering = ["order", "name"]
 
     def save(self, *args, **kwargs):
         if not self.slug:
@@ -108,14 +105,15 @@ class Category(models.Model):
 
 class Tag(models.Model):
     """文章标签"""
-    name = models.CharField('名称', max_length=50, unique=True)
-    slug = models.SlugField('Slug', unique=True, blank=True)
-    created_at = models.DateTimeField('创建时间', auto_now_add=True)
+
+    name = models.CharField("名称", max_length=50, unique=True)
+    slug = models.SlugField("Slug", unique=True, blank=True)
+    created_at = models.DateTimeField("创建时间", auto_now_add=True)
 
     class Meta:
-        verbose_name = '标签'
-        verbose_name_plural = '标签'
-        ordering = ['name']
+        verbose_name = "标签"
+        verbose_name_plural = "标签"
+        ordering = ["name"]
 
     def save(self, *args, **kwargs):
         if not self.slug:
@@ -128,66 +126,61 @@ class Tag(models.Model):
 
 class Article(models.Model):
     """文章模型"""
+
     STATUS_CHOICES = [
-        ('draft', '草稿'),
-        ('published', '已发布'),
-        ('archived', '已归档'),
+        ("draft", "草稿"),
+        ("published", "已发布"),
+        ("archived", "已归档"),
     ]
 
-    title = models.CharField('标题', max_length=200)
-    slug = models.SlugField('Slug', unique=True, blank=True)
-    content = models.TextField('内容')
-    summary = models.TextField('摘要', max_length=500, blank=True)
-    
+    title = models.CharField("标题", max_length=200)
+    slug = models.SlugField("Slug", unique=True, blank=True)
+    content = models.TextField("内容")
+    summary = models.TextField("摘要", max_length=500, blank=True)
+
     # 关联
     author = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        related_name='articles',
-        verbose_name='作者'
+        User, on_delete=models.CASCADE, related_name="articles", verbose_name="作者"
     )
     category = models.ForeignKey(
         Category,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='articles',
-        verbose_name='分类'
+        related_name="articles",
+        verbose_name="分类",
     )
-    tags = models.ManyToManyField(Tag, blank=True, verbose_name='标签')
-    
+    tags = models.ManyToManyField(Tag, blank=True, verbose_name="标签")
+
     # 状态
     status = models.CharField(
-        '状态',
-        max_length=20,
-        choices=STATUS_CHOICES,
-        default='draft'
+        "状态", max_length=20, choices=STATUS_CHOICES, default="draft"
     )
-    is_featured = models.BooleanField('是否推荐', default=False)
-    allow_comments = models.BooleanField('允许评论', default=True)
-    
+    is_featured = models.BooleanField("是否推荐", default=False)
+    allow_comments = models.BooleanField("允许评论", default=True)
+
     # 统计
-    views = models.PositiveIntegerField('浏览次数', default=0)
-    likes = models.PositiveIntegerField('点赞数', default=0)
-    
+    views = models.PositiveIntegerField("浏览次数", default=0)
+    likes = models.PositiveIntegerField("点赞数", default=0)
+
     # 时间
-    published_at = models.DateTimeField('发布时间', null=True, blank=True)
-    created_at = models.DateTimeField('创建时间', auto_now_add=True)
-    updated_at = models.DateTimeField('更新时间', auto_now=True)
+    published_at = models.DateTimeField("发布时间", null=True, blank=True)
+    created_at = models.DateTimeField("创建时间", auto_now_add=True)
+    updated_at = models.DateTimeField("更新时间", auto_now=True)
 
     class Meta:
-        verbose_name = '文章'
-        verbose_name_plural = '文章'
-        ordering = ['-published_at', '-created_at']
+        verbose_name = "文章"
+        verbose_name_plural = "文章"
+        ordering = ["-published_at", "-created_at"]
         indexes = [
-            models.Index(fields=['status', 'published_at']),
-            models.Index(fields=['author', 'status']),
+            models.Index(fields=["status", "published_at"]),
+            models.Index(fields=["author", "status"]),
         ]
 
     def save(self, *args, **kwargs):
         if not self.slug:
             self.slug = slugify(self.title)
-        if self.status == 'published' and not self.published_at:
+        if self.status == "published" and not self.published_at:
             self.published_at = timezone.now()
         super().save(*args, **kwargs)
 
@@ -195,159 +188,161 @@ class Article(models.Model):
         return self.title
 
     def get_absolute_url(self):
-        return reverse('blog:article_detail', kwargs={'slug': self.slug})
+        return reverse("blog:article_detail", kwargs={"slug": self.slug})
 
 
 class Comment(models.Model):
     """评论模型"""
+
     article = models.ForeignKey(
-        Article,
-        on_delete=models.CASCADE,
-        related_name='comments',
-        verbose_name='文章'
+        Article, on_delete=models.CASCADE, related_name="comments", verbose_name="文章"
     )
     author = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        related_name='comments',
-        verbose_name='作者'
+        User, on_delete=models.CASCADE, related_name="comments", verbose_name="作者"
     )
     parent = models.ForeignKey(
-        'self',
+        "self",
         on_delete=models.CASCADE,
         null=True,
         blank=True,
-        related_name='replies',
-        verbose_name='父评论'
+        related_name="replies",
+        verbose_name="父评论",
     )
-    content = models.TextField('评论内容')
-    is_visible = models.BooleanField('是否显示', default=True)
-    created_at = models.DateTimeField('创建时间', auto_now_add=True)
-    updated_at = models.DateTimeField('更新时间', auto_now=True)
+    content = models.TextField("评论内容")
+    is_visible = models.BooleanField("是否显示", default=True)
+    created_at = models.DateTimeField("创建时间", auto_now_add=True)
+    updated_at = models.DateTimeField("更新时间", auto_now=True)
 
     class Meta:
-        verbose_name = '评论'
-        verbose_name_plural = '评论'
-        ordering = ['created_at']
+        verbose_name = "评论"
+        verbose_name_plural = "评论"
+        ordering = ["created_at"]
 
     def __str__(self):
-        return f'{self.author.username}: {self.content[:50]}'
+        return f"{self.author.username}: {self.content[:50]}"
 
 
 # ============================================================
 # 示例：生成的 Django 视图
 # ============================================================
 
-from django.shortcuts import render, get_object_or_404, redirect
-from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
+from django.views.generic import (
+    ListView,
+    DetailView,
+    CreateView,
+    UpdateView,
+    DeleteView,
+)
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib import messages
-from django.http import JsonResponse
-from django.views.decorators.http import require_POST
-from django.views.decorators.csrf import csrf_exempt
 from django.core.cache import cache
-from django.db.models import Q
 
-from .models import Article, Category, Tag, Comment
+from .models import Article, Category, Tag
 from .forms import ArticleForm, CommentForm
 
 
 class ArticleListView(ListView):
     """文章列表视图"""
+
     model = Article
-    template_name = 'blog/article_list.html'
-    context_object_name = 'articles'
+    template_name = "blog/article_list.html"
+    context_object_name = "articles"
     paginate_by = 10
 
     def get_queryset(self):
         cache_key = f'articles_list_{self.kwargs.get("category_slug", "all")}'
         queryset = cache.get(cache_key)
-        
+
         if queryset is None:
-            queryset = Article.objects.filter(status='published').select_related(
-                'author', 'category'
-            ).prefetch_related('tags')
-            
-            category_slug = self.kwargs.get('category_slug')
+            queryset = (
+                Article.objects.filter(status="published")
+                .select_related("author", "category")
+                .prefetch_related("tags")
+            )
+
+            category_slug = self.kwargs.get("category_slug")
             if category_slug:
                 queryset = queryset.filter(category__slug=category_slug)
-            
+
             cache.set(cache_key, queryset, 60 * 5)  # 缓存 5 分钟
-        
+
         return queryset
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['categories'] = Category.objects.filter(is_active=True)
-        context['popular_tags'] = Tag.objects.annotate(
-            article_count=models.Count('article')
-        ).order_by('-article_count')[:10]
+        context["categories"] = Category.objects.filter(is_active=True)
+        context["popular_tags"] = Tag.objects.annotate(
+            article_count=models.Count("article")
+        ).order_by("-article_count")[:10]
         return context
 
 
 class ArticleDetailView(DetailView):
     """文章详情视图"""
+
     model = Article
-    template_name = 'blog/article_detail.html'
-    context_object_name = 'article'
+    template_name = "blog/article_detail.html"
+    context_object_name = "article"
 
     def get_object(self, queryset=None):
         article = super().get_object(queryset)
         # 增加浏览次数
-        article.views = models.F('views') + 1
-        article.save(update_fields=['views'])
+        article.views = models.F("views") + 1
+        article.save(update_fields=["views"])
         article.refresh_from_db()
         return article
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['comments'] = self.object.comments.filter(is_visible=True)
-        context['comment_form'] = CommentForm()
-        context['related_articles'] = Article.objects.filter(
-            status='published',
-            category=self.object.category
+        context["comments"] = self.object.comments.filter(is_visible=True)
+        context["comment_form"] = CommentForm()
+        context["related_articles"] = Article.objects.filter(
+            status="published", category=self.object.category
         ).exclude(pk=self.object.pk)[:3]
         return context
 
 
 class ArticleCreateView(LoginRequiredMixin, CreateView):
     """创建文章视图"""
+
     model = Article
     form_class = ArticleForm
-    template_name = 'blog/article_form.html'
+    template_name = "blog/article_form.html"
 
     def form_valid(self, form):
         form.instance.author = self.request.user
-        messages.success(self.request, '文章创建成功！')
+        messages.success(self.request, "文章创建成功！")
         return super().form_valid(form)
 
 
 class ArticleUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     """更新文章视图"""
+
     model = Article
     form_class = ArticleForm
-    template_name = 'blog/article_form.html'
+    template_name = "blog/article_form.html"
 
     def test_func(self):
         article = self.get_object()
         return self.request.user == article.author
 
     def form_valid(self, form):
-        messages.success(self.request, '文章更新成功！')
+        messages.success(self.request, "文章更新成功！")
         return super().form_valid(form)
 
 
 class ArticleDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     """删除文章视图"""
+
     model = Article
-    success_url = '/blog/'
+    success_url = "/blog/"
 
     def test_func(self):
         article = self.get_object()
         return self.request.user == article.author
 
     def delete(self, request, *args, **kwargs):
-        messages.success(request, '文章已删除！')
+        messages.success(request, "文章已删除！")
         return super().delete(request, *args, **kwargs)
 
 
@@ -355,42 +350,47 @@ class ArticleDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
 # 示例：DRF API 视图集
 # ============================================================
 
-from rest_framework import viewsets, filters, status
+from rest_framework import viewsets, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from django_filters.rest_framework import DjangoFilterBackend
 
-from .models import Article, Category, Tag, Comment
+from .models import Article, Category, Tag
 from .serializers import ArticleSerializer, ArticleListSerializer
 
 
 class ArticleViewSet(viewsets.ModelViewSet):
     """文章 API 视图集"""
-    queryset = Article.objects.filter(status='published')
+
+    queryset = Article.objects.filter(status="published")
     permission_classes = [IsAuthenticatedOrReadOnly]
-    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    filterset_fields = ['category', 'tags', 'author']
-    search_fields = ['title', 'content', 'summary']
-    ordering_fields = ['published_at', 'views', 'likes']
-    ordering = ['-published_at']
+    filter_backends = [
+        DjangoFilterBackend,
+        filters.SearchFilter,
+        filters.OrderingFilter,
+    ]
+    filterset_fields = ["category", "tags", "author"]
+    search_fields = ["title", "content", "summary"]
+    ordering_fields = ["published_at", "views", "likes"]
+    ordering = ["-published_at"]
 
     def get_serializer_class(self):
-        if self.action == 'list':
+        if self.action == "list":
             return ArticleListSerializer
         return ArticleSerializer
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
 
-    @action(detail=True, methods=['post'])
+    @action(detail=True, methods=["post"])
     def like(self, request, pk=None):
         """点赞文章"""
         article = self.get_object()
-        article.likes = models.F('likes') + 1
-        article.save(update_fields=['likes'])
+        article.likes = models.F("likes") + 1
+        article.save(update_fields=["likes"])
         article.refresh_from_db()
-        return Response({'likes': article.likes})
+        return Response({"likes": article.likes})
 
     @action(detail=False)
     def featured(self, request):

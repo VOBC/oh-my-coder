@@ -1,6 +1,6 @@
 # Oh My Coder - VS Code Extension
 
-> 多智能体 AI 编程助手，支持 11 个国产大模型
+> 多智能体 AI 编程助手，支持 12 个国产大模型
 
 ## 功能特性
 

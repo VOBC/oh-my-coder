@@ -20,6 +20,8 @@ from typing import AsyncIterator, Dict, List, Optional
 
 import httpx
 
+from src.utils.safe_executor import safe_execute
+
 from .base import (
     BaseModel,
     Message,
@@ -115,6 +117,7 @@ class TongyiModel(BaseModel):
             formatted.append(item)
         return formatted
 
+    @safe_execute(max_attempts=3, timeout=30.0)
     async def generate(self, messages: List[Message], **kwargs) -> ModelResponse:
         """非流式生成"""
         client = await self._get_client()
@@ -183,6 +186,7 @@ class TongyiModel(BaseModel):
         except httpx.RequestError as e:
             raise TongyiAPIError(f"网络请求失败: {e}")
 
+    @safe_execute(max_attempts=3, timeout=30.0)
     async def stream(self, messages: List[Message], **kwargs) -> AsyncIterator[str]:
         """流式生成"""
         client = await self._get_client()

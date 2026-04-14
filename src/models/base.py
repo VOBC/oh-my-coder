@@ -31,13 +31,14 @@ class ModelProvider(Enum):
     GLM = "glm"  # 智谱 ChatGLM
     OPENAI = "openai"  # OpenAI GPT
     CLAUDE = "claude"  # Anthropic Claude
-    MINIMAX = "minimax"  # MiniMax 海螺
-    KIMI = "kimi"  # 月暗 Kimi
+    MINIMAX = "minimax"  # MiniMax
+    KIMI = "kimi"  # Kimi
     HUNYUAN = "hunyuan"  # 腾讯混元
     DOUBAO = "doubao"  # 字节豆包
     TIANGONG = "tiangong"  # 天工AI
     SPARK = "spark"  # 讯飞星火
     BAICHUAN = "baichuan"  # 百川智能
+    MIMO = "mimo"  # 小米 MiMo
 
 
 @dataclass

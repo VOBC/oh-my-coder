@@ -14,6 +14,7 @@ Agent 生命周期：
 4. 输出结果
 """
 
+import asyncio
 import json
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
@@ -52,6 +53,7 @@ class AgentContext:
     relevant_files: List[Path] = field(default_factory=list)  # 相关文件
     previous_outputs: Dict[str, Any] = field(default_factory=dict)  # 前序 Agent 输出
     metadata: Dict[str, Any] = field(default_factory=dict)  # 其他元数据
+    skill_context: str = ""  # Tier 0 自动注入：Skill 经验清单（由 Orchestrator 填充）
 
 
 @dataclass
@@ -110,11 +112,66 @@ class BaseAgent(ABC):
         self.status = AgentStatus.IDLE
         self._output_history: List[AgentOutput] = []
 
+        # 初始化工作目录上下文扫描器
+        try:
+            from ..context import WorkspaceScanner
+
+            project_path = config.get("project_path") if config else None
+            if project_path:
+                self.workspace_scanner = WorkspaceScanner(Path(project_path))
+            else:
+                self.workspace_scanner = WorkspaceScanner(Path.cwd())
+        except Exception:
+            # 浏览器上下文感知失败不影响 Agent 初始化
+            self.workspace_scanner = None
+
     @property
     @abstractmethod
     def system_prompt(self) -> str:
         """返回系统提示词（定义 Agent 的角色和行为）"""
         pass
+
+    def get_workspace_context(self, max_depth: int = 3) -> str:
+        """
+        获取工作目录上下文
+
+        扫描项目目录，生成文件树结构，用于增强 Agent 的上下文感知能力。
+
+        Args:
+            max_depth: 最大扫描深度
+
+        Returns:
+            str: 文件树上下文字符串
+        """
+        if self.workspace_scanner is None:
+            return "[工作目录上下文不可用]"
+
+        try:
+            return self.workspace_scanner.to_context_string(max_depth=max_depth)
+        except Exception as e:
+            return f"[工作目录上下文扫描失败: {e}]"
+
+    def get_full_context(self, max_depth: int = 3) -> Dict[str, str]:
+        """
+        获取完整上下文（文件 + 浏览器）
+
+        Returns:
+            Dict[str, str]: 包含 workspace 和 browser 上下文字典
+        """
+        from ..context import BrowserAwareness
+
+        result = {
+            "workspace": self.get_workspace_context(max_depth=max_depth),
+        }
+
+        try:
+            awareness = BrowserAwareness()
+            browser_ctx = asyncio.run(awareness.get_current_tab())
+            result["browser"] = browser_ctx.to_context_string()
+        except Exception:
+            result["browser"] = "[浏览器上下文不可用]"
+
+        return result
 
     def get_context_prompt(self, context: AgentContext) -> str:
         """根据上下文生成额外提示词"""
@@ -126,6 +183,11 @@ class BaseAgent(ABC):
         if context.project_path:
             parts.append(f"## 项目路径\n{context.project_path}")
 
+        # 添加工目录上下文（文件树）
+        workspace_ctx = self.get_workspace_context()
+        if workspace_ctx and workspace_ctx != "[工作目录上下文不可用]":
+            parts.append(f"## 项目文件结构\n{workspace_ctx}")
+
         if context.relevant_files:
             files_str = "\n".join(str(f) for f in context.relevant_files)
             parts.append(f"## 相关文件\n{files_str}")
@@ -134,6 +196,10 @@ class BaseAgent(ABC):
             parts.append("## 前序工作成果")
             for agent_name, output in context.previous_outputs.items():
                 parts.append(f"### {agent_name}\n{output}")
+
+        # Tier 0: 追加 Skill 经验上下文
+        if context.skill_context:
+            parts.append(context.skill_context)
 
         return "\n\n".join(parts)
 

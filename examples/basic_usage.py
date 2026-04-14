@@ -7,14 +7,13 @@
 3. 工作流选择
 """
 
-import httpx
 import asyncio
 
 
 def example_cli_basic():
     """
     示例 1: CLI 基本用法
-    
+
     在终端执行这些命令：
     """
     commands = [
@@ -30,7 +29,7 @@ def example_cli_basic():
         "# 查看系统状态",
         "omc status",
     ]
-    
+
     for cmd in commands:
         print(cmd)
 
@@ -38,7 +37,7 @@ def example_cli_basic():
 def example_cli_tasks():
     """
     示例 2: CLI 任务执行
-    
+
     在终端执行这些命令：
     """
     tasks = [
@@ -57,7 +56,7 @@ def example_cli_tasks():
         "# 生成测试",
         'omc run "为 src/core 生成单元测试" -w test',
     ]
-    
+
     for task in tasks:
         print(task)
 
@@ -67,15 +66,12 @@ async def example_web_api():
     示例 3: Web API 异步调用（SSE）
     """
     url = "http://localhost:8000/api/execute"
-    payload = {
-        "task": "为用户模型添加 CRUD 接口",
-        "workflow": "build"
-    }
-    
+    payload = {"task": "为用户模型添加 CRUD 接口", "workflow": "build"}
+
     print("=== Web API 异步调用示例 ===")
     print(f"POST {url}")
     print(f"Payload: {payload}\n")
-    
+
     # 实际调用示例（需要服务器运行）
     # async with httpx.AsyncClient() as client:
     #     async with client.stream("POST", url, json=payload) as response:
@@ -89,15 +85,12 @@ async def example_web_api_sync():
     示例 4: Web API 同步调用
     """
     url = "http://localhost:8000/api/execute-sync"
-    payload = {
-        "task": "审查代码质量",
-        "workflow": "review"
-    }
-    
+    payload = {"task": "审查代码质量", "workflow": "review"}
+
     print("=== Web API 同步调用示例 ===")
     print(f"POST {url}")
     print(f"Payload: {payload}\n")
-    
+
     # 实际调用示例（需要服务器运行）
     # async with httpx.AsyncClient(timeout=60) as client:
     #     response = await client.post(url, json=payload)
@@ -111,25 +104,25 @@ def example_curl():
     """
     commands = [
         "# 异步执行（SSE）",
-        'curl -X POST http://localhost:8000/api/execute \\',
+        "curl -X POST http://localhost:8000/api/execute \\",
         '  -H "Content-Type: application/json" \\',
         '  -d \'{"task": "实现 REST API", "workflow": "build"}\'',
         "",
         "# 同步执行",
-        'curl -X POST http://localhost:8000/api/execute-sync \\',
+        "curl -X POST http://localhost:8000/api/execute-sync \\",
         '  -H "Content-Type: application/json" \\',
         '  -d \'{"task": "审查代码质量", "workflow": "review"}\'',
         "",
         "# 列出所有任务",
-        'curl http://localhost:8000/api/tasks',
+        "curl http://localhost:8000/api/tasks",
         "",
         "# 获取任务详情",
-        'curl http://localhost:8000/api/tasks/task_id_here',
+        "curl http://localhost:8000/api/tasks/task_id_here",
         "",
         "# 健康检查",
-        'curl http://localhost:8000/health',
+        "curl http://localhost:8000/health",
     ]
-    
+
     print("=== curl 命令示例 ===")
     for cmd in commands:
         print(cmd)
@@ -140,19 +133,19 @@ if __name__ == "__main__":
     print("Oh My Coder 基础示例")
     print("=" * 60)
     print()
-    
+
     example_cli_basic()
     print()
-    
+
     example_cli_tasks()
     print()
-    
+
     print(example_web_api.__doc__)
     asyncio.run(example_web_api())
     print()
-    
+
     print(example_web_api_sync.__doc__)
     asyncio.run(example_web_api_sync())
     print()
-    
+
     example_curl()
