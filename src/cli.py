@@ -35,6 +35,7 @@ from .cli_multiagent import app as multiagent_app
 from .cli_security import app as security_app
 from .cli_checkpoint import app as checkpoint_app
 from .cli_mcp import app as mcp_app
+from .cli_memory import app as memory_app
 
 # 版本信息
 __version__ = "0.2.0"
@@ -56,6 +57,7 @@ app.add_typer(multiagent_app, name="multiagent")
 app.add_typer(security_app, name="security")
 app.add_typer(checkpoint_app, name="checkpoint")
 app.add_typer(mcp_app, name="mcp")
+app.add_typer(memory_app, name="memory", help="分层记忆管理 - 查看核心/精选/完整记忆")
 
 console = Console()
 

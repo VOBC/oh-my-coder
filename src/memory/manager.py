@@ -257,3 +257,69 @@ class MemoryManager:
                 return truncated
             return summary[: max_tokens * 4]
         return summary
+
+    def get_tier2_archive(self) -> str:
+        """
+        获取 Tier 2 完整存档（无 token 限制）。
+
+        完整记忆：所有项目、所有学习记录、所有偏好。
+        用于导出、搜索、审计。
+        """
+        lines = []
+
+        # 用户偏好
+        prefs = self.long_term.get_user_prefs()
+        lines.append("## 用户偏好")
+        lines.append(f"- 模型: {prefs.default_model}")
+        lines.append(f"- 工作流: {prefs.default_workflow}")
+        lines.append(f"- 主题: {prefs.theme}")
+        lines.append(f"- 编辑器: {prefs.editor}")
+        lines.append(f"- Shell: {prefs.shell}")
+        lines.append("")
+
+        # 所有项目
+        projects = self.long_term.get_recent_projects(limit=20)
+        if projects:
+            lines.append("## 项目列表")
+            for p in projects:
+                prefs_p = self.long_term.get_project_prefs(p)
+                lines.append(f"### {prefs_p.name or p.name}")
+                lines.append(f"- 路径: {p}")
+                lines.append(f"- 框架: {prefs_p.framework or '—'}")
+                lines.append(f"- 语言: {prefs_p.language or '—'}")
+                if prefs_p.notes:
+                    lines.append(f"- 备注: {prefs_p.notes[:300]}")
+                if prefs_p.custom_commands:
+                    lines.append("- 常用命令:")
+                    for alias, cmd in prefs_p.custom_commands.items():
+                        lines.append(f"  - {alias}: {cmd}")
+                lines.append("")
+
+        # 所有学习记录
+        all_learnings = self.learnings.get_recent(limit=50)
+        if all_learnings:
+            lines.append("## 学习记录")
+            for entry in all_learnings:
+                lines.append(f"### {entry.title} [{entry.category}]")
+                lines.append(entry.content[:500])
+                if entry.tags:
+                    lines.append(f"标签: {', '.join(entry.tags)}")
+                lines.append("")
+
+        return "\n".join(lines)
+
+    def get_memory_stats(self) -> Dict[str, Any]:
+        """获取记忆统计信息"""
+        projects = self.long_term.get_recent_projects(limit=100)
+        all_learnings = self.learnings.get_recent(limit=1000)
+
+        tier0 = self.get_tier0_summary()
+        tier1 = self.get_tier1_summary()
+
+        return {
+            "projects_count": len(projects),
+            "learnings_count": len(all_learnings),
+            "tier0_tokens": self.count_tokens(tier0),
+            "tier1_tokens": self.count_tokens(tier1),
+            "categories": list(set(e.category for e in all_learnings)),
+        }

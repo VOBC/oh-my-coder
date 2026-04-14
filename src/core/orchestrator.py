@@ -184,12 +184,14 @@ class Orchestrator:
         model_router,
         state_dir: Optional[Path] = None,
         skills_dir: Optional[Path] = None,
+        project_path: Optional[Path] = None,
     ):
         """
         Args:
             model_router: 模型路由器
             state_dir: 状态持久化目录
             skills_dir: Skill 文件根目录（默认 .omc/skills）
+            project_path: 项目路径（用于分层记忆注入）
         """
         self.model_router = model_router
         self.state_dir = state_dir or Path(".omc/state")
@@ -209,6 +211,10 @@ class Orchestrator:
 
         # 工作流状态
         self._active_workflows: Dict[str, WorkflowResult] = {}
+
+        # 分层记忆管理器（懒加载）
+        self._memory_manager = None  # type: ignore
+        self._project_path = project_path
 
     # ------------------------------------------------------------------
     # Skill 自进化（Tier 0 自动注入）
@@ -233,6 +239,29 @@ class Orchestrator:
                 project_path=self.state_dir.parent
             )
         return self._checkpoint_manager
+
+    @property
+    def memory_manager(self):
+        """懒加载 MemoryManager（分层有限记忆）"""
+        if self._memory_manager is None:
+            from ..memory.manager import MemoryManager
+
+            base = self._project_path or self.state_dir.parent
+            self._memory_manager = MemoryManager.from_project(base)
+        return self._memory_manager
+
+    def inject_memory_context(self) -> str:
+        """
+        获取 Tier 0 核心记忆注入文本。
+
+        追加到 AgentContext.skill_context，放在 Skill 经验之后。
+        """
+        tier0 = self.memory_manager.get_tier0_summary()
+        if not tier0 or not tier0.strip():
+            return ""
+        return (
+            f"\n\n{'=' * 50}\n" f"## 🧠 核心记忆（Tier 0）\n" f"{tier0}\n" f"{'=' * 50}"
+        )
 
     def get_skill_inventory(self, max_tokens: int = 500) -> str:
         """
@@ -337,6 +366,28 @@ class Orchestrator:
                 self.skill_manager.create(**draft)
             except Exception:
                 pass  # 静默失败，不阻塞工作流
+
+    # ------------------------------------------------------------------
+    # 上下文构建
+    # ------------------------------------------------------------------
+
+    def _build_agent_context(
+        self,
+        agent_name: str,
+        context: Dict[str, Any],
+    ):
+        """构建统一的 AgentContext（含 Skill 注入 + Tier 0 记忆注入）"""
+        from ..agents.base import AgentContext
+
+        skill_ctx = self.inject_skill_context(agent_name)
+        memory_ctx = self.inject_memory_context()
+
+        return AgentContext(
+            project_path=Path(context.get("project_path", ".")),
+            task_description=context.get("task", ""),
+            previous_outputs=context.get("_result_outputs", {}),
+            skill_context=skill_ctx + memory_ctx,
+        )
 
     # ------------------------------------------------------------------
     # Agent 注册与获取
@@ -462,7 +513,6 @@ class Orchestrator:
         result: WorkflowResult,
     ):
         """顺序执行步骤"""
-        from ..agents.base import AgentContext
 
         for step in steps:
             # 检查依赖
@@ -474,13 +524,8 @@ class Orchestrator:
                 # 执行步骤
                 agent = self.get_agent(step.agent_name)
 
-                # 构建上下文（Tier 0: 注入 Skill 经验）
-                agent_context = AgentContext(
-                    project_path=Path(context.get("project_path", ".")),
-                    task_description=context.get("task", ""),
-                    previous_outputs=result.outputs,
-                    skill_context=self.inject_skill_context(step.agent_name),
-                )
+                # 构建上下文（Tier 0: 注入 Skill 经验 + 核心记忆）
+                agent_context = self._build_agent_context(step.agent_name, context)
 
                 output = await asyncio.wait_for(
                     agent.execute(agent_context),
@@ -515,7 +560,6 @@ class Orchestrator:
         这样 review 工作流的 code-reviewer + security-reviewer 可以同时跑，
         比顺序执行快约一倍。
         """
-        from ..agents.base import AgentContext
 
         # 建立步骤字典
         step_map: Dict[str, WorkflowStep] = {s.agent_name: s for s in steps}
@@ -546,12 +590,7 @@ class Orchestrator:
             tasks = []
             for step in level:
                 agent = self.get_agent(step.agent_name)
-                agent_context = AgentContext(
-                    project_path=Path(context.get("project_path", ".")),
-                    task_description=context.get("task", ""),
-                    previous_outputs=result.outputs,
-                    skill_context=self.inject_skill_context(step.agent_name),
-                )
+                agent_context = self._build_agent_context(step.agent_name, context)
                 tasks.append(
                     asyncio.wait_for(
                         agent.execute(agent_context),
@@ -593,7 +632,6 @@ class Orchestrator:
         - condition 返回 False → 跳过（不计入 completed，但也不报错）
         - condition 抛异常 → 标记失败
         """
-        from ..agents.base import AgentContext
 
         for step in steps:
             # 检查依赖
@@ -614,12 +652,7 @@ class Orchestrator:
 
             try:
                 agent = self.get_agent(step.agent_name)
-                agent_context = AgentContext(
-                    project_path=Path(context.get("project_path", ".")),
-                    task_description=context.get("task", ""),
-                    previous_outputs=result.outputs,
-                    skill_context=self.inject_skill_context(step.agent_name),
-                )
+                agent_context = self._build_agent_context(step.agent_name, context)
 
                 output = await asyncio.wait_for(
                     agent.execute(agent_context),
@@ -653,17 +686,8 @@ class Orchestrator:
         Returns:
             AgentOutput: 执行结果
         """
-        from ..agents.base import AgentContext
-
         agent = self.get_agent(agent_name)
-
-        agent_context = AgentContext(
-            project_path=Path(context.get("project_path", ".")),
-            task_description=context.get("task", ""),
-            metadata=context.get("metadata", {}),
-            skill_context=self.inject_skill_context(agent_name),
-        )
-
+        agent_context = self._build_agent_context(agent_name, context)
         return await agent.execute(agent_context)
 
     def _save_workflow_result(self, result: WorkflowResult):

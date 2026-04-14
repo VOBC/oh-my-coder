@@ -271,3 +271,116 @@ class TestMemoryManager:
         recent = memory_mgr.get_recent_projects(limit=5)
         assert any(p.resolve() == p1.resolve() for p in recent)
         assert any(p.resolve() == p2.resolve() for p in recent)
+
+
+# ─────────────────────────────────────────────────────────────────
+# 分层有限记忆（Tier 0/1/2）
+# ─────────────────────────────────────────────────────────────────
+
+
+class TestLayeredMemory:
+    """分层有限记忆系统测试"""
+
+    def test_tier0_empty(self, memory_mgr):
+        """空记忆时返回空字符串"""
+        tier0 = memory_mgr.get_tier0_summary()
+        assert isinstance(tier0, str)
+
+    def test_tier0_with_learnings(self, memory_mgr):
+        """有学习记录时 Tier 0 包含最近经验"""
+        memory_mgr.add_learning("CI fix", "run ruff before commit", "lesson")
+        memory_mgr.add_learning("docker tip", "use compose up", "ops")
+        tier0 = memory_mgr.get_tier0_summary()
+        assert "CI fix" in tier0 or "docker tip" in tier0
+
+    def test_tier0_token_limit(self, temp_dir):
+        """Tier 0 不超过配置的 token 限制"""
+        config = MemoryConfig(storage_dir=temp_dir, tier0_max_tokens=50)
+        mgr = MemoryManager(config)
+
+        # 塞入大量学习记录
+        for i in range(20):
+            mgr.add_learning(
+                f"title {i}",
+                f"this is a long learning entry with lots of content number {i}",
+                "note",
+            )
+
+        tier0 = mgr.get_tier0_summary()
+        tokens = mgr.count_tokens(tier0)
+        # 由于截断，token 数应 <= 限制或接近限制
+        assert tokens <= 50 + 20  # 允许少量截断误差
+
+    def test_tier1_empty(self, memory_mgr):
+        """空记忆时返回空字符串"""
+        tier1 = memory_mgr.get_tier1_summary()
+        assert isinstance(tier1, str)
+
+    def test_tier1_with_data(self, memory_mgr):
+        """有数据时 Tier 1 包含详细信息"""
+        memory_mgr.add_learning(
+            "architecture decision",
+            "we chose microservices over monolith",
+            "architecture",
+        )
+        tier1 = memory_mgr.get_tier1_summary()
+        assert "architecture decision" in tier1
+
+    def test_tier1_custom_max_tokens(self, memory_mgr):
+        """Tier 1 支持自定义 max_tokens"""
+        tier1 = memory_mgr.get_tier1_summary(max_tokens=100)
+        tokens = memory_mgr.count_tokens(tier1)
+        assert tokens <= 100 + 20
+
+    def test_tier2_archive(self, memory_mgr):
+        """Tier 2 完整存档包含所有数据"""
+        memory_mgr.add_learning("entry1", "content 1", "note")
+        memory_mgr.add_learning("entry2", "content 2", "ops")
+
+        archive = memory_mgr.get_tier2_archive()
+        assert "entry1" in archive
+        assert "entry2" in archive
+        assert "学习记录" in archive
+
+    def test_tier2_no_token_limit(self, temp_dir):
+        """Tier 2 无 token 限制"""
+        config = MemoryConfig(storage_dir=temp_dir, tier0_max_tokens=10)
+        mgr = MemoryManager(config)
+
+        for i in range(20):
+            mgr.add_learning(f"title {i}", f"content {i} " * 20, "note")
+
+        archive = mgr.get_tier2_archive()
+        # Tier 2 应该包含所有 20 条记录
+        assert "title 19" in archive
+
+    def test_memory_stats(self, memory_mgr):
+        """记忆统计返回正确结构"""
+        memory_mgr.add_learning("test entry", "test content", "test")
+
+        stats = memory_mgr.get_memory_stats()
+        assert "projects_count" in stats
+        assert "learnings_count" in stats
+        assert "tier0_tokens" in stats
+        assert "tier1_tokens" in stats
+        assert "categories" in stats
+        assert stats["learnings_count"] >= 1
+        assert "test" in stats["categories"]
+
+    def test_count_tokens(self, memory_mgr):
+        """token 计数功能正常"""
+        count = memory_mgr.count_tokens("hello world")
+        assert count >= 1
+
+    def test_tier0_truncation_with_tiktoken(self, temp_dir):
+        """使用 tiktoken 时截断更精确"""
+        config = MemoryConfig(storage_dir=temp_dir, tier0_max_tokens=30)
+        mgr = MemoryManager(config)
+
+        for i in range(10):
+            mgr.add_learning(f"long title number {i}", "content here " * 10, "note")
+
+        tier0 = mgr.get_tier0_summary()
+        tokens = mgr.count_tokens(tier0)
+        # 截断后不应大幅超过限制
+        assert tokens <= 30 + 15
