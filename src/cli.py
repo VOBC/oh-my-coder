@@ -62,6 +62,7 @@ app.add_typer(memory_app, name="memory", help="分层记忆管理 - 查看核心
 # gateway 子命令（懒导入，避免 gateway 依赖缺失时报错）
 try:
     from .cli_gateway import app as gateway_app
+
     app.add_typer(gateway_app, name="gateway", help="多平台网关 - Telegram / Discord")
 except Exception:
     pass  # gateway 依赖缺失时跳过
