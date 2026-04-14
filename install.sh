@@ -11,6 +11,8 @@ REPO_URL="https://github.com/VOBC/oh-my-coder.git"
 REPO_NAME="oh-my-coder"
 INSTALL_DIR="${HOME}/${REPO_NAME}"
 MIN_PYTHON_VERSION="3.9"
+AUTO_CONFIRM="${AUTO_CONFIRM:-false}"
+INSTALL_DEV="no"
 
 # 颜色定义
 RED='\033[0;31m'
@@ -162,12 +164,26 @@ configure_api_key() {
     # 创建 .env 文件
     if [ -f ".env" ]; then
         print_warning ".env 文件已存在"
+        if [[ "$AUTO_CONFIRM" == "true" ]]; then
+            print_step "自动模式：跳过 API Key 配置"
+            return
+        fi
         read -p "是否要重新配置? (y/N): " -n 1 -r
         echo
         if [[ ! $REPLY =~ ^[Yy]$ ]]; then
             print_step "跳过 API Key 配置"
             return
         fi
+    fi
+
+    # 自动模式跳过交互式配置
+    if [[ "$AUTO_CONFIRM" == "true" ]]; then
+        print_step "自动模式：跳过 API Key 配置"
+        if [ ! -f ".env" ]; then
+            cp .env.example .env 2>/dev/null || echo "# 请手动配置 API Key" > .env
+            print_warning "已创建 .env 文件，请稍后编辑并填入你的 API Key"
+        fi
+        return
     fi
     
     echo ""
@@ -238,13 +254,18 @@ verify_installation() {
         OMC_CMD="${INSTALL_DIR}/.venv/bin/omc"
     fi
     
-    if $OMC_CMD --version >/dev/null 2>&1; then
-        VERSION=$($OMC_CMD --version 2>&1)
-        print_success "CLI 安装成功: ${VERSION}"
+    echo ""
+    print_step "运行 omc --version..."
+    if $OMC_CMD --version 2>&1; then
+        print_success "CLI 安装成功"
     else
         print_warning "CLI 验证失败，尝试直接运行..."
-        python -m src.cli --version 2>&1 || true
+        python -m src.cli --version 2>&1 || print_warning "模块验证失败"
     fi
+    
+    echo ""
+    print_step "运行 omc model current..."
+    python -m src.cli model current 2>&1 || true
     
     # 测试 Python 模块
     if python -c "import oh_my_coder" 2>/dev/null; then
@@ -252,6 +273,8 @@ verify_installation() {
     else
         print_warning "Python 模块导入失败，请检查依赖"
     fi
+    
+    echo ""
 }
 
 # 打印使用说明
@@ -303,6 +326,10 @@ main() {
     # 解析参数
     while [[ $# -gt 0 ]]; do
         case $1 in
+            -y|--yes)
+                AUTO_CONFIRM="true"
+                shift
+                ;;
             --dev)
                 INSTALL_DEV="yes"
                 shift
@@ -311,13 +338,14 @@ main() {
                 INSTALL_DIR="$2"
                 shift 2
                 ;;
-            --help)
+            --help|-h)
                 echo "使用方法: $0 [选项]"
                 echo ""
                 echo "选项:"
+                echo "  -y, --yes       自动确认所有提示（无人值守安装）"
                 echo "  --dir <路径>    指定安装目录（默认: ~/oh-my-coder）"
                 echo "  --dev           同时安装开发依赖"
-                echo "  --help          显示帮助"
+                echo "  -h, --help      显示帮助"
                 exit 0
                 ;;
             *)
@@ -336,11 +364,17 @@ main() {
     
     if [ -d "${INSTALL_DIR}" ]; then
         print_warning "目录 ${INSTALL_DIR} 已存在"
-        read -p "是否更新代码? (Y/n): " -n 1 -r
-        echo
-        if [[ ! $REPLY =~ ^[Nn]$ ]]; then
+        if [[ "$AUTO_CONFIRM" == "true" ]]; then
+            print_step "自动模式：更新代码..."
             cd "${INSTALL_DIR}"
             git pull origin main 2>/dev/null || print_warning "git pull 失败，请手动更新"
+        else
+            read -p "是否更新代码? (Y/n): " -n 1 -r
+            echo
+            if [[ ! $REPLY =~ ^[Nn]$ ]]; then
+                cd "${INSTALL_DIR}"
+                git pull origin main 2>/dev/null || print_warning "git pull 失败，请手动更新"
+            fi
         fi
     else
         print_step "克隆仓库..."
