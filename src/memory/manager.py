@@ -12,7 +12,6 @@
 - Tier 2（Archive）：完整存档，无限存储
 """
 
-import sys
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -195,14 +194,14 @@ class MemoryManager:
 
         # 用户偏好
         prefs = self.long_term.get_user_prefs()
-        lines.append(f"\n## 用户偏好")
+        lines.append("\n## 用户偏好")
         lines.append(f"- 模型: {prefs.default_model}")
         lines.append(f"- 工作流: {prefs.default_workflow}")
 
         # 最近学习
         recent = self.learnings.get_recent(limit=3)
         if recent:
-            lines.append(f"\n## 最近经验")
+            lines.append("\n## 最近经验")
             for entry in recent:
                 lines.append(f"- {entry.title}: {entry.content[:80]}")
 
