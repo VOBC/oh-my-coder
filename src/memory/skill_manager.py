@@ -51,6 +51,7 @@ import yaml
 # 可选：tiktoken 用于精确 token 计算
 try:
     import tiktoken
+
     _HAS_TIKTOKEN = True
 except ImportError:
     _HAS_TIKTOKEN = False

@@ -23,6 +23,7 @@ from .learnings import LearningsMemory, LearningEntry
 # 可选：tiktoken 用于精确 token 计算
 try:
     import tiktoken
+
     _HAS_TIKTOKEN = True
 except ImportError:
     _HAS_TIKTOKEN = False
@@ -190,7 +191,9 @@ class MemoryManager:
             lines.append("## 最近项目")
             for p in projects:
                 prefs = self.long_term.get_project_prefs(p)
-                lines.append(f"- {prefs.name or p.name}: {prefs.framework or prefs.language}")
+                lines.append(
+                    f"- {prefs.name or p.name}: {prefs.framework or prefs.language}"
+                )
 
         # 用户偏好
         prefs = self.long_term.get_user_prefs()
@@ -211,7 +214,9 @@ class MemoryManager:
         if tokens > self.config.tier0_max_tokens:
             # 截断到 token 限制
             if self._enc:
-                truncated = self._enc.decode(self._enc.encode(summary)[: self.config.tier0_max_tokens])
+                truncated = self._enc.decode(
+                    self._enc.encode(summary)[: self.config.tier0_max_tokens]
+                )
                 return truncated
             return summary[: self.config.tier0_max_tokens * 4]
         return summary
@@ -250,5 +255,5 @@ class MemoryManager:
             if self._enc:
                 truncated = self._enc.decode(self._enc.encode(summary)[:max_tokens])
                 return truncated
-            return summary[:max_tokens * 4]
+            return summary[: max_tokens * 4]
         return summary
