@@ -99,7 +99,6 @@ class DingTalkNotificationChannel(NotificationChannel):
             return False
 
         try:
-
             # 钉钉签名
             if self.secret:
                 timestamp = str(round(time.time() * 1000))
@@ -160,7 +159,6 @@ class TelegramNotificationChannel(NotificationChannel):
             return False
 
         try:
-
             emoji = {"info": "ℹ️", "success": "✅", "warning": "⚠️", "error": "🚨"}.get(
                 level, "ℹ️"
             )
@@ -196,7 +194,6 @@ class DiscordNotificationChannel(NotificationChannel):
             return False
 
         try:
-
             color_map = {
                 "info": 3447003,  # 蓝色
                 "success": 3066993,  # 绿色
@@ -242,7 +239,6 @@ class SlackNotificationChannel(NotificationChannel):
             return False
 
         try:
-
             emoji = {
                 "info": ":information_source:",
                 "success": ":white_check_mark:",
@@ -300,7 +296,6 @@ class TeamsNotificationChannel(NotificationChannel):
             return False
 
         try:
-
             color_map = {
                 "info": "0078D4",
                 "success": "107C10",
@@ -372,7 +367,6 @@ class FeishuNotificationChannel(NotificationChannel):
             return False
 
         try:
-
             emoji = {"info": "ℹ️", "success": "✅", "warning": "⚠️", "error": "🚨"}.get(
                 level, "ℹ️"
             )
@@ -424,7 +418,6 @@ class WeComNotificationChannel(NotificationChannel):
             return False
 
         try:
-
             emoji = {"info": "ℹ️", "success": "✅", "warning": "⚠️", "error": "🚨"}.get(
                 level, "ℹ️"
             )
@@ -461,7 +454,6 @@ class PushPlusNotificationChannel(NotificationChannel):
             return False
 
         try:
-
             text = f"**{title}**\n\n{body}\n\n_{datetime.now().strftime('%H:%M:%S')}_"
             encoded = urllib.parse.urlencode(
                 {"token": self.token, "content": text, "type": "text"}

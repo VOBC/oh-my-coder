@@ -395,7 +395,7 @@ class WorkspaceScanner:
         else:
             body = str(summary_parts)
 
-        return f"""[{language or 'unknown'}] {path.name}
+        return f"""[{language or "unknown"}] {path.name}
 路径: {path.relative_to(self.root) if path.is_relative_to(self.root) else path}
 大小: {self._format_size(stat.st_size)}
 修改: {time.strftime("%Y-%m-%d %H:%M", time.localtime(stat.st_mtime))}
@@ -571,9 +571,9 @@ class WorkspaceScanner:
         elif size < 1024 * 1024:
             return f"{size / 1024:.1f}KB"
         elif size < 1024 * 1024 * 1024:
-            return f"{size / (1024*1024):.1f}MB"
+            return f"{size / (1024 * 1024):.1f}MB"
         else:
-            return f"{size / (1024*1024*1024):.1f}GB"
+            return f"{size / (1024 * 1024 * 1024):.1f}GB"
 
     def to_context_string(self, max_depth: int = 3) -> str:
         """

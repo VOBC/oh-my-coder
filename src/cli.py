@@ -511,7 +511,7 @@ def quest_list(
             q.id[:8],
             q.title[:35],
             f"[{color}]{q.status.value}[/{color}]",
-            f"{bar} {int(q.progress()*100)}%",
+            f"{bar} {int(q.progress() * 100)}%",
             f"{q.duration():.0f}s" if q.duration() else "—",
             q.created_at.strftime("%m-%d %H:%M"),
         )
@@ -554,7 +554,7 @@ def quest_status(
         f"[cyan]ID:[/cyan]     {quest.id}",
         f"[cyan]标题:[/cyan]   {quest.title}",
         f"[cyan]状态:[/cyan]   [{sc}]{quest.status.value}[/{sc}]",
-        f"[cyan]进度:[/cyan]   {int(quest.progress()*100)}%",
+        f"[cyan]进度:[/cyan]   {int(quest.progress() * 100)}%",
     ]
 
     if quest.duration():

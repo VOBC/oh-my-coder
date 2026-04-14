@@ -87,7 +87,8 @@ class TestToolCreate:
     def test_create_duplicate(self, tmp_sm):
         tmp_sm.tool_create(name="Dup", body="# Dup", category="workflow")
         result = tmp_sm.tool_create(name="Dup", body="# Dup", category="workflow")
-        assert "⚠️" in result
+        # 重复创建自动转为 patch，返回成功
+        assert "✅" in result
         assert "patch" in result
 
 

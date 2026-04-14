@@ -75,7 +75,7 @@ def security_check(
         else:
             console.print(
                 Panel.fit(
-                    f"[green]✅ 命令安全[/green]\n\n" f"命令: [cyan]{command}[/cyan]",
+                    f"[green]✅ 命令安全[/green]\n\n命令: [cyan]{command}[/cyan]",
                     title="🔒 安全检查",
                     border_style="green",
                 )

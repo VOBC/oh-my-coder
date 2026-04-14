@@ -234,28 +234,28 @@ class Orchestrator:
             )
         return self._checkpoint_manager
 
-    def get_skill_inventory(self, max_chars: int = 500) -> str:
+    def get_skill_inventory(self, max_tokens: int = 500) -> str:
         """
         获取所有 Skill 的名字+一句话描述。
         供 Tier 0 注入到 Agent 系统 Prompt 底部。
         """
-        return self.skill_manager.get_skill_inventory(max_chars=max_chars)
+        return self.skill_manager.get_skill_inventory(max_tokens=max_tokens)
 
-    def inject_skill_context(self, agent_class: str, max_chars: int = 500) -> str:
+    def inject_skill_context(self, agent_class: str, max_tokens: int = 500) -> str:
         """
         为指定 Agent 生成 Skill 上下文注入文本。
 
         追加到 agent.system_prompt 底部，实现 Tier 0 自动注入。
         """
-        inventory = self.get_skill_inventory(max_chars=max_chars)
+        inventory = self.get_skill_inventory(max_tokens=max_tokens)
         if not inventory or "(none)" in inventory:
             return ""
         return (
-            f"\n\n{'='*50}\n"
+            f"\n\n{'=' * 50}\n"
             f"## 📚 可用经验（来自历史沉淀）\n"
             f"{inventory}\n"
             f"如当前任务与上述经验相关，请优先参考或调用 skill-manage 工具。\n"
-            f"{'='*50}"
+            f"{'=' * 50}"
         )
 
     # ------------------------------------------------------------------

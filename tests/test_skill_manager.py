@@ -352,15 +352,16 @@ class TestBuildSkillFromExecution:
 class TestGetSkillInventory:
     def test_empty(self, sm):
         inv = sm.get_skill_inventory()
-        assert "0 Skills Available" in inv
+        assert "0 Skills" in inv
+        assert "(none)" in inv
 
     def test_with_skills(self, sm):
         sm.create(name="S1", body="# S1", category="debugging", description="desc1")
         sm.create(name="S2", body="# S2", category="workflow", description="desc2")
         inv = sm.get_skill_inventory()
-        assert "2 Skills Available" in inv
-        assert "s1" in inv or "S1" in inv
-        assert "desc1" in inv
+        assert "2 Skills" in inv
+        assert "s1: desc1" in inv
+        assert "s2: desc2" in inv
 
     def test_max_chars_truncation(self, sm):
         # 创建很多小 skill
@@ -371,6 +372,6 @@ class TestGetSkillInventory:
                 category="workflow",
                 description=f"description number {i}",
             )
-        inv = sm.get_skill_inventory(max_chars=300)
-        # 应该被截断
-        assert len(inv) <= 400
+        inv = sm.get_skill_inventory(max_tokens=50)  # 限制在 50 token
+        # 应该被截断（header + lines 不会超过太多）
+        assert len(inv) <= 300

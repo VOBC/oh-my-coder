@@ -277,7 +277,7 @@ def _get_mock_recent_tasks() -> List[RecentTask]:
 
 @router.get("/stats", response_model=DashboardStats)
 async def get_dashboard_stats(
-    days: int = Query(7, ge=1, le=30, description="统计周期（天）")
+    days: int = Query(7, ge=1, le=30, description="统计周期（天）"),
 ) -> DashboardStats:
     """
     获取仪表板统计数据

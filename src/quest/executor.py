@@ -304,7 +304,7 @@ class QuestExecutor:
 
         steps.append(
             QuestStep(
-                step_id=f"S{len(steps)+1}",
+                step_id=f"S{len(steps) + 1}",
                 title="代码审查",
                 description="进行代码审查和质量检查",
                 agent="code-reviewer",

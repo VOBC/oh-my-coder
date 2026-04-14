@@ -63,7 +63,7 @@ class Gene:
         valid_categories = {"coding", "review", "debug", "docs", "test"}
         if self.category and self.category not in valid_categories:
             errors.append(
-                f"无效 category '{self.category}'，" f"应为 {sorted(valid_categories)}"
+                f"无效 category '{self.category}'，应为 {sorted(valid_categories)}"
             )
         if not self.name:
             errors.append("name 不能为空")

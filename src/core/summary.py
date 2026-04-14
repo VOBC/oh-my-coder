@@ -396,7 +396,7 @@ h1 {{ color: #333; }}
 <body>
 <h1>📋 {summary.task}</h1>
 <p>工作流: <strong>{summary.workflow}</strong> |
-   状态: <span style="color:{status_color}">{'✅ 成功' if summary.success else '❌ 失败'}</span></p>
+   状态: <span style="color:{status_color}">{"✅ 成功" if summary.success else "❌ 失败"}</span></p>
 
 <div class="stat">⏱️ {summary.duration_seconds:.1f}s</div>
 <div class="stat">💰 ¥{summary.total_cost:.4f}</div>
@@ -411,8 +411,8 @@ h1 {{ color: #333; }}
         icon = "✅" if step["status"] == "completed" else "❌"
         f.write(
             f"""<div class="step {cls}">
-<strong>{icon} {step['agent']}</strong> ({step['duration']:.1f}s)<br>
-{step['result']}
+<strong>{icon} {step["agent"]}</strong> ({step["duration"]:.1f}s)<br>
+{step["result"]}
 </div>
 """
         )
@@ -459,7 +459,7 @@ def quick_summary(
     """
     completed = [
         {
-            "agent": f"Step{i+1}",
+            "agent": f"Step{i + 1}",
             "status": "completed",
             "duration": 0,
             "tokens": 0,

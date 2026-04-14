@@ -48,6 +48,13 @@ from typing import Any, Dict, List, Optional
 
 import yaml
 
+# 可选：tiktoken 用于精确 token 计算
+try:
+    import tiktoken
+    _HAS_TIKTOKEN = True
+except ImportError:
+    _HAS_TIKTOKEN = False
+
 
 class SkillManager:
     """Skill 文件管理器"""
@@ -480,7 +487,7 @@ class SkillManager:
         # 相关度排序：完全匹配 > 名称包含 > 描述包含
         def score(x: Dict[str, Any]) -> int:
             s = 0
-            full = f"{x.get('name','')} {x.get('description','')}".lower()
+            full = f"{x.get('name', '')} {x.get('description', '')}".lower()
             for term in query_terms:
                 if term in x.get("name", "").lower():
                     s += 3
@@ -518,37 +525,88 @@ class SkillManager:
                 return path
         return None
 
-    def get_skill_inventory(self, max_chars: int = 500) -> str:
+    def get_skill_inventory(self, max_tokens: int = 500) -> str:
         """
-        生成所有 Skill 的名字+一句话描述，供注入到系统 Prompt
+        生成 Tier 0 注入文本：Skill 名字 + 一句话描述。
+
+        严格限制输出不超过 max_tokens。
+        格式：[skill-name]: 描述（每行一个，不要 Markdown 列表）
 
         Args:
-            max_chars: 最大字符数（截断）
+            max_tokens: 最大 token 数（默认 500）
 
         Returns:
             形如 "skill_id: description\n..." 的字符串
         """
+        has_tiktoken = _HAS_TIKTOKEN
+
+        if has_tiktoken:
+            try:
+                enc = tiktoken.get_encoding("cl100k_base")
+            except Exception:
+                has_tiktoken = False
+
+        if not has_tiktoken:
+            # 回退：粗略估算 1 token ≈ 4 字符
+            max_chars = max_tokens * 4
+            return self._get_inventory_fallback(max_chars)
+
+        lines = []
+        total_tokens = 0
+
+        # 按 updated_at 排序，最新的优先
+        sorted_skills = sorted(
+            self._index.items(),
+            key=lambda x: x[1].get("updated_at", ""),
+            reverse=True,
+        )
+
+        for sid, info in sorted_skills:
+            # 每行格式：skill_id: description
+            line = f"{sid}: {info.get('description', '')}"
+            line_tokens = len(enc.encode(line))
+            newline_tokens = 1  # 换行符
+
+            if total_tokens + line_tokens + newline_tokens > max_tokens:
+                break
+
+            lines.append(line)
+            total_tokens += line_tokens + newline_tokens
+
+        count = len(self._index)
+        header = f"[{count} Skills]\n"
+
+        if lines:
+            result = header + "\n".join(lines)
+            if count > len(lines):
+                result += f"\n... (+{count - len(lines)} more)"
+            return result
+        return f"[{count} Skills] (none)"
+
+    def _get_inventory_fallback(self, max_chars: int) -> str:
+        """回退方案：按字符数截断"""
         lines = []
         total = 0
-        for sid, info in self._index.items():
-            line = f"- {sid}: {info.get('description', '')}"
+        sorted_skills = sorted(
+            self._index.items(),
+            key=lambda x: x[1].get("updated_at", ""),
+            reverse=True,
+        )
+        for sid, info in sorted_skills:
+            line = f"{sid}: {info.get('description', '')}"
             if total + len(line) + 1 > max_chars:
                 break
             lines.append(line)
             total += len(line) + 1
 
-        header = f"[{len(self._index)} Skills Available]\n"
+        count = len(self._index)
+        header = f"[{count} Skills]\n"
         if lines:
-            return (
-                header
-                + "\n".join(lines)
-                + (
-                    f"\n... (共 {len(self._index)} 个)"
-                    if len(self._index) > len(lines)
-                    else ""
-                )
-            )
-        return f"[{len(self._index)} Skills Available] (none)"
+            result = header + "\n".join(lines)
+            if count > len(lines):
+                result += f"\n... (+{count - len(lines)} more)"
+            return result
+        return f"[{count} Skills] (none)"
 
     # ------------------------------------------------------------------
     # 自动沉淀评估

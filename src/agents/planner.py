@@ -351,9 +351,9 @@ class PlannerAgent(BaseAgent):
             if isinstance(explore_result, dict):
                 parts.append(
                     f"""## 项目探索结果
-- 文件数量: {explore_result.get('files_count', 'N/A')}
-- 技术栈: {', '.join(explore_result.get('tech_stack', []))}
-- 项目结构: {explore_result.get('structure', 'N/A')}
+- 文件数量: {explore_result.get("files_count", "N/A")}
+- 技术栈: {", ".join(explore_result.get("tech_stack", []))}
+- 项目结构: {explore_result.get("structure", "N/A")}
 """
                 )
 
@@ -363,9 +363,9 @@ class PlannerAgent(BaseAgent):
             if isinstance(analyst_result, dict):
                 parts.append(
                     f"""## 需求分析结果
-- 实体: {', '.join(analyst_result.get('entities', []))}
-- 功能: {', '.join(analyst_result.get('features', []))}
-- 约束: {', '.join(analyst_result.get('constraints', []))}
+- 实体: {", ".join(analyst_result.get("entities", []))}
+- 功能: {", ".join(analyst_result.get("features", []))}
+- 约束: {", ".join(analyst_result.get("constraints", []))}
 """
                 )
 
@@ -570,7 +570,7 @@ class PlannerAgent(BaseAgent):
                 description="根据执行反馈新增的任务",
                 tasks=[
                     SubTask(
-                        id=f"N{i+1}",
+                        id=f"N{i + 1}",
                         title=req,
                         description=req,
                         agent="executor",

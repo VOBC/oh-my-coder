@@ -209,7 +209,7 @@ class QuestDisplay:
             title=quest.title[:45],
             status=quest.status,
             priority=quest.priority,
-            progress_bar=f"{bar} {int(quest.progress()*100)}%",
+            progress_bar=f"{bar} {int(quest.progress() * 100)}%",
             duration=duration_str,
             created_at=quest.created_at.strftime("%m-%d %H:%M"),
         )

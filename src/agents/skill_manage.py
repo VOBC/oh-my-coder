@@ -142,8 +142,8 @@ updated_at: 2026-04-12
         lines = []
         for s in skills:
             lines.append(
-                f"- **{s['skill_id']}** [{s.get('category','')}] "
-                f"{s.get('description','')} "
+                f"- **{s['skill_id']}** [{s.get('category', '')}] "
+                f"{s.get('description', '')} "
                 f"[{' / '.join(s.get('tags', [])[:3])}]"
             )
         return "\n".join(lines) or "（无结果）"
@@ -160,11 +160,11 @@ updated_at: 2026-04-12
 
         parts = [
             f"## {skill['name']} (`{skill['skill_id']}`)",
-            f"**分类**: {skill.get('category','')}",
-            f"**描述**: {skill.get('description','')}",
+            f"**分类**: {skill.get('category', '')}",
+            f"**描述**: {skill.get('description', '')}",
             f"**标签**: {', '.join(skill.get('tags', []))}",
             f"**触发词**: {', '.join(skill.get('triggers', []))}",
-            f"**创建**: {skill.get('created_at','')} | **更新**: {skill.get('updated_at','')}",
+            f"**创建**: {skill.get('created_at', '')} | **更新**: {skill.get('updated_at', '')}",
         ]
         if include_body and skill.get("body"):
             parts.append("\n---\n\n" + skill["body"])
@@ -180,7 +180,37 @@ updated_at: 2026-04-12
         tags: Optional[List[str]] = None,
         triggers: Optional[List[str]] = None,
     ) -> str:
-        """工具：创建新 Skill（确认不存在时用）"""
+        """
+        工具：创建新 Skill（自动 patch 优先）
+
+        先检查同名 Skill 是否存在：
+        - 已存在 → 自动改为 patch（增量更新）
+        - 不存在 → 创建新 Skill
+        """
+        skill_id = self.sm._slugify(name)
+
+        # 检查是否存在（patch 优先）
+        existing = self.sm.get_skill(skill_id)
+        if existing:
+            # 自动转为 patch
+            try:
+                result = self.sm.patch(
+                    skill_id=skill_id,
+                    body=body,
+                    description=description,
+                    tags=tags,
+                    triggers=triggers,
+                    name=name,
+                    category=category,
+                )
+                return (
+                    f"✅ Skill 已存在，自动转为 patch: `{skill_id}`\n"
+                    f"   描述: {result.get('description', '')}"
+                )
+            except Exception as e:
+                return f"❌ Patch 失败: {e}"
+
+        # 不存在，创建新 Skill
         try:
             result = self.sm.create(
                 name=name,
@@ -193,11 +223,6 @@ updated_at: 2026-04-12
             return (
                 f"✅ Skill 创建成功: `{result['skill_id']}`\n"
                 f"   路径: {self.sm.skills_dir}/{category}/{result['skill_id']}/SKILL.md"
-            )
-        except FileExistsError:
-            return (
-                f"⚠️ Skill 已存在，请用 patch 而非 create\n"
-                f"   skill_id: {self.sm._slugify(name)}"
             )
         except Exception as e:
             return f"❌ 创建失败: {e}"
@@ -227,7 +252,7 @@ updated_at: 2026-04-12
             action = "更新" if existed_before else "创建"
             return (
                 f"✅ Skill {action}: `{result['skill_id']}`\n"
-                f"   描述: {result.get('description','')}"
+                f"   描述: {result.get('description', '')}"
             )
         except Exception as e:
             return f"❌ 操作失败: {e}"
@@ -259,8 +284,8 @@ updated_at: 2026-04-12
         lines = [f"**{len(results)} 个结果** (for: {query}):\n"]
         for s in results:
             lines.append(
-                f"- **{s['skill_id']}** [{s.get('category','')}] "
-                f"{s.get('description','')}"
+                f"- **{s['skill_id']}** [{s.get('category', '')}] "
+                f"{s.get('description', '')}"
             )
         return "\n".join(lines)
 
