@@ -139,22 +139,22 @@ pip install -e .
 # DeepSeek（推荐，性价比高）
 export DEEPSEEK_API_KEY=your_key_here
 
-# 可选：其他模型
-export WENXIN_API_KEY=your_key           # 文心一言
-export WENXIN_SECRET_KEY=your_secret     # 文心一言（需要两个）
-export TONGYI_API_KEY=your_key           # 通义千问
+# 可选：其他模型（按生产就绪度排序）
+export MIMO_API_KEY=your_key             # 小米 MiMo
 export GLM_API_KEY=your_key              # 智谱 GLM
-export MINIMAX_API_KEY=your_key          # MiniMax
 export KIMI_API_KEY=your_key             # Kimi
-export HUNYUAN_API_KEY=your_key          # 腾讯混元
-export HUNYUAN_SECRET_KEY=your_secret    # 腾讯混元（需要两个）
 export DOUBAO_API_KEY=your_key           # 字节豆包
 export TIANGONG_API_KEY=your_key         # 天工AI
-export SPARK_API_KEY=your_key            # 讯飞星火（需同时配置 SPARK_APP_ID 和 SPARK_SECRET_KEY）
+export BAICHUAN_API_KEY=your_key         # 百川智能
+export TONGYI_API_KEY=your_key           # 通义千问（Beta：高并发偶发超时）
+export MINIMAX_API_KEY=your_key          # MiniMax（Beta：无函数调用）
+export SPARK_API_KEY=your_key            # 讯飞星火（Beta：需同时配置 SPARK_APP_ID 和 SPARK_SECRET_KEY）
 export SPARK_APP_ID=your_app_id          # 讯飞星火 APP ID
 export SPARK_SECRET_KEY=your_secret     # 讯飞星火 SECRET KEY
-export BAICHUAN_API_KEY=your_key         # 百川智能
-export MIMO_API_KEY=your_key             # 小米 MiMo
+export WENXIN_API_KEY=your_key           # 文心一言（待完善：需同时配置 WENXIN_SECRET_KEY）
+export WENXIN_SECRET_KEY=your_secret    # 文心一言 SECRET KEY
+export HUNYUAN_API_KEY=your_key          # 腾讯混元（待完善：需同时配置 HUNYUAN_SECRET_KEY）
+export HUNYUAN_SECRET_KEY=your_secret   # 腾讯混元 SECRET KEY
 ```
 
 <details>
@@ -943,17 +943,17 @@ oh-my-coder/
 │   ├── models/              # 模型适配层（12 个厂商）
 │   │   ├── base.py          # 统一接口
 │   │   ├── deepseek.py      # DeepSeek 适配器
-│   │   ├── wenxin.py        # 文心一言
-│   │   ├── tongyi.py        # 通义千问
+│   │   ├── mimo.py          # 小米 MiMo
 │   │   ├── glm.py           # 智谱 GLM
 │   │   ├── kimi.py          # Kimi
 │   │   ├── doubao.py        # 字节豆包
-│   │   ├── minimax.py       # MiniMax
-│   │   ├── hunyuan.py       # 腾讯混元
 │   │   ├── tiangong.py      # 天工AI
-│   │   ├── spark.py         # 讯飞星火
 │   │   ├── baichuan.py      # 百川智能
-│   │   └── mimo.py          # 小米 MiMo
+│   │   ├── tongyi.py        # 通义千问
+│   │   ├── minimax.py       # MiniMax
+│   │   ├── spark.py         # 讯飞星火
+│   │   ├── wenxin.py        # 文心一言
+│   │   └── hunyuan.py       # 腾讯混元
 │   ├── web/                 # 🌐 Web 界面
 │   │   ├── app.py           # FastAPI 应用 + SSE
 │   │   ├── templates/       # HTML 模板
@@ -1020,14 +1020,17 @@ pytest -m unit -v
 **Q: API Key 如何获取？**
 A: 请访问对应模型的官方网站注册账号后获取：
    - DeepSeek: https://platform.deepseek.com/
+   - 小米 MiMo: https://mimo.ai.utrain.cloud/
+   - 智谱 GLM: https://open.bigmodel.cn/
    - Kimi: https://platform.moonshot.cn/
    - 豆包: https://console.volcengine.com/
-   - 通义千问: https://dashscope.console.aliyun.com/
-   - 智谱 GLM: https://open.bigmodel.cn/
    - 天工AI: https://model-platform.tiangong.cn/
    - 百川智能: https://platform.baichuan-ai.com/
+   - 通义千问: https://dashscope.console.aliyun.com/
    - MiniMax: https://api.minimax.chat/
-   - 小米 MiMo: https://mimo.ai.utrain.cloud/
+   - 讯飞星火: https://xinghuo.xfyun.cn/
+   - 文心一言: https://console.bce.baidu.com/
+   - 腾讯混元: https://console.cloud.tencent.com/hunyuan
 
 **Q: 模型调用超时怎么办？**
 A: 可通过以下方式解决：
