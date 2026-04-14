@@ -61,6 +61,10 @@ nav:
     - guide/models.md
     - guide/agents.md
     - guide/workflows.md
+    - guide/gateway.md
+    - guide/memory-system.md
+    - guide/checkpoint.md
+    - guide/auto-skill.md
   - API:
     - api/cli.md
     - api/http-api.md

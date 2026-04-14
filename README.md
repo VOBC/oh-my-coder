@@ -27,6 +27,8 @@
 - [🤖 Agent 系统（30 个专业 Agent）](#-agent-系统30-个专业-agent)
 - [🧙 Quest Mode（异步自主编程）](#️-quest-mode异步自主编程)
 - [🧠 主动学习模块](#-主动学习模块)
+- [🧠 分层记忆系统](#-分层记忆系统)
+- [🌐 多平台 Gateway](#-多平台-gateway)
 - [🌐 工作目录上下文感知](#️-工作目录上下文感知)
 - [🧠 支持的模型](#-支持的模型)
 - [🔄 工作流](#-工作流)
@@ -705,6 +707,61 @@ results = sm.search("sql 慢查询")
 ```
 
 数据存储在 `~/.omc/` 目录。
+
+---
+
+## 🧠 分层记忆系统
+
+Oh My Coder 采用**分层有限记忆**架构，在不同上下文窗口限制下提供最优记忆注入。
+
+| 层级 | Token 限制 | 内容 | 用途 |
+|------|-----------|------|------|
+| **Tier 0** | < 500 | 核心记忆（最近项目、偏好、经验） | 系统 Prompt 注入 |
+| **Tier 1** | < 2000 | 精选记忆（项目详情、常用命令） | 上下文补充 |
+| **Tier 2** | 无限制 | 完整存档（所有项目、学习记录） | 搜索、导出 |
+
+```bash
+omc memory core       # Tier 0 核心记忆
+omc memory selected   # Tier 1 精选记忆
+omc memory archive    # Tier 2 完整存档
+omc memory search "FastAPI"  # 搜索记忆
+omc memory stats      # 记忆统计
+```
+
+📖 详见 [分层记忆系统文档](docs/guide/memory-system.md)
+
+---
+
+## 🌐 多平台 Gateway
+
+支持 Telegram / Discord 双向消息接入，统一消息格式，跨平台协作。
+
+```bash
+omc gateway list              # 列出支持的平台
+omc gateway test telegram     # 测试连接
+```
+
+| 平台 | 状态 | 环境变量 |
+|------|------|----------|
+| Telegram | ✅ | `TELEGRAM_BOT_TOKEN` |
+| Discord | ✅ | `DISCORD_BOT_TOKEN` |
+| WhatsApp | 🔜 | — |
+
+📖 详见 [Gateway 文档](docs/guide/gateway.md)
+
+---
+
+## ⚡ 模型切换 CLI
+
+一键切换默认模型，无需重启：
+
+```bash
+omc model list            # 列出所有 12 个支持的模型
+omc model current         # 显示当前模型
+omc model switch glm      # 切换到智谱 GLM
+```
+
+配置存储在 `~/.config/oh-my-coder/config.json`，环境变量 `OMC_DEFAULT_MODEL` 优先级更高。
 
 ---
 
