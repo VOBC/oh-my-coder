@@ -152,6 +152,7 @@ export DOUBAO_API_KEY=your_key           # 字节豆包
 export TIANGONG_API_KEY=your_key         # 天工AI
 export SPARK_API_KEY=your_key            # 讯飞星火（需同时配置 SPARK_APP_ID 和 SPARK_SECRET_KEY）
 export BAICHUAN_API_KEY=your_key         # 百川智能
+export MIMO_API_KEY=your_key             # 小米 MiMo
 ```
 
 <details>
@@ -949,7 +950,8 @@ oh-my-coder/
 │   │   ├── hunyuan.py       # 腾讯混元
 │   │   ├── tiangong.py      # 天工AI
 │   │   ├── spark.py         # 讯飞星火
-│   │   └── baichuan.py      # 百川智能
+│   │   ├── baichuan.py      # 百川智能
+│   │   └── mimo.py          # 小米 MiMo
 │   ├── web/                 # 🌐 Web 界面
 │   │   ├── app.py           # FastAPI 应用 + SSE
 │   │   ├── templates/       # HTML 模板
