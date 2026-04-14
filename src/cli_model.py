@@ -11,7 +11,6 @@ from __future__ import annotations
 import json
 import os
 from pathlib import Path
-from typing import Optional
 
 import typer
 from rich.console import Console
@@ -152,7 +151,7 @@ def switch_model(
     # 打印确认信息
     info = SUPPORTED_MODELS[model_name]
     console.print()
-    console.print(f"[bold green]✓ 模型切换成功[/]")
+    console.print("[bold green]✓ 模型切换成功[/]")
     console.print(f"  [dim]旧模型:[/] {old_model}")
     console.print(f"  [dim]新模型:[/] {info['name']} ({model_name})")
     console.print(f"  [dim]配置文件:[/] {CONFIG_FILE}")
