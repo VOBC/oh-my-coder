@@ -1228,3 +1228,4 @@ def _status_color(status: str) -> str:
 
 if __name__ == "__main__":
     app()
+    app()

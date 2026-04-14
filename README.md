@@ -9,6 +9,7 @@
 [![Stars](https://img.shields.io/github/stars/VOBC/oh-my-coder?style=flat-square&logo=github)](https://github.com/VOBC/oh-my-coder/stargazers)
 [![Last Commit](https://img.shields.io/github/last-commit/VOBC/oh-my-coder?style=flat-square&logo=github)](https://github.com/VOBC/oh-my-coder/commits)
 [![Issues](https://img.shields.io/github/issues/VOBC/oh-my-coder?style=flat-square&logo=github)](https://github.com/VOBC/oh-my-coder/issues)
+[![Install](https://img.shields.io/badge/install-one--click-brightgreen.svg)](https://github.com/VOBC/oh-my-coder#-一键安装)
 
 **灵感来源**: [oh-my-claudecode](https://github.com/Yeachan-Heo/oh-my-claudecode) (17.8k ⭐)
 
@@ -54,6 +55,8 @@
 
 Oh My Coder 是一个**多智能体协作编程系统**，通过多个专业 Agent 协作完成复杂开发任务。
 
+> 🚀 **推荐新手用户**：使用 [一键安装脚本](#-一键安装推荐) 快速开始，避免安装问题
+
 **核心优势：**
 - 🧠 **智能路由** - 根据任务类型自动选择合适模型，智能路由可优化 Token 消耗
 - 🔄 **协作模式** - 多个 Agent 分工协作，像真实团队一样工作
@@ -64,12 +67,47 @@ Oh My Coder 是一个**多智能体协作编程系统**，通过多个专业 Age
 
 ## 🚀 快速开始
 
-### 1. 安装依赖
+### 🎯 一键安装（推荐）
+
+最简单的方式是使用一键安装脚本：
 
 ```bash
+# 方法一：直接使用安装脚本
+curl -fsSL https://raw.githubusercontent.com/VOBC/oh-my-coder/main/install-fixed.sh | bash
+
+# 方法二：手动下载并安装
 git clone https://github.com/VOBC/oh-my-coder.git
 cd oh-my-coder
-pip install -r requirements.txt
+chmod +x install-fixed.sh
+./install-fixed.sh
+```
+
+**安装脚本会自动：**
+- ✅ 检查 Python 版本（需要 3.9+）
+- ✅ 安装 pip（如果缺失）
+- ✅ 创建虚拟环境
+- ✅ 安装所有依赖
+- ✅ 修复常见问题
+- ✅ 验证安装成功
+
+### 2. 传统安装方式
+
+如果遇到问题，可以使用传统方式：
+
+```bash
+# 克隆项目
+git clone https://github.com/VOBC/oh-my-coder.git
+cd oh-my-coder
+
+# 创建虚拟环境
+python3 -m venv .venv
+source .venv/bin/activate
+
+# 安装依赖
+pip install -e .
+
+# 验证安装
+omc --help
 ```
 
 ### 2. 配置 API Key
@@ -662,6 +700,42 @@ A: 设置对应模型的环境变量即可：
    ```bash
    export DEEPSEEK_API_KEY=your_key    # 默认使用
    export KIMI_API_KEY=your_key        # 备选模型
+   ```
+
+**Q: 安装失败怎么办？**
+A: 如果安装遇到问题，可以尝试以下方法：
+
+### 1. 使用修复脚本
+```bash
+# 进入项目目录
+cd oh-my-coder
+
+# 运行修复脚本
+./fix-install.sh
+```
+
+### 2. 手动修复
+```bash
+# 1. 重新创建虚拟环境
+rm -rf .venv
+python3 -m venv .venv
+source .venv/bin/activate
+
+# 2. 重新安装依赖
+pip install --upgrade pip
+pip install -e .
+
+# 3. 验证安装
+omc --help
+```
+
+### 3. 常见安装问题
+- **问题**：`TypeError: main() missing 1 required positional argument: 'ctx'`
+  **解决**：使用修复脚本重新安装
+- **问题**：虚拟环境不存在
+  **解决**：重新创建虚拟环境
+- **问题**：依赖包缺失
+  **解决**：重新安装项目依赖
    ```
    路由器会根据任务类型和成本自动选择最优模型。
 
