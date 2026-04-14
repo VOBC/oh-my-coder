@@ -151,6 +151,8 @@ export HUNYUAN_SECRET_KEY=your_secret    # 腾讯混元（需要两个）
 export DOUBAO_API_KEY=your_key           # 字节豆包
 export TIANGONG_API_KEY=your_key         # 天工AI
 export SPARK_API_KEY=your_key            # 讯飞星火（需同时配置 SPARK_APP_ID 和 SPARK_SECRET_KEY）
+export SPARK_APP_ID=your_app_id          # 讯飞星火 APP ID
+export SPARK_SECRET_KEY=your_secret     # 讯飞星火 SECRET KEY
 export BAICHUAN_API_KEY=your_key         # 百川智能
 export MIMO_API_KEY=your_key             # 小米 MiMo
 ```
