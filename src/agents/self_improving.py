@@ -257,6 +257,7 @@ class SelfImprovingAgent(BaseAgent):
         model_router=None,
         config: Optional[Dict[str, Any]] = None,
         store: Optional[LearningStore] = None,
+        skill_manager: Optional[Any] = None,
     ):
         super().__init__(model_router, config)
         db_path = Path.home() / ".omc" / "learning.db"
@@ -265,6 +266,8 @@ class SelfImprovingAgent(BaseAgent):
         from ..memory.learnings import LearningsMemory
 
         self._memory = LearningsMemory(Path.home() / ".omc")
+        # SkillManager 可选注入（测试时注入临时目录）
+        self._skill_manager: Optional[Any] = skill_manager
 
     @property
     def system_prompt(self) -> str:
@@ -458,6 +461,208 @@ class SelfImprovingAgent(BaseAgent):
             status=AgentStatus.SUCCESS,
             content=json.dumps(data, ensure_ascii=False, indent=2),
         )
+
+    def auto_create_skill(
+        self,
+        task_context: Dict[str, Any],
+    ) -> Optional[Dict[str, Any]]:
+        """
+        自动生成 Skill 文件。
+
+        从 task_context 提取：
+        - 任务类型（category）
+        - 关键步骤（key_steps）
+        - 重要判断（judgments）
+        - 潜在陷阱（gotchas）
+
+        满足以下任一条件才创建：
+        1. 工具调用 ≥5 次且成功
+        2. 错误 → 解决
+        3. 用户纠正
+        4. 非平凡工作流（多步骤）
+
+        Args:
+            task_context: 包含以下键的字典：
+                - agent_name: str
+                - task: str（任务描述）
+                - workflow: str（工作流名）
+                - result: str（最终结果摘要）
+                - steps: List[str]（步骤列表）
+                - error: Optional[str]（错误信息）
+                - had_fix: bool（是否从错误中恢复）
+                - had_user_correction: bool
+                - tool_call_count: int（工具调用次数）
+
+        Returns:
+            Skill 信息 dict；不满足条件返回 None
+        """
+        from ..memory.skill_manager import SkillManager
+
+        # ---- 评估是否值得沉淀 ----
+        tool_call_count = task_context.get("tool_call_count", 0)
+        had_error = bool(task_context.get("error"))
+        had_fix = task_context.get("had_fix", False)
+        had_user_correction = task_context.get("had_user_correction", False)
+        is_nontrivial = len(task_context.get("steps", [])) >= 3
+
+        if not SkillManager.evaluate_skill_worthy(
+            tool_call_count=tool_call_count,
+            had_error=had_error,
+            had_fix=had_fix,
+            had_user_correction=had_user_correction,
+            is_nontrivial_workflow=is_nontrivial,
+        ):
+            return None
+
+        # ---- 生成 Skill 内容 ----
+        agent_name = task_context.get("agent_name", "unknown")
+        task = task_context.get("task", "")
+        workflow = task_context.get("workflow", "general")
+        result_summary = task_context.get("result", "")[:300]
+        steps = task_context.get("steps", [])
+        error_msg = task_context.get("error", "")
+        judgments = task_context.get("judgments", [])
+        gotchas = task_context.get("gotchas", [])
+
+        # 判断 category
+        if error_msg:
+            category = "debugging"
+        elif had_user_correction:
+            category = "corrections"
+        elif workflow in {"build", "refactor", "test", "doc"}:
+            category = "workflow"
+        else:
+            category = "best-practices"
+
+        # 生成 skill_id（避免重复）
+        skill_id = SkillManager._slugify(f"{workflow}-{agent_name}-{task[:20]}")
+        if len(skill_id) > 40:
+            skill_id = skill_id[:40]
+
+        # 提取 triggers
+        triggers = []
+        skip_words = {
+            "the",
+            "and",
+            "for",
+            "with",
+            "from",
+            "this",
+            "that",
+            "into",
+            "your",
+            "some",
+            "any",
+            "all",
+            "but",
+            "not",
+            "are",
+            "was",
+            "were",
+            "been",
+            "have",
+            "has",
+            "had",
+            "will",
+            "would",
+        }
+        for word in task.split():
+            w = word.strip(".,!?;:()[]{}").lower()
+            if len(w) >= 3 and w not in skip_words:
+                triggers.append(w)
+
+        # 生成 tags
+        tags = list({workflow, agent_name})
+        tags.extend(triggers[:3])
+
+        # ---- 构建 body ----
+        body_lines = [
+            f"# {workflow.title()} with {agent_name.title()}",
+            "",
+            f"**任务**: {task}",
+            f"**工作流**: {workflow}",
+            f"**Agent**: {agent_name}",
+            "",
+        ]
+
+        # 关键步骤
+        if steps:
+            body_lines.append("## 关键步骤")
+            for i, step in enumerate(steps, 1):
+                body_lines.append(f"{i}. {step}")
+            body_lines.append("")
+
+        # 重要判断
+        if judgments:
+            body_lines.append("## 重要判断")
+            for j in judgments:
+                body_lines.append(f"- {j}")
+            body_lines.append("")
+
+        # 执行结果
+        body_lines.append("## 执行结果")
+        body_lines.append(result_summary if result_summary else "（无）")
+        body_lines.append("")
+
+        # 错误处理
+        if error_msg:
+            body_lines.append("## 错误处理")
+            body_lines.append(error_msg[:200])
+            body_lines.append("")
+
+        # 潜在陷阱
+        if gotchas:
+            body_lines.append("## 潜在陷阱")
+            for g in gotchas:
+                body_lines.append(f"- ⚠️ {g}")
+            body_lines.append("")
+
+        # 适用条件
+        body_lines.append("## 适用条件")
+        body_lines.append(f"- 任务类型: {workflow}")
+        if triggers:
+            body_lines.append(f"- 触发词: {', '.join(triggers[:5])}")
+
+        body = "\n".join(body_lines)
+        description = task[:120].strip()
+
+        # ---- 写入 Skill 文件（patch 优先）----
+        sm = self._skill_manager or SkillManager()
+        try:
+            skill_info = sm.patch(
+                skill_id=skill_id,
+                body=body,
+                category=category,
+                description=description,
+                tags=tags,
+                triggers=triggers[:5],
+            )
+        except Exception:
+            try:
+                skill_info = sm.create(
+                    name=skill_id,
+                    body=body,
+                    category=category,
+                    description=description,
+                    tags=tags,
+                    triggers=triggers[:5],
+                )
+            except Exception:
+                return None
+
+        # ---- 同时记录到 LearningsMemory ----
+        try:
+            self._memory.add(
+                title=f"[Auto] {workflow}: {task[:40]}",
+                content=body,
+                category="best-practice",
+                tags=tags,
+                context=", ".join(triggers[:3]),
+            )
+        except Exception:
+            pass  # 不影响主流程
+
+        return skill_info
 
     def promote_best_practices_to_skills(
         self,

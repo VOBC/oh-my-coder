@@ -320,7 +320,7 @@ class Orchestrator:
             tool_call_count = len(result.steps_completed)
 
         had_error = result.status == WorkflowStatus.FAILED
-        had_fix = had_error and False  # 无法从 WorkflowResult 直接判断，需外部注入
+        had_fix = context.get("_had_fix", False)
         had_user_correction = context.get("_had_user_correction", False)
         is_nontrivial = len(result.steps_completed) >= 3
 
@@ -339,33 +339,31 @@ class Orchestrator:
             last = list(result.outputs.values())[-1]
             final_result = getattr(last, "result", "")[:300] or str(last)[:300]
 
-        draft = SkillManager.build_skill_from_execution(
-            agent_name=(
+        # 构建 task_context 供 auto_create_skill 使用
+        task_context = {
+            "agent_name": (
                 result.steps_completed[-1] if result.steps_completed else "orchestrator"
             ),
-            task_description=context.get("task", ""),
-            workflow_name=workflow_name,
-            final_result=final_result,
-            key_steps=result.steps_completed,
-            error_context=str(result.error) if result.error else None,
-        )
+            "task": context.get("task", ""),
+            "workflow": workflow_name,
+            "result": final_result,
+            "steps": result.steps_completed,
+            "error": str(result.error) if result.error else None,
+            "had_fix": context.get("_had_fix", False),
+            "had_user_correction": context.get("_had_user_correction", False),
+            "tool_call_count": tool_call_count,
+            "judgments": context.get("_judgments", []),
+            "gotchas": context.get("_gotchas", []),
+        }
 
-        # 自动创建（patch 优先）
+        # 通过 SelfImprovingAgent.auto_create_skill 完成沉淀
+        from ..agents.self_improving import SelfImprovingAgent
+
         try:
-            self.skill_manager.patch(
-                skill_id=draft["name"],
-                body=draft["body"],
-                category=draft["category"],
-                description=draft["description"],
-                tags=draft["tags"],
-                triggers=draft["triggers"],
-            )
+            sia = SelfImprovingAgent(skill_manager=self.skill_manager)
+            sia.auto_create_skill(task_context)
         except Exception:
-            # 兜底 create
-            try:
-                self.skill_manager.create(**draft)
-            except Exception:
-                pass  # 静默失败，不阻塞工作流
+            pass  # 静默，不阻塞工作流
 
     # ------------------------------------------------------------------
     # 上下文构建
