@@ -70,6 +70,8 @@ omc run "你好，介绍一下你自己"
 | `claude code debug` | `omc run` + `--workflow debug` | `omc run "调试这个错误" --workflow debug --file buggy.py` |
 | `claude code review` | `omc run` + `--workflow review` | `omc run "审查代码质量" --workflow review --file api.py` |
 | `claude code test` | `omc run` + `--workflow test` | `omc run "生成单元测试" --workflow test --file service.py` |
+| `claude code autopilot` | `omc run` + `--workflow autopilot` | `omc run "自动完成这个功能" --workflow autopilot` |
+| `claude code pair` | `omc run` + `--workflow pair` | `omc run "结对编程实现登录功能" --workflow pair` |
 
 ## 🧠 智谱 GLM 搬家计划对接
 
@@ -184,6 +186,53 @@ omc run "调试 buggy.py 中的 TypeError" --workflow debug --file buggy.py
 - **Discussions**: https://github.com/VOBC/oh-my-coder/discussions
 - **文档**: https://github.com/VOBC/oh-my-coder#readme
 
+## 🛠️ 故障排除
+
+### 问题1: `omc config set` 命令不生效
+**症状**: 配置了API Key但运行任务时提示"未配置模型"
+**解决**:
+```bash
+# 方法1: 检查配置是否保存
+omc config show
+
+# 方法2: 直接设置环境变量
+export GLM_API_KEY="free"
+omc run "测试"  # 临时生效
+
+# 方法3: 编辑 .env 文件
+echo 'GLM_API_KEY=free' >> .env
+```
+
+### 问题2: 安装失败（pip install oh-my-coder 报错）
+**解决**:
+```bash
+# 方法1: 使用国内镜像
+pip install oh-my-coder -i https://pypi.tuna.tsinghua.edu.cn/simple
+
+# 方法2: 源码安装（推荐）
+git clone https://github.com/VOBC/oh-my-coder.git
+cd oh-my-coder
+pip install -e .
+```
+
+### 问题3: 运行速度慢
+**解决**:
+```bash
+# 使用更快的模型（DeepSeek响应最快）
+omc config set -k DEFAULT_MODEL -v "deepseek"
+
+# 或者指定模型运行
+omc run "任务" --model deepseek
+```
+
+### 问题4: 中文支持问题
+**解决**:
+```bash
+# 使用中文优化模型（GLM/通义千问）
+omc config set -k DEFAULT_MODEL -v "glm"
+omc run "任务" --model qwen
+```
+
 ## 📈 性能对比
 
 根据用户反馈，oh-my-coder + GLM-4.7-Flash 在以下场景表现优秀：
@@ -209,7 +258,7 @@ omc run "调试 buggy.py 中的 TypeError" --workflow debug --file buggy.py
 - **oh-my-coder GitHub**: https://github.com/VOBC/oh-my-coder
 - **智谱 AI 开放平台**: https://open.bigmodel.cn/
 - **Claude 封号新闻**: [难搞!Claude开始搞AI实名制了,国内用户可咋办](https://new.qq.com/rain/a/20260415A06C6F00)
-- **智谱搬家计划**: [智谱推出Claude用户特别搬家计划](https://new.qq.com/rain/a/20250905A06C6F00)
+- **智谱搬家计划**: [智谱AI开放平台](https://open.bigmodel.cn/) - 查看"Claude用户特别搬家计划"公告
 
 ---
 

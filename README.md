@@ -168,7 +168,7 @@ omc run "解释这段代码" --workflow explore --file main.py
 omc config set -k GLM_API_KEY -v "你的智谱 API Key"
 ```
 
-**详细迁移指南**：👉 [docs/guide/claude-migration.md](docs/guide/claude-migration.md)
+**详细迁移指南**：👉 [docs/guide/claude-migration.md](docs/guide/claude-migration.md)（包含故障排除和常见问题）
 
 ---
 
