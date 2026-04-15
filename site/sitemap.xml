@@ -2,110 +2,126 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
          <loc>https://vobc.github.io/oh-my-coder/</loc>
-         <lastmod>2026-04-13</lastmod>
+         <lastmod>2026-04-14</lastmod>
     </url>
     <url>
          <loc>https://vobc.github.io/oh-my-coder/API/</loc>
-         <lastmod>2026-04-13</lastmod>
+         <lastmod>2026-04-14</lastmod>
     </url>
     <url>
          <loc>https://vobc.github.io/oh-my-coder/ARCHITECTURE/</loc>
-         <lastmod>2026-04-13</lastmod>
+         <lastmod>2026-04-14</lastmod>
     </url>
     <url>
          <loc>https://vobc.github.io/oh-my-coder/DEMO_SCRIPT/</loc>
-         <lastmod>2026-04-13</lastmod>
+         <lastmod>2026-04-14</lastmod>
     </url>
     <url>
          <loc>https://vobc.github.io/oh-my-coder/DEPLOYMENT/</loc>
-         <lastmod>2026-04-13</lastmod>
+         <lastmod>2026-04-14</lastmod>
     </url>
     <url>
          <loc>https://vobc.github.io/oh-my-coder/FAQ/</loc>
-         <lastmod>2026-04-13</lastmod>
+         <lastmod>2026-04-14</lastmod>
     </url>
     <url>
          <loc>https://vobc.github.io/oh-my-coder/ORIGINAL_ARCHITECTURE/</loc>
-         <lastmod>2026-04-13</lastmod>
+         <lastmod>2026-04-14</lastmod>
     </url>
     <url>
          <loc>https://vobc.github.io/oh-my-coder/QUICKSTART/</loc>
-         <lastmod>2026-04-13</lastmod>
+         <lastmod>2026-04-14</lastmod>
     </url>
     <url>
          <loc>https://vobc.github.io/oh-my-coder/team-collaboration/</loc>
-         <lastmod>2026-04-13</lastmod>
+         <lastmod>2026-04-14</lastmod>
     </url>
     <url>
          <loc>https://vobc.github.io/oh-my-coder/api/cli/</loc>
-         <lastmod>2026-04-13</lastmod>
+         <lastmod>2026-04-14</lastmod>
     </url>
     <url>
          <loc>https://vobc.github.io/oh-my-coder/api/http-api/</loc>
-         <lastmod>2026-04-13</lastmod>
+         <lastmod>2026-04-14</lastmod>
     </url>
     <url>
          <loc>https://vobc.github.io/oh-my-coder/features/capability-pack/</loc>
-         <lastmod>2026-04-13</lastmod>
+         <lastmod>2026-04-14</lastmod>
     </url>
     <url>
          <loc>https://vobc.github.io/oh-my-coder/features/checkpoint/</loc>
-         <lastmod>2026-04-13</lastmod>
+         <lastmod>2026-04-14</lastmod>
     </url>
     <url>
          <loc>https://vobc.github.io/oh-my-coder/features/mcp-server/</loc>
-         <lastmod>2026-04-13</lastmod>
+         <lastmod>2026-04-14</lastmod>
     </url>
     <url>
          <loc>https://vobc.github.io/oh-my-coder/guide/agents/</loc>
-         <lastmod>2026-04-13</lastmod>
+         <lastmod>2026-04-14</lastmod>
+    </url>
+    <url>
+         <loc>https://vobc.github.io/oh-my-coder/guide/auto-skill/</loc>
+         <lastmod>2026-04-14</lastmod>
+    </url>
+    <url>
+         <loc>https://vobc.github.io/oh-my-coder/guide/checkpoint/</loc>
+         <lastmod>2026-04-14</lastmod>
+    </url>
+    <url>
+         <loc>https://vobc.github.io/oh-my-coder/guide/gateway/</loc>
+         <lastmod>2026-04-14</lastmod>
     </url>
     <url>
          <loc>https://vobc.github.io/oh-my-coder/guide/install/</loc>
-         <lastmod>2026-04-13</lastmod>
+         <lastmod>2026-04-14</lastmod>
+    </url>
+    <url>
+         <loc>https://vobc.github.io/oh-my-coder/guide/memory-system/</loc>
+         <lastmod>2026-04-14</lastmod>
     </url>
     <url>
          <loc>https://vobc.github.io/oh-my-coder/guide/models/</loc>
-         <lastmod>2026-04-13</lastmod>
+         <lastmod>2026-04-14</lastmod>
     </url>
     <url>
          <loc>https://vobc.github.io/oh-my-coder/guide/quick-start/</loc>
-         <lastmod>2026-04-13</lastmod>
+         <lastmod>2026-04-14</lastmod>
     </url>
     <url>
          <loc>https://vobc.github.io/oh-my-coder/guide/workflows/</loc>
-         <lastmod>2026-04-13</lastmod>
+         <lastmod>2026-04-14</lastmod>
     </url>
     <url>
          <loc>https://vobc.github.io/oh-my-coder/screenshots/</loc>
-         <lastmod>2026-04-13</lastmod>
+         <lastmod>2026-04-14</lastmod>
     </url>
     <url>
          <loc>https://vobc.github.io/oh-my-coder/screenshots/workflow-comparison/</loc>
-         <lastmod>2026-04-13</lastmod>
+         <lastmod>2026-04-14</lastmod>
     </url>
     <url>
          <loc>https://vobc.github.io/oh-my-coder/zh/</loc>
-         <lastmod>2026-04-13</lastmod>
+         <lastmod>2026-04-14</lastmod>
     </url>
     <url>
          <loc>https://vobc.github.io/oh-my-coder/zh/getting-started/</loc>
-         <lastmod>2026-04-13</lastmod>
+         <lastmod>2026-04-14</lastmod>
     </url>
     <url>
          <loc>https://vobc.github.io/oh-my-coder/zh/tutorials/</loc>
-         <lastmod>2026-04-13</lastmod>
+         <lastmod>2026-04-14</lastmod>
     </url>
     <url>
          <loc>https://vobc.github.io/oh-my-coder/zh/tutorials/code-review/</loc>
-         <lastmod>2026-04-13</lastmod>
+         <lastmod>2026-04-14</lastmod>
     </url>
     <url>
          <loc>https://vobc.github.io/oh-my-coder/zh/tutorials/flask-restructure/</loc>
-         <lastmod>2026-04-13</lastmod>
+         <lastmod>2026-04-14</lastmod>
     </url>
     <url>
          <loc>https://vobc.github.io/oh-my-coder/zh/tutorials/open-source-test/</loc>
-         <lastmod>2026-04-13</lastmod>
+         <lastmod>2026-04-14</lastmod>
     </url>
 </urlset>

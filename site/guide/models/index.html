@@ -471,10 +471,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#11" class="md-nav__link">
+  <a href="#12" class="md-nav__link">
     <span class="md-ellipsis">
       
-        支持的模型（11 家国内模型）
+        支持的模型（12 家国内模型）
       
     </span>
   </a>
@@ -577,6 +577,118 @@
     
   
     工作流
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../gateway/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    多平台消息网关
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../memory-system/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    分层记忆系统
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../checkpoint/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Checkpoint &amp; Rollback
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../auto-skill/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    自动生成 Skills
   
 
     
@@ -1031,10 +1143,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#11" class="md-nav__link">
+  <a href="#12" class="md-nav__link">
     <span class="md-ellipsis">
       
-        支持的模型（11 家国内模型）
+        支持的模型（12 家国内模型）
       
     </span>
   </a>
@@ -1119,7 +1231,7 @@
 
 
 <h1 id="_1">模型配置</h1>
-<h2 id="11">支持的模型（11 家国内模型）</h2>
+<h2 id="12">支持的模型（12 家国内模型）</h2>
 <table>
 <thead>
 <tr>
@@ -1132,57 +1244,62 @@
 <tr>
 <td><strong>DeepSeek</strong></td>
 <td><code>DEEPSEEK_API_KEY</code></td>
-<td>性价比最高，推荐</td>
+<td>⭐ 免费额度，性价比最高，推荐</td>
+</tr>
+<tr>
+<td><strong>MiMo</strong></td>
+<td><code>MIMOAPIKEY</code></td>
+<td>小米 MiMo，mimo-v2-flash <strong>免费</strong>，1M 上下文</td>
 </tr>
 <tr>
 <td><strong>智谱 GLM</strong></td>
 <td><code>GLM_API_KEY</code></td>
-<td>GLM-4-Flash <strong>永久免费</strong></td>
-</tr>
-<tr>
-<td><strong>文心一言</strong></td>
-<td><code>WENXIN_API_KEY</code> + <code>WENXIN_SECRET_KEY</code></td>
-<td>百度云</td>
-</tr>
-<tr>
-<td><strong>通义千问</strong></td>
-<td><code>TONGYI_API_KEY</code></td>
-<td>阿里云</td>
+<td>GLM-4-Flash <strong>永久免费</strong>，函数调用支持</td>
 </tr>
 <tr>
 <td><strong>Kimi</strong></td>
 <td><code>KIMI_API_KEY</code></td>
-<td>月之暗面</td>
-</tr>
-<tr>
-<td><strong>混元</strong></td>
-<td><code>HUNYUAN_API_KEY</code> + <code>HUNYUAN_SECRET_KEY</code></td>
-<td>腾讯云</td>
+<td>月之暗面，128K 超长上下文</td>
 </tr>
 <tr>
 <td><strong>豆包</strong></td>
 <td><code>DOUBAO_API_KEY</code></td>
-<td>字节跳动</td>
+<td>字节跳动，响应速度快</td>
 </tr>
 <tr>
 <td><strong>天工</strong></td>
 <td><code>TIANGONG_API_KEY</code></td>
-<td>昆仑万维</td>
-</tr>
-<tr>
-<td><strong>讯飞星火</strong></td>
-<td><code>SPARK_API_KEY</code> + <code>SPARK_SECRET_KEY</code> + <code>SPARK_APP_ID</code></td>
-<td>科大讯飞</td>
+<td>昆仑万维，中文理解强</td>
 </tr>
 <tr>
 <td><strong>百川</strong></td>
 <td><code>BAICHUAN_API_KEY</code></td>
-<td>百川智能</td>
+<td>百川智能，中文能力出色</td>
 </tr>
 <tr>
-<td><strong>GLM（自定义）</strong></td>
-<td><code>GLM_API_KEY</code> + <code>GLM_API_BASE</code></td>
-<td>支持私有部署</td>
+<td><strong>通义千问</strong></td>
+<td><code>TONGYI_API_KEY</code></td>
+<td>阿里云（Beta：高并发偶发超时）</td>
+</tr>
+<tr>
+<td><strong>MiniMax</strong></td>
+<td><code>MINIMAX_API_KEY</code></td>
+<td>中文理解强（Beta：无函数调用）</td>
+</tr>
+<tr>
+<td><strong>讯飞星火</strong></td>
+<td><code>SPARK_API_KEY</code> + <code>SPARK_SECRET_KEY</code> + <code>SPARK_APP_ID</code></td>
+<td>科大讯飞（待完善：认证复杂）</td>
+</tr>
+<tr>
+<td><strong>文心一言</strong></td>
+<td><code>WENXIN_API_KEY</code> + <code>WENXIN_SECRET_KEY</code></td>
+<td>百度云（待完善：需双 Key）</td>
+</tr>
+<tr>
+<td><strong>混元</strong></td>
+<td><code>HUNYUAN_API_KEY</code> + <code>HUNYUAN_SECRET_KEY</code></td>
+<td>腾讯云（待完善：需双 Key）</td>
 </tr>
 </tbody>
 </table>
