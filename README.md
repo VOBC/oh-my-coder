@@ -751,7 +751,7 @@ omc memory stats      # 记忆统计
 
 ## 🌐 多平台 Gateway
 
-支持 Telegram / Discord 双向消息接入，统一消息格式，跨平台协作。
+支持 Telegram / Discord / WhatsApp / 飞书 / 企业微信 / 钉钉 / Slack 双向消息接入，统一消息格式，跨平台协作。
 
 ```bash
 omc gateway list              # 列出支持的平台
@@ -762,7 +762,11 @@ omc gateway test telegram     # 测试连接
 |------|------|----------|
 | Telegram | ✅ | `TELEGRAM_BOT_TOKEN` |
 | Discord | ✅ | `DISCORD_BOT_TOKEN` |
-| WhatsApp | 🔜 | — |
+| WhatsApp | ✅ | `WHATSAPP_*` |
+| 飞书 / Lark | ✅ | `FEISHU_*` |
+| 企业微信 | ✅ | `WECOM_*` |
+| 钉钉 | ✅ | `DINGTALK_*` |
+| Slack | ✅ | `SLACK_*` |
 
 📖 详见 [Gateway 文档](docs/guide/gateway.md)
 
