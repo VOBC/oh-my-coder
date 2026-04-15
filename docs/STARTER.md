@@ -80,6 +80,12 @@ omc --version
 
 ---
 
+## 工作流预览
+
+![AI Programming Workflow](docs/screenshots/demo-workflow.png)
+
+---
+
 ## 实操案例 1：写一个小工具
 
 **目标**：让 AI 帮你写一个文件批量重命名工具。
