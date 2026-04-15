@@ -261,8 +261,9 @@ python -m src.cli context browser
 # 查看当前配置
 python -m src.cli config show
 
-# 设置 API Key
-python -m src.cli config set deepseek.api_key <your-key>
+# 设置 API Key（使用 -k 参数指定变量名，-v 指定值）
+python -m src.cli config set -k DEEPSEEK_API_KEY -v <your-key>
+python -m src.cli config set -k GLM_API_KEY -v <your-key>
 
 # 列出可用模型
 python -m src.cli config list-models
