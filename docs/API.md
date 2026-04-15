@@ -1,6 +1,6 @@
 # API 文档
 
-> Oh My Coder v0.2.0 - 完整 API 参考手册
+> Oh My Coder v1.0.0 - 完整 API 参考手册
 
 ---
 
