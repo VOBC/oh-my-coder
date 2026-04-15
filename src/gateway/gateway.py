@@ -64,6 +64,24 @@ class Gateway:
         orchestrator: Any = None,
         telegram_token: Optional[str] = None,
         discord_token: Optional[str] = None,
+        whatsapp_phone_number_id: Optional[str] = None,
+        whatsapp_access_token: Optional[str] = None,
+        whatsapp_webhook_url: Optional[str] = None,
+        whatsapp_verify_token: Optional[str] = None,
+        feishu_app_id: Optional[str] = None,
+        feishu_app_secret: Optional[str] = None,
+        feishu_encrypt_key: Optional[str] = None,
+        wecom_corp_id: Optional[str] = None,
+        wecom_agent_id: Optional[str] = None,
+        wecom_corp_secret: Optional[str] = None,
+        wecom_token: Optional[str] = None,
+        wecom_encoding_aes_key: Optional[str] = None,
+        dingtalk_app_key: Optional[str] = None,
+        dingtalk_app_secret: Optional[str] = None,
+        dingtalk_token: Optional[str] = None,
+        dingtalk_aes_key: Optional[str] = None,
+        slack_bot_token: Optional[str] = None,
+        slack_signing_secret: Optional[str] = None,
         allowed_user_ids: Optional[Dict[Platform, List[str]]] = None,
         plugins_dir: Optional[Path] = None,
     ):
@@ -103,6 +121,62 @@ class Gateway:
                 platform=Platform.DISCORD, on_message=self._noop_handler
             )
 
+        # ---- WhatsApp ----
+        if whatsapp_phone_number_id and whatsapp_access_token:
+            self._register_whatsapp(
+                whatsapp_phone_number_id,
+                whatsapp_access_token,
+                whatsapp_webhook_url or "",
+                whatsapp_verify_token,
+            )
+        else:
+            self._handlers[Platform.WHATSAPP] = NoopHandler(
+                platform=Platform.WHATSAPP, on_message=self._noop_handler
+            )
+
+        # ---- 飞书 ----
+        if feishu_app_id and feishu_app_secret:
+            self._register_feishu(feishu_app_id, feishu_app_secret, feishu_encrypt_key)
+        else:
+            self._handlers[Platform.FEISHU] = NoopHandler(
+                platform=Platform.FEISHU, on_message=self._noop_handler
+            )
+
+        # ---- 企业微信 ----
+        if wecom_corp_id and wecom_agent_id and wecom_corp_secret:
+            self._register_wecom(
+                wecom_corp_id,
+                wecom_agent_id,
+                wecom_corp_secret,
+                wecom_token,
+                wecom_encoding_aes_key,
+            )
+        else:
+            self._handlers[Platform.WECOM] = NoopHandler(
+                platform=Platform.WECOM, on_message=self._noop_handler
+            )
+
+        # ---- 钉钉 ----
+        if dingtalk_app_key and dingtalk_app_secret:
+            self._register_dingtalk(
+                dingtalk_app_key,
+                dingtalk_app_secret,
+                dingtalk_token,
+                dingtalk_aes_key,
+            )
+        else:
+            self._handlers[Platform.DINGTALK] = NoopHandler(
+                platform=Platform.DINGTALK, on_message=self._noop_handler
+            )
+
+        # ---- Slack ----
+        if slack_bot_token and slack_signing_secret:
+            self._register_slack(slack_bot_token, slack_signing_secret)
+        else:
+            self._handlers[Platform.SLACK] = NoopHandler(
+                platform=Platform.SLACK, on_message=self._noop_handler
+            )
+
     # ---- 平台注册 ----
 
     def _register_telegram(self, token: str, allowed_user_ids: List[str]) -> None:
@@ -135,6 +209,110 @@ class Gateway:
         )
         logger.info("[gateway] Discord handler registered")
 
+    def _register_whatsapp(
+        self,
+        phone_number_id: str,
+        access_token: str,
+        webhook_url: str,
+        verify_token: Optional[str],
+    ) -> None:
+        from .platforms.whatsapp import WhatsAppHandler, check_whatsapp_dependencies
+
+        if not check_whatsapp_dependencies():
+            logger.warning("[gateway] WhatsApp 依赖缺失，跳过注册")
+            return
+
+        self._handlers[Platform.WHATSAPP] = WhatsAppHandler(
+            phone_number_id=phone_number_id,
+            access_token=access_token,
+            webhook_url=webhook_url,
+            verify_token=verify_token,
+            on_message=self.on_platform_message,
+            on_error=lambda e: logger.error(f"[gateway/whatsapp] {e}"),
+        )
+        logger.info("[gateway] WhatsApp handler registered")
+
+    def _register_feishu(
+        self, app_id: str, app_secret: str, encrypt_key: Optional[str]
+    ) -> None:
+        from .platforms.feishu import FeishuHandler, check_feishu_dependencies
+
+        if not check_feishu_dependencies():
+            logger.warning("[gateway] 飞书依赖缺失，跳过注册")
+            return
+
+        self._handlers[Platform.FEISHU] = FeishuHandler(
+            app_id=app_id,
+            app_secret=app_secret,
+            encrypt_key=encrypt_key,
+            on_message=self.on_platform_message,
+            on_error=lambda e: logger.error(f"[gateway/feishu] {e}"),
+        )
+        logger.info("[gateway] 飞书 handler registered")
+
+    def _register_wecom(
+        self,
+        corp_id: str,
+        agent_id: str,
+        corp_secret: str,
+        token: Optional[str],
+        encoding_aes_key: Optional[str],
+    ) -> None:
+        from .platforms.wecom import WeComHandler, check_wecom_dependencies
+
+        if not check_wecom_dependencies():
+            logger.warning("[gateway] 企业微信依赖缺失，跳过注册")
+            return
+
+        self._handlers[Platform.WECOM] = WeComHandler(
+            corp_id=corp_id,
+            agent_id=agent_id,
+            corp_secret=corp_secret,
+            token=token,
+            encoding_aes_key=encoding_aes_key,
+            on_message=self.on_platform_message,
+            on_error=lambda e: logger.error(f"[gateway/wecom] {e}"),
+        )
+        logger.info("[gateway] 企业微信 handler registered")
+
+    def _register_dingtalk(
+        self,
+        app_key: str,
+        app_secret: str,
+        token: Optional[str],
+        aes_key: Optional[str],
+    ) -> None:
+        from .platforms.dingtalk import DingTalkHandler, check_dingtalk_dependencies
+
+        if not check_dingtalk_dependencies():
+            logger.warning("[gateway] 钉钉依赖缺失，跳过注册")
+            return
+
+        self._handlers[Platform.DINGTALK] = DingTalkHandler(
+            app_key=app_key,
+            app_secret=app_secret,
+            token=token,
+            aes_key=aes_key,
+            on_message=self.on_platform_message,
+            on_error=lambda e: logger.error(f"[gateway/dingtalk] {e}"),
+        )
+        logger.info("[gateway] 钉钉 handler registered")
+
+    def _register_slack(self, bot_token: str, signing_secret: str) -> None:
+        from .platforms.slack import SlackHandler, check_slack_dependencies
+
+        if not check_slack_dependencies():
+            logger.warning("[gateway] Slack 依赖缺失，跳过注册")
+            return
+
+        self._handlers[Platform.SLACK] = SlackHandler(
+            bot_token=bot_token,
+            signing_secret=signing_secret,
+            on_message=self.on_platform_message,
+            on_error=lambda e: logger.error(f"[gateway/slack] {e}"),
+        )
+        logger.info("[gateway] Slack handler registered")
+
     # ---- 消息处理 ----
 
     def on_platform_message(self, message: IncomingMessage) -> None:
@@ -148,7 +326,7 @@ class Gateway:
             message: 统一格式的收件消息
         """
         logger.info(
-            f"[gateway] [{message.platform.value}] {message.user_id}: {message.text[:80]}"
+            f"[gateway] [{message.platform.value}] {message.user_id}: {message.text[:80]}"  # noqa: E501
         )
 
         if self.orchestrator is None:

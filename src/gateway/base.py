@@ -27,6 +27,9 @@ class Platform(Enum):
     TELEGRAM = "telegram"
     DISCORD = "discord"
     WHATSAPP = "whatsapp"
+    FEISHU = "feishu"
+    WECOM = "wecom"
+    DINGTALK = "dingtalk"
     SLACK = "slack"
     WECHAT = "wechat"
 
