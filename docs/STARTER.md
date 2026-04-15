@@ -6,7 +6,7 @@
 
 一台电脑，就这些。不需要付费，不需要翻墙。
 
-我们用 **GLM-4-Flash**，智谱 AI 的模型，**永久免费**。
+我们用 **GLM-4-Flash**，智谱 AI 的模型，**免费使用**。
 
 ## 准备工作（10 分钟）
 
@@ -38,7 +38,7 @@ sudo apt install python3 python3-pip python3-venv
 3. 登录后，进入 API Keys 页面
 4. 点「创建 API Key」，复制下来
 
-> 🔑 这个 Key 是免费的，GLM-4-Flash 永久免费使用。
+> 🔑 这个 Key 是免费的，GLM-4-Flash 免费使用。
 
 ### 3. 安装 Oh My Coder
 

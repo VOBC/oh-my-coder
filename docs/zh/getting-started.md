@@ -14,7 +14,7 @@ pip install -e .
 # 推荐：DeepSeek（性价比最高）
 export DEEPSEEK_API_KEY=sk-xxxxx
 
-# 或者：GLM（永久免费）
+# 或者：GLM（免费使用）
 export GLM_API_KEY=your_key_here
 ```
 

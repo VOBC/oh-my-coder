@@ -104,7 +104,7 @@ pip install -e .
 
 ## 第五步：配置 API Key
 
-Oh My Coder 需要至少一个模型的 API Key 才能工作。**推荐用 GLM-4-Flash，永久免费。**
+Oh My Coder 需要至少一个模型的 API Key 才能工作。**推荐用 GLM-4-Flash，免费使用。**
 
 ### 获取 API Key
 

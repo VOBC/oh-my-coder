@@ -12,7 +12,7 @@
 重写 GitHub 项目 [oh-my-claudecode](https://github.com/Yeachan-Heo/oh-my-claudecode)，将其从 TypeScript + Claude Code 生态，改造为 Python + 国内多模型支持。
 
 **原项目特点：**
-- 17.8k stars，韩国开发者
+- 28.9k stars，韩国开发者
 - 32 个专业智能体（架构师、UI设计师、安全专家等）
 - 7 种执行模式
 - 智能模型路由（节省 30-50% token）

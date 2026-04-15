@@ -32,7 +32,7 @@ CONFIG_FILE = CONFIG_DIR / "config.json"
 SUPPORTED_MODELS = {
     # 低成本/免费模型
     "deepseek": {"name": "DeepSeek", "tier": "low", "note": "高性价比，推荐"},
-    "glm": {"name": "智谱 GLM", "tier": "low", "note": "GLM-4-Flash 永久免费"},
+    "glm": {"name": "智谱 GLM", "tier": "low", "note": "GLM-4-Flash 免费使用"},
     # 主流模型
     "wenxin": {"name": "文心一言", "tier": "medium", "note": "百度"},
     "tongyi": {"name": "通义千问", "tier": "medium", "note": "阿里"},

@@ -15,7 +15,7 @@ Oh My Coder（OMC）是一个**多智能体 AI 编程助手**，支持 12 家国
 
 - 🤖 **30 个专业 Agent**：Explore、Analyze、Code、Review、Debug、Test 等分工协作
 - 🌐 **国产模型支持**：DeepSeek、GLM、文心、通义、Kimi、混元、MiMo 等 12 家
-- 💰 **永久免费**：GLM-4-Flash 永久免费，DeepSeek 性价比极高
+- 💰 **免费使用**：GLM-4-Flash 免费额度充足，DeepSeek 性价比极高
 - 🔄 **多 Agent 协作**：Build / Review / Domain / Coordinate 四通道编排
 - 🧙 **Quest Mode**：后台异步任务，实时推送进度
 - 📚 **主动学习**：从执行结果中学习，优化路由策略

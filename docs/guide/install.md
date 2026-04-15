@@ -35,7 +35,7 @@ cp examples/.env.example .env
 # DeepSeek（推荐，性价比高）
 export DEEPSEEK_API_KEY=sk-xxxxx
 
-# 智谱 GLM（GLM-4-Flash 永久免费）
+# 智谱 GLM（GLM-4-Flash 开源免费）
 export GLM_API_KEY=your_key_here
 
 # 可选：其他模型

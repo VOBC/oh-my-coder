@@ -2,7 +2,7 @@
 
 > 🤖 多智能体 AI 编程助手，支持国内大模型
 
-🎯 **GLM-4.7-Flash 永久免费 · 12 个国产大模型 · 30 个专业 Agent · 多 Agent 协作 · 完全开源**
+🎯 **GLM-4.7-Flash 开源免费 · 12 家国产大模型 · 30 个专业 Agent · 多 Agent 协作 · 完全开源**
 
 [![Python](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
@@ -11,7 +11,7 @@
 [![Last Commit](https://img.shields.io/github/last-commit/VOBC/oh-my-coder?style=flat-square&logo=github)](https://github.com/VOBC/oh-my-coder/commits)
 [![Issues](https://img.shields.io/github/issues/VOBC/oh-my-coder?style=flat-square&logo=github)](https://github.com/VOBC/oh-my-coder/issues)
 
-**灵感来源**: [oh-my-claudecode](https://github.com/Yeachan-Heo/oh-my-claudecode) (17.8k ⭐)
+**灵感来源**: [oh-my-claudecode](https://github.com/Yeachan-Heo/oh-my-claudecode) (28.9k ⭐)
 
 ![Agent System](docs/screenshots/demo-agents.png)
 
@@ -48,7 +48,7 @@
 
 ## 🎯 为什么选择 Oh My Coder？
 
-> **GLM-4.7-Flash 永久免费 · 12 家国产模型 · 30 个专业 Agent · 多 Agent 协作 · 完全开源**
+> **GLM-4.7-Flash 开源免费 · 12 家国产模型 · 30 个专业 Agent · 多 Agent 协作 · 完全开源**
 
 ### 完整竞品对比（2026年AI编程工具生态）
 
@@ -56,7 +56,7 @@
 
 | 工具 | 类型 | Stars | 价格 | 开源 | 国内可用 | 多Agent | 模型支持 |
 |------|------|-------|------|------|----------|---------|----------|
-| **oh-my-claudecode** | Claude Code插件 | 18,963 ⭐ | 需Claude Pro ($25/月) | ✅ | ⚠️ 需翻墙 | ✅ 32个Agent | 仅Claude |
+| **oh-my-claudecode** | Claude Code插件 | 28,890 ⭐ | 需Claude Pro ($25/月) | ✅ | ⚠️ 需翻墙 | ✅ 32个Agent | 仅Claude |
 | **oh-my-coder** | 多Agent框架 | 较少 | **免费** | **✅ MIT** | **✅** | ✅ 30个Agent | ✅ 12家国产模型 |
 | **AutoGen** | 微软多Agent框架 | 大 | 免费 | ✅ | ✅ | ✅ | 多模型 |
 | **OpenCode** | 开源CLI | 中 | 免费 | ✅ | ✅ | ✅ | 75+模型 |
@@ -78,7 +78,7 @@
 
 > **同类开源项目对比**：oh-my-coder 是目前**唯一一个**将多Agent编排框架 + 国产模型 + 中文交互 + 完全免费结合起来的开源项目。
 >
-> 与原版 oh-my-claudecode（18,963 ⭐）相比，我们聚焦在**国产模型支持**和**零成本**两个核心差异点，适合无法使用Claude Pro/翻墙的国内开发者。
+> 与原版 oh-my-claudecode（28,890 ⭐）相比，我们聚焦在**国产模型支持**和**零成本**两个核心差异点，适合无法使用Claude Pro/翻墙的国内开发者。
 
 > 📌 **价格说明**：
 > 1. Cursor: $20/月（以官网 https://cursor.sh 为准）
@@ -100,7 +100,7 @@
 | 自托管 | ✅ | ❌ | ❌ | ❌ | ❌ | ✅ |
 | **核心差异** | **国产模型+零成本** | **Claude生态** | **大厂背书** | **AI原生IDE** | **GitHub集成** | **企业级框架** |
 
-> ⚠️ **诚实评估**：oh-my-claudecode 有 18,963 ⭐，Agent数量（32个）和社区成熟度都领先于我们。我们的核心差异是**国产模型永久免费 + 中文 + 本地运行**，这是其他竞品做不到的组合。
+> ⚠️ **诚实评估**：oh-my-claudecode 有 28,890 ⭐，Agent数量（32个）和社区成熟度都领先于我们。我们的核心差异是**开源免费 + 国产模型 + 中文 + 本地运行**，这是其他竞品做不到的组合。
 
 ---
 
@@ -814,7 +814,7 @@ python -m src.cli context browser
 |--------|----------|------|
 | **DeepSeek** | [生产就绪] | ⭐ 推荐首选，DeepSeek-V3 **免费额度**，推理能力强 |
 | **MiMo** | [生产就绪] | 小米 MiMo，mimo-v2-flash **免费**，1M 上下文 |
-| **智谱 GLM** | [生产就绪] | GLM-4-Flash **永久免费**，函数调用支持，兼容性好 |
+| **智谱 GLM** | [生产就绪] | GLM-4-Flash **官方免费**，函数调用支持，兼容性好 |
 | **Kimi** | [生产就绪] | 128K 上下文，适合大代码库 |
 | **豆包** | [生产就绪] | 字节自研，响应速度快 |
 | **天工AI** | [生产就绪] | 昆仑万维出品，中文理解强 |
@@ -829,7 +829,7 @@ python -m src.cli context browser
 |--------|----------|----------|------|
 | **DeepSeek** | `DEEPSEEK_API_KEY` | `deepseek-chat` | ⭐ 免费额度，推理能力强 |
 | **MiMo** | `MIMOAPIKEY` | `mimo-v2-flash` | 小米 MiMo，免费 256K / Pro 1M 上下文 |
-| **智谱 GLM** | `GLM_API_KEY` | `glm-4-flash` | 永久免费，函数调用支持 |
+| **智谱 GLM** | `GLM_API_KEY` | `glm-4-flash` | 官方免费，函数调用支持 |
 | **Kimi** | `KIMI_API_KEY` | `moonshot-v1-128k` | 128K 超长上下文 |
 | **豆包** | `DOUBAO_API_KEY` | `doubao-pro-32k` | 字节自研，响应快 |
 | **天工AI** | `TIANGONG_API_KEY` | `skywork-v1.0` | 昆仑万维出品，中文强 |
