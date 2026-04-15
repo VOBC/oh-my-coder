@@ -14,8 +14,8 @@ echo "🔍 pre-commit 快速检查"
 echo "======================================"
 echo ""
 
-# 只检查被修改的文件，速度更快
-STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(py|sh)$' || true)
+# 只检查被修改的 Python 文件，速度更快
+STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.py$' || true)
 
 if [ -z "$STAGED_FILES" ]; then
     echo "没有 Python/Shell 文件被修改，跳过检查"

@@ -38,7 +38,7 @@ from .cli_mcp import app as mcp_app
 from .cli_memory import app as memory_app
 
 # 版本信息
-__version__ = "0.2.0"
+__version__ = "1.0.0"
 __author__ = "VOBC"
 __repo__ = "https://github.com/VOBC/oh-my-coder"
 
@@ -60,13 +60,13 @@ app.add_typer(mcp_app, name="mcp")
 app.add_typer(memory_app, name="memory", help="分层记忆管理 - 查看核心/精选/完整记忆")
 
 # model 子命令
-from .cli_model import app as model_app
+from .cli_model import app as model_app  # noqa: E402
 
 app.add_typer(model_app, name="model", help="模型管理 - 查看/切换默认模型")
 
 # gateway 子命令（懒导入，避免 gateway 依赖缺失时报错）
 try:
-    from .cli_gateway import app as gateway_app
+    from .cli_gateway import app as gateway_app  # noqa: E402
 
     app.add_typer(gateway_app, name="gateway", help="多平台网关 - Telegram / Discord")
 except Exception:
@@ -302,7 +302,7 @@ def wiki(
             console=console,
         ) as progress:
             progress.add_task("解析代码...", total=None)
-            content = generator.generate(output)
+            generator.generate(output)
 
         console.print(
             Panel.fit(
@@ -901,7 +901,7 @@ def quest_wait(
                         1 for s in fresh.steps if s.status == QuestStatus.COMPLETED
                     )
                     total = len(fresh.steps)
-                    progress = int(completed / total * 100)
+                    int(completed / total * 100)
                     bar = "█" * completed + "░" * (total - completed)
                     console.print(
                         f"\r  [{fresh.status.value:12}] "

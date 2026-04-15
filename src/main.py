@@ -3,13 +3,13 @@
 from fastapi import FastAPI
 from rich.console import Console
 
-app = FastAPI(title="Oh My Coder", version="0.1.0")
+app = FastAPI(title="Oh My Coder", version="1.0.0")
 console = Console()
 
 
 @app.get("/")
 async def root():
-    return {"message": "Oh My Coder API", "version": "0.1.0"}
+    return {"message": "Oh My Coder API", "version": "1.0.0"}
 
 
 @app.get("/health")

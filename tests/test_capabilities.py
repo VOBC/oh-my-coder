@@ -129,7 +129,7 @@ class TestCapabilityPackageManager:
     def test_init_creates_directory(self, tmp_path):
         """测试初始化创建目录"""
         packages_dir = tmp_path / "new_capabilities"
-        manager = CapabilityPackageManager(packages_dir=packages_dir)
+        CapabilityPackageManager(packages_dir=packages_dir)
 
         assert packages_dir.exists()
         assert packages_dir.is_dir()
@@ -225,7 +225,7 @@ class TestCapabilityPackageManager:
     def test_sanitize_model_config(self, manager):
         """测试敏感信息脱敏"""
         config = {
-            "api_key": "sk-1234567890abcdef",
+            "api_key": "sk-test-placeholder-key-not-real",
             "api_secret": "secret123456",
             "normal_key": "normal_value",
             "password": "mysecretpassword",
@@ -235,7 +235,7 @@ class TestCapabilityPackageManager:
         sanitized = manager._sanitize_model_config(config)
 
         # 敏感信息应该被脱敏
-        assert sanitized["api_key"] == "sk-1***cdef"
+        assert sanitized["api_key"] == "sk-t***real"
         assert sanitized["api_secret"] == "secr***3456"
         assert sanitized["password"] == "myse***word"
         assert sanitized["token"] == "bear***2345"
@@ -290,7 +290,7 @@ class TestCapabilityPackageIntegration:
         manager = CapabilityPackageManager(packages_dir=tmp_path / "caps")
 
         # 1. 导出配置
-        package = manager.export_from_config(
+        manager.export_from_config(
             name="my-workflow",
             version="1.0.0",
             description="我的工作流配置",
@@ -333,7 +333,7 @@ class TestCapabilityPackageIntegration:
         """测试 JSON 格式正确性"""
         manager = CapabilityPackageManager(packages_dir=tmp_path / "caps")
 
-        package = manager.export_from_config(
+        manager.export_from_config(
             name="json-test",
             version="2.0.0",
             description="测试 JSON 格式",

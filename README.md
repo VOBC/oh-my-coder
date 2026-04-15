@@ -125,6 +125,11 @@ Oh My Coder 是一个**多智能体协作编程系统**，通过多个专业 Age
 ```bash
 git clone https://github.com/VOBC/oh-my-coder.git
 cd oh-my-coder
+
+# 推荐创建虚拟环境（已有可跳过）
+python -m venv .venv
+source .venv/bin/activate  # Windows: .venv\Scripts\activate
+
 pip install -e .
 ```
 
