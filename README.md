@@ -133,7 +133,6 @@ source .venv/bin/activate  # Windows: .venv\Scripts\activate
 pip install -e .
 ```
 
-### 2. 配置 API Key
 
 > ⚠️ **首次使用**：请将 `examples/.env.example` 复制为 `.env` 并填入真实 API Key，再运行以下命令加载：
 > ```bash
@@ -655,6 +654,8 @@ python -m src.cli quest-wait <quest-id>
 | **企业微信** | `--wecom <webhook_url>` | Webhook，Markdown 格式 |
 | **PushPlus** | `--pushplus <token>` | 微信公众号推送，最简配置 |
 
+> 📖 详细文档：[Quest Mode 详解](docs/QUEST_MODE.md)
+
 ---
 
 ## 🧠 主动学习模块
@@ -717,6 +718,10 @@ results = sm.search("sql 慢查询")
 
 ---
 
+> 📖 详细文档：[主动学习模块](docs/SELF_IMPROVING.md)
+
+---
+
 ## 🧠 分层记忆系统
 
 Oh My Coder 采用**分层有限记忆**架构，在不同上下文窗口限制下提供最优记忆注入。
@@ -736,6 +741,10 @@ omc memory stats      # 记忆统计
 ```
 
 📖 详见 [分层记忆系统文档](docs/guide/memory-system.md)
+
+---
+
+> 📖 详细文档：[分层记忆系统](docs/MEMORY_SYSTEM.md)
 
 ---
 
