@@ -20,6 +20,7 @@
 ## 📖 目录
 
 - [🎯 为什么选择 Oh My Coder？](#-为什么选择-oh-my-coder)
+- [🚀 Claude Code 迁移指南](#-claude-code-迁移指南)
 - [🎯 项目简介](#-项目简介)
 - [🚀 快速开始](#-快速开始)
 - [📖 快速示例](#-快速示例)
@@ -49,6 +50,30 @@
 ## 🎯 为什么选择 Oh My Coder？
 
 > **GLM-4.7-Flash 开源免费 · 12 家国产模型 · 30 个专业 Agent · 多 Agent 协作 · 完全开源**
+
+### ⚠️ Claude 封号？这里是国产替代方案
+
+**2026年4月14日更新**：Claude 官方强制实名认证，中国大陆用户账号被封。如果你正在寻找 Claude Code 的替代品，oh-my-coder 是**最佳国产开源选择**：
+
+| 对比项 | Claude Code | oh-my-coder |
+|--------|-------------|-------------|
+| **模型** | 仅 Claude（需翻墙） | **12个国产模型**（GLM-4.7-Flash 完全免费） |
+| **价格** | 需 Claude Pro ($25/月) | **完全免费开源** |
+| **数据隐私** | 上传到海外服务器 | **本地处理，不上传** |
+| **中国用户** | 封号风险高 | **完全支持** |
+| **Agent数量** | 约10个 | **30个专业Agent** |
+| **开源** | 闭源 | **MIT开源协议** |
+
+**迁移指南**：如果你之前用 Claude Code，切换到 oh-my-coder 只需：
+```bash
+pip install oh-my-coder
+omc config set -k GLM_API_KEY -v "free"  # GLM-4.7-Flash 完全免费
+omc run "你好，介绍一下你自己"
+```
+
+---
+
+### 完整竞品对比（2026年AI编程工具生态）
 
 ### 完整竞品对比（2026年AI编程工具生态）
 
@@ -101,6 +126,49 @@
 | **核心差异** | **国产模型+零成本** | **Claude生态** | **大厂背书** | **AI原生IDE** | **GitHub集成** | **企业级框架** |
 
 > 🎯 **定位**：oh-my-claudecode 聚焦 Claude 生态（28,890 ⭐，32个Agent，社区成熟）。我们专注**国产模型直连 + 中文优化 + 本地离线运行**，为国内开发者提供零门槛的多Agent编程体验。
+
+---
+
+## 🚀 Claude Code 迁移指南
+
+**2026年4月14日**：Claude 官方强制实名认证，中国大陆用户账号被封。如果你正在寻找 Claude Code 的替代品，这里是完整的迁移指南：
+
+### 📋 快速迁移步骤
+
+```bash
+# 1. 安装 oh-my-coder
+pip install oh-my-coder
+
+# 2. 配置 GLM-4.7-Flash（完全免费）
+omc config set -k GLM_API_KEY -v "free"
+
+# 3. 开始使用
+omc run "解释这段代码" --workflow explore --file main.py
+```
+
+### 🔄 功能映射
+
+| Claude Code 命令 | oh-my-coder 命令 |
+|-----------------|------------------|
+| `claude code explain` | `omc run --workflow explore` |
+| `claude code refactor` | `omc run --workflow build` |
+| `claude code debug` | `omc run --workflow debug` |
+| `claude code review` | `omc run --workflow review` |
+| `claude code test` | `omc run --workflow test` |
+
+### 🤝 对接智谱搬家计划
+
+智谱 AI 已推出"Claude API 用户特别搬家计划"：
+- **新用户**：赠送 2000 万 Tokens 免费体验
+- **API 兼容**：全面兼容 Claude 协议
+- **无缝切换**：只需替换 API URL
+
+在 oh-my-coder 中使用智谱 GLM：
+```bash
+omc config set -k GLM_API_KEY -v "你的智谱 API Key"
+```
+
+**详细迁移指南**：👉 [docs/guide/claude-migration.md](docs/guide/claude-migration.md)
 
 ---
 
