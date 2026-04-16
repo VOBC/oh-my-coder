@@ -546,8 +546,8 @@ class ModelRouter:
         # 2. 选择模型
         decision = self.select(task_type, complexity)
 
-        # 3. 获取模型实例
-        model = self._models[decision.selected_provider][decision.selected_tier]
+        # 3. 获取模型实例（变量未使用，仅用于调试）
+        # model = self._models[decision.selected_provider][decision.selected_tier]
 
         # 4. 故障转移：按 fallback 顺序尝试
         fallback_order = [

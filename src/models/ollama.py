@@ -29,7 +29,6 @@ from .base import (
     BaseModel,
     Message,
     ModelConfig,
-    ModelProvider,
     ModelResponse,
     ModelTier,
     Usage,
@@ -86,7 +85,7 @@ class OllamaModel(BaseModel):
     - 支持多种开源模型
     """
 
-    provider = ModelProvider.OLLAMA if hasattr(ModelProvider, "OLLAMA") else "ollama"
+    provider = "ollama"
 
     def __init__(
         self,
@@ -101,9 +100,7 @@ class OllamaModel(BaseModel):
             model_name: Ollama 模型名称（如 qwen2:7b）
         """
         # 设置 Ollama 特定配置
-        config.provider = (
-            ModelProvider.OLLAMA if hasattr(ModelProvider, "OLLAMA") else "ollama"
-        )
+        config.provider = "ollama"
         if config.base_url is None:
             config.base_url = OLLAMA_DEFAULT_URL
 
@@ -331,15 +328,15 @@ class OllamaModel(BaseModel):
             return False
 
     def __repr__(self) -> str:
-        return f"OllamaModel(model={self.model_name}, tier={self.tier.value}, base_url={self.base_url})"
+        return (
+            f"OllamaModel(model={self.model_name}, "
+            f"tier={self.tier.value}, "
+            f"base_url={self.base_url})"
+        )
 
 
-# 添加 OLLAMA 到 ModelProvider 枚举（如果还没有）
-if hasattr(ModelProvider, "OLLAMA"):
-    pass
-else:
-    # 动态添加 OLLAMA 枚举值
-    ModelProvider.OLLAMA = "ollama"
+# Ollama Provider 标识符
+OLLAMA_PROVIDER = "ollama"
 
 
 def create_ollama_model(
