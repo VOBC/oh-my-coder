@@ -137,25 +137,31 @@ class RouterConfig:
         self.kimi_api_key = self.kimi_api_key or os.getenv("KIMI_API_KEY")
         self.hunyuan_api_key = self.hunyuan_api_key or os.getenv("HUNYUAN_API_KEY")
         self.doubao_api_key = self.doubao_api_key or os.getenv("DOUBAO_API_KEY")
-        
+
         # Ollama 配置
-        self.ollama_base_url = self.ollama_base_url or os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+        self.ollama_base_url = self.ollama_base_url or os.getenv(
+            "OLLAMA_BASE_URL", "http://localhost:11434"
+        )
         self.ollama_model = self.ollama_model or os.getenv("OLLAMA_MODEL", "qwen2:7b")
-        self.prefer_local = os.getenv("PREFER_LOCAL_MODEL", "true").lower() in ("true", "1", "yes")
+        self.prefer_local = os.getenv("PREFER_LOCAL_MODEL", "true").lower() in (
+            "true",
+            "1",
+            "yes",
+        )
 
         # 默认故障转移顺序（优先本地模型，然后免费/便宜的云端）
         if not self.fallback_order:
             if self.prefer_local:
                 self.fallback_order = [
-                    "ollama",    # 本地模型优先（零成本）
+                    "ollama",  # 本地模型优先（零成本）
                     "deepseek",  # 免费额度高
-                    "kimi",      # 长上下文
-                    "doubao",    # 性价比高
-                    "minimax",   # MiniMax
-                    "glm",       # 智谱
-                    "tongyi",    # 通义千问
-                    "wenxin",    # 文心一言
-                    "hunyuan",   # 混元
+                    "kimi",  # 长上下文
+                    "doubao",  # 性价比高
+                    "minimax",  # MiniMax
+                    "glm",  # 智谱
+                    "tongyi",  # 通义千问
+                    "wenxin",  # 文心一言
+                    "hunyuan",  # 混元
                 ]
             else:
                 self.fallback_order = [
@@ -167,7 +173,7 @@ class RouterConfig:
                     "tongyi",
                     "wenxin",
                     "hunyuan",
-                    "ollama",    # 本地模型作为后备
+                    "ollama",  # 本地模型作为后备
                 ]
 
 
@@ -299,7 +305,7 @@ class ModelRouter:
         # Ollama 本地模型（优先检测）
         try:
             from ..models.ollama import OllamaModel, OLLAMA_DEFAULT_URL
-            
+
             base_url = self.config.ollama_base_url or OLLAMA_DEFAULT_URL
             if OllamaModel.is_available(base_url):
                 model_name = self.config.ollama_model or "qwen2:7b"
@@ -309,7 +315,7 @@ class ModelRouter:
                         cfg, ModelTier(tier), model_name=model_name
                     )
                 logger.info(f"Ollama 本地模型已初始化 ({model_name})")
-                
+
                 # 列出可用模型
                 available = OllamaModel.list_models(base_url)
                 if available:
@@ -489,7 +495,7 @@ class ModelRouter:
         if selected_provider is None:
             raise NoModelAvailableError(
                 f"没有可用的模型处理 {task_type} 任务（tier={tier}，"
-                f"可用提供商={[p for p in self._models.keys() if tier in self._models.get(p, {})]}"
+                f"可用提供商={list(self._models.keys())}"
             )
 
         # 估算成本

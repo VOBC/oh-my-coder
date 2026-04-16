@@ -15,6 +15,7 @@ router = APIRouter(prefix="/api/local-models", tags=["local-models"])
 
 class LocalModelInfo(BaseModel):
     """本地模型信息"""
+
     name: str
     size: Optional[str] = None
     modified_at: Optional[str] = None
@@ -25,6 +26,7 @@ class LocalModelInfo(BaseModel):
 
 class OllamaStatus(BaseModel):
     """Ollama 服务状态"""
+
     available: bool
     base_url: str
     models: List[LocalModelInfo] = []
@@ -35,29 +37,29 @@ class OllamaStatus(BaseModel):
 async def get_ollama_status() -> OllamaStatus:
     """
     获取 Ollama 服务状态和可用模型列表
-    
+
     Returns:
         OllamaStatus: 服务状态和模型列表
     """
     import os
     from ..models.ollama import OllamaModel, OLLAMA_DEFAULT_URL
-    
+
     base_url = os.getenv("OLLAMA_BASE_URL", OLLAMA_DEFAULT_URL)
-    
+
     try:
         is_available = OllamaModel.is_available(base_url)
-        
+
         if not is_available:
             return OllamaStatus(
                 available=False,
                 base_url=base_url,
                 models=[],
-                error="Ollama 服务未运行，请执行: ollama serve"
+                error="Ollama 服务未运行，请执行: ollama serve",
             )
-        
+
         # 获取本地模型列表
         raw_models = OllamaModel.list_models(base_url)
-        
+
         # 转换为 LocalModelInfo
         models = []
         for m in raw_models:
@@ -68,7 +70,7 @@ async def get_ollama_status() -> OllamaStatus:
                 tier = "low"
             elif ":70b" in name or ":72b" in name or ":33b" in name:
                 tier = "high"
-            
+
             # 格式化大小
             size_bytes = m.get("size", 0)
             if size_bytes:
@@ -78,50 +80,47 @@ async def get_ollama_status() -> OllamaStatus:
                     size = f"{size_bytes / 1e6:.0f} MB"
             else:
                 size = None
-            
-            models.append(LocalModelInfo(
-                name=name,
-                size=size,
-                modified_at=m.get("modified_at"),
-                tier=tier,
-                description=_get_model_description(name),
-                available=True,
-            ))
-        
+
+            models.append(
+                LocalModelInfo(
+                    name=name,
+                    size=size,
+                    modified_at=m.get("modified_at"),
+                    tier=tier,
+                    description=_get_model_description(name),
+                    available=True,
+                )
+            )
+
         return OllamaStatus(
             available=True,
             base_url=base_url,
             models=models,
         )
-        
+
     except Exception as e:
-        return OllamaStatus(
-            available=False,
-            base_url=base_url,
-            models=[],
-            error=str(e)
-        )
+        return OllamaStatus(available=False, base_url=base_url, models=[], error=str(e))
 
 
 @router.get("/models", response_model=List[LocalModelInfo])
 async def list_local_models() -> List[LocalModelInfo]:
     """
     列出所有本地可用的模型
-    
+
     Returns:
         List[LocalModelInfo]: 模型列表
     """
     import os
     from ..models.ollama import OllamaModel, OLLAMA_DEFAULT_URL
-    
+
     base_url = os.getenv("OLLAMA_BASE_URL", OLLAMA_DEFAULT_URL)
-    
+
     if not OllamaModel.is_available(base_url):
         return []
-    
+
     raw_models = OllamaModel.list_models(base_url)
     models = []
-    
+
     for m in raw_models:
         name = m.get("name", "")
         tier = "medium"
@@ -129,16 +128,18 @@ async def list_local_models() -> List[LocalModelInfo]:
             tier = "low"
         elif ":70b" in name or ":72b" in name or ":33b" in name:
             tier = "high"
-        
-        models.append(LocalModelInfo(
-            name=name,
-            size=m.get("size"),
-            modified_at=m.get("modified_at"),
-            tier=tier,
-            description=_get_model_description(name),
-            available=True,
-        ))
-    
+
+        models.append(
+            LocalModelInfo(
+                name=name,
+                size=m.get("size"),
+                modified_at=m.get("modified_at"),
+                tier=tier,
+                description=_get_model_description(name),
+                available=True,
+            )
+        )
+
     return models
 
 
@@ -146,15 +147,15 @@ async def list_local_models() -> List[LocalModelInfo]:
 async def pull_model(model_name: str) -> Dict[str, Any]:
     """
     拉取模型到本地
-    
+
     Args:
         model_name: 模型名称（如 qwen2:7b）
-        
+
     Returns:
         拉取状态
     """
     from ..models.ollama import OllamaModel
-    
+
     try:
         success = OllamaModel.pull_model(model_name)
         if success:
@@ -175,24 +176,25 @@ async def pull_model(model_name: str) -> Dict[str, Any]:
 async def get_recommended_models() -> List[Dict[str, Any]]:
     """
     获取推荐的本地模型列表
-    
+
     Returns:
         推荐模型列表（按能力分级）
     """
     from ..models.ollama import OLLAMA_MODELS
-    from ..models.base import ModelTier
-    
+
     result = []
     for tier, models in OLLAMA_MODELS.items():
         for m in models:
-            result.append({
-                "name": m["name"],
-                "tier": tier.value,
-                "description": m["desc"],
-                "context_length": m["context"],
-                "installed": False,  # 需要实际检查
-            })
-    
+            result.append(
+                {
+                    "name": m["name"],
+                    "tier": tier.value,
+                    "description": m["desc"],
+                    "context_length": m["context"],
+                    "installed": False,  # 需要实际检查
+                }
+            )
+
     return result
 
 
@@ -208,9 +210,9 @@ def _get_model_description(model_name: str) -> str:
         "mixtral": "Mixtral MoE - 高质量输出",
         "phi3": "Microsoft Phi-3 - 小而强",
     }
-    
+
     for key, desc in descriptions.items():
         if key in model_name.lower():
             return desc
-    
+
     return "开源大语言模型"

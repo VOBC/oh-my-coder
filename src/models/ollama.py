@@ -18,7 +18,6 @@ Ollama 本地模型适配器
 - deepseek-coder:6.7b - DeepSeek 代码模型
 """
 
-import asyncio
 import json
 import subprocess
 import time
@@ -53,7 +52,11 @@ OLLAMA_MODELS = {
     ModelTier.MEDIUM: [
         {"name": "qwen2:7b", "desc": "通义千问 7B", "context": 32768},
         {"name": "llama3:8b-instruct", "desc": "Llama 3 8B Instruct", "context": 8192},
-        {"name": "deepseek-coder:6.7b", "desc": "DeepSeek Coder 6.7B", "context": 16384},
+        {
+            "name": "deepseek-coder:6.7b",
+            "desc": "DeepSeek Coder 6.7B",
+            "context": 16384,
+        },
         {"name": "codellama:7b", "desc": "Code Llama 7B", "context": 16384},
     ],
     # HIGH tier - 高质量（需要更多显存）
@@ -75,7 +78,7 @@ for tier, models in OLLAMA_MODELS.items():
 class OllamaModel(BaseModel):
     """
     Ollama 本地模型适配器
-    
+
     特点：
     - 零成本：完全本地运行，无 API 费用
     - 隐私保护：数据不出本地
@@ -83,7 +86,7 @@ class OllamaModel(BaseModel):
     - 支持多种开源模型
     """
 
-    provider = ModelProvider.OLLAMA if hasattr(ModelProvider, 'OLLAMA') else "ollama"
+    provider = ModelProvider.OLLAMA if hasattr(ModelProvider, "OLLAMA") else "ollama"
 
     def __init__(
         self,
@@ -98,18 +101,20 @@ class OllamaModel(BaseModel):
             model_name: Ollama 模型名称（如 qwen2:7b）
         """
         # 设置 Ollama 特定配置
-        config.provider = ModelProvider.OLLAMA if hasattr(ModelProvider, 'OLLAMA') else "ollama"
+        config.provider = (
+            ModelProvider.OLLAMA if hasattr(ModelProvider, "OLLAMA") else "ollama"
+        )
         if config.base_url is None:
             config.base_url = OLLAMA_DEFAULT_URL
 
         self.model_name = model_name
         self.base_url = config.base_url.rstrip("/")
         self._client: Optional[httpx.AsyncClient] = None
-        
+
         # 推断 tier
         if model_name in _MODEL_TIER_MAP:
             tier = _MODEL_TIER_MAP[model_name]
-        
+
         super().__init__(config, tier)
 
     async def _get_client(self) -> httpx.AsyncClient:
@@ -126,7 +131,7 @@ class OllamaModel(BaseModel):
     ) -> ModelResponse:
         """
         调用 Ollama API 生成响应
-        
+
         Ollama API 文档: https://github.com/ollama/ollama/blob/main/docs/api.md
         """
         client = await self._get_client()
@@ -134,8 +139,7 @@ class OllamaModel(BaseModel):
 
         # 转换消息格式
         ollama_messages = [
-            {"role": msg.role, "content": msg.content}
-            for msg in messages
+            {"role": msg.role, "content": msg.content} for msg in messages
         ]
 
         # 构建 Ollama API 请求
@@ -148,7 +152,7 @@ class OllamaModel(BaseModel):
                 "top_p": kwargs.get("top_p", 0.9),
                 "top_k": kwargs.get("top_k", 40),
                 "num_ctx": kwargs.get("max_tokens", 4096),
-            }
+            },
         }
 
         try:
@@ -163,11 +167,11 @@ class OllamaModel(BaseModel):
             # 解析响应
             content = data.get("message", {}).get("content", "")
             model = data.get("model", self.model_name)
-            
+
             # Ollama 返回的 token 统计
             eval_count = data.get("eval_count", 0)  # 生成的 token 数
             prompt_eval_count = data.get("prompt_eval_count", 0)  # 输入的 token 数
-            
+
             usage = Usage(
                 prompt_tokens=prompt_eval_count,
                 completion_tokens=eval_count,
@@ -187,11 +191,13 @@ class OllamaModel(BaseModel):
                 metadata={
                     "local": True,
                     "base_url": self.base_url,
-                }
+                },
             )
 
         except httpx.HTTPStatusError as e:
-            raise RuntimeError(f"Ollama API 错误: {e.response.status_code} - {e.response.text}")
+            raise RuntimeError(
+                f"Ollama API 错误: {e.response.status_code} - {e.response.text}"
+            )
         except httpx.ConnectError:
             raise RuntimeError(
                 f"无法连接到 Ollama 服务 ({self.base_url})，"
@@ -210,8 +216,7 @@ class OllamaModel(BaseModel):
 
         # 转换消息格式
         ollama_messages = [
-            {"role": msg.role, "content": msg.content}
-            for msg in messages
+            {"role": msg.role, "content": msg.content} for msg in messages
         ]
 
         payload = {
@@ -220,7 +225,7 @@ class OllamaModel(BaseModel):
             "stream": True,
             "options": {
                 "temperature": kwargs.get("temperature", 0.7),
-            }
+            },
         }
 
         try:
@@ -265,15 +270,16 @@ class OllamaModel(BaseModel):
     def is_available(base_url: str = OLLAMA_DEFAULT_URL) -> bool:
         """
         检查 Ollama 服务是否可用
-        
+
         Args:
             base_url: Ollama API 地址
-            
+
         Returns:
             bool: 服务是否可用
         """
         try:
             import httpx
+
             response = httpx.get(f"{base_url.rstrip('/')}/api/tags", timeout=5.0)
             return response.status_code == 200
         except Exception:
@@ -283,15 +289,16 @@ class OllamaModel(BaseModel):
     def list_models(base_url: str = OLLAMA_DEFAULT_URL) -> List[Dict[str, Any]]:
         """
         列出本地可用的 Ollama 模型
-        
+
         Args:
             base_url: Ollama API 地址
-            
+
         Returns:
             模型列表，每个模型包含 name, size, modified_at 等信息
         """
         try:
             import httpx
+
             response = httpx.get(f"{base_url.rstrip('/')}/api/tags", timeout=5.0)
             if response.status_code == 200:
                 data = response.json()
@@ -304,11 +311,11 @@ class OllamaModel(BaseModel):
     def pull_model(model_name: str, base_url: str = OLLAMA_DEFAULT_URL) -> bool:
         """
         拉取模型到本地
-        
+
         Args:
             model_name: 模型名称（如 qwen2:7b）
             base_url: Ollama API 地址
-            
+
         Returns:
             bool: 是否成功
         """
@@ -328,7 +335,7 @@ class OllamaModel(BaseModel):
 
 
 # 添加 OLLAMA 到 ModelProvider 枚举（如果还没有）
-if hasattr(ModelProvider, 'OLLAMA'):
+if hasattr(ModelProvider, "OLLAMA"):
     pass
 else:
     # 动态添加 OLLAMA 枚举值
@@ -342,12 +349,12 @@ def create_ollama_model(
 ) -> OllamaModel:
     """
     创建 Ollama 模型实例的便捷函数
-    
+
     Args:
         model_name: 模型名称
         base_url: Ollama API 地址
         tier: 性能层级（不指定则自动推断）
-        
+
     Returns:
         OllamaModel 实例
     """
@@ -355,9 +362,9 @@ def create_ollama_model(
         api_key="",  # Ollama 不需要 API Key
         base_url=base_url,
     )
-    
+
     # 自动推断 tier
     if tier is None:
         tier = _MODEL_TIER_MAP.get(model_name, ModelTier.MEDIUM)
-    
+
     return OllamaModel(config, tier=tier, model_name=model_name)

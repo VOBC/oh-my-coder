@@ -17,43 +17,43 @@ app = typer.Typer(help="本地模型管理 - Ollama 支持")
 def check_status():
     """
     检查 Ollama 服务状态
-    
+
     示例:
         omc local status
     """
     from ..models.ollama import OllamaModel, OLLAMA_DEFAULT_URL
     import os
-    
+
     base_url = os.getenv("OLLAMA_BASE_URL", OLLAMA_DEFAULT_URL)
-    
+
     console.print(f"[cyan]检测 Ollama 服务 ({base_url})...[/cyan]")
-    
+
     if OllamaModel.is_available(base_url):
         console.print("[green]✓ Ollama 服务运行中[/green]")
-        
+
         # 列出本地模型
         models = OllamaModel.list_models(base_url)
         if models:
             console.print(f"\n[bold]本地可用模型 ({len(models)} 个):[/bold]")
-            
+
             table = Table()
             table.add_column("模型名称", style="cyan")
             table.add_column("大小")
             table.add_column("修改时间")
-            
+
             for m in models:
                 size = m.get("size", 0)
                 if size > 1e9:
                     size_str = f"{size / 1e9:.1f} GB"
                 else:
                     size_str = f"{size / 1e6:.0f} MB"
-                
+
                 table.add_row(
                     m.get("name", "unknown"),
                     size_str,
                     m.get("modified_at", "")[:10] if m.get("modified_at") else "",
                 )
-            
+
             console.print(table)
         else:
             console.print("[yellow]暂无本地模型[/yellow]")
@@ -70,34 +70,38 @@ def check_status():
 def list_models():
     """
     列出本地可用的模型
-    
+
     示例:
         omc local list
     """
     from ..models.ollama import OllamaModel, OLLAMA_MODELS
     from ..models.base import ModelTier
-    
+
     console.print("[bold]本地模型状态:[/bold]\n")
-    
+
     # 检查已安装模型
     installed = OllamaModel.list_models()
     installed_names = {m["name"] for m in installed}
-    
+
     # 显示推荐模型
     for tier in [ModelTier.LOW, ModelTier.MEDIUM, ModelTier.HIGH]:
         console.print(f"\n[cyan]{tier.value.upper()} Tier:[/cyan]")
-        
+
         table = Table()
         table.add_column("模型", style="cyan")
         table.add_column("描述")
         table.add_column("状态")
-        
+
         for m in OLLAMA_MODELS.get(tier, []):
-            status = "[green]✓ 已安装[/green]" if m["name"] in installed_names else "[dim]未安装[/dim]"
+            status = (
+                "[green]✓ 已安装[/green]"
+                if m["name"] in installed_names
+                else "[dim]未安装[/dim]"
+            )
             table.add_row(m["name"], m["desc"], status)
-        
+
         console.print(table)
-    
+
     console.print(f"\n[dim]已安装 {len(installed)} 个本地模型[/dim]")
 
 
@@ -107,23 +111,23 @@ def pull_model(
 ):
     """
     拉取模型到本地
-    
+
     示例:
         omc local pull qwen2:7b
         omc local pull llama3:8b
     """
     from ..models.ollama import OllamaModel
-    
+
     console.print(f"[cyan]拉取模型: {model_name}[/cyan]")
     console.print("[dim]这可能需要几分钟，取决于模型大小...[/dim]\n")
-    
+
     success = OllamaModel.pull_model(model_name)
-    
+
     if success:
         console.print(f"\n[green]✓ 模型 {model_name} 拉取成功[/green]")
-        console.print(f"[dim]使用 [green]omc local status[/dim] 查看已安装模型[/dim]")
+        console.print("[dim]使用 [green]omc local status[/dim] 查看已安装模型[/dim]")
     else:
-        console.print(f"\n[red]✗ 拉取失败[/red]")
+        console.print("\n[red]✗ 拉取失败[/red]")
         console.print("\n[yellow]请确保：[/yellow]")
         console.print("  1. Ollama 已安装并运行：ollama serve")
         console.print("  2. 模型名称正确：https://ollama.ai/library")
@@ -136,21 +140,21 @@ def run_ollama(
 ):
     """
     启动 Ollama 服务（如果未运行）
-    
+
     示例:
         omc local run
         omc local run --port 11435
     """
     import subprocess
-    
+
     from ..models.ollama import OllamaModel
-    
+
     if OllamaModel.is_available():
         console.print("[green]✓ Ollama 已在运行[/green]")
         return
-    
+
     console.print("[cyan]启动 Ollama 服务...[/cyan]")
-    
+
     try:
         subprocess.Popen(
             ["ollama", "serve"],
@@ -171,24 +175,23 @@ def model_info(
 ):
     """
     显示模型详细信息
-    
+
     示例:
         omc local info qwen2:7b
     """
     from ..models.ollama import OLLAMA_MODELS
-    from ..models.base import ModelTier
-    
+
     # 查找模型描述
     desc = "开源大语言模型"
     tier = "medium"
-    
+
     for t, models in OLLAMA_MODELS.items():
         for m in models:
             if m["name"] == model_name:
                 desc = m["desc"]
                 tier = t.value
                 break
-    
+
     console.print(
         Panel.fit(
             f"[bold cyan]{model_name}[/bold cyan]\n\n"
