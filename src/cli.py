@@ -59,6 +59,13 @@ app.add_typer(checkpoint_app, name="checkpoint")
 app.add_typer(mcp_app, name="mcp")
 app.add_typer(memory_app, name="memory", help="分层记忆管理 - 查看核心/精选/完整记忆")
 
+# 本地模型命令
+try:
+    from .cli_local_models import app as local_models_app
+    app.add_typer(local_models_app, name="local", help="本地模型管理 - Ollama 零成本运行")
+except Exception:
+    pass
+
 # model 子命令
 from .cli_model import app as model_app  # noqa: E402
 

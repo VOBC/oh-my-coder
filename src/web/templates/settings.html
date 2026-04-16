@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Oh My Coder - 设置</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            color: #fff;
+        }
+        .nav {
+            background: rgba(255,255,255,0.1);
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .nav-brand {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #4fc3f7;
+        }
+        .nav-links a {
+            color: #fff;
+            text-decoration: none;
+            margin-left: 25px;
+            opacity: 0.8;
+            transition: opacity 0.3s;
+        }
+        .nav-links a:hover { opacity: 1; }
+        .nav-links a.active { color: #4fc3f7; opacity: 1; }
+        
+        .container {
+            max-width: 1200px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+        
+        .page-title {
+            font-size: 2em;
+            margin-bottom: 30px;
+        }
+        
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+        .tab {
+            padding: 12px 24px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .tab:hover { background: rgba(255,255,255,0.2); }
+        .tab.active {
+            background: #4fc3f7;
+            color: #1a1a2e;
+        }
+        
+        .settings-section {
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+        }
+        .section-title {
+            font-size: 1.3em;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            opacity: 0.8;
+        }
+        .form-input {
+            width: 100%;
+            padding: 12px 16px;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 8px;
+            color: #fff;
+            font-size: 1em;
+        }
+        .form-input:focus {
+            outline: none;
+            border-color: #4fc3f7;
+        }
+        
+        .model-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 15px;
+        }
+        .model-card {
+            background: rgba(255,255,255,0.05);
+            border: 2px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .model-card:hover {
+            border-color: rgba(79, 195, 247, 0.5);
+        }
+        .model-card.selected {
+            border-color: #4fc3f7;
+            background: rgba(79, 195, 247, 0.1);
+        }
+        .model-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .model-name {
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+        .model-badge {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.75em;
+        }
+        .badge-local { background: #4caf50; }
+        .badge-cloud { background: #2196f3; }
+        .badge-free { background: #9c27b0; }
+        
+        .model-desc {
+            opacity: 0.7;
+            font-size: 0.9em;
+            margin-bottom: 10px;
+        }
+        .model-meta {
+            display: flex;
+            gap: 15px;
+            font-size: 0.85em;
+            opacity: 0.6;
+        }
+        
+        .ollama-status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 15px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+        .status-dot.online { background: #4caf50; }
+        .status-dot.offline { background: #f44336; }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: all 0.3s;
+        }
+        .btn-primary {
+            background: #4fc3f7;
+            color: #1a1a2e;
+        }
+        .btn-primary:hover {
+            background: #29b6f6;
+        }
+        .btn-secondary {
+            background: rgba(255,255,255,0.1);
+            color: #fff;
+        }
+        .btn-secondary:hover {
+            background: rgba(255,255,255,0.2);
+        }
+        
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            padding: 15px 25px;
+            border-radius: 8px;
+            background: #4caf50;
+            color: #fff;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s;
+        }
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        .toast.error { background: #f44336; }
+    </style>
+</head>
+<body>
+    <nav class="nav">
+        <div class="nav-brand">🤖 Oh My Coder</div>
+        <div class="nav-links">
+            <a href="/">首页</a>
+            <a href="/dashboard">仪表板</a>
+            <a href="/history">历史</a>
+            <a href="/agents">Agent</a>
+            <a href="/settings" class="active">设置</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <h1 class="page-title">⚙️ 设置</h1>
+        
+        <div class="tabs">
+            <div class="tab active" data-tab="models">模型选择</div>
+            <div class="tab" data-tab="api-keys">API Keys</div>
+            <div class="tab" data-tab="preferences">偏好设置</div>
+        </div>
+        
+        <!-- 模型选择 -->
+        <div id="tab-models" class="tab-content">
+            <div class="settings-section">
+                <h2 class="section-title">🖥️ 本地模型 (Ollama)</h2>
+                <div id="ollama-status" class="ollama-status">
+                    <div class="status-dot offline"></div>
+                    <span>检测中...</span>
+                </div>
+                
+                <div id="local-models" class="model-grid">
+                    <!-- 动态加载 -->
+                </div>
+            </div>
+            
+            <div class="settings-section">
+                <h2 class="section-title">☁️ 云端模型</h2>
+                <div id="cloud-models" class="model-grid">
+                    <div class="model-card" data-model="deepseek">
+                        <div class="model-card-header">
+                            <span class="model-name">DeepSeek</span>
+                            <span class="model-badge badge-free">免费</span>
+                        </div>
+                        <div class="model-desc">性价比最高，每天 4000 万 token 免费额度</div>
+                        <div class="model-meta">
+                            <span>💰 成本: 免费额度内</span>
+                            <span>🇨🇳 国内直连</span>
+                        </div>
+                    </div>
+                    
+                    <div class="model-card" data-model="glm">
+                        <div class="model-card-header">
+                            <span class="model-name">智谱 GLM</span>
+                            <span class="model-badge badge-cloud">云端</span>
+                        </div>
+                        <div class="model-desc">GLM-4.7-Flash 完全免费，国产大模型</div>
+                        <div class="model-meta">
+                            <span>💰 成本: 免费</span>
+                            <span>🇨🇳 国内直连</span>
+                        </div>
+                    </div>
+                    
+                    <div class="model-card" data-model="kimi">
+                        <div class="model-card-header">
+                            <span class="model-name">Kimi</span>
+                            <span class="model-badge badge-cloud">云端</span>
+                        </div>
+                        <div class="model-desc">支持超长上下文（20万字）</div>
+                        <div class="model-meta">
+                            <span>💰 成本: 低</span>
+                            <span>🇨🇳 国内直连</span>
+                        </div>
+                    </div>
+                    
+                    <div class="model-card" data-model="tongyi">
+                        <div class="model-card-header">
+                            <span class="model-name">通义千问</span>
+                            <span class="model-badge badge-cloud">云端</span>
+                        </div>
+                        <div class="model-desc">阿里云大模型，多模态支持</div>
+                        <div class="model-meta">
+                            <span>💰 成本: 低</span>
+                            <span>🇨🇳 国内直连</span>
+                        </div>
+                    </div>
+                    
+                    <div class="model-card" data-model="wenxin">
+                        <div class="model-card-header">
+                            <span class="model-name">文心一言</span>
+                            <span class="model-badge badge-cloud">云端</span>
+                        </div>
+                        <div class="model-desc">百度大模型，中文能力强</div>
+                        <div class="model-meta">
+                            <span>💰 成本: 低</span>
+                            <span>🇨🇳 国内直连</span>
+                        </div>
+                    </div>
+                    
+                    <div class="model-card" data-model="doubao">
+                        <div class="model-card-header">
+                            <span class="model-name">豆包</span>
+                            <span class="model-badge badge-cloud">云端</span>
+                        </div>
+                        <div class="model-desc">字节跳动大模型，性价比高</div>
+                        <div class="model-meta">
+                            <span>💰 成本: 低</span>
+                            <span>🇨🇳 国内直连</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- API Keys -->
+        <div id="tab-api-keys" class="tab-content" style="display:none;">
+            <div class="settings-section">
+                <h2 class="section-title">🔑 API Keys 配置</h2>
+                
+                <div class="form-group">
+                    <label class="form-label">DeepSeek API Key</label>
+                    <input type="password" class="form-input" id="key-deepseek" 
+                           placeholder="sk-xxxxxxxx">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">智谱 GLM API Key</label>
+                    <input type="password" class="form-input" id="key-glm" 
+                           placeholder="填写 'free' 使用免费版">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Kimi API Key</label>
+                    <input type="password" class="form-input" id="key-kimi" 
+                           placeholder="sk-xxxxxxxx">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">通义千问 API Key</label>
+                    <input type="password" class="form-input" id="key-tongyi" 
+                           placeholder="sk-xxxxxxxx">
+                </div>
+                
+                <button class="btn btn-primary" onclick="saveApiKeys()">保存配置</button>
+            </div>
+        </div>
+        
+        <!-- 偏好设置 -->
+        <div id="tab-preferences" class="tab-content" style="display:none;">
+            <div class="settings-section">
+                <h2 class="section-title">🎛️ 运行偏好</h2>
+                
+                <div class="form-group">
+                    <label class="form-label">优先使用本地模型</label>
+                    <select class="form-input" id="prefer-local">
+                        <option value="true">是（零成本，隐私保护）</option>
+                        <option value="false">否（优先云端模型）</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">默认工作流</label>
+                    <select class="form-input" id="default-workflow">
+                        <option value="build">build - 开发构建</option>
+                        <option value="review">review - 代码审查</option>
+                        <option value="debug">debug - 调试修复</option>
+                        <option value="test">test - 测试生成</option>
+                        <option value="doc">doc - 文档生成</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">任务超时时间（秒）</label>
+                    <input type="number" class="form-input" id="timeout" value="300">
+                </div>
+                
+                <button class="btn btn-primary" onclick="savePreferences()">保存偏好</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="toast" class="toast"></div>
+
+    <script>
+        // Tab 切换
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
+                
+                tab.classList.add('active');
+                document.getElementById('tab-' + tab.dataset.tab).style.display = 'block';
+            });
+        });
+        
+        // 检测 Ollama 状态
+        async function checkOllama() {
+            try {
+                const res = await fetch('/api/local-models/status');
+                const data = await res.json();
+                
+                const statusDiv = document.getElementById('ollama-status');
+                const statusDot = statusDiv.querySelector('.status-dot');
+                const statusText = statusDiv.querySelector('span');
+                
+                if (data.available) {
+                    statusDot.classList.remove('offline');
+                    statusDot.classList.add('online');
+                    statusText.textContent = `Ollama 运行中 (${data.models.length} 个模型)`;
+                    
+                    // 显示本地模型
+                    const grid = document.getElementById('local-models');
+                    grid.innerHTML = '';
+                    
+                    data.models.forEach(model => {
+                        const card = document.createElement('div');
+                        card.className = 'model-card';
+                        card.dataset.model = 'ollama:' + model.name;
+                        card.innerHTML = `
+                            <div class="model-card-header">
+                                <span class="model-name">${model.name}</span>
+                                <span class="model-badge badge-local">本地</span>
+                            </div>
+                            <div class="model-desc">${model.description || '本地模型'}</div>
+                            <div class="model-meta">
+                                <span>📦 ${model.size || '未知大小'}</span>
+                                <span>Tier: ${model.tier}</span>
+                            </div>
+                        `;
+                        grid.appendChild(card);
+                    });
+                    
+                    if (data.models.length === 0) {
+                        grid.innerHTML = '<div style="opacity:0.7;padding:20px;">暂无本地模型，运行 <code>ollama pull qwen2:7b</code> 拉取</div>';
+                    }
+                } else {
+                    statusText.textContent = data.error || 'Ollama 未运行';
+                }
+            } catch (e) {
+                console.error('检测 Ollama 失败:', e);
+            }
+        }
+        
+        // 模型卡片点击
+        document.addEventListener('click', (e) => {
+            const card = e.target.closest('.model-card');
+            if (card) {
+                document.querySelectorAll('.model-card').forEach(c => c.classList.remove('selected'));
+                card.classList.add('selected');
+                
+                const model = card.dataset.model;
+                localStorage.setItem('selected-model', model);
+                showToast(`已选择模型: ${model}`);
+            }
+        });
+        
+        // 保存 API Keys
+        async function saveApiKeys() {
+            const keys = {
+                deepseek: document.getElementById('key-deepseek').value,
+                glm: document.getElementById('key-glm').value,
+                kimi: document.getElementById('key-kimi').value,
+                tongyi: document.getElementById('key-tongyi').value,
+            };
+            
+            try {
+                const res = await fetch('/api/settings', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ models: keys })
+                });
+                
+                if (res.ok) {
+                    showToast('API Keys 已保存');
+                } else {
+                    showToast('保存失败', true);
+                }
+            } catch (e) {
+                showToast('保存失败: ' + e.message, true);
+            }
+        }
+        
+        // 保存偏好
+        async function savePreferences() {
+            const prefs = {
+                prefer_local: document.getElementById('prefer-local').value === 'true',
+                default_workflow: document.getElementById('default-workflow').value,
+                timeout: parseInt(document.getElementById('timeout').value),
+            };
+            
+            try {
+                const res = await fetch('/api/settings', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ defaults: prefs })
+                });
+                
+                if (res.ok) {
+                    showToast('偏好设置已保存');
+                }
+            } catch (e) {
+                showToast('保存失败', true);
+            }
+        }
+        
+        // Toast 提示
+        function showToast(message, isError = false) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = 'toast show' + (isError ? ' error' : '');
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+        
+        // 加载当前设置
+        async function loadSettings() {
+            try {
+                const res = await fetch('/api/settings');
+                const data = await res.json();
+                
+                // 填充表单
+                if (data.models) {
+                    if (data.models.deepseek?.api_key_masked) {
+                        document.getElementById('key-deepseek').placeholder = data.models.deepseek.api_key_masked;
+                    }
+                }
+                
+                if (data.defaults) {
+                    document.getElementById('prefer-local').value = data.defaults.prefer_local ? 'true' : 'false';
+                    document.getElementById('default-workflow').value = data.defaults.workflow || 'build';
+                    document.getElementById('timeout').value = data.defaults.timeout || 300;
+                }
+            } catch (e) {
+                console.error('加载设置失败:', e);
+            }
+        }
+        
+        // 初始化
+        checkOllama();
+        loadSettings();
+        
+        // 恢复上次选择的模型
+        const lastModel = localStorage.getItem('selected-model');
+        if (lastModel) {
+            const card = document.querySelector(`[data-model="${lastModel}"]`);
+            if (card) card.classList.add('selected');
+        }
+    </script>
+</body>
+</html>

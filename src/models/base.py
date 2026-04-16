@@ -39,6 +39,7 @@ class ModelProvider(Enum):
     SPARK = "spark"  # 讯飞星火
     BAICHUAN = "baichuan"  # 百川智能
     MIMO = "mimo"  # 小米 MiMo
+    OLLAMA = "ollama"  # Ollama 本地模型（零成本）
 
 
 @dataclass

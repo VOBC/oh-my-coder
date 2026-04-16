@@ -27,6 +27,7 @@ from .spark import SparkAPIError, SparkModel
 from .tiangong import TiangongAPIError, TiangongModel
 from .tongyi import TongyiAPIError, TongyiModel
 from .wenxin import WenxinAPIError, WenxinModel
+from .ollama import OllamaModel, create_ollama_model
 
 __all__ = [
     # 基类
@@ -73,4 +74,7 @@ __all__ = [
     # 小米 MiMo
     "MimoModel",
     "MimoAPIError",
+    # Ollama 本地模型
+    "OllamaModel",
+    "create_ollama_model",
 ]

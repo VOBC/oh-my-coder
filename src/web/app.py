@@ -27,6 +27,7 @@ from src.core.router import ModelRouter, RouterConfig
 from src.web.history_api import history_router, agent_router, history_store
 from src.web.dashboard_api import router as dashboard_router
 from src.web.team_api import router as team_router
+from src.web.local_models_api import router as local_models_router
 
 # ========================================
 # FastAPI App
@@ -47,6 +48,7 @@ app.include_router(history_router)
 app.include_router(agent_router)
 app.include_router(dashboard_router)
 app.include_router(team_router)
+app.include_router(local_models_router)
 
 
 # ========================================
@@ -596,6 +598,157 @@ async def get_config():
             "agents": [s.agent_name for s in WORKFLOW_TEMPLATES["build"]],
         }
     )
+
+
+# ===== Settings 页面 & API =====
+SETTINGS_DIR = Path.home() / ".omc"
+SETTINGS_FILE = SETTINGS_DIR / "config.json"
+
+
+def _read_settings() -> Dict[str, Any]:
+    """读取 ~/.omc/config.json，不存在则返回默认值"""
+    if not SETTINGS_FILE.exists():
+        return {
+            "models": {
+                "deepseek": {
+                    "provider": "DeepSeek",
+                    "api_key": "",
+                    "cost_level": "free",
+                    "enabled": True,
+                },
+                "tongyi": {
+                    "provider": "阿里云",
+                    "api_key": "",
+                    "cost_level": "low",
+                    "enabled": False,
+                },
+                "wenxin": {
+                    "provider": "百度",
+                    "api_key": "",
+                    "cost_level": "low",
+                    "enabled": False,
+                },
+            },
+            "defaults": {
+                "model": "deepseek",
+                "workflow": "build",
+                "timeout": 300,
+            },
+        }
+    try:
+        import json
+
+        raw = json.loads(SETTINGS_FILE.read_text(encoding="utf-8"))
+    except Exception:
+        return _read_settings.__wrapped__() if hasattr(_read_settings, "__wrapped__") else {
+            "models": {
+                "deepseek": {
+                    "provider": "DeepSeek",
+                    "api_key": "",
+                    "cost_level": "free",
+                    "enabled": True,
+                },
+                "tongyi": {
+                    "provider": "阿里云",
+                    "api_key": "",
+                    "cost_level": "low",
+                    "enabled": False,
+                },
+                "wenxin": {
+                    "provider": "百度",
+                    "api_key": "",
+                    "cost_level": "low",
+                    "enabled": False,
+                },
+            },
+            "defaults": {
+                "model": "deepseek",
+                "workflow": "build",
+                "timeout": 300,
+            },
+        }
+    # 确保必要字段存在
+    if "models" not in raw:
+        raw["models"] = {}
+    if "defaults" not in raw:
+        raw["defaults"] = {}
+    for key in ("deepseek", "tongyi", "wenxin"):
+        if key not in raw["models"]:
+            raw["models"][key] = {
+                "provider": {"deepseek": "DeepSeek", "tongyi": "阿里云", "wenxin": "百度"}.get(
+                    key, key
+                ),
+                "api_key": "",
+                "cost_level": {"deepseek": "free", "tongyi": "low", "wenxin": "low"}.get(
+                    key, "low"
+                ),
+                "enabled": key == "deepseek",
+            }
+    for dk, dv in {
+        "model": "deepseek",
+        "workflow": "build",
+        "timeout": 300,
+    }.items():
+        raw["defaults"].setdefault(dk, dv)
+    return raw
+
+
+def _mask_key(key: str) -> str:
+    """对 API Key 做脱敏处理，只显示后 4 位"""
+    if not key or len(key) <= 4:
+        return key or ""
+    return "*" * (len(key) - 4) + key[-4:]
+
+
+@app.get("/settings", response_class=HTMLResponse)
+async def settings_page(request: Request):
+    """设置页面"""
+    return templates.TemplateResponse(request, "settings.html")
+
+
+@app.get("/api/settings")
+async def get_settings():
+    """获取当前设置（API Key 脱敏）"""
+    settings = _read_settings()
+    # 脱敏 API Key
+    masked = json_dumps(settings, ensure_ascii=False)  # keep original for structure
+    # Deep-copy models with masked keys
+    for _name, _m in settings.get("models", {}).items():
+        raw_key = _m.get("api_key", "")
+        _m["api_key_masked"] = _mask_key(raw_key)
+        _m["has_key"] = bool(raw_key)
+    return JSONResponse(settings)
+
+
+@app.post("/api/settings")
+async def save_settings(payload: dict):
+    """保存设置到 ~/.omc/config.json"""
+    import json
+
+    # 读取现有设置做合并
+    current = _read_settings()
+
+    # 合并 models
+    if "models" in payload:
+        for name, model_conf in payload["models"].items():
+            if name not in current["models"]:
+                current["models"][name] = {}
+            for k, v in model_conf.items():
+                if k == "api_key":
+                    # 跳过脱敏值（以 * 开头的不写入）
+                    if isinstance(v, str) and v.startswith("*"):
+                        continue
+                current["models"][name][k] = v
+
+    # 合并 defaults
+    if "defaults" in payload:
+        current["defaults"].update(payload["defaults"])
+
+    SETTINGS_DIR.mkdir(parents=True, exist_ok=True)
+    SETTINGS_FILE.write_text(
+        json.dumps(current, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
+    return JSONResponse({"status": "ok", "message": "设置已保存"})
 
 
 # ===== 健康检查 =====
