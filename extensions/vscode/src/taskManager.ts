@@ -2,15 +2,16 @@
  * 任务管理器
  */
 
-import * as vscode from 'vscode';
-import * as path from 'path';
-import { spawn, ChildProcess } from 'child_process';
+import * as vscode from "vscode";
+import { spawn, ChildProcess, execSync } from "child_process";
+import * as path from "path";
+import * as fs from "fs";
 
 export enum TaskStatus {
-    Idle = 'idle',
-    Running = 'running',
-    Completed = 'completed',
-    Error = 'error',
+    Idle = "idle",
+    Running = "running",
+    Completed = "completed",
+    Error = "error",
 }
 
 export interface Task {
@@ -44,13 +45,43 @@ export class TaskManager implements vscode.Disposable {
     private process: ChildProcess | null = null;
     private _onDidChangeStatus = new vscode.EventEmitter<TaskStatus>();
     private _onDidChangeOutput = new vscode.EventEmitter<string>();
-    private outputBuffer: string = '';
+    private outputBuffer: string = "";
 
     readonly onDidChangeStatus = this._onDidChangeStatus.event;
     readonly onDidChangeOutput = this._onDidChangeOutput.event;
 
     constructor(context: vscode.ExtensionContext) {
         this.context = context;
+    }
+
+    /**
+     * 获取 CLI 路径
+     * 优先使用 which/where 查找，找不到则尝试默认路径
+     */
+    private getCliPath(): string {
+        try {
+            // 尝试使用 which (Unix/macOS) 或 where (Windows) 查找
+            if (process.platform === "win32") {
+                return execSync("where omc", { encoding: "utf-8" }).trim().split("\n")[0];
+            } else {
+                return execSync("which omc", { encoding: "utf-8" }).trim();
+            }
+        } catch {
+            // 找不到，尝试默认路径
+            const defaultPaths = [
+                path.join(process.env.HOME || "", ".local", "bin", "omc"),
+                path.join(process.env.HOME || "", ".cargo", "bin", "omc"),
+                "/usr/local/bin/omc",
+                "/usr/bin/omc",
+            ];
+            for (const p of defaultPaths) {
+                if (fs.existsSync(p)) {
+                    return p;
+                }
+            }
+            // 最后尝试直接用 "omc"，让系统 PATH 去解析
+            return "omc";
+        }
     }
 
     getStatus(): TaskStatus {
@@ -65,10 +96,10 @@ export class TaskManager implements vscode.Disposable {
         return this.outputBuffer;
     }
 
-    async runTask(taskData: Omit<Task, 'id' | 'status'>): Promise<TaskResult> {
+    async runTask(taskData: Omit<Task, "id" | "status">): Promise<TaskResult> {
         if (this.currentTask && this.currentTask.status === TaskStatus.Running) {
-            vscode.window.showWarningMessage('已有任务在运行，请等待完成或停止');
-            return { success: false, output: '已有任务在运行' };
+            vscode.window.showWarningMessage("已有任务在运行，请等待完成或停止");
+            return { success: false, output: "已有任务在运行" };
         }
 
         const task: Task = {
@@ -79,7 +110,7 @@ export class TaskManager implements vscode.Disposable {
         };
 
         this.currentTask = task;
-        this.outputBuffer = '';
+        this.outputBuffer = "";
         this._onDidChangeStatus.fire(TaskStatus.Running);
 
         try {
@@ -100,61 +131,59 @@ export class TaskManager implements vscode.Disposable {
     }
 
     private async executeTask(task: Task): Promise<TaskResult> {
-        const config = vscode.workspace.getConfiguration('omc');
-        const apiKey = config.get<string>('apiKey') || process.env.DEEPSEEK_API_KEY || '';
-        const defaultModel = config.get<string>('defaultModel') || 'deepseek';
-        const maxTokens = config.get<number>('maxTokens') || 4096;
-        const temperature = config.get<number>('temperature') || 0.7;
+        const config = vscode.workspace.getConfiguration("omc");
+        const apiKey = config.get<string>("apiKey") || process.env.DEEPSEEK_API_KEY || "";
+        const defaultModel = config.get<string>("defaultModel") || "deepseek";
+        const maxTokens = config.get<number>("maxTokens") || 4096;
+        const temperature = config.get<number>("temperature") || 0.7;
 
         if (!apiKey) {
-            throw new Error('请配置 API Key：设置中搜索 "omc.apiKey" 或设置环境变量');
+            throw new Error("请配置 API Key：设置中搜索 \"omc.apiKey\" 或设置环境变量");
         }
 
         return new Promise((resolve, reject) => {
-            // 调用 oh-my-coder CLI
-            const cliPath = this.getCliPath();
             const args = [
-                'run',
+                "run",
                 task.description,
-                '--model', defaultModel,
-                '--max-tokens', String(maxTokens),
-                '--temperature', String(temperature),
+                "--model", defaultModel,
+                "--max-tokens", String(maxTokens),
+                "--temperature", String(temperature),
             ];
 
             if (task.workflow) {
-                args.push('--workflow', task.workflow);
+                args.push("--workflow", task.workflow);
             }
 
             if (task.fileName) {
-                args.push('--file', task.fileName);
+                args.push("--file", task.fileName);
             }
 
-            this.process = spawn('python', ['-m', 'src.main', ...args], {
-                cwd: cliPath,
-                env: {
-                    ...process.env,
-                    DEEPSEEK_API_KEY: apiKey,
-                },
-            });
+            const env: Record<string, string> = {
+                ...process.env as Record<string, string>,
+                DEEPSEEK_API_KEY: apiKey,
+            };
 
-            let output = '';
-            let error = '';
+            const cliPath = this.getCliPath();
+            this.process = spawn(cliPath, args, { env });
 
-            this.process.stdout?.on('data', (data) => {
+            let output = "";
+            let error = "";
+
+            this.process.stdout?.on("data", (data) => {
                 const chunk = data.toString();
                 output += chunk;
                 this.outputBuffer += chunk;
                 this._onDidChangeOutput.fire(chunk);
             });
 
-            this.process.stderr?.on('data', (data) => {
+            this.process.stderr?.on("data", (data) => {
                 const chunk = data.toString();
                 error += chunk;
                 this.outputBuffer += chunk;
                 this._onDidChangeOutput.fire(chunk);
             });
 
-            this.process.on('close', (code) => {
+            this.process.on("close", (code) => {
                 this.process = null;
 
                 if (code === 0) {
@@ -168,26 +197,20 @@ export class TaskManager implements vscode.Disposable {
                 }
             });
 
-            this.process.on('error', (err) => {
+            this.process.on("error", (err) => {
                 this.process = null;
-                reject(err);
+                if ((err as NodeJS.ErrnoException).code === "ENOENT") {
+                    reject(new Error(
+                        "找不到 omc 命令，请先安装 oh-my-coder：pip install oh-my-coder"
+                    ));
+                } else {
+                    reject(err);
+                }
             });
         });
     }
 
-    private getCliPath(): string {
-        // 尝试查找 oh-my-coder 安装路径
-        const workspaceFolders = vscode.workspace.workspaceFolders;
-        if (workspaceFolders) {
-            const localPath = path.join(workspaceFolders[0].uri.fsPath, 'oh-my-coder');
-            // 检查是否存在
-            return localPath;
-        }
-        return path.dirname(path.dirname(path.dirname(__dirname)));
-    }
-
     private parseMetrics(output: string): { tokens: number; duration: number; cost: number } {
-        // 从输出中解析指标
         const tokenMatch = output.match(/Tokens[:\s]+(\d+)/i);
         const durationMatch = output.match(/Duration[:\s]+(\d+\.?\d*)\s*s/i);
         const costMatch = output.match(/Cost[:\s]+\$?(\d+\.?\d*)/i);

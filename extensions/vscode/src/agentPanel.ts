@@ -67,6 +67,8 @@ export class OMCProvider implements vscode.TreeDataProvider<TaskItem> {
     private getWebviewContent(webview: vscode.Webview): string {
         const task = this.taskManager.getCurrentTask();
         const isRunning = task?.status === TaskStatus.Running;
+        const config = vscode.workspace.getConfiguration('omc');
+        const currentModel = config.get<string>('defaultModel') || 'deepseek';
 
         return `<!DOCTYPE html>
 <html lang="zh-CN">
@@ -90,7 +92,7 @@ export class OMCProvider implements vscode.TreeDataProvider<TaskItem> {
             display: flex;
             align-items: center;
             gap: 8px;
-            margin-bottom: 16px;
+            margin-bottom: 12px;
         }
         .header h2 {
             font-size: 16px;
@@ -116,6 +118,20 @@ export class OMCProvider implements vscode.TreeDataProvider<TaskItem> {
             background: var(--vscode-inputValidation-errorBackground);
             color: var(--vscode-inputValidation-errorForeground);
         }
+        .select-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        .select-row select {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid var(--vscode-input-border);
+            background: var(--vscode-input-background);
+            color: var(--vscode-input-foreground);
+            border-radius: 4px;
+            font-size: 13px;
+        }
         .task-input {
             width: 100%;
             padding: 8px;
@@ -132,7 +148,7 @@ export class OMCProvider implements vscode.TreeDataProvider<TaskItem> {
         .buttons {
             display: flex;
             gap: 8px;
-            margin-bottom: 16px;
+            margin-bottom: 12px;
         }
         .btn {
             flex: 1;
@@ -162,23 +178,75 @@ export class OMCProvider implements vscode.TreeDataProvider<TaskItem> {
             background: var(--vscode-editor-background);
             border: 1px solid var(--vscode-input-border);
             border-radius: 4px;
-            padding: 8px;
-            font-family: 'Consolas', 'Monaco', monospace;
-            font-size: 12px;
+            padding: 12px;
+            font-size: 13px;
             height: 300px;
             overflow-y: auto;
-            white-space: pre-wrap;
-            word-break: break-all;
+            line-height: 1.6;
         }
-        .workflow-select {
-            width: 100%;
-            padding: 8px;
-            border: 1px solid var(--vscode-input-border);
-            background: var(--vscode-input-background);
-            color: var(--vscode-input-foreground);
+        .output h1, .output h2, .output h3 {
+            margin: 16px 0 8px 0;
+            font-weight: 600;
+        }
+        .output h1 { font-size: 18px; border-bottom: 1px solid var(--vscode-input-border); padding-bottom: 8px; }
+        .output h2 { font-size: 16px; }
+        .output h3 { font-size: 14px; }
+        .output p { margin: 8px 0; }
+        .output code {
+            background: var(--vscode-textCodeBlock-background);
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 12px;
+        }
+        .output pre {
+            background: var(--vscode-textCodeBlock-background);
+            padding: 12px;
             border-radius: 4px;
-            font-size: 13px;
-            margin-bottom: 12px;
+            overflow-x: auto;
+            margin: 8px 0;
+        }
+        .output pre code {
+            background: none;
+            padding: 0;
+        }
+        .output ul, .output ol {
+            margin: 8px 0;
+            padding-left: 24px;
+        }
+        .output li {
+            margin: 4px 0;
+        }
+        .output blockquote {
+            border-left: 4px solid var(--vscode-input-border);
+            padding-left: 12px;
+            margin: 8px 0;
+            color: var(--vscode-descriptionForeground);
+        }
+        .output hr {
+            border: none;
+            border-top: 1px solid var(--vscode-input-border);
+            margin: 16px 0;
+        }
+        .output table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 8px 0;
+        }
+        .output th, .output td {
+            border: 1px solid var(--vscode-input-border);
+            padding: 8px;
+            text-align: left;
+        }
+        .output th {
+            background: var(--vscode-textCodeBlock-background);
+            font-weight: 600;
+        }
+        .empty-state {
+            color: var(--vscode-descriptionForeground);
+            font-style: italic;
+            text-align: center;
+            padding: 40px 0;
         }
     </style>
 </head>
@@ -190,14 +258,30 @@ export class OMCProvider implements vscode.TreeDataProvider<TaskItem> {
         </span>
     </div>
 
-    <select class="workflow-select" id="workflow">
-        <option value="">默认工作流</option>
-        <option value="build">🔨 构建</option>
-        <option value="review">🔍 审查</option>
-        <option value="debug">🐛 调试</option>
-        <option value="test">🧪 测试</option>
-        <option value="explore">📖 探索</option>
-    </select>
+    <div class="select-row">
+        <select id="model">
+            <option value="deepseek" ${currentModel === 'deepseek' ? 'selected' : ''}>DeepSeek</option>
+            <option value="qwen" ${currentModel === 'qwen' ? 'selected' : ''}>通义千问</option>
+            <option value="glm" ${currentModel === 'glm' ? 'selected' : ''}>智谱 GLM</option>
+            <option value="kimi" ${currentModel === 'kimi' ? 'selected' : ''}>Kimi</option>
+            <option value="hunyuan" ${currentModel === 'hunyuan' ? 'selected' : ''}>腾讯混元</option>
+            <option value="wenxin" ${currentModel === 'wenxin' ? 'selected' : ''}>文心一言</option>
+            <option value="doubao" ${currentModel === 'doubao' ? 'selected' : ''}>豆包</option>
+            <option value="minimax" ${currentModel === 'minimax' ? 'selected' : ''}>MiniMax</option>
+            <option value="tiangong" ${currentModel === 'tiangong' ? 'selected' : ''}>天工</option>
+            <option value="spark" ${currentModel === 'spark' ? 'selected' : ''}>讯飞星火</option>
+            <option value="baichuan" ${currentModel === 'baichuan' ? 'selected' : ''}>百川</option>
+            <option value="siliconflow" ${currentModel === 'siliconflow' ? 'selected' : ''}>SiliconFlow</option>
+        </select>
+        <select id="workflow">
+            <option value="">默认工作流</option>
+            <option value="build">🔨 构建</option>
+            <option value="review">🔍 审查</option>
+            <option value="debug">🐛 调试</option>
+            <option value="test">🧪 测试</option>
+            <option value="explore">📖 探索</option>
+        </select>
+    </div>
 
     <input type="text" class="task-input" id="taskInput" 
            placeholder="输入任务描述...">
@@ -211,7 +295,9 @@ export class OMCProvider implements vscode.TreeDataProvider<TaskItem> {
         </button>
     </div>
 
-    <div class="output" id="output">${this.escapeHtml(this.taskManager.getOutput()) || '等待任务...'}</div>
+    <div class="output" id="output">
+        ${this.taskManager.getOutput() ? this.renderMarkdown(this.taskManager.getOutput()) : '<div class="empty-state">等待任务...</div>'}
+    </div>
 
     <script>
         const vscode = acquireVsCodeApi();
@@ -223,11 +309,13 @@ export class OMCProvider implements vscode.TreeDataProvider<TaskItem> {
         document.getElementById('runBtn').addEventListener('click', () => {
             const input = document.getElementById('taskInput').value;
             const workflow = document.getElementById('workflow').value;
+            const model = document.getElementById('model').value;
             if (input.trim()) {
                 vscode.postMessage({
                     type: 'runTask',
                     description: input,
-                    workflow: workflow
+                    workflow: workflow,
+                    model: model
                 });
             }
         });
@@ -239,7 +327,8 @@ export class OMCProvider implements vscode.TreeDataProvider<TaskItem> {
         window.addEventListener('message', (event) => {
             const message = event.data;
             if (message.type === 'output') {
-                outputEl.textContent += message.data;
+                // Append raw text, will be rendered as markdown on next refresh
+                outputEl.innerHTML = message.html || '<div class="empty-state">等待任务...</div>';
                 outputEl.scrollTop = outputEl.scrollHeight;
             } else if (message.type === 'status') {
                 const running = message.status === 'running';
@@ -268,6 +357,50 @@ export class OMCProvider implements vscode.TreeDataProvider<TaskItem> {
             .replace(/>/g, '&gt;')
             .replace(/"/g, '&quot;')
             .replace(/'/g, '&#039;');
+    }
+
+    /**
+     * 简单的 Markdown 渲染
+     */
+    private renderMarkdown(text: string): string {
+        let html = this.escapeHtml(text);
+
+        // Headers
+        html = html.replace(/^### (.*$)/gim, '<h3>$1</h3>');
+        html = html.replace(/^## (.*$)/gim, '<h2>$1</h2>');
+        html = html.replace(/^# (.*$)/gim, '<h1>$1</h1>');
+
+        // Bold and Italic
+        html = html.replace(/\*\*\*(.*?)\*\*\*/g, '<strong><em>$1</em></strong>');
+        html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+        html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
+
+        // Inline code
+        html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+
+        // Code blocks
+        html = html.replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>');
+
+        // Blockquotes
+        html = html.replace(/^&gt; (.*$)/gim, '<blockquote>$1</blockquote>');
+
+        // Horizontal rules
+        html = html.replace(/^---$/gim, '<hr>');
+
+        // Unordered lists
+        html = html.replace(/^- (.*$)/gim, '<li>$1</li>');
+        html = html.replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>');
+
+        // Ordered lists
+        html = html.replace(/^\d+\. (.*$)/gim, '<li>$1</li>');
+
+        // Links
+        html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
+
+        // Line breaks
+        html = html.replace(/\n/g, '<br>');
+
+        return html;
     }
 
     refresh(): void {

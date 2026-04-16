@@ -9,3 +9,4 @@ src/**
 **/*.md
 **/node_modules/**
 test/**
+resources/icon.svg

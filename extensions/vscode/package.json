@@ -1,7 +1,7 @@
 {
   "name": "oh-my-coder",
   "displayName": "Oh My Coder",
-  "description": "多智能体 AI 编程助手 - 支持 11 个国产大模型",
+  "description": "多智能体 AI 编程助手 - 支持 12 个国产大模型",
   "version": "0.1.0",
   "publisher": "vobc",
   "engines": {
@@ -112,7 +112,7 @@
         {
           "id": "omc-sidebar",
           "title": "Oh My Coder",
-          "icon": "resources/icon.svg"
+          "icon": "resources/icon.png"
         }
       ]
     },
@@ -153,10 +153,11 @@
             "minimax",
             "tiangong",
             "spark",
-            "baichuan"
+            "baichuan",
+            "siliconflow"
           ],
           "default": "deepseek",
-          "description": "默认使用的模型"
+          "description": "默认使用的模型（12个国产大模型）"
         },
         "omc.autoSave": {
           "type": "boolean",

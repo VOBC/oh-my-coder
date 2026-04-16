@@ -48,8 +48,29 @@ export function activate(context: vscode.ExtensionContext) {
         })
     );
 
+    // 首次启动检测 API Key
+    const config = vscode.workspace.getConfiguration('omc');
+    const apiKey = config.get<string>('apiKey') || process.env.DEEPSEEK_API_KEY || '';
+    if (!apiKey) {
+        setTimeout(() => {
+            vscode.window.showWarningMessage(
+                'Oh My Coder: 未检测到 API Key，请先配置后再使用',
+                '配置 API Key',
+                '使用 GLM 免费模型'
+            ).then((selection) => {
+                if (selection === '配置 API Key') {
+                    vscode.commands.executeCommand('workbench.action.openSettings', 'omc.apiKey');
+                } else if (selection === '使用 GLM 免费模型') {
+                    vscode.window.showInformationMessage(
+                        'GLM 免费模型快速配置：\n1. 访问 https://open.bigmodel.cn 注册\n2. 获取 API Key\n3. 在设置中填入 omc.apiKey，模型选 glm'
+                    );
+                }
+            });
+        }, 3000);
+    }
+
     // 显示欢迎消息
-    if (vscode.workspace.getConfiguration('omc').get('showWelcome')) {
+    if (config.get('showWelcome')) {
         vscode.window.showInformationMessage(
             '🤖 Oh My Coder 已启动！使用 Ctrl+Shift+Enter 运行任务',
             '打开面板',
@@ -58,7 +79,7 @@ export function activate(context: vscode.ExtensionContext) {
             if (selection === '打开面板') {
                 vscode.commands.executeCommand('omc.openPanel');
             } else if (selection === '不再显示') {
-                vscode.workspace.getConfiguration('omc').update('showWelcome', false);
+                config.update('showWelcome', false);
             }
         });
     }
