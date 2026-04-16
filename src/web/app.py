@@ -9,6 +9,7 @@ import uuid
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+import json as _json
 
 import uvicorn
 from fastapi import BackgroundTasks, FastAPI, HTTPException, Request
@@ -19,15 +20,21 @@ from pydantic import BaseModel
 
 # 确保可以导入 src 模块
 project_root = Path(__file__).parent.parent.parent
+
 sys.path.insert(0, str(project_root))
 
-from src.agents.base import AgentContext, AgentOutput, AgentStatus, get_agent
-from src.core.orchestrator import WORKFLOW_TEMPLATES, Orchestrator
-from src.core.router import ModelRouter, RouterConfig
-from src.web.history_api import history_router, agent_router, history_store
-from src.web.dashboard_api import router as dashboard_router
-from src.web.team_api import router as team_router
-from src.web.local_models_api import router as local_models_router
+# 导入必须在 sys.path.insert 之后
+try:
+    from src.agents.base import AgentContext, AgentOutput, AgentStatus, get_agent
+    from src.core.orchestrator import WORKFLOW_TEMPLATES, Orchestrator
+    from src.core.router import ModelRouter, RouterConfig
+    from src.web.history_api import history_router, agent_router, history_store
+    from src.web.dashboard_api import router as dashboard_router
+    from src.web.team_api import router as team_router
+    from src.web.local_models_api import router as local_models_router
+except ImportError as e:
+    print(f"导入错误: {e}")
+    raise
 
 # ========================================
 # FastAPI App
@@ -229,7 +236,8 @@ async def agent_live_stream():
     SSE 实时推送当前 Agent 协作状态
 
     Returns:
-        StreamingResponse: text/event-stream，每 2 秒推送一次 orchestrator.get_current_state()
+        StreamingResponse: text/event-stream，每 2 秒推送一次
+        orchestrator.get_current_state()
     """
     orch = get_orchestrator()
 
@@ -261,7 +269,6 @@ async def agent_live_stream():
 # ========================================
 # JSON Helper (avoid orjson dependency)
 # ========================================
-import json as _json
 
 
 def json_dumps(obj):
@@ -385,11 +392,10 @@ async def run_task(
         orch._active_workflows[workflow_id] = wf_result
 
         # 按顺序执行每个步骤
-        context = {
-            "project_path": project_path,
-            "task": task,
-        }
-
+        # context = {
+        #             "project_path": project_path,
+        #             "task": task,
+        # }
         previous_outputs = {}
 
         for step in steps:
@@ -640,33 +646,37 @@ def _read_settings() -> Dict[str, Any]:
 
         raw = json.loads(SETTINGS_FILE.read_text(encoding="utf-8"))
     except Exception:
-        return _read_settings.__wrapped__() if hasattr(_read_settings, "__wrapped__") else {
-            "models": {
-                "deepseek": {
-                    "provider": "DeepSeek",
-                    "api_key": "",
-                    "cost_level": "free",
-                    "enabled": True,
+        return (
+            _read_settings.__wrapped__()
+            if hasattr(_read_settings, "__wrapped__")
+            else {
+                "models": {
+                    "deepseek": {
+                        "provider": "DeepSeek",
+                        "api_key": "",
+                        "cost_level": "free",
+                        "enabled": True,
+                    },
+                    "tongyi": {
+                        "provider": "阿里云",
+                        "api_key": "",
+                        "cost_level": "low",
+                        "enabled": False,
+                    },
+                    "wenxin": {
+                        "provider": "百度",
+                        "api_key": "",
+                        "cost_level": "low",
+                        "enabled": False,
+                    },
                 },
-                "tongyi": {
-                    "provider": "阿里云",
-                    "api_key": "",
-                    "cost_level": "low",
-                    "enabled": False,
+                "defaults": {
+                    "model": "deepseek",
+                    "workflow": "build",
+                    "timeout": 300,
                 },
-                "wenxin": {
-                    "provider": "百度",
-                    "api_key": "",
-                    "cost_level": "low",
-                    "enabled": False,
-                },
-            },
-            "defaults": {
-                "model": "deepseek",
-                "workflow": "build",
-                "timeout": 300,
-            },
-        }
+            }
+        )
     # 确保必要字段存在
     if "models" not in raw:
         raw["models"] = {}
@@ -675,13 +685,17 @@ def _read_settings() -> Dict[str, Any]:
     for key in ("deepseek", "tongyi", "wenxin"):
         if key not in raw["models"]:
             raw["models"][key] = {
-                "provider": {"deepseek": "DeepSeek", "tongyi": "阿里云", "wenxin": "百度"}.get(
-                    key, key
-                ),
+                "provider": {
+                    "deepseek": "DeepSeek",
+                    "tongyi": "阿里云",
+                    "wenxin": "百度",
+                }.get(key, key),
                 "api_key": "",
-                "cost_level": {"deepseek": "free", "tongyi": "low", "wenxin": "low"}.get(
-                    key, "low"
-                ),
+                "cost_level": {
+                    "deepseek": "free",
+                    "tongyi": "low",
+                    "wenxin": "low",
+                }.get(key, "low"),
                 "enabled": key == "deepseek",
             }
     for dk, dv in {
@@ -711,7 +725,7 @@ async def get_settings():
     """获取当前设置（API Key 脱敏）"""
     settings = _read_settings()
     # 脱敏 API Key
-    masked = json_dumps(settings, ensure_ascii=False)  # keep original for structure
+    # masked = json_dumps(settings, ensure_ascii=False)  # keep original for structure
     # Deep-copy models with masked keys
     for _name, _m in settings.get("models", {}).items():
         raw_key = _m.get("api_key", "")
