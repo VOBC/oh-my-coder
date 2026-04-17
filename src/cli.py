@@ -59,6 +59,14 @@ app.add_typer(checkpoint_app, name="checkpoint")
 app.add_typer(mcp_app, name="mcp")
 app.add_typer(memory_app, name="memory", help="分层记忆管理 - 查看核心/精选/完整记忆")
 
+# 代码清理命令
+try:
+    from .cli_clean import app as clean_app
+
+    app.add_typer(clean_app, name="clean", help="代码清理 - 检测和清理冗余代码")
+except Exception:
+    pass
+
 # 本地模型命令
 try:
     from .cli_local_models import app as local_models_app
