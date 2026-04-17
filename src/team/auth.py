@@ -120,7 +120,7 @@ class TeamAuth:
 
     def _hash_password(self, password: str, salt: str) -> str:
         """哈希密码"""
-        return hashlib.sha256(f"{password}{salt}".encode()).hexdigest()
+        return hashlib.sha256(f"{password}{salt}".encode()).hexdigest()  # noqa: B303
 
     async def create_team(
         self,

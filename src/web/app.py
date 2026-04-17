@@ -584,11 +584,11 @@ async def execute_task_sync(req: ExecuteRequest):
             }
         )
 
-    except Exception as e:
+    except Exception:  # noqa: B008
         return JSONResponse(
             {
                 "status": "error",
-                "message": str(e),
+                "message": "服务器内部错误，请稍后重试",
             }
         )
 
