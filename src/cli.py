@@ -67,6 +67,14 @@ try:
 except Exception:
     pass
 
+# 成本优化命令
+try:
+    from .cli_cost import app as cost_app
+
+    app.add_typer(cost_app, name="cost", help="成本优化 - 根据任务推荐最优模型")
+except Exception:
+    pass
+
 # 本地模型命令
 try:
     from .cli_local_models import app as local_models_app
