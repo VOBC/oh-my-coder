@@ -354,5 +354,137 @@ def agent_stats(
     console.print(table)
 
 
+# ------------------------------------------------------------------
+# 版本迭代记忆 - 解决鬼打墙问题
+# ------------------------------------------------------------------
+
+
+@app.command("decisions")
+def list_decisions(
+    category: Optional[str] = typer.Option(
+        None,
+        "--category",
+        "-c",
+        help="按类别过滤 (bug_fix/solution_choice/rejection/architecture)",
+    ),
+    limit: int = typer.Option(10, "--limit", "-n", help="显示数量"),
+):
+    """列出历史决策记录"""
+    from .agents.self_improving import SelfImprovingAgent
+
+    sia = SelfImprovingAgent()
+    decisions = sia.list_decisions(category=category, limit=limit)
+
+    if not decisions:
+        console.print("[yellow]暂无决策记录[/yellow]")
+        return
+
+    table = Table(title="历史决策记录")
+    table.add_column("ID", style="cyan", width=25)
+    table.add_column("标题", style="white")
+    table.add_column("类别", style="yellow")
+    table.add_column("结果", style="green")
+    table.add_column("问题", style="dim", width=40)
+
+    for d in decisions:
+        table.add_row(
+            d["id"],
+            d["title"],
+            d["category"],
+            d["result"],
+            d["problem"],
+        )
+
+    console.print(table)
+    console.print("\n[dim]使用 'omc agent decision <问题描述>' 检索相关决策[/dim]")
+
+
+@app.command("decision")
+def retrieve_decision(
+    problem: str = typer.Argument(..., help="问题描述，用于检索相似决策"),
+    limit: int = typer.Option(3, "--limit", "-n", help="返回数量"),
+):
+    """检索历史决策，避免重复踩坑"""
+    from .agents.self_improving import SelfImprovingAgent
+
+    sia = SelfImprovingAgent()
+    decisions = sia.retrieve_past_decisions(problem, limit=limit)
+
+    if not decisions:
+        console.print("[yellow]未找到相关决策记录[/yellow]")
+        console.print("[dim]使用 'omc agent record-decision' 记录新决策[/dim]")
+        return
+
+    console.print(f"[cyan]找到 {len(decisions)} 条相关决策：[/cyan]\n")
+
+    for i, d in enumerate(decisions, 1):
+        panel = Panel(
+            f"**问题**: {d['problem']}\n\n"
+            f"**解决方案**: {d['chosen_solution']}\n\n"
+            f"**结果**: {d['result']}\n\n"
+            f"**效果**: {d.get('outcome', 'N/A')}\n\n"
+            f"**适用场景**: {d.get('reusable_for', 'N/A')}\n\n"
+            f"**关键词**: {', '.join(d.get('keywords', []))}",
+            title=f"{i}. {d['title']}",
+            border_style="cyan",
+        )
+        console.print(panel)
+
+
+@app.command("record-decision")
+def record_decision(
+    title: str = typer.Option(..., "--title", "-t", help="决策标题"),
+    problem: str = typer.Option(..., "--problem", "-p", help="遇到的问题"),
+    solution: str = typer.Option(..., "--solution", "-s", help="选择的解决方案"),
+    category: str = typer.Option(
+        "solution_choice", "--category", "-c", help="决策类别"
+    ),
+    result: str = typer.Option(
+        "success", "--result", "-r", help="结果 (success/failure)"
+    ),
+    outcome: str = typer.Option("", "--outcome", "-o", help="效果描述"),
+    reusable_for: str = typer.Option("", "--reusable-for", help="适用场景"),
+):
+    """记录重要决策"""
+    from .agents.self_improving import SelfImprovingAgent
+
+    sia = SelfImprovingAgent()
+    decision_id = sia.record_decision(
+        title=title,
+        problem=problem,
+        chosen_solution=solution,
+        category=category,
+        result=result,
+        outcome=outcome,
+        reusable_for=reusable_for,
+    )
+
+    console.print(f"[green]✓[/green] 决策已记录: {decision_id}")
+
+
+@app.command("decision-stats")
+def decision_stats():
+    """显示决策记忆统计"""
+    from .agents.self_improving import SelfImprovingAgent
+
+    sia = SelfImprovingAgent()
+    stats = sia.get_decision_stats()
+
+    table = Table(title="决策记忆统计")
+    table.add_column("指标", style="cyan")
+    table.add_column("值", style="green")
+
+    table.add_row("总决策数", str(stats.get("total_decisions", 0)))
+    table.add_row("最新决策", stats.get("latest_decision", "无"))
+
+    category_data = stats.get("by_category", {})
+    if category_data:
+        table.add_row(
+            "按类别", ", ".join(f"{k}: {v}" for k, v in category_data.items())
+        )
+
+    console.print(table)
+
+
 if __name__ == "__main__":
     app()

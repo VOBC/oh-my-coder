@@ -25,7 +25,13 @@ from .base import (
     BaseAgent,
     register_agent,
 )
-from .evolution import EvolutionConfig, EvolutionRecord, EvolutionStore, SuccessPattern
+from .evolution import (
+    DecisionMemory,
+    EvolutionConfig,
+    EvolutionRecord,
+    EvolutionStore,
+    SuccessPattern,
+)
 
 
 @dataclass
@@ -281,6 +287,7 @@ class SelfImprovingAgent(BaseAgent):
         # 进化系统
         state_dir = Path.home() / ".omc" / "state"
         self._evolution_store = EvolutionStore(state_dir)
+        self._decision_memory = DecisionMemory(state_dir)  # 版本迭代记忆
         self._evolution_config = evolution_config or EvolutionConfig()
 
     @property
@@ -1130,6 +1137,116 @@ class SelfImprovingAgent(BaseAgent):
         self._evolution_store.save_evolution_record(record)
 
         return record
+
+    # ------------------------------------------------------------------
+    # 版本迭代记忆 - 解决鬼打墙问题
+    # ------------------------------------------------------------------
+
+    def retrieve_past_decisions(
+        self,
+        problem_description: str,
+        limit: int = 3,
+    ) -> List[Dict[str, Any]]:
+        """
+        检索历史决策，避免重复踩坑
+
+        当 Agent 遇到问题时，调用此方法检索类似问题的历史决策，
+        获取"这个问题上次是怎么解决的"的经验。
+
+        Args:
+            problem_description: 问题描述
+            limit: 返回数量上限
+
+        Returns:
+            决策列表，每项包含 title, problem, chosen_solution, reusable_for 等
+        """
+        decisions = self._decision_memory.retrieve(problem_description, limit=limit)
+
+        return [
+            {
+                "id": d.id,
+                "title": d.title,
+                "problem": d.problem,
+                "chosen_solution": d.chosen_solution,
+                "result": d.result,
+                "outcome": d.outcome,
+                "reusable_for": d.reusable_for,
+                "keywords": d.keywords,
+            }
+            for d in decisions
+        ]
+
+    def record_decision(
+        self,
+        title: str,
+        problem: str,
+        chosen_solution: str,
+        agent_type: str = "",
+        category: str = "solution_choice",
+        rejected_alternatives: Optional[List[str]] = None,
+        result: str = "",
+        outcome: str = "",
+        reusable_for: str = "",
+        related_files: Optional[List[str]] = None,
+    ) -> str:
+        """
+        记录重要决策
+
+        Args:
+            title: 决策标题
+            problem: 遇到的问题
+            chosen_solution: 选择的方案
+            agent_type: Agent 类型
+            category: 决策类别 (bug_fix/solution_choice/rejection/architecture)
+            rejected_alternatives: 放弃的方案
+            result: 结果 (success/failure)
+            outcome: 效果描述
+            reusable_for: 适用场景
+            related_files: 相关文件
+
+        Returns:
+            decision_id
+        """
+        # 自动提取关键词
+        keywords = self._decision_memory._extract_keywords(problem, chosen_solution)
+
+        return self._decision_memory.record_decision(
+            title=title,
+            problem=problem,
+            chosen_solution=chosen_solution,
+            agent_type=agent_type,
+            category=category,
+            rejected_alternatives=rejected_alternatives,
+            result=result,
+            outcome=outcome,
+            reusable_for=reusable_for,
+            keywords=keywords,
+            related_files=related_files,
+        )
+
+    def list_decisions(
+        self,
+        category: Optional[str] = None,
+        limit: int = 10,
+    ) -> List[Dict[str, Any]]:
+        """列出决策记录"""
+        decisions = self._decision_memory.list_decisions(category=category, limit=limit)
+        return [
+            {
+                "id": d.id,
+                "title": d.title,
+                "category": d.category,
+                "result": d.result,
+                "problem": (
+                    d.problem[:100] + "..." if len(d.problem) > 100 else d.problem
+                ),
+            }
+            for d in decisions
+        ]
+
+    def get_decision_stats(self) -> Dict[str, Any]:
+        """获取决策记忆统计"""
+        return self._decision_memory.get_stats()
 
     def get_evolution_stats(self, agent_type: str) -> Dict[str, Any]:
         """获取 Agent 的进化统计信息"""
