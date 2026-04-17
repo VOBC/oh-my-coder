@@ -81,7 +81,7 @@ Bug 修复                  debug                  omc run "..." -w debug
 | 文件名 | 内容 | 优先级 |
 |--------|------|--------|
 | `cli-help.png` | omc --help 主界面 | ⭐⭐⭐ |
-| `cli-agents.png` | omc agents 30个Agent | ⭐⭐⭐ |
+| `cli-agents.png` | omc agents 31个Agent | ⭐⭐⭐ |
 | `workflow-run.png` | omc run -w build 执行中 | ⭐⭐ |
 | `quest-mode.png` | omc quest 异步编程 | ⭐⭐ |
 | `doc-workflow.png` | omc run -w doc 文档生成 | ⭐⭐ |

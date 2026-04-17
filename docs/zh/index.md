@@ -9,11 +9,11 @@
 
 ## 项目简介
 
-Oh My Coder（OMC）是一个**多智能体 AI 编程助手**，支持 12 家国内大模型、30 个专业 Agent、多 Agent 协作。
+Oh My Coder（OMC）是一个**多智能体 AI 编程助手**，支持 12 家国内大模型、31 个专业 Agent、多 Agent 协作。
 
 ### 核心特点
 
-- 🤖 **30 个专业 Agent**：Explore、Analyze、Code、Review、Debug、Test 等分工协作
+- 🤖 **31 个专业 Agent**：Explore、Analyze、Code、Review、Debug、Test 等分工协作
 - 🌐 **国产模型支持**：DeepSeek、GLM、文心、通义、Kimi、混元、MiMo 等 12 家
 - 💰 **免费使用**：GLM-4-Flash 免费额度充足，DeepSeek 性价比极高
 - 🔄 **多 Agent 协作**：Build / Review / Domain / Coordinate 四通道编排
@@ -47,5 +47,5 @@ python -m src.web.app      # 启动 Web 界面
 | [快速开始](getting-started.md) | 从零开始，5 分钟上手 |
 | [教程](tutorials.md) | 常见场景实战教程 |
 | [安装指南](../guide/install.md) | 详细安装步骤 |
-| [Agent 系统](../guide/agents.md) | 30 个 Agent 详细介绍 |
+| [Agent 系统](../guide/agents.md) | 31 个 Agent 详细介绍 |
 | [CLI 参考](../api/cli.md) | 命令行详细文档 |

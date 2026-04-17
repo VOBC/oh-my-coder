@@ -2,7 +2,7 @@
 
 > 🤖 多智能体 AI 编程助手，支持国内大模型
 
-🎯 **GLM-4.7-Flash 开源免费 · 12 家国产大模型 · 30 个专业 Agent · 多 Agent 协作 · 完全开源**
+🎯 **GLM-4.7-Flash 开源免费 · 12 家国产大模型 · 31 个专业 Agent · 多 Agent 协作 · 完全开源**
 
 [![Python](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
@@ -27,7 +27,7 @@
 - [🎬 效果演示](#-效果演示)
 - [🌐 Web 界面预览](#-web-界面预览)
 - [🏗️ 架构设计](#️-架构设计)
-- [🤖 Agent 系统（30 个专业 Agent）](#-agent-系统30-个专业-agent)
+- [🤖 Agent 系统（31 个专业 Agent）](#-agent-系统31-个专业-agent)
 - [🧙 Quest Mode（异步自主编程）](#️-quest-mode异步自主编程)
 - [🧠 主动学习模块](#-主动学习模块)
 - [🧠 分层记忆系统](#-分层记忆系统)
@@ -49,7 +49,7 @@
 
 ## 🎯 为什么选择 Oh My Coder？
 
-> **GLM-4.7-Flash 开源免费 · 12 家国产模型 · 30 个专业 Agent · 多 Agent 协作 · 完全开源**
+> **GLM-4.7-Flash 开源免费 · 12 家国产模型 · 31 个专业 Agent · 多 Agent 协作 · 完全开源**
 
 ### ⚠️ Claude 封号？这里是国产替代方案
 
@@ -61,7 +61,7 @@
 | **价格** | 需 Claude Pro ($25/月) | **完全免费开源** |
 | **数据隐私** | 上传到海外服务器 | **本地处理，不上传** |
 | **中国用户** | 封号风险高 | **完全支持** |
-| **Agent数量** | 约10个 | **30个专业Agent** |
+| **Agent数量** | 约10个 | **31个专业Agent** |
 | **开源** | 闭源 | **MIT开源协议** |
 
 **迁移指南**：如果你之前用 Claude Code，切换到 oh-my-coder 只需：
@@ -80,7 +80,7 @@ omc run "你好，介绍一下你自己"
 | 工具 | 类型 | Stars | 价格 | 开源 | 国内可用 | 多Agent | 模型支持 |
 |------|------|-------|------|------|----------|---------|----------|
 | **oh-my-claudecode** | Claude Code插件 | 28,890 ⭐ | 需Claude Pro ($25/月) | ✅ | ⚠️ 需翻墙 | ✅ 32个Agent | 仅Claude |
-| **oh-my-coder** | 多Agent框架 | 较少 | **免费** | **✅ MIT** | **✅** | ✅ 30个Agent | ✅ 12家国产模型 |
+| **oh-my-coder** | 多Agent框架 | 较少 | **免费** | **✅ MIT** | **✅** | ✅ 31个Agent | ✅ 12家国产模型 |
 | **AutoGen** | 微软多Agent框架 | 大 | 免费 | ✅ | ⚠️ 需翻墙 | ✅ | 多模型 |
 | **OpenCode** | 开源CLI | 中 | 免费 | ✅ | ✅ | ✅ | 75+模型 |
 | **MyClaude** | 多后端编排 | 小 | 免费 | ✅ | ✅ | ✅ | Claude/Codex/Gemini |
@@ -114,7 +114,7 @@ omc run "你好，介绍一下你自己"
 
 | 特性 | Oh My Coder | oh-my-claudecode | 腾讯CodeBuddy | Cursor | Copilot | AutoGen |
 |------|:-----------:|:----------------:|:-------------:|:------:|:-------:|:-------:|
-| 多Agent协作 | ✅ 30个 | ✅ 32个 | ❌ | ❌ | ❌ | ✅ |
+| 多Agent协作 | ✅ 31个 | ✅ 32个 | ❌ | ❌ | ❌ | ✅ |
 | 开源免费 | ✅ MIT | ✅ | ⚠️ 企业版付费 | ❌ $20/月 | ❌ $19/月 | ✅ |
 | 国内直连 | ✅ | ❌ 需翻墙 | ✅ | ❌ 需翻墙 | ❌ 需翻墙 | ✅ |
 | 国产模型支持 | ✅ 12家 | ❌ | ✅ 混元 | ❌ | ❌ | ❌ |
@@ -333,6 +333,39 @@ python -m src.cli config set -k GLM_API_KEY -v <your-key>
 
 # 列出可用模型
 python -m src.cli config list-models
+
+# === 代码清理 ===
+# 扫描项目中的冗余代码
+python -m src.cli clean .
+
+# 自动修复可清理的问题
+python -m src.cli clean . --fix
+
+# 激进模式（自动删除空文件）
+python -m src.cli clean . --aggressive
+
+# === 成本估算 ===
+# 根据任务描述推荐最优模型
+python -m src.cli cost "设计新系统架构"
+
+# 指定涉及文件数量以提高准确性
+python -m src.cli cost "重构用户模块" --files 10
+
+# 列出所有可用模型及定价
+python -m src.cli cost --list
+
+# === 版本迭代记忆 ===
+# 列出历史决策记录
+python -m src.cli agent decisions
+
+# 检索相关历史决策（解决鬼打墙问题）
+python -m src.cli agent decision "用户登录报错 500"
+
+# 记录新的重要决策
+python -m src.cli agent record-decision -t "修复 X 问题" -p "问题描述" -s "解决方案"
+
+# 查看决策记忆统计
+python -m src.cli agent decision-stats
 ```
 
 ### Web API 示例
@@ -494,7 +527,7 @@ flowchart TD
         TR[TracerAgent<br/>追踪根因]
     end
 
-    subgraph Domain1["🎯 领域通道 1/2 (8)"]
+    subgraph Domain1["🎯 领域通道 1/2 (9)"]
         TE[TestEngineerAgent<br/>测试生成]
         DS[DesignerAgent<br/>设计]
         VI[VisionAgent<br/>视觉分析<br/>UI代码生成]
@@ -503,16 +536,17 @@ flowchart TD
         SC[ScientistAgent<br/>技术调研]
         GM[GitMasterAgent<br/>Git操作]
         CS[CodeSimplifierAgent<br/>代码简化]
+        DB2[DatabaseAgent<br/>数据库]
     end
 
     subgraph Domain2["🎯 领域通道 2/2 (7)"]
         QA[QATesterAgent<br/>QA验证]
-        DB2[DatabaseAgent<br/>数据库]
         API[APIAgent<br/>API开发]
         DO[DevOpsAgent<br/>部署运维]
         UML[UMLAgent<br/>UML建模]
         PF[PerformanceAgent<br/>性能优化]
         MG[MigrationAgent<br/>迁移]
+        CL[CloudArchitectAgent<br/>云架构]
     end
 
     subgraph Wizard["🧙 协调通道 (4)"]
@@ -587,7 +621,7 @@ flowchart TD
 
 ---
 
-## 🤖 Agent 系统（30 个专业 Agent）<a id="-agent-系统30-个专业-agent"></a>
+## 🤖 Agent 系统（31 个专业 Agent）<a id="-agent-系统31-个专业-agent"></a>
 
 ### 构建 / 分析通道
 | Agent | 功能描述 |
@@ -1074,12 +1108,16 @@ Oh My Coder 高度重视代码安全：
 ```
 oh-my-coder/
 ├── src/
-│   ├── agents/              # 智能体模块（30 个 Agent）
+│   ├── agents/              # 智能体模块（31 个 Agent）
 │   │   ├── base.py          # Agent 基类 & 注册机制
 │   │   ├── explore.py       # 代码探索
-│   │   ├── analyst.py       # 需求分析
-│   │   ├── architect.py     # 架构设计
-│   │   ├── executor.py      # 代码实现
+│   │   ├── analyst.py        # 需求分析
+│   │   ├── architect.py      # 架构设计
+│   │   ├── executor.py       # 代码实现
+│   │   ├── evolution.py      # 🆕 自进化 & 版本迭代记忆
+│   │   ├── code_cleaner.py   # 🆕 代码清理 Agent
+│   │   ├── cost_optimizer.py  # 🆕 成本优化建议
+│   │   ├── smart_test.py     # 🆕 智能测试增强
 │   │   └── ...
 │   ├── core/                # 核心引擎
 │   │   ├── router.py        # 三层模型路由器
@@ -1122,7 +1160,7 @@ oh-my-coder/
 ## 🧪 测试
 
 ```bash
-# 运行所有测试（78 个测试）
+# 运行所有测试（770 个测试）
 pytest
 
 # 运行指定测试
@@ -1148,7 +1186,7 @@ pytest -m unit -v
 - [x] 核心架构设计
 - [x] 模型适配层（DeepSeek / 文心 / 通义 / GLM / Kimi / 豆包 / MiniMax / 混元）
 - [x] Agent 基类和注册机制
-- [x] 核心 Agent（30 个专业 Agent）
+- [x] 核心 Agent（31 个专业 Agent）
 - [x] 编排引擎（顺序/并行/条件执行）
 - [x] CLI 入口
 - [x] Web 界面（SSE 实时推送）

@@ -19,7 +19,7 @@
 多智能体 AI 编程助手
 
 ✨ 12 家国产大模型
-🤖 30 个专业 Agent
+🤖 31 个专业 Agent
 💰 GLM-4.7-Flash 完全免费
 ```
 
@@ -174,7 +174,7 @@ $ omc run "为用户模块添加分页查询接口" --workflow build
 🎯 为什么选择 Oh My Coder?
 
 ✅ 12 家国产大模型支持
-✅ 30 个专业 Agent 协作
+✅ 31 个专业 Agent 协作
 ✅ GLM-4.7-Flash 完全免费
 ✅ 中文优先，本土优化
 ✅ 完全开源，MIT 协议
@@ -238,7 +238,7 @@ pip install oh-my-coder
 ```
 [0:00-0:30]
 "Oh My Coder，多智能体 AI 编程助手。
-支持 12 家国产大模型，30 个专业 Agent 协作。
+支持 12 家国产大模型，31 个专业 Agent 协作。
 GLM-4.7-Flash 完全免费，开箱即用。"
 
 [0:30-1:00]

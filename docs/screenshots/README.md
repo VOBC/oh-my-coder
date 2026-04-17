@@ -16,7 +16,7 @@
 
 ![Agent System](demo-agents.png)
 
-`omc agents` 输出：30 个专业 Agent，分为构建/分析、审查、领域、协调四个通道。
+`omc agents` 输出：31 个专业 Agent，分为构建/分析、审查、领域、协调四个通道。
 
 ## Web SSE Stream
 

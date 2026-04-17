@@ -12,7 +12,7 @@
 
 > 👋 大家好，今天给大家介绍一款完全开源的多智能体 AI 编程助手——**Oh My Coder**。
 >
-> 它基于国产大模型，支持 GLM-4-Flash（永久免费），内置 30 个专业 Agent，
+> 它基于国产大模型，支持 GLM-4-Flash（永久免费），内置 31 个专业 Agent，
 > 可以帮你自动写代码、跑测试、做代码审查。
 
 **画面停留：2 秒**
@@ -82,7 +82,7 @@ $ omc config set -k GLM_API_KEY \
 ```
 $ omc agents
 
-  🤖 Oh My Coder — 30 个专业 Agent
+  🤖 Oh My Coder — 31 个专业 Agent
 
   构建/分析通道
   ├── ExplorerAgent       探索代码库，生成项目地图
@@ -106,7 +106,7 @@ $ omc agents
 
 **配音/字幕**：
 
-> Oh My Coder 内置 30 个专业 Agent，分成四类通道：
+> Oh My Coder 内置 31 个专业 Agent，分成四类通道：
 > 构建分析通道负责理解需求和生成代码；
 > 审查通道做质量把关；
 > 14 个领域 Agent 覆盖前端、数据库、安全等专门场景；

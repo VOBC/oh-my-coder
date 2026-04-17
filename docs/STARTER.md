@@ -263,7 +263,7 @@ export DEEPSEEK_API_KEY="你的Key"
 
 ### 探索更多 Agent
 
-Oh My Coder 有 30 个专业 Agent：
+Oh My Coder 有 31 个专业 Agent：
 
 ```bash
 # 查看所有 Agent

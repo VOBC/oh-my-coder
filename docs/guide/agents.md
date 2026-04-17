@@ -1,8 +1,8 @@
 # Agent 系统
 
-## 30 个专业 Agent
+## 31 个专业 Agent
 
-oh-my-coder 内置 30 个专业 Agent，分为四个协作通道。
+oh-my-coder 内置 31 个专业 Agent，分为四个协作通道。
 
 ### 构建 / 分析通道
 

@@ -9,7 +9,7 @@
 **Oh My Coder** 是一个**多智能体 AI 编程助手**，通过多个专业 Agent 协作完成编程任务。
 
 **核心优势：**
-- 🤖 30 个专业 Agent，分工协作
+- 🤖 31 个专业 Agent，分工协作
 - 💰 成本极低（DeepSeek 免费额度）
 - 🇨🇳 中文友好，本土化设计
 
@@ -77,7 +77,7 @@ python -m src.cli agents
 │ analyst   │ 需求分析智能体                  │ high   │
 │ architect │ 架构师智能体                    │ high   │
 │ executor  │ 执行者智能体                    │ medium │
-│ ...       │ (共 30 个 Agent)               │        │
+│ ...       │ (共 31 个 Agent)               │        │
 └───────────┴────────────────────────────────┴────────┘
 ```
 
@@ -205,7 +205,7 @@ Oh My Coder 方式：
 
 ---
 
-## 30 个 Agent 全览
+## 31 个 Agent 全览
 
 ### Build/Analysis Lane（构建分析）
 
