@@ -29,7 +29,7 @@ async def test_mimo():
         sys.exit(1)
 
     print("🔗 正在连接 MiMo API...")
-    print(f"   API Key: {api_key[:8]}...{api_key[-4:]}")
+    print("   API Key: 已脱敏")
 
     config = ModelConfig(api_key=api_key)
 
@@ -38,10 +38,11 @@ async def test_mimo():
     model_low = MimoModel(config, ModelTier.LOW)
     try:
         from src.models.base import Message
-        response = await model_low.generate([
-            Message(role="user", content="你好，请用一句话介绍自己")
-        ])
-        print(f"✅ LOW tier 成功!")
+
+        response = await model_low.generate(
+            [Message(role="user", content="你好，请用一句话介绍自己")]
+        )
+        print("✅ LOW tier 成功!")
         print(f"   回复: {response.content[:100]}...")
         print(f"   延迟: {response.latency_ms:.0f}ms")
         print(f"   Token 使用: {response.usage.total_tokens}")
@@ -55,10 +56,10 @@ async def test_mimo():
     print("\n📝 测试 mimo-v2-pro (HIGH tier)...")
     model_high = MimoModel(config, ModelTier.HIGH)
     try:
-        response = await model_high.generate([
-            Message(role="user", content="你好，请用一句话介绍自己")
-        ])
-        print(f"✅ HIGH tier 成功!")
+        response = await model_high.generate(
+            [Message(role="user", content="你好，请用一句话介绍自己")]
+        )
+        print("✅ HIGH tier 成功!")
         print(f"   回复: {response.content[:100]}...")
         print(f"   延迟: {response.latency_ms:.0f}ms")
     except Exception as e:
@@ -70,30 +71,37 @@ async def test_mimo():
     print("\n📝 测试函数调用 (Function Calling)...")
     model = MimoModel(config, ModelTier.LOW)
     try:
-        tools = [{
-            "type": "function",
-            "function": {
-                "name": "get_weather",
-                "description": "获取指定城市的天气",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "city": {"type": "string", "description": "城市名称"}
+        tools = [
+            {
+                "type": "function",
+                "function": {
+                    "name": "get_weather",
+                    "description": "获取指定城市的天气",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "city": {"type": "string", "description": "城市名称"}
+                        },
+                        "required": ["city"],
                     },
-                    "required": ["city"]
-                }
+                },
             }
-        }]
-        response = await model.generate([
-            Message(role="user", content="北京天气怎么样?")
-        ], tools=tools)
+        ]
+        response = await model.generate(
+            [Message(role="user", content="北京天气怎么样?")], tools=tools
+        )
 
         if response.metadata.get("tool_calls"):
-            print(f"✅ 函数调用成功!")
-            print(f"   调用函数: {response.metadata['tool_calls'][0]['function']['name']}")
-            print(f"   参数: {response.metadata['tool_calls'][0]['function']['arguments']}")
+            print("✅ 函数调用成功!")
+            print(
+                f"   调用函数: {response.metadata['tool_calls'][0]['function']['name']}"
+            )
+            print(
+                f"   参数: "
+                f"{response.metadata['tool_calls'][0]['function']['arguments']}"
+            )
         else:
-            print(f"⚠️ 未触发函数调用 (正常，取决于模型判断)")
+            print("⚠️ 未触发函数调用 (正常，取决于模型判断)")
     except Exception as e:
         print(f"❌ 函数调用测试失败: {e}")
     finally:
