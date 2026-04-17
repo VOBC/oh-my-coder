@@ -82,6 +82,22 @@ try:
 except Exception:
     pass  # gateway 依赖缺失时跳过
 
+# agent 子命令 - Agent 配置管理与自进化
+try:
+    from .cli_agent import app as agent_app  # noqa: E402
+
+    app.add_typer(agent_app, name="agent", help="Agent 管理 - 导出/导入/进化")
+except Exception:
+    pass
+
+# template 子命令 - 工作流模板
+try:
+    from .cli_template import app as template_app  # noqa: E402
+
+    app.add_typer(template_app, name="template", help="工作流模板 - 列出/使用模板")
+except Exception:
+    pass
+
 console = Console()
 
 

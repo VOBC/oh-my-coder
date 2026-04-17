@@ -365,6 +365,48 @@ class Orchestrator:
         except Exception:
             pass  # 静默，不阻塞工作流
 
+    async def _maybe_evolve_agents(
+        self,
+        result: WorkflowResult,
+    ) -> None:
+        """
+        工作流完成后触发 Agent 自进化。
+
+        对参与工作流的所有 Agent 执行进化分析：
+        1. 分析执行日志
+        2. 提取成功/失败模式
+        3. 更新 system prompt（如需要）
+
+        仅当启用自进化且样本数足够时执行。
+        """
+        from ..agents.self_improving import SelfImprovingAgent, EvolutionConfig
+
+        config = EvolutionConfig()
+        if not config.enabled:
+            return
+
+        try:
+            sia = SelfImprovingAgent(evolution_config=config)
+
+            # 对每个参与的 Agent 执行进化
+            for agent_name in result.steps_completed:
+                try:
+                    record = sia.evolve(
+                        agent_type=agent_name,
+                        trigger="workflow_completion",
+                    )
+                    if record:
+                        # 进化成功，记录到上下文
+                        result.outputs[f"_evolution_{agent_name}"] = {
+                            "evolution_id": record.id,
+                            "generation": record.generation,
+                            "changes": record.changes,
+                        }
+                except Exception:
+                    pass  # 单个 Agent 进化失败不影响其他
+        except Exception:
+            pass  # 静默，不阻塞工作流
+
     # ------------------------------------------------------------------
     # 上下文构建
     # ------------------------------------------------------------------
@@ -469,9 +511,10 @@ class Orchestrator:
         if not skip_checkpoint:
             try:
                 task_id = context.get("task", "unknown").replace(" ", "-")[:30]
+                task_desc = context.get("task", "")
                 cp_id = self.checkpoint_manager.create(
                     task_id=task_id,
-                    description=f"Workflow 开始: {workflow_name} | {context.get('task', '')}",
+                    description=f"Workflow 开始: {workflow_name} | {task_desc}",
                 )
                 context["_checkpoint_id"] = cp_id
             except Exception:
@@ -499,6 +542,12 @@ class Orchestrator:
         # ---- 自动沉淀：评估是否值得生成 Skill（Tier 0）----
         try:
             await self._maybe_learn_from_workflow(workflow_name, context, result)
+        except Exception:
+            pass  # 静默，不阻塞工作流
+
+        # ---- 自进化：分析执行日志，优化 Agent prompt----
+        try:
+            await self._maybe_evolve_agents(result)
         except Exception:
             pass  # 静默，不阻塞工作流
 

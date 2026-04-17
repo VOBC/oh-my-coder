@@ -347,6 +347,26 @@ def get_agent(name: str) -> Optional[Type[BaseAgent]]:
     return AGENT_REGISTRY.get(name)
 
 
+def list_all_agents() -> List[Dict[str, Any]]:
+    """
+    列出所有已注册的 Agent
+
+    Returns:
+        Agent 信息列表，每个元素包含 name, description, lane, default_tier 等
+    """
+    result = []
+    for name, agent_class in AGENT_REGISTRY.items():
+        info = {
+            "name": name,
+            "description": getattr(agent_class, "description", ""),
+            "lane": getattr(agent_class, "lane", ""),
+            "default_tier": getattr(agent_class, "default_tier", ""),
+            "icon": getattr(agent_class, "icon", ""),
+        }
+        result.append(info)
+    return result
+
+
 def list_agents() -> List[str]:
     """列出所有已注册的 Agent"""
     return list(AGENT_REGISTRY.keys())

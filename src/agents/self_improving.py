@@ -2,9 +2,17 @@
 主动学习模块 - Self-Improving Agent
 
 收集执行反馈，分析失败模式，自动优化策略。
+支持自进化：自动总结经验、优化 prompt、存储进化历史。
+
+主要功能：
+1. 任务完成后自动分析执行日志
+2. 提取成功/失败模式
+3. 生成优化建议并更新 Agent 的 system prompt
+4. 存储进化历史到 .omc/state/agents/{agent_name}/
 """
 
 import sqlite3
+import time
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
@@ -17,6 +25,7 @@ from .base import (
     BaseAgent,
     register_agent,
 )
+from .evolution import EvolutionConfig, EvolutionRecord, EvolutionStore, SuccessPattern
 
 
 @dataclass
@@ -96,13 +105,13 @@ class LearningStore:
             )
             conn.execute(
                 """
-                CREATE INDEX IF NOT EXISTS idx_feedback_agent_type 
+                CREATE INDEX IF NOT EXISTS idx_feedback_agent_type
                 ON execution_feedback(agent_type)
             """
             )
             conn.execute(
                 """
-                CREATE INDEX IF NOT EXISTS idx_feedback_error_type 
+                CREATE INDEX IF NOT EXISTS idx_feedback_error_type
                 ON execution_feedback(error_type)
             """
             )
@@ -113,7 +122,7 @@ class LearningStore:
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.execute(
                 """
-                INSERT INTO execution_feedback 
+                INSERT INTO execution_feedback
                 (timestamp, agent_type, task_description, context_hash, success,
                  execution_time, error_type, error_message, user_correction,
                  retry_count, final_success)
@@ -166,7 +175,7 @@ class LearningStore:
             conn.row_factory = sqlite3.Row
             rows = conn.execute(
                 """
-                SELECT * FROM execution_feedback 
+                SELECT * FROM execution_feedback
                 WHERE agent_type = ? AND success = 0
                 ORDER BY timestamp DESC
                 LIMIT ?
@@ -183,7 +192,7 @@ class LearningStore:
                 SELECT error_type, COUNT(*) as count,
                        AVG(execution_time) as avg_time,
                        AVG(retry_count) as avg_retries
-                FROM execution_feedback 
+                FROM execution_feedback
                 WHERE agent_type = ? AND error_type IS NOT NULL
                 GROUP BY error_type
                 HAVING count >= ?
@@ -206,10 +215,10 @@ class LearningStore:
         with sqlite3.connect(self.db_path) as conn:
             row = conn.execute(
                 """
-                SELECT 
+                SELECT
                     COUNT(CASE WHEN success = 1 THEN 1 END) * 1.0 / COUNT(*)
-                FROM execution_feedback 
-                WHERE agent_type = ? 
+                FROM execution_feedback
+                WHERE agent_type = ?
                 AND timestamp > datetime('now', '-{} days')
                 """.format(
                     days
@@ -224,7 +233,7 @@ class LearningStore:
             conn.row_factory = sqlite3.Row
             rows = conn.execute(
                 """
-                SELECT * FROM strategy_adjustments 
+                SELECT * FROM strategy_adjustments
                 WHERE agent_type = ?
                 ORDER BY effectiveness_score DESC, applied_count DESC
                 """,
@@ -258,6 +267,7 @@ class SelfImprovingAgent(BaseAgent):
         config: Optional[Dict[str, Any]] = None,
         store: Optional[LearningStore] = None,
         skill_manager: Optional[Any] = None,
+        evolution_config: Optional[EvolutionConfig] = None,
     ):
         super().__init__(model_router, config)
         db_path = Path.home() / ".omc" / "learning.db"
@@ -268,10 +278,15 @@ class SelfImprovingAgent(BaseAgent):
         self._memory = LearningsMemory(Path.home() / ".omc")
         # SkillManager 可选注入（测试时注入临时目录）
         self._skill_manager: Optional[Any] = skill_manager
+        # 进化系统
+        state_dir = Path.home() / ".omc" / "state"
+        self._evolution_store = EvolutionStore(state_dir)
+        self._evolution_config = evolution_config or EvolutionConfig()
 
     @property
     def system_prompt(self) -> str:
-        return """你是一个主动学习的优化助手。分析执行反馈，识别失败模式，生成策略调整建议。
+        return """你是一个主动学习的优化助手。
+分析执行反馈，识别失败模式，生成策略调整建议。
 关注：错误类型分布、成功率趋势、重试效果、prompt 优化方向。"""
 
     def record_execution(
@@ -449,11 +464,32 @@ class SelfImprovingAgent(BaseAgent):
             data = self.report()
         elif "analyze" in parts or "分析" in parts:
             agent_type = parts[-1] if len(parts) > 1 else None
-            adjustments = self.analyze_and_improve(agent_type) if agent_type else []
-            data = {"adjustments": [str(a) for a in adjustments]}
+            if agent_type:
+                data = self.analyze_task_logs(agent_type)
+            else:
+                adjustments = self.analyze_and_improve(agent_type) if agent_type else []
+                data = {"adjustments": [str(a) for a in adjustments]}
         elif "promote" in parts or "升级" in parts or "skill" in parts:
             # 将 best-practice 条目升级为 Skill 文件
             data = self.promote_best_practices_to_skills()
+        elif "evolve" in parts or "进化" in parts:
+            # 执行自进化
+            agent_type = parts[-1] if len(parts) > 1 else "executor"
+            record = self.evolve(agent_type, trigger="manual")
+            if record:
+                data = {
+                    "evolution_id": record.id,
+                    "generation": record.generation,
+                    "changes": record.changes,
+                    "before": record.before_state,
+                    "after": record.after_state,
+                }
+            else:
+                data = {"message": "未触发进化（样本不足或无需优化）"}
+        elif "stats" in parts or "统计" in parts:
+            # 获取进化统计
+            agent_type = parts[-1] if len(parts) > 1 else "executor"
+            data = self.get_evolution_stats(agent_type)
         else:
             data = self.report()
 
@@ -707,3 +743,400 @@ class SelfImprovingAgent(BaseAgent):
         results["total_best_practices"] = len(best_practices)
         results["total_skills"] = len(sm.list_skills())
         return results
+
+    # ------------------------------------------------------------------
+    # 自进化方法（P0 增强）
+    # ------------------------------------------------------------------
+
+    def analyze_task_logs(
+        self,
+        agent_type: str,
+        recent_count: int = 10,
+    ) -> Dict[str, Any]:
+        """
+        分析任务执行日志，提取经验教训
+
+        在任务完成后自动调用，分析最近的执行记录，
+        识别成功/失败模式，为进化提供依据。
+
+        Args:
+            agent_type: Agent 类型
+            recent_count: 分析最近 N 条记录
+
+        Returns:
+            分析结果，包含 success_patterns, failure_patterns, recommendations
+        """
+        analysis = {
+            "agent_type": agent_type,
+            "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
+            "success_patterns": [],
+            "failure_patterns": [],
+            "recommendations": [],
+            "success_rate": 0.0,
+            "sample_size": 0,
+        }
+
+        # 获取最近的执行记录
+        with sqlite3.connect(self.store.db_path) as conn:
+            conn.row_factory = sqlite3.Row
+            rows = conn.execute(
+                """
+                SELECT * FROM execution_feedback
+                WHERE agent_type = ?
+                ORDER BY timestamp DESC
+                LIMIT ?
+                """,
+                (agent_type, recent_count),
+            ).fetchall()
+
+            if not rows:
+                return analysis
+
+            records = [dict(row) for row in rows]
+            analysis["sample_size"] = len(records)
+
+            # 计算成功率
+            success_count = sum(1 for r in records if r.get("success"))
+            analysis["success_rate"] = success_count / len(records) if records else 0.0
+
+            # 提取成功模式
+            successful = [r for r in records if r.get("success")]
+            if successful:
+                # 分析成功记录的共同特征
+                avg_time = sum(r.get("execution_time", 0) for r in successful) / len(
+                    successful
+                )
+                analysis["success_patterns"].append(
+                    {
+                        "pattern": "successful_execution",
+                        "avg_time": avg_time,
+                        "count": len(successful),
+                        "characteristics": self._extract_success_characteristics(
+                            successful
+                        ),
+                    }
+                )
+
+            # 提取失败模式
+            failed = [r for r in records if not r.get("success")]
+            if failed:
+                # 按错误类型分组
+                error_groups: Dict[str, List[Dict]] = {}
+                for r in failed:
+                    et = r.get("error_type") or "unknown"
+                    if et not in error_groups:
+                        error_groups[et] = []
+                    error_groups[et].append(r)
+
+                for error_type, group in error_groups.items():
+                    analysis["failure_patterns"].append(
+                        {
+                            "pattern": error_type,
+                            "count": len(group),
+                            "examples": [
+                                g.get("error_message", "")[:100] for g in group[:3]
+                            ],
+                        }
+                    )
+
+            # 生成建议
+            threshold = self._evolution_config.improvement_threshold
+            if analysis["success_rate"] < threshold:
+                rate = analysis["success_rate"]
+                analysis["recommendations"].append(
+                    {
+                        "type": "trigger_evolution",
+                        "reason": f"成功率 {rate:.1%} 低于阈值 {threshold:.1%}",
+                        "priority": "high",
+                    }
+                )
+
+            if failed:
+                analysis["recommendations"].append(
+                    {
+                        "type": "analyze_failures",
+                        "reason": f"发现 {len(failed)} 条失败记录，建议分析根本原因",
+                        "priority": "medium",
+                    }
+                )
+
+        return analysis
+
+    def _extract_success_characteristics(
+        self, successful_records: List[Dict]
+    ) -> List[str]:
+        """从成功记录中提取共同特征"""
+        characteristics = []
+
+        # 分析执行时间
+        times = [
+            r.get("execution_time", 0)
+            for r in successful_records
+            if r.get("execution_time")
+        ]
+        if times:
+            avg = sum(times) / len(times)
+            characteristics.append(f"平均执行时间: {avg:.1f}s")
+
+        # 分析重试次数
+        retries = [r.get("retry_count", 0) for r in successful_records]
+        if retries and sum(retries) == 0:
+            characteristics.append("无需重试即成功")
+        elif retries:
+            avg_retry = sum(retries) / len(retries)
+            characteristics.append(f"平均重试次数: {avg_retry:.1f}")
+
+        return characteristics
+
+    def extract_patterns(
+        self,
+        agent_type: str,
+        pattern_type: str = "all",
+    ) -> List[SuccessPattern]:
+        """
+        提取成功/失败模式并存储到模式库
+
+        从执行历史中提取可复用的模式，包括：
+        - 策略模式（成功的工作流程）
+        - Prompt 技巧（有效的提示词技巧）
+        - 错误恢复模式（从错误中恢复的方法）
+
+        Args:
+            agent_type: Agent 类型
+            pattern_type: 模式类型（all/strategy/prompt/recovery）
+
+        Returns:
+            提取的模式列表
+        """
+        patterns = []
+
+        # 获取调整记录（策略模式）
+        if pattern_type in ("all", "strategy"):
+            adjustments = self.store.get_adjustments(agent_type)
+            for adj in adjustments:
+                if (
+                    adj.effectiveness_score
+                    >= self._evolution_config.pattern_confidence_threshold
+                ):
+                    pattern = SuccessPattern(
+                        id=f"{agent_type}-strategy-{adj.id}",
+                        pattern_type="strategy",
+                        description=(
+                            f"{adj.pattern_detected}: "
+                            f"{adj.adjustment_content[:100]}"
+                        ),
+                        context=adj.adjustment_type,
+                        effectiveness_score=adj.effectiveness_score,
+                        occurrences=adj.applied_count,
+                    )
+                    patterns.append(pattern)
+
+                    # 存储到进化系统
+                    self._evolution_store.add_success_pattern(
+                        agent_name=agent_type,
+                        pattern_type="strategy",
+                        description=pattern.description,
+                        context=pattern.context,
+                    )
+
+        # 获取成功执行的共同特征（workflow 模式）
+        if pattern_type in ("all", "workflow"):
+            analysis = self.analyze_task_logs(agent_type, recent_count=20)
+            for sp in analysis.get("success_patterns", []):
+                for char in sp.get("characteristics", []):
+                    pattern = SuccessPattern(
+                        id=f"{agent_type}-workflow-{int(time.time())}",
+                        pattern_type="workflow",
+                        description=char,
+                        context=sp.get("pattern", ""),
+                        effectiveness_score=0.8,
+                    )
+                    patterns.append(pattern)
+
+        return patterns
+
+    def update_system_prompt(
+        self,
+        agent_type: str,
+        base_prompt: str,
+        analysis: Optional[Dict[str, Any]] = None,
+    ) -> str:
+        """
+        根据进化分析更新 system prompt
+
+        将提取的成功模式、策略调整、学习到的经验
+        注入到 Agent 的 system prompt 中。
+
+        Args:
+            agent_type: Agent 类型
+            base_prompt: 原始 system prompt
+            analysis: 可选的分析结果（如未提供则自动分析）
+
+        Returns:
+            更新后的 system prompt
+        """
+        if not self._evolution_config.enabled:
+            return base_prompt
+
+        # 如果没有提供分析结果，先进行分析
+        if analysis is None:
+            analysis = self.analyze_task_logs(agent_type)
+
+        # 获取版本信息
+        prompt_version = self._evolution_store.get_prompt_version(agent_type)
+
+        # 获取策略调整
+        adjustments = self.store.get_adjustments(agent_type)
+        prompt_adjustments = [
+            a
+            for a in adjustments
+            if a.adjustment_type == "prompt_update" and a.effectiveness_score > 0.5
+        ]
+
+        # 获取成功模式
+        success_patterns = self._evolution_store.load_success_patterns(agent_type)
+
+        # 构建优化内容
+        optimization_parts = []
+
+        # 添加策略调整
+        if prompt_adjustments:
+            optimization_parts.append("## 学习到的策略")
+            for adj in prompt_adjustments[:3]:
+                optimization_parts.append(
+                    f"- {adj.pattern_detected}: {adj.adjustment_content[:80]}"
+                )
+
+        # 添加成功模式
+        if success_patterns:
+            optimization_parts.append("\n## 成功经验")
+            for pattern in success_patterns[:5]:
+                optimization_parts.append(f"- {pattern.description[:100]}")
+
+        # 如果有优化内容，生成新 prompt
+        if optimization_parts:
+            new_prompt = f"""{base_prompt}
+
+---
+## 🧠 自进化优化（版本 {prompt_version + 1}）
+
+{chr(10).join(optimization_parts)}
+
+> 以上内容由自进化系统自动生成，基于历史执行经验。
+"""
+        else:
+            new_prompt = base_prompt
+
+        # 保存优化后的 prompt
+        if new_prompt != base_prompt:
+            self._evolution_store.save_optimized_prompt(agent_type, new_prompt)
+
+        return new_prompt
+
+    def evolve(
+        self,
+        agent_type: str,
+        trigger: str = "manual",
+    ) -> Optional[EvolutionRecord]:
+        """
+        执行一次自进化
+
+        完整的自进化流程：
+        1. 分析执行日志
+        2. 提取成功/失败模式
+        3. 生成策略调整
+        4. 更新 system prompt
+        5. 记录进化历史
+
+        Args:
+            agent_type: Agent 类型
+            trigger: 触发原因（manual/success_rate_low/user_correction/error_pattern）
+
+        Returns:
+            进化记录，如果未触发进化则返回 None
+        """
+        if not self._evolution_config.enabled:
+            return None
+
+        # 检查样本数是否足够
+        with sqlite3.connect(self.store.db_path) as conn:
+            count = conn.execute(
+                "SELECT COUNT(*) FROM execution_feedback WHERE agent_type = ?",
+                (agent_type,),
+            ).fetchone()[0]
+
+        if count < self._evolution_config.min_samples:
+            return None
+
+        # 记录进化前状态
+        before_state = {
+            "success_rate": self.store.get_success_rate(agent_type, days=7),
+            "total_executions": count,
+            "active_adjustments": len(self.store.get_adjustments(agent_type)),
+        }
+
+        # 执行分析
+        analysis = self.analyze_task_logs(agent_type, recent_count=20)
+
+        # 提取模式
+        patterns = self.extract_patterns(agent_type)
+
+        # 生成策略调整
+        adjustments = self.analyze_and_improve(agent_type)
+
+        # 更新 system prompt（如果需要）
+        base_prompt = self._evolution_store.load_optimized_prompt(agent_type) or ""
+        if not base_prompt:
+            base_prompt = f"你是一个专业的 {agent_type} Agent。"
+
+        new_prompt = self.update_system_prompt(agent_type, base_prompt, analysis)
+
+        # 记录进化后状态
+        after_state = {
+            "success_rate": analysis["success_rate"],
+            "patterns_extracted": len(patterns),
+            "adjustments_generated": len(adjustments),
+            "prompt_updated": new_prompt != base_prompt,
+        }
+
+        # 构建变更列表
+        changes = []
+        if adjustments:
+            changes.append(f"生成 {len(adjustments)} 个策略调整")
+        if patterns:
+            changes.append(f"提取 {len(patterns)} 个成功模式")
+        if new_prompt != base_prompt:
+            changes.append("更新 system prompt")
+
+        if not changes:
+            return None  # 没有实际变更
+
+        # 获取当前代数
+        generation = self._evolution_store.get_current_generation(agent_type)
+
+        # 创建进化记录
+        record = EvolutionRecord(
+            id=f"evo-{agent_type}-{int(time.time())}",
+            timestamp=time.strftime("%Y-%m-%d %H:%M:%S"),
+            agent_type=agent_type,
+            generation=generation,
+            trigger=trigger,
+            before_state=before_state,
+            after_state=after_state,
+            changes=changes,
+        )
+
+        # 保存进化记录
+        self._evolution_store.save_evolution_record(record)
+
+        return record
+
+    def get_evolution_stats(self, agent_type: str) -> Dict[str, Any]:
+        """获取 Agent 的进化统计信息"""
+        stats = self._evolution_store.get_evolution_stats(agent_type)
+        stats["config"] = {
+            "enabled": self._evolution_config.enabled,
+            "improvement_threshold": self._evolution_config.improvement_threshold,
+            "min_samples": self._evolution_config.min_samples,
+        }
+        return stats
