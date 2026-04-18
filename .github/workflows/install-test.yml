@@ -31,7 +31,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4.2.3
+        uses: actions/checkout@v4
 
       # ── 测试 1: 语法检查 ──────────────────────────────────────────────
       - name: ShellCheck install.sh
@@ -123,7 +123,7 @@ jobs:
     permissions:
       contents: read  # Minimal permissions for macOS install test
     steps:
-      - uses: actions/checkout@v4.2.3
+      - uses: actions/checkout@v4
 
       - name: Simulate macOS install
         run: |
