@@ -14,6 +14,8 @@ on:
 jobs:
   test-install:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read  # Minimal permissions for install script test
     strategy:
       fail-fast: false
       matrix:
@@ -115,6 +117,8 @@ jobs:
   # ── 单独 job: macOS 测试（macOS runner）────────────────────────────
   macos-test:
     runs-on: macos-latest
+    permissions:
+      contents: read  # Minimal permissions for macOS install test
     steps:
       - uses: actions/checkout@v4
 

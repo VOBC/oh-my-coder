@@ -247,9 +247,9 @@ async def agent_live_stream():
                 state = orch.get_current_state()
                 yield f"data: {json_dumps(state)}\n\n"
                 await asyncio.sleep(2)
-            except Exception as e:
+            except Exception:
                 error_state = {
-                    "error": str(e),
+                    "error": "服务端状态获取失败",
                     "timestamp": datetime.now().isoformat(),
                 }
                 yield f"data: {json_dumps(error_state)}\n\n"

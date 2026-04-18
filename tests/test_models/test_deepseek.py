@@ -20,12 +20,12 @@ class TestDeepSeekModelInit:
 
     def test_default_base_url(self):
         config = ModelConfig(api_key="test_key")
-        model = DeepSeekModel(config)
-        assert "api.deepseek.com" in config.base_url
+        model = DeepSeekModel(config)  # noqa: F841
+        assert "api.deepseek.com" in config.base_url  # noqa: B640
 
     def test_custom_base_url(self):
         config = ModelConfig(api_key="test_key", base_url="https://custom.api.com/v1")
-        model = DeepSeekModel(config)
+        model = DeepSeekModel(config)  # noqa: F841
         assert config.base_url == "https://custom.api.com/v1"
 
     def test_tier_low(self):

@@ -20,12 +20,12 @@ class TestMimoModelInit:
 
     def test_default_base_url(self):
         config = ModelConfig(api_key="test_key")
-        model = MimoModel(config)
-        assert "api.xiaomimimo.com" in config.base_url
+        model = MimoModel(config)  # noqa: F841
+        assert "api.xiaomimimo.com" in config.base_url  # noqa: B640
 
     def test_custom_base_url(self):
         config = ModelConfig(api_key="test_key", base_url="https://custom.api.com/v1")
-        model = MimoModel(config)
+        model = MimoModel(config)  # noqa: F841
         assert config.base_url == "https://custom.api.com/v1"
 
     def test_tier_low(self):
@@ -48,7 +48,7 @@ class TestMimoModelInit:
 
     def test_provider(self):
         config = ModelConfig(api_key="test_key")
-        model = MimoModel(config)
+        model = MimoModel(config)  # noqa: F841
         assert model.provider == ModelProvider.MIMO
 
 

@@ -119,8 +119,13 @@ class TeamAuth:
         return secrets.token_urlsafe(6).upper()
 
     def _hash_password(self, password: str, salt: str) -> str:
-        """哈希密码"""
-        return hashlib.sha256(f"{password}{salt}".encode()).hexdigest()  # noqa: B303
+        """哈希密码（PBKDF2-SHA256，100k 迭代）"""
+        return hashlib.pbkdf2_hmac(
+            "sha256",
+            password.encode(),
+            salt.encode(),
+            100_000,
+        ).hex()
 
     async def create_team(
         self,

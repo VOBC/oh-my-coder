@@ -9,6 +9,8 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read  # Minimal permissions for test workflow
     steps:
       - uses: actions/checkout@v4
 
