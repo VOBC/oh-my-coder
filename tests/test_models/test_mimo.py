@@ -22,7 +22,6 @@ class TestMimoModelInit:
     def test_default_base_url(self):
         config = ModelConfig(api_key="test_key")
         model = MimoModel(config)  # noqa: F841
-        assert "api.xiaomimimo.com" in config.base_url  # noqa: B640
         assert urlparse(config.base_url).netloc == "api.xiaomimimo.com"
 
     def test_custom_base_url(self):

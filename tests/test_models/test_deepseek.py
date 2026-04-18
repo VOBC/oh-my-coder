@@ -22,7 +22,6 @@ class TestDeepSeekModelInit:
     def test_default_base_url(self):
         config = ModelConfig(api_key="test_key")
         model = DeepSeekModel(config)  # noqa: F841
-        assert "api.deepseek.com" in config.base_url  # noqa: B640
         assert urlparse(config.base_url).netloc == "api.deepseek.com"
 
     def test_custom_base_url(self):
