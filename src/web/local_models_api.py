@@ -99,7 +99,9 @@ async def get_ollama_status() -> OllamaStatus:
         )
 
     except Exception as e:
-        return OllamaStatus(available=False, base_url=base_url, models=[], error=str(e))
+        return OllamaStatus(
+            available=False, base_url=base_url, models=[], error=type(e).__name__
+        )
 
 
 @router.get("/models", response_model=List[LocalModelInfo])
@@ -168,8 +170,8 @@ async def pull_model(model_name: str) -> Dict[str, Any]:
                 "status": "failed",
                 "message": f"模型 {model_name} 拉取失败",
             }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    except Exception:
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.get("/recommended")

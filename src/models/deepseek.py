@@ -211,15 +211,15 @@ class DeepSeekModel(BaseModel):
             error_detail = ""
             try:
                 error_body = e.response.json()
-                error_detail = error_body.get("error", {}).get("message", str(e))
-            except:
-                error_detail = str(e)
+                error_detail = error_body.get("error", {}).get("message", "HTTP error")
+            except Exception:
+                error_detail = f"HTTP {e.response.status_code}"
 
             raise DeepSeekAPIError(
                 f"DeepSeek API 错误 ({e.response.status_code}): {error_detail}"
             )
         except httpx.RequestError as e:
-            raise DeepSeekAPIError(f"网络请求失败: {e}")
+            raise DeepSeekAPIError(f"网络请求失败: {type(e).__name__}")
 
     async def stream(self, messages: List[Message], **kwargs) -> AsyncIterator[str]:
         """
@@ -275,15 +275,15 @@ class DeepSeekModel(BaseModel):
             error_detail = ""
             try:
                 error_body = e.response.json()
-                error_detail = error_body.get("error", {}).get("message", str(e))
-            except:
-                error_detail = str(e)
+                error_detail = error_body.get("error", {}).get("message", "HTTP error")
+            except Exception:
+                error_detail = f"HTTP {e.response.status_code}"
 
             raise DeepSeekAPIError(
                 f"DeepSeek API 错误 ({e.response.status_code}): {error_detail}"
             )
         except httpx.RequestError as e:
-            raise DeepSeekAPIError(f"网络请求失败: {e}")
+            raise DeepSeekAPIError(f"网络请求失败: {type(e).__name__}")
 
 
 class DeepSeekAPIError(Exception):

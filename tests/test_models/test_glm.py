@@ -6,6 +6,7 @@
 
 import sys
 from unittest.mock import AsyncMock, MagicMock, patch
+from urllib.parse import urlparse
 
 import pytest
 
@@ -20,8 +21,9 @@ class TestGLMModelInit:
 
     def test_default_base_url(self):
         config = ModelConfig(api_key="test_key")
-        model = GLMModel(config)
-        assert "bigmodel.cn" in config.base_url
+        GLMModel(config)  # 初始化验证
+        # 安全检查：使用 urlparse 验证域名，而非 in 操作符
+        assert urlparse(config.base_url).netloc.endswith("bigmodel.cn")
 
     def test_all_tiers(self):
         config = ModelConfig(api_key="test_key")

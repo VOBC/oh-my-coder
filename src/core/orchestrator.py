@@ -533,7 +533,7 @@ class Orchestrator:
 
         except Exception as e:
             result.status = WorkflowStatus.FAILED
-            result.error = str(e)
+            result.error = f"{type(e).__name__}: {str(e)[:200]}"  # 截断防止泄露
 
         finally:
             result.execution_time = time.time() - start_time

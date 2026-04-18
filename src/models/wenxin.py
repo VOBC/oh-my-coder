@@ -212,13 +212,13 @@ class WenxinModel(BaseModel):
             error_detail = ""
             try:
                 error_body = e.response.json()
-                error_detail = error_body.get("error_msg", str(e))
-            except:
-                error_detail = str(e)
+                error_detail = error_body.get("error_msg", "HTTP error")
+            except Exception:
+                error_detail = f"HTTP {e.response.status_code}"
 
             raise WenxinAPIError(f"文心一言 API 错误: {error_detail}")
         except httpx.RequestError as e:
-            raise WenxinAPIError(f"网络请求失败: {e}")
+            raise WenxinAPIError(f"网络请求失败: {type(e).__name__}")
 
     async def stream(self, messages: List[Message], **kwargs) -> AsyncIterator[str]:
         """流式生成"""
@@ -257,13 +257,13 @@ class WenxinModel(BaseModel):
             error_detail = ""
             try:
                 error_body = e.response.json()
-                error_detail = error_body.get("error_msg", str(e))
-            except:
-                error_detail = str(e)
+                error_detail = error_body.get("error_msg", "HTTP error")
+            except Exception:
+                error_detail = f"HTTP {e.response.status_code}"
 
             raise WenxinAPIError(f"文心一言 API 错误: {error_detail}")
         except httpx.RequestError as e:
-            raise WenxinAPIError(f"网络请求失败: {e}")
+            raise WenxinAPIError(f"网络请求失败: {type(e).__name__}")
 
 
 class WenxinAPIError(Exception):

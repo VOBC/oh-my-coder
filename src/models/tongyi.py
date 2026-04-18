@@ -178,13 +178,13 @@ class TongyiModel(BaseModel):
             error_detail = ""
             try:
                 error_body = e.response.json()
-                error_detail = error_body.get("message", str(e))
-            except:
-                error_detail = str(e)
+                error_detail = error_body.get("message", "HTTP error")
+            except Exception:
+                error_detail = f"HTTP {e.response.status_code}"
 
             raise TongyiAPIError(f"通义千问 API 错误: {error_detail}")
         except httpx.RequestError as e:
-            raise TongyiAPIError(f"网络请求失败: {e}")
+            raise TongyiAPIError(f"网络请求失败: {type(e).__name__}")
 
     @safe_execute(max_attempts=3, timeout=30.0)
     async def stream(self, messages: List[Message], **kwargs) -> AsyncIterator[str]:
@@ -228,13 +228,13 @@ class TongyiModel(BaseModel):
             error_detail = ""
             try:
                 error_body = e.response.json()
-                error_detail = error_body.get("message", str(e))
-            except:
-                error_detail = str(e)
+                error_detail = error_body.get("message", "HTTP error")
+            except Exception:
+                error_detail = f"HTTP {e.response.status_code}"
 
             raise TongyiAPIError(f"通义千问 API 错误: {error_detail}")
         except httpx.RequestError as e:
-            raise TongyiAPIError(f"网络请求失败: {e}")
+            raise TongyiAPIError(f"网络请求失败: {type(e).__name__}")
 
 
 class TongyiAPIError(Exception):

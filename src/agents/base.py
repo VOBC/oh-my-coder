@@ -237,7 +237,7 @@ class BaseAgent(ABC):
             output = AgentOutput(
                 agent_name=self.name,
                 status=AgentStatus.FAILED,
-                error=str(e),
+                error=f"{type(e).__name__}",  # 只记录类型，不泄露详情
                 execution_time=time.time() - start_time,
             )
             self.status = AgentStatus.FAILED
