@@ -229,9 +229,9 @@ class PythonParser:
         )
 
     def _generate_id(self, file_path: str, name: str, line: int) -> str:
-        """生成元素 ID"""
+        """生成元素 ID（非密码用途）"""
         hash_input = f"{file_path}:{name}:{line}"
-        return hashlib.md5(hash_input.encode()).hexdigest()[:12]
+        return hashlib.sha256(hash_input.encode()).hexdigest()[:12]
 
 
 class CodebaseIndexer:
@@ -305,7 +305,7 @@ class CodebaseIndexer:
             return None
 
         language = self.detect_language(file_path)
-        file_hash = hashlib.md5(source.encode()).hexdigest()
+        file_hash = hashlib.sha256(source.encode()).hexdigest()  # 非密码用途
         relative_path = str(file_path.relative_to(self.config.root_path))
 
         # 解析代码元素
@@ -495,11 +495,9 @@ class CodebaseIndexer:
         file_index_path = path / "files.json"
         if file_index_path.exists():
             with open(file_index_path, "r", encoding="utf-8") as f:
-                data = json.load(f)
-                # TODO: 反序列化
+                json.load(f)  # TODO: 反序列化
 
         element_index_path = path / "elements.json"
         if element_index_path.exists():
             with open(element_index_path, "r", encoding="utf-8") as f:
-                data = json.load(f)
-                # TODO: 反序列化
+                json.load(f)  # TODO: 反序列化

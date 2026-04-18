@@ -386,10 +386,10 @@ class SelfImprovingAgent(BaseAgent):
             return f"{error_type}_error"
 
     def _hash_context(self, context: str) -> str:
-        """简单的上下文哈希"""
+        """简单的上下文哈希（用于缓存，非密码用途）"""
         import hashlib
 
-        return hashlib.md5(context.encode()).hexdigest()[:16]
+        return hashlib.sha256(context.encode()).hexdigest()[:16]
 
     def _generate_adjustment(
         self, agent_type: str, pattern: Dict
