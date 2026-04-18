@@ -444,9 +444,11 @@ async def run_task(
                 wf_result.steps_failed.append(agent_name)
                 task_manager.update_step(task_id, agent_name, "failed", "执行超时")
                 task_manager._tasks[task_id]["stats"]["steps_failed"].append(agent_name)
-            except Exception as e:
+            except Exception:
                 wf_result.steps_failed.append(agent_name)
-                task_manager.update_step(task_id, agent_name, "failed", str(e))
+                task_manager.update_step(
+                    task_id, agent_name, "failed", "Agent 执行失败"
+                )
                 task_manager._tasks[task_id]["stats"]["steps_failed"].append(agent_name)
 
         # 标记工作流完成
@@ -494,9 +496,9 @@ async def run_task(
     except Exception as e:
         if orch is not None and workflow_id in orch._active_workflows:
             orch._active_workflows[workflow_id].status = WorkflowStatus.FAILED
-        task_manager.complete_task(task_id, error=str(e))
+        task_manager.complete_task(task_id, error="任务执行失败")
 
-        # 保存失败记录
+        # 保存失败记录（仅记录异常类型，不泄露详情）
         history_record = {
             "task_id": task_id,
             "task": task,
@@ -506,7 +508,7 @@ async def run_task(
             "status": "failed",
             "started_at": task_manager._tasks[task_id].get("started_at"),
             "completed_at": datetime.now().isoformat(),
-            "error": str(e),
+            "error_type": type(e).__name__,
         }
         history_store.save(task_id, history_record)
 

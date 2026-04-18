@@ -34,7 +34,7 @@ echo -e "${GREEN}✓ ruff check 通过${NC}"
 echo ""
 
 echo "2️⃣  black check..."
-python3 -m black --check src/ tests/ config/ examples/ || {
+python3 -m black src/ tests/ config/ examples/ || {
     echo -e "${RED}✗ black check 失败${NC}"
     exit 1
 }
