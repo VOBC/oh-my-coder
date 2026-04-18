@@ -31,13 +31,13 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.2.3
 
       # ── 测试 1: 语法检查 ──────────────────────────────────────────────
       - name: ShellCheck install.sh
         uses: ludeeus/action-shellcheck@master
         with:
-          filename: install.sh
+          additional_files: install.sh
 
       # ── 测试 2: 指定版本 Python（需要 >= 3.9）─────────────────────────
       - name: Set up Python ${{ matrix.python-version }}
@@ -123,7 +123,7 @@ jobs:
     permissions:
       contents: read  # Minimal permissions for macOS install test
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4.2.3
 
       - name: Simulate macOS install
         run: |
