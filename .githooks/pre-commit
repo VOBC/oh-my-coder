@@ -1,49 +1,139 @@
 #!/bin/bash
-# pre-commit hook - 快速检查，阻止明显问题进入仓库
-# 完整测试仍由 CI 执行
+# 预提交钩子 - 强制本地拦截不安全代码
+# 安装: git config core.hooksPath .githooks
 
 set -euo pipefail
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
 CYAN='\033[0;36m'
 NC='\033[0m'
 
-echo "======================================"
-echo "🔍 pre-commit 快速检查"
-echo "======================================"
-echo ""
+ERRORS=0
 
-# 只检查被修改的 Python 文件，速度更快
-STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.py$' || true)
+echo "======================================"
+echo "🔒 安全门禁检查"
+echo "======================================"
+
+# 只检查本次提交的变更文件（更快），排除 node_modules
+STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(py|sh|yml|yaml)$' | grep -v node_modules | grep -v '\.githooks/pre-commit' || true)
 
 if [ -z "$STAGED_FILES" ]; then
-    echo "没有 Python/Shell 文件被修改，跳过检查"
+    echo "没有 Python/Shell/YAML 文件变更，跳过安全检查"
     exit 0
 fi
 
-echo "待检查文件:"
+echo "检查文件:"
 echo "$STAGED_FILES"
 echo ""
 
-echo "1️⃣  ruff check..."
-echo "$STAGED_FILES" | xargs python3 -m ruff check --select=E,W,F || {
-    echo -e "${RED}✗ ruff check 失败${NC}"
-    echo "运行 'python3 -m ruff check --fix src/ tests/' 自动修复"
-    exit 1
-}
-echo -e "${GREEN}✓ ruff check 通过${NC}"
-echo ""
+# 1. 检查 str(e) 模式（高危）- 只检查 Python 文件中的实际使用
+echo "1️⃣  检查 str(e) 异常信息泄露..."
+PYTHON_FILES=$(echo "$STAGED_FILES" | grep '\.py$' || true)
+if [ -n "$PYTHON_FILES" ]; then
+    STRE_ISSUES=$(echo "$PYTHON_FILES" | xargs grep -n "str(e)" 2>/dev/null | grep -v "# safe" | grep -v "str(e) is" | grep -v "str(e) ==" | grep -v "__pycache__" | grep -v "test_security" || true)
+else
+    STRE_ISSUES=""
+fi
+if [ -n "$STRE_ISSUES" ]; then
+    echo -e "${RED}❌ 发现 str(e) 模式（可能泄露敏感信息）:${NC}"
+    echo "$STRE_ISSUES"
+    echo ""
+    echo -e "${CYAN}💡 修复建议: 使用 type(e).__name__ 或 'Internal server error'${NC}"
+    ERRORS=$((ERRORS + 1))
+else
+    echo -e "${GREEN}✅ 无 str(e) 泄露风险${NC}"
+fi
 
-echo "2️⃣  black check..."
-echo "$STAGED_FILES" | xargs python3 -m black --check 2>/dev/null || {
-    echo -e "${RED}✗ black 格式检查失败${NC}"
-    echo "运行 'python3 -m black src/ tests/' 自动格式化"
-    exit 1
-}
-echo -e "${GREEN}✓ black 格式通过${NC}"
+# 2. 检查 in url 不安全模式 - 只检查 Python 文件
 echo ""
+echo "2️⃣  检查 in url 不安全模式..."
+if [ -n "$PYTHON_FILES" ]; then
+    INURL_ISSUES=$(echo "$PYTHON_FILES" | xargs grep -n "in.*url\|in url" 2>/dev/null | grep -v "urlparse" | grep -v "__pycache__" | grep "\".*in.*url\"" || true)
+else
+    INURL_ISSUES=""
+fi
+if [ -n "$INURL_ISSUES" ]; then
+    echo -e "${YELLOW}⚠️  发现 in url 模式（请确认是否安全）:${NC}"
+    echo "$INURL_ISSUES"
+    echo ""
+    echo -e "${CYAN}💡 建议: 使用 urlparse(url).netloc 进行精确匹配${NC}"
+fi
 
+# 3. 检查 MD5/SHA1 弱加密 - 只检查 Python 文件
+echo ""
+echo "3️⃣  检查弱加密算法..."
+if [ -n "$PYTHON_FILES" ]; then
+    MD5_ISSUES=$(echo "$PYTHON_FILES" | xargs grep -n "hashlib\.md5\|hashlib\.sha1" 2>/dev/null | grep -v "# safe" | grep -v "# non-crypto" | grep -v "# cache" | grep -v "__pycache__" || true)
+else
+    MD5_ISSUES=""
+fi
+if [ -n "$MD5_ISSUES" ]; then
+    echo -e "${YELLOW}⚠️  发现 MD5/SHA1 使用:${NC}"
+    echo "$MD5_ISSUES"
+    echo ""
+    echo -e "${CYAN}💡 建议: 密码存储用 PBKDF2，其他用途用 SHA256${NC}"
+fi
+
+# 4. 检查 workflow permissions（YAML 文件）
+echo ""
+echo "4️⃣  检查 workflow permissions..."
+YAML_FILES=$(echo "$STAGED_FILES" | grep "\.github/workflows/" | grep -E '\.yml$|\.yaml$' | grep -v node_modules || true)
+if [ -n "$YAML_FILES" ]; then
+    for f in $YAML_FILES; do
+        if [ -f "$f" ]; then
+            if ! grep -q "^permissions:" "$f"; then
+                echo -e "${RED}❌ $f 缺少 permissions 声明${NC}"
+                ERRORS=$((ERRORS + 1))
+            fi
+        fi
+    done
+    if [ $ERRORS -eq 0 ]; then
+        echo -e "${GREEN}✅ 所有 workflow 有 permissions${NC}"
+    fi
+else
+    echo "无 workflow 文件变更，跳过"
+fi
+
+# 5. 检查硬编码敏感信息 - 只检查 Python 文件
+echo ""
+echo "5️⃣  检查硬编码敏感信息..."
+if [ -n "$PYTHON_FILES" ]; then
+    SECRETS=$(echo "$PYTHON_FILES" | xargs grep -iEn "(api_key|apikey|password|secret|token)\s*=\s*[\"'][^\"']{8,}[\"']" 2>/dev/null | grep -v "example" | grep -v "test" | grep -v "mock" | grep -v "__pycache__" || true)
+else
+    SECRETS=""
+fi
+if [ -n "$SECRETS" ]; then
+    echo -e "${YELLOW}⚠️  发现可能的硬编码敏感信息:${NC}"
+    echo "$SECRETS"
+    echo ""
+    echo -e "${CYAN}💡 建议: 使用环境变量或配置文件${NC}"
+fi
+
+# 6. 检查 subprocess shell=True - 只检查 Python 文件
+echo ""
+echo "6️⃣  检查命令注入风险..."
+if [ -n "$PYTHON_FILES" ]; then
+    SHELL_TRUE=$(echo "$PYTHON_FILES" | xargs grep -n "subprocess.*shell=True" 2>/dev/null | grep -v "__pycache__" || true)
+else
+    SHELL_TRUE=""
+fi
+if [ -n "$SHELL_TRUE" ]; then
+    echo -e "${YELLOW}⚠️  发现 subprocess shell=True:${NC}"
+    echo "$SHELL_TRUE"
+    echo ""
+    echo -e "${CYAN}💡 建议: 使用参数列表避免命令注入${NC}"
+fi
+
+echo ""
 echo "======================================"
-echo -e "${GREEN}✅ 快速检查通过！可以提交。${NC}"
+if [ $ERRORS -gt 0 ]; then
+    echo -e "${RED}❌ 发现 $ERRORS 个严重安全问题，提交被拒绝${NC}"
+    echo ""
+    echo -e "${CYAN}📖 参考: docs/security/security-whackamole-investigation.md${NC}"
+    exit 1
+else
+    echo -e "${GREEN}✅ 安全门禁检查通过${NC}"
+fi
 echo "======================================"
