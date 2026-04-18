@@ -65,7 +65,107 @@
 
 ---
 
-## 经验教训
+## 经验教训（整合小麦的 6 条核心经验）
+
+> 以下经验来自小麦的实际踩坑总结，已整合到本报告中。
+
+### 经验 1：不要打地鼠 — 批量修复同类问题
+
+**小麦原话**：修一个 CodeQL 问题前，先全库扫描所有同类问题，一次性全修。
+
+**错误做法**：
+```bash
+# 第 1 轮：修复 src/models/a.py 的 str(e)
+# 第 2 轮：修复 src/models/b.py 的 str(e)
+# 第 3 轮：修复 src/models/c.py 的 str(e)
+# ... 重复 5+ 次
+```
+
+**正确做法**：
+```bash
+# 一次性扫描所有文件，批量修复
+grep -rn "str(e)" src/ tests/ --include="*.py"
+# 然后一次性全部修改
+```
+
+### 经验 2：扫描有延迟 — 不要期待即时反馈
+
+**小麦原话**：GitHub CodeQL 修复后要等几小时到一天才更新，不是立刻消失。
+
+**关键认知**：
+- CodeQL 扫描是异步的，修复后不会立即反映
+- 不要因为"修完还报错"而反复修改
+- 提交修复后，等待 2-24 小时再检查状态
+
+### 经验 3：测试代码也要安全
+
+**小麦原话**：`assert "domain" in url` 这种写法即使在 test 文件里也会被标记。
+
+**常见误区**：
+```python
+# ❌ 错误：测试文件里也不安全
+assert "api.deepseek.com" in url  # CodeQL 会标记
+
+# ✅ 正确：测试文件也要用 urlparse
+from urllib.parse import urlparse
+assert urlparse(url).netloc == "api.deepseek.com"
+```
+
+### 经验 4：str(e) 禁止 — 异常信息不能直接暴露
+
+**小麦原话**：异常信息不能直接暴露，用 `"Internal server error"` 替代。
+
+**错误示例**：
+```python
+except Exception as e:
+    return {"error": str(e)}  # ❌ 可能泄露敏感信息
+```
+
+**正确做法**：
+```python
+except Exception as e:
+    return {"error": "Internal server error"}  # ✅ 固定消息
+    # 或
+    return {"error": type(e).__name__}  # ✅ 只暴露类型
+    # 或
+    return {"error": f"HTTP {e.response.status_code}"}  # ✅ 脱敏状态码
+```
+
+### 经验 5：修复前先扫描，修复后验证
+
+**小麦原话**：不要修完就不管了。
+
+**标准流程**：
+```bash
+# 1. 修复前：扫描确认问题范围
+grep -rn "str(e)" src/ tests/
+
+# 2. 修复：批量修改所有同类问题
+
+# 3. 修复后：验证是否还有残留
+grep -rn "str(e)" src/ tests/
+
+# 4. 本地测试
+python3 -m pytest tests/ -q
+
+# 5. 提交后：等待 CI 完成，确认通过
+```
+
+### 经验 6：建立门禁 — 多重防护体系
+
+**小麦原话**：CI 安全检查 + pre-commit hook + 安全编码规范。
+
+**三层防护**：
+
+| 层级 | 工具 | 作用 |
+|------|------|------|
+| **第一层** | Pre-commit hook | 本地拦截，提交前检查 |
+| **第二层** | CI 快速检查 | PR 阶段拦截 |
+| **第三层** | CodeQL 完整扫描 | 合并后深度检查 |
+
+---
+
+## 补充经验教训（AI 反思）
 
 ### 教训 1：预防 > 修复
 
