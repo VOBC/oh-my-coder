@@ -255,7 +255,8 @@ def test_add():
         hint.append("")
         hint.append("注意：")
         hint.append(
-            "1. 使用 markdown 代码块标记文件路径，格式：` ```language:path/to/file.ext `"
+            "1. 使用 markdown 代码块标记文件路径，"
+            "格式：` ```language:path/to/file.ext `"
         )
         hint.append("2. 代码块中的第一行必须是文件路径（相对于项目根目录）")
         hint.append("3. 每个主要文件单独一个代码块")
@@ -311,7 +312,7 @@ def test_add():
                 errors.append(f"保存 {file_path} 失败: {e}")
 
         # 3. 尝试格式化代码（如果可用）
-        formatted_files = self._try_format_code(context.project_path, saved_files)
+        self._try_format_code(context.project_path, saved_files)
 
         # 4. 尝试运行测试（如果写了测试）
         test_result = self._try_run_tests(context.project_path, saved_files)
@@ -363,7 +364,7 @@ def test_add():
                 # 格式: ```python:path/to/file.py 或 ```path/to/file.py
                 match = re.match(r"```(\w+)?:?\s*(.+)?", line)
                 if match:
-                    lang = match.group(1) or ""
+                    _ = match.group(1) or ""  # lang, unused
                     file_path = match.group(2) or ""
                     if not file_path:
                         # 尝试从下一行获取路径
@@ -375,7 +376,7 @@ def test_add():
                             file_path = lines[i + 1].strip()
                             i += 1
                 else:
-                    lang, file_path = "", ""
+                    _, file_path = "", ""
 
                 if file_path and not file_path.startswith("#"):
                     # 收集代码内容
@@ -497,6 +498,6 @@ def test_add():
                 result["tests_failed"] = int(match.group(1))
 
         except Exception as e:
-            result["output"] = str(e)
+            result["output"] = f"Error: {type(e).__name__}"
 
         return result

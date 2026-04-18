@@ -213,10 +213,10 @@ def validate_config_file(path: str | Path) -> tuple[bool, list[str]]:
         config = load_config_file(path)
         errors = config.validate()
         return len(errors) == 0, errors
-    except FileNotFoundError as e:
-        return False, [str(e)]
+    except FileNotFoundError:
+        return False, ["配置文件不存在"]
     except Exception as e:
-        return False, [f"解析失败: {e}"]
+        return False, [f"解析失败: {type(e).__name__}"]
 
 
 def list_configs_in_dir(dir_path: str | Path) -> list[str]:
@@ -253,8 +253,6 @@ def _load_yaml(raw: str) -> dict[str, Any]:
     current_list: list[str] | None = None
     current_dict: dict[str, Any] | None = None
     in_dict = False
-    in_list = False
-    indent = 0
 
     for line in raw.splitlines():
         stripped = line.strip()
@@ -263,7 +261,6 @@ def _load_yaml(raw: str) -> dict[str, Any]:
 
         # 检测缩进
         content = stripped.rstrip()
-        line_indent = len(line) - len(line.lstrip())
 
         # 列表项
         if content.startswith("- "):

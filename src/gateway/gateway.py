@@ -378,7 +378,7 @@ class Gateway:
                 error_reply = OutgoingMessage(
                     platform=message.platform,
                     chat_id=message.chat_id,
-                    text=f"⚠️ 处理失败: {str(e)[:100]}",
+                    text=f"⚠️ 处理失败: {type(e).__name__}",
                 )
                 handler = self._handlers.get(message.platform)
                 if handler and handler.is_started:

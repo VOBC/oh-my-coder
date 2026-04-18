@@ -68,7 +68,7 @@ def _code_review_handler(args: Dict[str, Any]) -> Dict[str, Any]:
             loop.close()
         return {"content": str(result.result or result)}
     except Exception as e:
-        return {"error": str(e)}
+        return {"error": type(e).__name__}
 
 
 def _debug_handler(args: Dict[str, Any]) -> Dict[str, Any]:
@@ -94,7 +94,7 @@ def _debug_handler(args: Dict[str, Any]) -> Dict[str, Any]:
             loop.close()
         return {"content": str(result.result or result)}
     except Exception as e:
-        return {"error": str(e)}
+        return {"error": type(e).__name__}
 
 
 def _test_handler(args: Dict[str, Any]) -> Dict[str, Any]:
@@ -119,7 +119,7 @@ def _test_handler(args: Dict[str, Any]) -> Dict[str, Any]:
             loop.close()
         return {"content": str(result.result or result)}
     except Exception as e:
-        return {"error": str(e)}
+        return {"error": type(e).__name__}
 
 
 def _refactor_handler(args: Dict[str, Any]) -> Dict[str, Any]:
@@ -145,7 +145,7 @@ def _refactor_handler(args: Dict[str, Any]) -> Dict[str, Any]:
             loop.close()
         return {"content": str(result.result or result)}
     except Exception as e:
-        return {"error": str(e)}
+        return {"error": type(e).__name__}
 
 
 def _security_handler(args: Dict[str, Any]) -> Dict[str, Any]:
@@ -170,7 +170,7 @@ def _security_handler(args: Dict[str, Any]) -> Dict[str, Any]:
             loop.close()
         return {"content": str(result.result or result)}
     except Exception as e:
-        return {"error": str(e)}
+        return {"error": type(e).__name__}
 
 
 def _vision_handler(args: Dict[str, Any]) -> Dict[str, Any]:
@@ -198,7 +198,7 @@ def _vision_handler(args: Dict[str, Any]) -> Dict[str, Any]:
             loop.close()
         return {"content": str(result.result or result)}
     except Exception as e:
-        return {"error": str(e)}
+        return {"error": type(e).__name__}
 
 
 def _explore_handler(args: Dict[str, Any]) -> Dict[str, Any]:
@@ -222,7 +222,7 @@ def _explore_handler(args: Dict[str, Any]) -> Dict[str, Any]:
             loop.close()
         return {"content": str(result.result or result)}
     except Exception as e:
-        return {"error": str(e)}
+        return {"error": type(e).__name__}
 
 
 def _plan_handler(args: Dict[str, Any]) -> Dict[str, Any]:
@@ -247,7 +247,7 @@ def _plan_handler(args: Dict[str, Any]) -> Dict[str, Any]:
             loop.close()
         return {"content": str(result.result or result)}
     except Exception as e:
-        return {"error": str(e)}
+        return {"error": type(e).__name__}
 
 
 # ------------------------------------------------------------------
@@ -351,7 +351,7 @@ MCP_TOOLS: List[Dict[str, Any]] = [
                 "mode": {
                     "type": "string",
                     "enum": ["analysis", "ui_code"],
-                    "description": "模式：analysis（默认，视觉分析）/ ui_code（截图→UI代码生成）",
+                    "description": "模式: analysis/ui_code (视觉分析或UI代码生成)",
                 },
             },
         },

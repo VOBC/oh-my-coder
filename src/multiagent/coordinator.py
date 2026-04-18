@@ -296,7 +296,7 @@ class MultiAgentCoordinator:
                 role=agent.role,
                 success=False,
                 output=None,
-                error=str(e),
+                error=type(e).__name__,
                 duration=time.time() - start,
             )
 

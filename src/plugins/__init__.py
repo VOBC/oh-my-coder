@@ -235,7 +235,7 @@ class PluginManager:
             plugin = self._plugins.get(name)
             if plugin:
                 plugin.status = PluginStatus.ERROR
-                plugin.error = str(e)
+                plugin.error = f"{type(e).__name__}"
             return None
 
     def load_all(self) -> Dict[str, Plugin]:
@@ -271,7 +271,7 @@ class PluginManager:
             return True
         except Exception as e:
             plugin.status = PluginStatus.ERROR
-            plugin.error = str(e)
+            plugin.error = f"{type(e).__name__}"
             return False
 
     def disable(self, name: str) -> bool:

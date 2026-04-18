@@ -166,14 +166,14 @@ class QuestExecutor:
                     return
                 except Exception as e:
                     step.status = QuestStatus.FAILED
-                    step.error = str(e)
-                    fresh.error_message = f"步骤 {step.step_id} 失败: {e}"
+                    step.error = type(e).__name__
+                    fresh.error_message = f"步骤 {step.step_id} 失败"
                     self.store.save(fresh)
                     self._notify(
                         fresh,
                         "failed",
-                        f"⚠️ 步骤 [{step.step_id}] {step.title} 失败: {e}",
-                        details={"step_id": step.step_id, "error": str(e)},
+                        f"⚠️ 步骤 [{step.step_id}] {step.title} 失败",
+                        details={"step_id": step.step_id, "error": type(e).__name__},
                     )
                     # 触发重规划回调
                     if self.replan_callback:
@@ -217,12 +217,12 @@ class QuestExecutor:
             self.store.update_status(quest.id, QuestStatus.FAILED)
             fresh = self.store.get(quest.id)
             if fresh:
-                fresh.error_message = str(e)
+                fresh.error_message = type(e).__name__
                 self.store.save(fresh)
             self._notify(
                 fresh,
                 "failed",
-                f"❌ Quest 执行失败: {e}",
+                "❌ Quest 执行失败",
             )
         finally:
             self._running_quests.pop(quest.id, None)

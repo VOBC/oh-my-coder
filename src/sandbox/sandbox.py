@@ -276,10 +276,10 @@ class Sandbox:
                 "duration": time.time() - start,
                 "success": False,
             }
-        except PermissionError as e:
+        except PermissionError:
             return {
                 "output": "",
-                "stderr": str(e),
+                "stderr": "Permission denied",
                 "returncode": -2,
                 "truncated": False,
                 "duration": time.time() - start,

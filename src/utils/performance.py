@@ -175,7 +175,7 @@ class AsyncExecutor:
             except Exception as e:
                 if fail_fast:
                     raise
-                return (False, str(e))
+                return (False, type(e).__name__)
 
         tasks = [run_with_result(c) for c in coros]
         results = await asyncio.gather(*tasks)

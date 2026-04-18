@@ -743,7 +743,9 @@ class SelfImprovingAgent(BaseAgent):
                     )
                     results["created"].append(skill_id)
                 except Exception as e:
-                    results["errors"].append({"skill_id": skill_id, "error": str(e)})
+                    results["errors"].append(
+                        {"skill_id": skill_id, "error": type(e).__name__}
+                    )
             else:
                 results["skipped"].append(skill_id)
 
