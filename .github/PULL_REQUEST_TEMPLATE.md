@@ -58,6 +58,10 @@ body:
           required: false
         - label: commit message 符合规范
           required: true
+        - label: ⚠️ 安全检查：无 str(e) 泄露、无 in url 模式、无明文密码
+          required: false
+        - label: ⚠️ 如修改异常处理，请确认错误信息已脱敏
+          required: false
 
   - type: input
     id: testing
