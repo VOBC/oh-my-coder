@@ -3,6 +3,7 @@ Context 模块测试 - 工作目录上下文感知
 """
 
 from pathlib import Path
+from urllib.parse import urlparse
 
 import pytest
 
@@ -459,7 +460,8 @@ class TestBrowserContext:
         )
         result = ctx.to_context_string()
         assert "Test Page" in result
-        assert "example.com" in result  # noqa: B640
+        parsed = urlparse(ctx.url)
+        assert parsed.netloc == "example.com"
         assert "Hello world" in result
 
     def test_to_context_string_truncates_content(self):

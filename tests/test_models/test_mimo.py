@@ -6,6 +6,7 @@
 
 import sys
 from unittest.mock import AsyncMock, MagicMock, patch
+from urllib.parse import urlparse
 
 import pytest
 
@@ -22,6 +23,7 @@ class TestMimoModelInit:
         config = ModelConfig(api_key="test_key")
         model = MimoModel(config)  # noqa: F841
         assert "api.xiaomimimo.com" in config.base_url  # noqa: B640
+        assert urlparse(config.base_url).netloc == "api.xiaomimimo.com"
 
     def test_custom_base_url(self):
         config = ModelConfig(api_key="test_key", base_url="https://custom.api.com/v1")
