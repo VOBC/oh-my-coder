@@ -11,6 +11,9 @@ on:
       - "install.sh"
       - ".github/workflows/install-test.yml"
 
+permissions:
+  contents: read  # Minimal permissions for install script test
+
 jobs:
   test-install:
     runs-on: ubuntu-latest
