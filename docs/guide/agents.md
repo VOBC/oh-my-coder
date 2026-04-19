@@ -4,7 +4,7 @@
 
 oh-my-coder 内置 31 个专业 Agent，分为四个协作通道。
 
-### 构建 / 分析通道
+### 构建 / 分析通道（9）
 
 | Agent | 功能 | 模型层级 |
 |-------|------|----------|
@@ -16,15 +16,16 @@ oh-my-coder 内置 31 个专业 Agent，分为四个协作通道。
 | `VerifierAgent` | 验证代码正确性，运行测试 | MEDIUM |
 | `DebuggerAgent` | 调试和修复代码错误 | MEDIUM |
 | `TracerAgent` | 追踪代码执行流程，定位根因 | MEDIUM |
+| `PerformanceAgent` | 性能分析、瓶颈定位和优化建议 | MEDIUM |
 
-### 审查通道
+### 审查通道（2）
 
 | Agent | 功能 | 模型层级 |
 |-------|------|----------|
 | `CodeReviewerAgent` | 代码质量审查，发现坏味道 | MEDIUM |
 | `SecurityReviewerAgent` | 代码安全审查，扫描漏洞 | HIGH |
 
-### 领域通道
+### 领域通道（16）
 
 | Agent | 功能 |
 |-------|------|
@@ -41,18 +42,18 @@ oh-my-coder 内置 31 个专业 Agent，分为四个协作通道。
 | `APIAgent` | REST API 设计、接口规范和文档 |
 | `DevOpsAgent` | CI/CD 流水线、容器化和部署 |
 | `UMLAgent` | UML 图表生成（类图/时序图/流程图） |
-| `PerformanceAgent` | 性能分析、瓶颈定位和优化建议 |
 | `MigrationAgent` | 代码迁移、框架升级和技术债清理 |
-| `PromptAgent` | Prompt 工程优化和模板管理 |
 | `AuthAgent` | 认证授权设计、安全策略审查 |
 | `DataAgent` | 数据处理、ETL 流程和数据质量 |
 
-### 协调通道
+### 协调通道（4）
 
 | Agent | 功能 | 模型层级 |
 |-------|------|----------|
-| `CriticAgent` | 审查计划和设计，提供改进建议 | MEDIUM |
+| `PromptAgent` | Prompt 工程优化和模板管理 | LOW |
 | `SelfImprovingAgent` | 从执行结果中学习，优化路由策略 | LOW |
+| `SkillManageAgent` | Skill 管理和自进化、经验沉淀 | LOW |
+| `CriticAgent` | 审查计划和设计，提供改进建议 | MEDIUM |
 
 ## 自定义 Agent
 

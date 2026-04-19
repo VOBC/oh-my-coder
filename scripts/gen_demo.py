@@ -87,7 +87,7 @@ def gen_demo_agents():
     lines = [
         (DIM, "$ omc agents"),
         (DIM, ""),
-        (WHITE, "  🤖 Oh My Coder — 30 个专业 Agent"),
+        (WHITE, "  🤖 Oh My Coder — 31 个专业 Agent"),
         (DIM, ""),
         (GREEN, "  构建/分析通道"),
         (GREEN, "  ├── ExploreAgent        探索代码库，生成项目地图"),
@@ -228,7 +228,7 @@ def gen_flowchart_svg(out_path: str):
   <text x="258" y="268" fill="#9b6fd0" font-size="10">验证</text>
   <rect x="312" y="258" width="10" height="10" rx="2" fill="none" stroke="#c4555d" stroke-width="1.5"/>
   <text x="328" y="268" fill="#c4555d" font-size="10">领域</text>
-  <text x="460" y="268" fill="#888888" font-size="10">│ 模型: DeepSeek · GLM · 文心 │ 30 个专业 Agent │ MIT 开源 │</text>
+  <text x="460" y="268" fill="#888888" font-size="10">│ 模型: DeepSeek · GLM · 文心 │ 31 个专业 Agent │ MIT 开源 │</text>
 </svg>"""
     with open(out_path, "w") as f:
         f.write(svg)
@@ -272,7 +272,7 @@ def main():
 
 ![Agent System](demo-agents.png)
 
-`omc agents` 输出：30 个专业 Agent，分为构建/分析、审查、领域、协调四个通道。
+`omc agents` 输出：31 个专业 Agent，分为构建/分析、审查、领域、协调四个通道。
 
 ## Web SSE Stream
 

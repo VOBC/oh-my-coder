@@ -23,8 +23,8 @@ graph TB
         A4[ExecutorAgent]
         A5[VerifierAgent]
         A6[CodeReviewerAgent]
-        A7[SecurityAgent]
-        A8[其他 11 个...]
+        A7[SecurityReviewerAgent]
+        A8[其他 24 个...]
     end
 
     subgraph 模型层["模型适配层"]
@@ -127,7 +127,7 @@ sequenceDiagram
     participant U as 用户
     participant O as Orchestrator
     participant CR as CodeReviewerAgent
-    participant SR as SecurityAgent
+    participant SR as SecurityReviewerAgent
 
     U->>O: 提交审查任务
     O->>CR: 代码质量审查

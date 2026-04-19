@@ -228,7 +228,7 @@ def draw_scene_intro(frame_idx, total_frames):
     # 特性标签
     if progress > 0.5:
         features = [
-            "🤖 30 个专业 Agent",
+            "🤖 31 个专业 Agent",
             "🆓 GLM-4-Flash 永久免费",
             "🇨🇳 支持 12 家国产模型",
         ]

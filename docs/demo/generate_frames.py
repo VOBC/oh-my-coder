@@ -99,7 +99,7 @@ def frame_001_intro():
     # 特性标签
     features = [
         ("✨ 12 家国产大模型", 600),
-        ("🤖 30 个专业 Agent", 660),
+        ("🤖 31 个专业 Agent", 660),
         ("💰 GLM-4.7-Flash 完全免费", 720),
     ]
     font_feat = get_font(28)
@@ -380,7 +380,7 @@ def frame_007_summary():
     # 特性列表
     features = [
         ("✅ 12 家国产大模型支持", GREEN),
-        ("✅ 30 个专业 Agent 协作", GREEN),
+        ("✅ 31 个专业 Agent 协作", GREEN),
         ("✅ GLM-4.7-Flash 完全免费", GREEN),
         ("✅ 中文优先，本土优化", GREEN),
         ("✅ 完全开源，MIT 协议", GREEN),

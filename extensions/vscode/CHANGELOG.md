@@ -4,7 +4,7 @@
 
 ### ✨ 新增
 
-- **30 个智能体** - 覆盖 BUILD/REVIEW/DEBUG/DOMAIN 四大通道
+- **31 个智能体** - 覆盖 BUILD/REVIEW/DEBUG/DOMAIN 四大通道
   - BUILD: Planner, Architect, Executor, Verifier, CodeSimplifier, Migration
   - REVIEW: CodeReviewer, SecurityReviewer, Critic, Performance
   - DEBUG: Debugger, Tracer
