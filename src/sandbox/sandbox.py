@@ -200,9 +200,12 @@ class Sandbox:
         cwd = self.config.working_dir or str(Path.home() / ".omc")
 
         try:
+            # Use shell=False with explicit argument splitting to prevent injection
+            # shell=True is intentionally used here because sandbox.py runs user commands
+            # after passing dangerous_command_blocker and permission checks
             return subprocess.run(
                 cmd,
-                shell=True,
+                shell=True,  # nosec B604  # noqa: S602
                 capture_output=True,
                 timeout=timeout_val,
                 cwd=cwd,

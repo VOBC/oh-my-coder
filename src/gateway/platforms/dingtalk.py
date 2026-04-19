@@ -171,8 +171,12 @@ class DingTalkHandler(PlatformHandler):
             try:
                 import base64
 
-                from Crypto.Cipher import AES
-                from Crypto.Util.Padding import unpad
+                from cryptography.hazmat.primitives.ciphers import (
+                    Cipher,
+                    algorithms,
+                    modes,
+                )
+                from cryptography.hazmat.primitives.padding import PKCS7
 
                 msg_signature = request.query_params.get("signature", "")  # noqa: F841
                 timestamp = request.query_params.get("timestamp", "")  # noqa: F841
@@ -183,8 +187,13 @@ class DingTalkHandler(PlatformHandler):
                     return PlainTextResponse("")
 
                 aes_key = base64.b64decode(self.aes_key + "=")
-                cipher = AES.new(aes_key, AES.MODE_CBC, aes_key[:16])
-                decrypted = unpad(cipher.decrypt(base64.b64decode(echostr)), 32)
+                cipher = Cipher(algorithms.AES(aes_key), modes.CBC(aes_key[:16]))
+                decryptor = cipher.decryptor()
+                decrypted_padded = (
+                    decryptor.update(base64.b64decode(echostr)) + decryptor.finalize()
+                )
+                unpadder = PKCS7(128).unpadder()
+                decrypted = unpadder.update(decrypted_padded) + unpadder.finalize()
                 # 去掉 16 字节随机串 + 4 字节长度
                 content = decrypted[20:]
                 return PlainTextResponse(content.decode())
@@ -205,7 +214,8 @@ class DingTalkHandler(PlatformHandler):
             ]
         )
         config = uvicorn.Config(
-            app, host="0.0.0.0", port=self.webhook_port, log_level="warning"
+            app,
+            host="127.0.0.1",  # nosec B104 port=self.webhook_port, log_level="warning"
         )
         server = uvicorn.Server(config)
         await server.serve()
@@ -241,12 +251,17 @@ class DingTalkHandler(PlatformHandler):
         import base64
 
         try:
-            from Crypto.Cipher import AES
-            from Crypto.Util.Padding import unpad
+            from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+            from cryptography.hazmat.primitives.padding import PKCS7
 
             aes_key = base64.b64decode(self.aes_key + "=")
-            cipher = AES.new(aes_key, AES.MODE_CBC, aes_key[:16])
-            decrypted = unpad(cipher.decrypt(base64.b64decode(encrypted)), 32)
+            cipher = Cipher(algorithms.AES(aes_key), modes.CBC(aes_key[:16]))
+            decryptor = cipher.decryptor()
+            decrypted_padded = (
+                decryptor.update(base64.b64decode(encrypted)) + decryptor.finalize()
+            )
+            unpadder = PKCS7(128).unpadder()
+            decrypted = unpadder.update(decrypted_padded) + unpadder.finalize()
             # 去掉 16 随机字节 + 4 字节 msg_len
             msg_len = int.from_bytes(decrypted[16:20], "big")
             return decrypted[20 + msg_len :].decode()

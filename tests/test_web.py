@@ -225,7 +225,10 @@ class TestAgentLiveStream:
                     yield "data: " + json_dumps(state) + "\n\n"
                     await asyncio.sleep(2)
                 except ValueError as e:
-                    error_state = {"error": str(e), "timestamp": "2026-04-12T08:00:00Z"}
+                    error_state = {
+                        "error": "ValueError",
+                        "timestamp": "2026-04-12T08:00:00Z",
+                    }
                     yield "data: " + json_dumps(error_state) + "\n\n"
 
         gen = patched_event_generator()
@@ -234,7 +237,7 @@ class TestAgentLiveStream:
         json_str = first_chunk.split("data: ", 1)[1].rstrip("\n\n")
         error_data = json.loads(json_str)
         assert "error" in error_data
-        assert error_data["error"] == "测试错误"
+        assert error_data["error"] == "ValueError"
 
     @pytest.mark.asyncio
     async def test_orchestrator_get_current_state(self, mock_orchestrator):

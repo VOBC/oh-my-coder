@@ -156,7 +156,8 @@ class SlackHandler(PlatformHandler):
             ]
         )
         config = uvicorn.Config(
-            app, host="0.0.0.0", port=self.webhook_port, log_level="warning"
+            app,
+            host="127.0.0.1",  # nosec B104 port=self.webhook_port, log_level="warning"
         )
         server = uvicorn.Server(config)
         await server.serve()

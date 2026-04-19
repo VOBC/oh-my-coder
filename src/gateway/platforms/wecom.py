@@ -205,7 +205,8 @@ class WeComHandler(PlatformHandler):
             ]
         )
         config = uvicorn.Config(
-            app, host="0.0.0.0", port=self.webhook_port, log_level="warning"
+            app,
+            host="127.0.0.1",  # nosec B104 port=self.webhook_port, log_level="warning"
         )
         server = uvicorn.Server(config)
         await server.serve()
@@ -257,12 +258,17 @@ class WeComHandler(PlatformHandler):
         import base64
 
         try:
-            from Crypto.Cipher import AES
-            from Crypto.Util.Padding import unpad
+            from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+            from cryptography.hazmat.primitives.padding import PKCS7
 
             aes_key = base64.b64decode(self.encoding_aes_key + "=")
-            cipher = AES.new(aes_key, AES.MODE_CBC, aes_key[:16])
-            decrypted = unpad(cipher.decrypt(base64.b64decode(encrypted)), 32)
+            cipher = Cipher(algorithms.AES(aes_key), modes.CBC(aes_key[:16]))
+            decryptor = cipher.decryptor()
+            decrypted_padded = (
+                decryptor.update(base64.b64decode(encrypted)) + decryptor.finalize()
+            )
+            unpadder = PKCS7(128).unpadder()
+            decrypted = unpadder.update(decrypted_padded) + unpadder.finalize()
             # PKCS7 去除随机数、AppID、长度
             content = decrypted[16:]
             msg_len = int.from_bytes(content[:4], "big")

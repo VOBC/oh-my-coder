@@ -219,17 +219,17 @@ class LearningStore:
     def get_success_rate(self, agent_type: str, days: int = 7) -> float:
         """计算成功率"""
         with sqlite3.connect(self.db_path) as conn:
+            # Use integer days directly in query (int, not user input)
+            days_int = int(days)
             row = conn.execute(
                 """
                 SELECT
                     COUNT(CASE WHEN success = 1 THEN 1 END) * 1.0 / COUNT(*)
                 FROM execution_feedback
                 WHERE agent_type = ?
-                AND timestamp > datetime('now', '-{} days')
-                """.format(
-                    days
-                ),
-                (agent_type,),
+                AND timestamp > datetime('now', '-' || ? || ' days')
+                """,
+                (agent_type, str(days_int)),
             ).fetchone()
             return row[0] if row and row[0] else 0.0
 

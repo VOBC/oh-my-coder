@@ -133,7 +133,7 @@ class WhatsAppHandler(PlatformHandler):
 
         config = uvicorn.Config(
             self._app,
-            host="0.0.0.0",
+            host="127.0.0.1",  # nosec B104
             port=self.webhook_port,
             log_level="warning",
         )
