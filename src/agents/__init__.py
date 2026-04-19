@@ -18,10 +18,12 @@ from .executor import ExecutorAgent
 from .explore import ExploreAgent
 from .git_master import GitMasterAgent
 from .planner import PlannerAgent
+from .performance import PerformanceAgent
 from .qa_tester import QATesterAgent
 from .scientist import ScientistAgent
 from .security import SecurityReviewerAgent
 from .self_improving import LearningStore, SelfImprovingAgent
+from .skill_manage import SkillManageAgent
 from .test_engineer import TestEngineerAgent
 from .tracer import TracerAgent
 from .verifier import VerifierAgent
@@ -33,55 +35,60 @@ from .database import DatabaseAgent
 from .api_agent import APIAgent
 from .devops import DevOpsAgent
 from .uml import UMLAgent
-from .performance import PerformanceAgent
 from .migration import MigrationAgent
-from .prompt_agent import PromptAgent
 from .auth_agent import AuthAgent
 from .data_agent import DataAgent
-from .skill_manage import SkillManageAgent
+from .prompt_agent import PromptAgent
 
-# 导出所有 Agent
+# 导出所有 Agent（分组严格对齐 docs/guide/agents.md）
 __all__ = [
     "BaseAgent",
     "register_agent",
     "get_agent",
     "list_agents",
-    # Build/Analysis Lane
+    # ========================
+    # 构建 / 分析通道（9）
+    # ========================
     "ExploreAgent",
     "AnalystAgent",
     "PlannerAgent",
     "ArchitectAgent",
-    "DebuggerAgent",
     "ExecutorAgent",
     "VerifierAgent",
+    "DebuggerAgent",
     "TracerAgent",
-    # Review Lane
+    "PerformanceAgent",
+    # ========================
+    # 审查通道（2）
+    # ========================
     "CodeReviewerAgent",
     "SecurityReviewerAgent",
-    # Domain Lane
+    # ========================
+    # 领域通道（16）
+    # ========================
     "TestEngineerAgent",
     "DesignerAgent",
     "VisionAgent",
     "DocumentAgent",
     "WriterAgent",
+    "ScientistAgent",
     "GitMasterAgent",
     "CodeSimplifierAgent",
-    "ScientistAgent",
     "QATesterAgent",
-    # 新增 Domain Agent（2026-04-12）
     "DatabaseAgent",
     "APIAgent",
     "DevOpsAgent",
     "UMLAgent",
-    "PerformanceAgent",
     "MigrationAgent",
-    "PromptAgent",
     "AuthAgent",
     "DataAgent",
-    # Coordination Lane
-    "CriticAgent",
-    "SkillManageAgent",
-    # Self-Improving
-    "LearningStore",
+    # ========================
+    # 协调通道（4）
+    # ========================
+    "PromptAgent",
     "SelfImprovingAgent",
+    "SkillManageAgent",
+    "CriticAgent",
+    # Self-Improving 基础设施
+    "LearningStore",
 ]
