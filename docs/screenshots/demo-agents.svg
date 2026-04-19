@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="920" height="700" viewBox="0 0 920 700">
+<svg xmlns="http://www.w3.org/2000/svg" width="920" height="720" viewBox="0 0 920 720">
   <style>
     text { font-family: -apple-system, "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif; }
     .bg { fill: #1e1e2e; }
@@ -15,7 +15,7 @@
   </style>
 
   <!-- Background -->
-  <rect width="920" height="650" rx="12" class="bg"/>
+  <rect width="920" height="720" rx="12" class="bg"/>
 
   <!-- Header -->
   <text x="30" y="32" class="cmd">$ omc agents list</text>
