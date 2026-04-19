@@ -507,27 +507,24 @@ flowchart TD
     User([用户输入任务])
     Router{智能路由器}
 
-    subgraph Build["🚀 构建通道 (6)"]
+    subgraph Build["🚀 构建/分析通道 (9)"]
         E[ExploreAgent<br/>探索代码库]
         A[AnalystAgent<br/>分析需求]
         P[PlannerAgent<br/>制定计划]
         AR[ArchitectAgent<br/>设计架构]
         EX[ExecutorAgent<br/>生成代码]
         V[VerifierAgent<br/>验证测试]
-    end
-
-    subgraph Review["🔍 审查通道 (3)"]
-        CR[CodeReviewerAgent<br/>质量审查]
-        SR[SecurityReviewerAgent<br/>安全审查]
-        CT[CriticAgent<br/>批判分析]
-    end
-
-    subgraph Debug["🐛 调试通道 (2)"]
         DB[DebuggerAgent<br/>定位问题]
         TR[TracerAgent<br/>追踪根因]
+        PF[PerformanceAgent<br/>性能分析]
     end
 
-    subgraph Domain1["🎯 领域通道 1/2 (9)"]
+    subgraph Review["🔍 审查通道 (2)"]
+        CR[CodeReviewerAgent<br/>质量审查]
+        SR[SecurityReviewerAgent<br/>安全审查]
+    end
+
+    subgraph Domain1["🎯 领域通道 1/2 (10)"]
         TE[TestEngineerAgent<br/>测试生成]
         DS[DesignerAgent<br/>设计]
         VI[VisionAgent<br/>视觉分析<br/>UI代码生成]
@@ -537,23 +534,23 @@ flowchart TD
         GM[GitMasterAgent<br/>Git操作]
         CS[CodeSimplifierAgent<br/>代码简化]
         DB2[DatabaseAgent<br/>数据库]
+        AU[AuthAgent<br/>权限认证]
     end
 
-    subgraph Domain2["🎯 领域通道 2/2 (7)"]
-        QA[QATesterAgent<br/>QA验证]
+    subgraph Domain2["🎯 领域通道 2/2 (6)"]
         API[APIAgent<br/>API开发]
         DO[DevOpsAgent<br/>部署运维]
         UML[UMLAgent<br/>UML建模]
-        PF[PerformanceAgent<br/>性能优化]
+        QA[QATesterAgent<br/>QA验证]
         MG[MigrationAgent<br/>迁移]
-        CL[CloudArchitectAgent<br/>云架构]
+        DA[DataAgent<br/>数据处理]
     end
 
     subgraph Wizard["🧙 协调通道 (4)"]
         PM[PromptAgent<br/>提示词优化]
-        AU[AuthAgent<br/>权限认证]
-        DA[DataAgent<br/>数据处理]
         SI[SelfImprovingAgent<br/>自我改进]
+        SM[SkillManageAgent<br/>经验沉淀]
+        CT2[CriticAgent<br/>批判分析]
     end
 
     User --> Router
@@ -561,9 +558,9 @@ flowchart TD
     %% Router 连接到各通道入口 Agent
     Router --> E
     Router --> CR
-    Router --> DB
     Router --> TE
     Router --> PM
+    Router --> API
 
     %% 构建通道流程
     E --> A
@@ -571,13 +568,12 @@ flowchart TD
     P --> AR
     AR --> EX
     EX --> V
+    DB --> TR
+    TR --> E
 
     %% 审查通道
     CR --> SR
     SR --> CT
-
-    %% 调试通道
-    DB --> TR
 
     %% 领域通道内部连接
     TE --> DS
@@ -592,14 +588,11 @@ flowchart TD
     %% 构建通道 → 审查通道
     V --> CR
 
-    %% 调试通道 → 构建通道
-    TR --> E
-
     %% 协调通道连接
     PM --> E
-    AU --> PM
-    DA --> PM
     SI --> PM
+    SM --> PM
+    CT2 --> PM
 
     V --> Result([完成])
     CT --> Result
@@ -623,7 +616,7 @@ flowchart TD
 
 ## 🤖 Agent 系统（31 个专业 Agent）<a id="-agent-系统31-个专业-agent"></a>
 
-### 构建 / 分析通道
+### 构建 / 分析通道（9）
 | Agent | 功能描述 |
 |-------|---------|
 | `ExploreAgent` | 探索代码库结构，生成项目地图 |
@@ -634,14 +627,15 @@ flowchart TD
 | `VerifierAgent` | 验证代码正确性，运行测试 |
 | `DebuggerAgent` | 调试和修复代码错误 |
 | `TracerAgent` | 追踪代码执行流程，定位根因 |
+| `PerformanceAgent` | 性能分析、瓶颈定位和优化建议 |
 
-### 审查通道
+### 审查通道（2）
 | Agent | 功能描述 |
 |-------|---------|
 | `CodeReviewerAgent` | 代码质量审查，发现坏味道 |
 | `SecurityReviewerAgent` | 代码安全审查，扫描漏洞 |
 
-### 领域通道
+### 领域通道（16）
 | Agent | 功能描述 |
 |-------|---------|
 | `TestEngineerAgent` | 生成单元测试和集成测试 |
@@ -657,16 +651,17 @@ flowchart TD
 | `APIAgent` | REST API 设计、接口规范和文档 |
 | `DevOpsAgent` | CI/CD 流水线、容器化和部署 |
 | `UMLAgent` | UML 图表生成（类图/时序图/流程图） |
-| `PerformanceAgent` | 性能分析、瓶颈定位和优化建议 |
 | `MigrationAgent` | 代码迁移、框架升级和技术债清理 |
-| `PromptAgent` | Prompt 工程优化和模板管理 |
 | `AuthAgent` | 认证授权设计、安全策略审查 |
 | `DataAgent` | 数据处理、ETL 流程和数据质量 |
-| `SkillManageAgent` | Skill 管理和自进化、经验沉淀 |
 
-### 协调通道
+### 协调通道（4）
 | Agent | 功能描述 |
 |-------|---------|
+| `PromptAgent` | Prompt 工程优化和模板管理 |
+| `SelfImprovingAgent` | 从执行结果中学习，优化路由策略 |
+| `SkillManageAgent` | Skill 管理和自进化、经验沉淀 |
+| `CriticAgent` | 审查计划和设计，提供改进建议 |
 | `CriticAgent` | 审查计划和设计，提供改进建议 |
 | `SelfImprovingAgent` | 从执行结果中学习，优化路由策略 |
 
