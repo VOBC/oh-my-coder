@@ -30,7 +30,7 @@
 - [🤖 Agent 系统（31 个专业 Agent）](docs/agents/agent-list.md)
 - [🧙 Quest Mode（异步自主编程）](#️-quest-mode异步自主编程)
 - [🧠 主动学习模块](#-主动学习模块)
-- [🧠 分层记忆系统](#-分层记忆系统)
+- [🧠 分层记忆系统](docs/guide/memory-system.md)
 - [🌐 多平台 Gateway](#-多平台-gateway)
 - [🌐 工作目录上下文感知](#️-工作目录上下文感知)
 - [🧠 支持的模型](#-支持的模型)
@@ -420,41 +420,6 @@ Oh My Coder 内置 **31 个专业 Agent**，覆盖代码生成、审查、测试
 
 ## 🧙 Quest Mode（异步自主编程）
 
-Oh My Coder 支持**异步自主编程任务**，可以后台执行、实时通知。
-
-### 核心特性
-
-| 特性 | 说明 |
-|------|------|
-| **SPEC 生成** | 自动生成任务规格文档 |
-| **步骤拆分** | 智能拆分任务为可执行步骤 |
-| **断点续跑** | Checkpoint 快照（SHA256 差异检测）+ 一键回滚，任务中断不丢进度 |
-| **验收确认** | 每个步骤执行完需要用户验收 |
-| **失败重试** | 步骤失败自动触发重规划 |
-| **桌面通知** | macOS 原生 + 8 种 Webhook 渠道（钉钉/Telegram/Discord/Slack/Teams/飞书/企业微信/PushPlus） |
-
-### 工作流程
-
-```
-创建 Quest → 生成 SPEC → 用户确认 → 后台执行 → 步骤验收 → 完成
-                                                      ↓
-                                              失败 → 重试/跳过
-```
-
-### 使用方式
-
-```bash
-# 创建并执行 Quest（自动生成 SPEC）
-python -m src.cli run "实现用户认证模块" --quest
-
-# 查看 Quest 列表
-python -m src.cli quest-list
-
-# 查看详细状态
-python -m src.cli quest-status <quest-id>
-
-## 🧙 Quest Mode（异步自主编程）
-
 
 
 > 📖 [完整说明请看 Quest Mode 文档](docs/features/quest-mode.md)
@@ -637,39 +602,9 @@ print_summary_compact(summary)
 
 ## 🧬 GEP 协议支持 (WIP)
 
-基于 EvoMap GEP 协议，将能力包升级为可注册、可发现、可互通的标准格式。
-
-### 核心概念
-
-| 概念 | 说明 |
-|------|------|
-| **Gene** | 能力元数据（UUID、名称、分类、标签、描述、版本） |
-| **Capsule** | 完整能力包（Gene + manifest 配置 + 依赖 + SHA256 校验） |
-| **GEPRegistry** | 本地注册表（register / discover / resolve / export_event） |
-
-### .omcp 向后兼容
-
-旧 `.omcp` 格式自动升级为 Capsule：
-- 有 `gene` 字段 → 直接使用
-- 无 `gene` 字段 → 根据文件名和内容推断虚拟 Gene（向后兼容）
-
-### GEP Event 格式
-
-```json
-{
-  "type": "GEP/Register",
-  "version": "1.0",
-  "payload": {
-    "gene": { "id": "...", "name": "...", "category": "..." },
-    "manifest": { "tools": [...], "agents": {...} },
-    "dependencies": [...],
-    "checksum": "..."
-  }
-}
-```
+> 📖 [完整说明请看 GEP 协议文档](docs/features/gep-protocol.md)
 
 ---
-
 ## 🔒 安全特性
 
 Oh My Coder 高度重视代码安全：
@@ -738,45 +673,14 @@ oh-my-coder/
 
 ## 🧪 测试
 
-```bash
-# 运行所有测试（770 个测试）
-pytest
-
-# 运行指定测试
-pytest tests/test_web.py -v
-
-# 带覆盖率
-pytest --cov=src --cov-report=term-missing
-
-# 仅 Web 界面测试
-pytest tests/test_web.py -v
-
-# 仅集成测试
-pytest tests/test_integration.py -v
-
-# 仅单元测试
-pytest -m unit -v
-```
+> 📖 [完整说明请看 测试文档](docs/dev/testing.md)
 
 ---
-
 ## 📊 开发进度
 
-- [x] 核心架构设计
-- [x] 模型适配层（DeepSeek / 文心 / 通义 / GLM / Kimi / 豆包 / MiniMax / 混元）
-- [x] Agent 基类和注册机制
-- [x] 核心 Agent（31 个专业 Agent）
-- [x] 编排引擎（顺序/并行/条件执行）
-- [x] CLI 入口
-- [x] Web 界面（SSE 实时推送）
-- [x] 测试套件
-- [x] 示例代码（基础 + 高级）
-- [x] Docker 部署
-- [x] 任务总结功能
-- [x] CI/CD 完整测试（lint + build + multi-python）
+> 📖 [完整说明请看 开发进度文档](docs/dev/progress.md)
 
 ---
-
 ## ❓ 常见问题
 
 **Q: API Key 如何获取？**
