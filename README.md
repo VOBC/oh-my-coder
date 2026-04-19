@@ -13,7 +13,7 @@
 
 **灵感来源**: [oh-my-claudecode](https://github.com/Yeachan-Heo/oh-my-claudecode) (28.9k ⭐)
 
-![Agent System](docs/screenshots/demo-agents.png)
+![Agent System](docs/screenshots/demo-agents.svg)
 
 ---
 

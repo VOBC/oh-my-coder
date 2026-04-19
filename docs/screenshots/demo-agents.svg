@@ -1,0 +1,85 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="920" height="620" viewBox="0 0 920 620">
+  <style>
+    text { font-family: -apple-system, "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif; }
+    .bg { fill: #1e1e2e; }
+    .title { fill: #cdd6f4; font-size: 20px; font-weight: bold; }
+    .subtitle { fill: #6c7086; font-size: 13px; }
+    .cmd { fill: #a6e3a1; font-size: 13px; font-family: "SF Mono", "Fira Code", monospace; }
+    .lane { fill: #89b4fa; font-size: 14px; font-weight: bold; }
+    .agent { fill: #a6e3a1; font-size: 13px; font-family: "SF Mono", "Fira Code", monospace; }
+    .desc { fill: #9399b2; font-size: 12px; }
+    .stat-box { fill: #313244; stroke: #45475a; stroke-width: 1; }
+    .stat-num { fill: #fab387; font-size: 22px; font-weight: bold; }
+    .stat-label { fill: #a6adc8; font-size: 11px; }
+    .line { stroke: #45475a; stroke-width: 1; }
+    .divider { stroke: #585b70; stroke-width: 0.5; }
+  </style>
+
+  <!-- Background -->
+  <rect width="920" height="620" rx="12" class="bg"/>
+
+  <!-- Header -->
+  <text x="30" y="32" class="cmd">$ omc agents list</text>
+  <text x="30" y="58" class="title">Oh My Coder — 31 个专业 Agent</text>
+  <text x="30" y="76" class="subtitle">Multi-Agent AI Coding Framework · 多 Agent 协作编程系统</text>
+  <line x1="30" y1="88" x2="890" y2="88" class="divider"/>
+
+  <!-- ===== Build/Analysis Lane (8) ===== -->
+  <text x="30" y="112" class="lane">▸ 构建/分析通道（8 个）</text>
+  <text x="30" y="134" class="agent">├─ ExploreAgent</text>      <text x="230" y="134" class="desc">项目探索与需求分析</text>
+  <text x="30" y="154" class="agent">├─ AnalystAgent</text>      <text x="230" y="154" class="desc">代码分析与质量评估</text>
+  <text x="30" y="174" class="agent">├─ PlannerAgent</text>      <text x="230" y="174" class="desc">任务规划与执行分解</text>
+  <text x="30" y="194" class="agent">├─ ArchitectAgent</text>    <text x="230" y="194" class="desc">系统架构设计与演进</text>
+  <text x="30" y="214" class="agent">├─ ExecutorAgent</text>     <text x="230" y="214" class="desc">代码生成与文件操作</text>
+  <text x="30" y="234" class="agent">├─ VerifierAgent</text>     <text x="230" y="234" class="desc">执行结果验证</text>
+  <text x="30" y="254" class="agent">├─ DebuggerAgent</text>     <text x="230" y="254" class="desc">运行时调试与错误定位</text>
+  <text x="30" y="274" class="agent">└─ TracerAgent</text>       <text x="230" y="274" class="desc">调用链路追踪与日志分析</text>
+
+  <line x1="30" y1="290" x2="890" y2="290" class="divider"/>
+
+  <!-- ===== Review Lane (2) ===== -->
+  <text x="30" y="312" class="lane">▸ 审查通道（2 个）</text>
+  <text x="30" y="334" class="agent">├─ CodeReviewerAgent</text>      <text x="230" y="334" class="desc">代码审查与重构建议</text>
+  <text x="30" y="354" class="agent">└─ SecurityReviewerAgent</text>  <text x="230" y="354" class="desc">安全漏洞扫描与修复</text>
+
+  <line x1="30" y1="370" x2="890" y2="370" class="divider"/>
+
+  <!-- ===== Domain Lane (18) ===== -->
+  <text x="30" y="392" class="lane">▸ 领域通道（18 个）</text>
+  <!-- Left column -->
+  <text x="30" y="414" class="agent">├─ TestEngineerAgent</text>   <text x="230" y="414" class="desc">测试策略与用例生成</text>
+  <text x="30" y="434" class="agent">├─ QATesterAgent</text>       <text x="230" y="434" class="desc">质量保证</text>
+  <text x="30" y="454" class="agent">├─ DesignerAgent</text>       <text x="230" y="454" class="desc">UI/UX 设计</text>
+  <text x="30" y="474" class="agent">├─ VisionAgent</text>         <text x="230" y="474" class="desc">图像处理与视觉理解</text>
+  <text x="30" y="494" class="agent">├─ DocumentAgent</text>       <text x="230" y="494" class="desc">文档生成与管理</text>
+  <text x="30" y="514" class="agent">├─ WriterAgent</text>         <text x="230" y="514" class="desc">技术写作</text>
+  <text x="30" y="534" class="agent">├─ ScientistAgent</text>      <text x="230" y="534" class="desc">数据分析与机器学习</text>
+  <text x="30" y="554" class="agent">├─ CodeSimplifierAgent</text> <text x="230" y="554" class="desc">代码简化与重构</text>
+  <text x="30" y="574" class="agent">├─ GitMasterAgent</text>      <text x="230" y="574" class="desc">Git 操作与版本控制</text>
+  <!-- Right column -->
+  <text x="460" y="414" class="agent">├─ DatabaseAgent</text>       <text x="660" y="414" class="desc">数据库设计与优化</text>
+  <text x="460" y="434" class="agent">├─ APIAgent</text>            <text x="660" y="434" class="desc">API 开发与规范</text>
+  <text x="460" y="454" class="agent">├─ DevOpsAgent</text>         <text x="660" y="454" class="desc">CI/CD 与自动化部署</text>
+  <text x="460" y="474" class="agent">├─ UMLAgent</text>            <text x="660" y="474" class="desc">UML 建模</text>
+  <text x="460" y="494" class="agent">├─ PerformanceAgent</text>    <text x="660" y="494" class="desc">性能分析</text>
+  <text x="460" y="514" class="agent">├─ MigrationAgent</text>      <text x="660" y="514" class="desc">代码迁移</text>
+  <text x="460" y="534" class="agent">├─ PromptAgent</text>         <text x="660" y="534" class="desc">提示词工程</text>
+  <text x="460" y="554" class="agent">├─ AuthAgent</text>           <text x="660" y="554" class="desc">认证与权限</text>
+  <text x="460" y="574" class="agent">└─ DataAgent</text>           <text x="660" y="574" class="desc">数据处理</text>
+
+  <line x1="30" y1="590" x2="890" y2="590" class="divider"/>
+
+  <!-- ===== Coordination Lane (3) ===== -->
+  <text x="30" y="612" class="lane">▸ 协调通道（3 个）</text>
+  <text x="230" y="612" class="desc">CriticAgent（质量评估）· SelfImprovingAgent（自我进化）· SkillManageAgent（技能管理）</text>
+
+  <!-- Stats panel -->
+  <rect x="680" y="96" width="200" height="190" rx="8" class="stat-box"/>
+  <text x="780" y="122" text-anchor="middle" class="stat-label">AGENT 总数</text>
+  <text x="780" y="155" text-anchor="middle" class="stat-num">31</text>
+  <text x="780" y="175" text-anchor="middle" class="stat-label">构建/分析 8 · 审查 2</text>
+  <text x="780" y="195" text-anchor="middle" class="stat-label">领域 18 · 协调 3</text>
+  <text x="780" y="225" text-anchor="middle" class="stat-label">12 家国产模型</text>
+  <text x="780" y="245" text-anchor="middle" class="stat-label">7 种工作流</text>
+  <text x="780" y="275" text-anchor="middle" class="stat-label">MIT 开源</text>
+</svg>
