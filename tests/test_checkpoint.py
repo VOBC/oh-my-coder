@@ -166,7 +166,9 @@ class TestList:
         assert len(cm.list(task_id="other")) == 1
 
     def test_list_sorted_by_time(self, cm, tmp_proj):
+        import time
         cm.create(task_id="t1", description="first")
+        time.sleep(0.05)  # 确保 created_at 不同
         cm.create(task_id="t2", description="second")
         all_list = cm.list()
         # 最新的在前

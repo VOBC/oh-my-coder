@@ -38,6 +38,7 @@ from .migration import MigrationAgent
 from .prompt_agent import PromptAgent
 from .auth_agent import AuthAgent
 from .data_agent import DataAgent
+from .skill_manage import SkillManageAgent
 
 # 导出所有 Agent
 __all__ = [
@@ -79,6 +80,7 @@ __all__ = [
     "DataAgent",
     # Coordination Lane
     "CriticAgent",
+    "SkillManageAgent",
     # Self-Improving
     "LearningStore",
     "SelfImprovingAgent",
