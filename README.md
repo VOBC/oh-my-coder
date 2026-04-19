@@ -129,44 +129,9 @@ omc run "你好，介绍一下你自己"
 
 ## 🚀 Claude Code 迁移指南
 
-**2026年4月14日**：Claude 官方强制实名认证，中国大陆用户账号被封。如果你正在寻找 Claude Code 的替代品，这里是完整的迁移指南：
 
-### 📋 快速迁移步骤
 
-```bash
-# 1. 安装 oh-my-coder
-pip install oh-my-coder
-
-# 2. 配置 GLM-4.7-Flash（完全免费）
-omc config set -k GLM_API_KEY -v "free"
-
-# 3. 开始使用
-omc run "解释这段代码" --workflow explore --file main.py
-```
-
-### 🔄 功能映射
-
-| Claude Code 命令 | oh-my-coder 命令 |
-|-----------------|------------------|
-| `claude code explain` | `omc run --workflow explore` |
-| `claude code refactor` | `omc run --workflow build` |
-| `claude code debug` | `omc run --workflow debug` |
-| `claude code review` | `omc run --workflow review` |
-| `claude code test` | `omc run --workflow test` |
-
-### 🤝 对接智谱搬家计划
-
-智谱 AI 已推出"Claude API 用户特别搬家计划"：
-- **新用户**：赠送 2000 万 Tokens 免费体验
-- **API 兼容**：全面兼容 Claude 协议
-- **无缝切换**：只需替换 API URL
-
-在 oh-my-coder 中使用智谱 GLM：
-```bash
-omc config set -k GLM_API_KEY -v "你的智谱 API Key"
-```
-
-**详细迁移指南**：👉 [docs/guide/claude-migration.md](docs/guide/claude-migration.md)（包含故障排除和常见问题）
+> 📖 [完整说明请看 Claude Code 迁移完整指南](docs/guide/claude-migration.md)
 
 ---
 
@@ -488,152 +453,21 @@ python -m src.cli quest-list
 # 查看详细状态
 python -m src.cli quest-status <quest-id>
 
-# 订阅通知（桌面 + 钉钉）
-python -m src.cli quest-notify --dingtalk https://oapi.dingtalk.com/robot/send?access_token=xxx
+## 🧙 Quest Mode（异步自主编程）
 
-# === 国际平台 ===
-# Telegram
-python -m src.cli quest-notify <quest-id> --telegram-bot-token <TOKEN> --telegram-chat-id <CHAT_ID>
 
-# Discord
-python -m src.cli quest-notify <quest-id> --discord https://discord.com/api/webhooks/xxx/xxx
 
-# Slack
-python -m src.cli quest-notify <quest-id> --slack https://hooks.slack.com/services/xxx/xxx/xxx
-
-# Microsoft Teams
-python -m src.cli quest-notify <quest-id> --teams https://outlook.office.com/webhook/xxx
-
-# === 国内平台 ===
-# 飞书（Lark）
-python -m src.cli quest-notify <quest-id> --feishu https://open.feishu.cn/open-apis/bot/v2/hook/xxx
-
-# 企业微信
-python -m src.cli quest-notify <quest-id> --wecom https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=xxx
-
-# PushPlus（微信公众号推送，只需 Token）
-python -m src.cli quest-notify <quest-id> --pushplus <your_pushplus_token>
-
-# 阻塞等待完成
-python -m src.cli quest-wait <quest-id>
-```
-
-### 通知渠道
-
-| 渠道 | 配置参数 | 说明 |
-|------|----------|------|
-| **桌面通知** | 默认开启 | macOS 原生通知 |
-| **钉钉** | `--dingtalk <url>` | 自定义机器人 Webhook |
-| **Telegram** | `--telegram-bot-token` + `--telegram-chat-id` | Bot API，Markdown 格式 |
-| **Discord** | `--discord <webhook_url>` | Webhook，Embed 格式 |
-| **Slack** | `--slack <webhook_url>` | Incoming Webhook，Block Kit 格式 |
-| **Microsoft Teams** | `--teams <webhook_url>` | Incoming Webhook，Adaptive Card 格式 |
-| **飞书（Lark）** | `--feishu <webhook_url>` | 自定义机器人，支持卡片消息 |
-| **企业微信** | `--wecom <webhook_url>` | Webhook，Markdown 格式 |
-| **PushPlus** | `--pushplus <token>` | 微信公众号推送，最简配置 |
-
-> 📖 详细文档：[Quest Mode 详解](docs/QUEST_MODE.md)
+> 📖 [完整说明请看 Quest Mode 文档](docs/features/quest-mode.md)
 
 ---
 
 ## 🧠 主动学习模块
 
-Oh My Coder 内置**主动学习**能力，可以从执行结果中学习并优化策略。
 
-### 功能
 
-| 模块 | 说明 |
-|------|------|
-| **反馈收集** | 收集成功/失败/用户修正反馈 |
-| **模式分析** | 分析失败类型（理解错误、执行错误、验证错误） |
-| **策略适配** | 根据模式类型推荐不同策略 |
-| **提示词调优** | 根据反馈自动调整 Agent system prompt |
-| **Skill 自进化** | 工作流完成后自动将经验沉淀为 `.omc/skills/` Skill 文件 |
-
-### Skill 自进化系统
-
-每次工作流完成后，Oh My Coder 自动评估是否值得沉淀经验：
-
-**触发条件（满足任一）：**
-- 工具调用 ≥5 次且成功
-- 错误 → 解决
-- 用户纠正
-- 非平凡工作流（≥3 步骤）
-
-**Skill 文件结构：**
-```
-.omc/skills/
-├── index.json           # 全量索引
-├── debugging/           # 调试经验（bug fix、troubleshooting）
-│   └── sql-slow-fix/
-│       └── SKILL.md    # YAML frontmatter + Markdown 正文
-├── workflow/           # 工作流经验
-├── corrections/        # 被纠正后的修复
-└── best-practices/     # 最佳实践
-```
-
-**Tier 0 自动注入：** 所有 Agent 执行前，Orchestrator 自动读取 `index.json`，将所有 Skill 的名字+描述追加到系统 Prompt 底部（~500 token），让 Agent 知道有哪些经验可用。
-
-**CRUD 工具：** `skill-manage` Agent 支持 create / patch / delete / list / search 操作，patch 优先于 create。
-
-```python
-from src.memory.skill_manager import SkillManager
-
-sm = SkillManager()
-
-# 创建 Skill
-sm.create(name="SQL 慢查询修复", body="# 正文...", category="debugging",
-          tags=["sql", "performance"], triggers=["查询慢"])
-
-# patch（优先）
-sm.patch(skill_id="sql-slow-fix", body="更新后的正文...")
-
-# 搜索
-results = sm.search("sql 慢查询")
-```
-
-数据存储在 `~/.omc/` 目录。
+> 📖 [完整说明请看 主动学习模块文档](docs/features/active-learning.md)
 
 ---
-
-> 📖 详细文档：[主动学习模块](docs/SELF_IMPROVING.md)
-
----
-
-## 🧠 分层记忆系统
-
-Oh My Coder 采用**分层有限记忆**架构，在不同上下文窗口限制下提供最优记忆注入。
-
-| 层级 | Token 限制 | 内容 | 用途 |
-|------|-----------|------|------|
-| **Tier 0** | < 500 | 核心记忆（最近项目、偏好、经验） | 系统 Prompt 注入 |
-| **Tier 1** | < 2000 | 精选记忆（项目详情、常用命令） | 上下文补充 |
-| **Tier 2** | 无限制 | 完整存档（所有项目、学习记录） | 搜索、导出 |
-
-```bash
-omc memory core       # Tier 0 核心记忆
-omc memory selected   # Tier 1 精选记忆
-omc memory archive    # Tier 2 完整存档
-omc memory search "FastAPI"  # 搜索记忆
-omc memory stats      # 记忆统计
-```
-
-📖 详见 [分层记忆系统文档](docs/guide/memory-system.md)
-
----
-
-> 📖 详细文档：[分层记忆系统](docs/MEMORY_SYSTEM.md)
-
----
-
-## 🌐 多平台 Gateway
-
-支持 Telegram / Discord / WhatsApp / 飞书 / 企业微信 / 钉钉 / Slack 双向消息接入，统一消息格式，跨平台协作。
-
-```bash
-omc gateway list              # 列出支持的平台
-omc gateway test telegram     # 测试连接
-```
 
 | 平台 | 状态 | 环境变量 |
 |------|------|----------|
