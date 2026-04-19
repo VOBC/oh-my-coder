@@ -1086,6 +1086,8 @@ def agents():
         QATesterAgent,
         ScientistAgent,
         SecurityReviewerAgent,
+        SelfImprovingAgent,
+        SkillManageAgent,
         TestEngineerAgent,
         TracerAgent,
         UMLAgent,
@@ -1142,6 +1144,16 @@ def agents():
         ("vision", VisionAgent.description, VisionAgent.default_tier),
         ("auth", AuthAgent.description, AuthAgent.default_tier),
         ("data", DataAgent.description, DataAgent.default_tier),
+        (
+            "self-improving",
+            SelfImprovingAgent.description,
+            SelfImprovingAgent.default_tier,
+        ),
+        (
+            "skill-manage",
+            SkillManageAgent.description,
+            SkillManageAgent.default_tier,
+        ),
     ]
 
     for name, desc, tier in agents_list:
