@@ -96,7 +96,7 @@ $ omc agents
   ├── CodeReviewerAgent      代码质量审查
   └── SecurityReviewerAgent  安全漏洞扫描
 
-  领域通道（14 个）
+  领域通道（16 个）
   Vision · Document · TestEngineer · Designer ·
   Scientist · GitMaster · Database · API · DevOps ...
 
