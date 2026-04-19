@@ -662,8 +662,6 @@ flowchart TD
 | `SelfImprovingAgent` | 从执行结果中学习，优化路由策略 |
 | `SkillManageAgent` | Skill 管理和自进化、经验沉淀 |
 | `CriticAgent` | 审查计划和设计，提供改进建议 |
-| `CriticAgent` | 审查计划和设计，提供改进建议 |
-| `SelfImprovingAgent` | 从执行结果中学习，优化路由策略 |
 
 **模型层级说明：**
 - **LOW** - 快速便宜（DeepSeek-V3 / GLM-4-Flash / Qwen-Turbo）
