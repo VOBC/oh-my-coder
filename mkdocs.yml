@@ -1,7 +1,7 @@
 strict: false  # 允许外部 repo 链接（README.md, CONTRIBUTING.md 等）
 
 site_name: Oh My Coder 文档
-site_description: 🤖 多智能体 AI 编程助手，支持国内大模型，30 个专业 Agent，多 Agent 协作
+site_description: 🤖 多智能体 AI 编程助手，支持国内大模型，31 个专业 Agent，多 Agent 协作
 site_author: VOBC
 site_url: https://vobc.github.io/oh-my-coder/
 
