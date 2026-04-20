@@ -73,6 +73,33 @@ nav:
     - features/checkpoint.md
     - features/mcp-server.md
   - 中文:
-    - zh/index.md
-    - zh/getting-started.md
-    - zh/tutorials.md
+    - 首页: zh/index.md
+    - 快速开始: zh/getting-started.md
+    - 教程: zh/tutorials.md
+    - 安装指南: zh/guide/install.md
+    - 快速开始详细: zh/guide/quickstart-detailed.md
+    - 模型配置: zh/guide/models.md
+    - 模型详细配置: zh/guide/model-config.md
+    - Agent 介绍: zh/guide/agents.md
+    - 工作流说明: zh/guide/workflows.md
+    - 部署说明: zh/guide/deployment.md
+    - 竞品对比: zh/guide/comparison.md
+    - 常见问题: zh/FAQ.md
+    - 功能特性:
+      - zh/features/active-learning.md
+      - zh/features/capability-pack.md
+      - zh/features/checkpoint.md
+      - zh/features/gep-protocol.md
+      - zh/features/mcp-server.md
+      - zh/features/quest-mode.md
+    - 开发文档:
+      - zh/dev/architecture.md
+      - zh/dev/development-report.md
+      - zh/dev/progress.md
+      - zh/dev/task-tracking.md
+      - zh/dev/testing.md
+    - 安全文档:
+      - zh/security/CODEQL_SOLUTIONS.md
+      - zh/security/coding-guide.md
+      - zh/security/security-whackamole-investigation.md
+      - zh/security/user-guide.md
