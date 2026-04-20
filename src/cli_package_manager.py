@@ -131,8 +131,8 @@ def _run_command(cmd: List[str], capture: bool = True) -> tuple:
             return result.returncode == 0, "", ""
     except subprocess.TimeoutExpired:
         return False, "", "Command timed out"
-    except Exception as e:
-        return False, "", str(e)
+    except Exception:
+        return False, "", "unavailable"
 
 
 # 常用开发工具推荐
