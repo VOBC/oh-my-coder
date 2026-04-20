@@ -110,7 +110,7 @@ def _select_workflow(workflow: str):
         return
 
     console.print(f"\n[green]✓[/green] 任务: {task}")
-    console.print(f"\n[cyan]运行命令:[/cyan]")
+    console.print("\n[cyan]运行命令:[/cyan]")
     console.print(f"  [bold]omc run[/bold] \"{task}\" --workflow {workflow}")
 
     # 询问是否立即执行

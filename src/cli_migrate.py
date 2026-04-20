@@ -9,13 +9,11 @@
 
 from __future__ import annotations
 
-import json
 from pathlib import Path
 from typing import Optional
 
 import typer
 from rich.console import Console
-from rich.panel import Panel
 from rich.table import Table
 
 app = typer.Typer(help="记忆迁移 - 从其他工具导入配置")
@@ -76,7 +74,7 @@ def migrate_claude(
     claude_md = project_path / "CLAUDE.md"
 
     if not claude_md.exists():
-        console.print(f"[red]错误：未找到 CLAUDE.md 文件[/red]")
+        console.print("[red]错误：未找到 CLAUDE.md 文件[/red]")
         console.print(f"[dim]请在项目目录: {project_path} 中创建 CLAUDE.md[/dim]")
         raise typer.Exit(1)
 
@@ -108,7 +106,7 @@ def migrate_claude(
     )
 
     console.print(f"[green]✓[/green] 配置已导入到: {output_file}")
-    console.print(f"[dim]可使用 'omc memory view' 查看导入的记忆[/dim]")
+    console.print("[dim]可使用 'omc memory view' 查看导入的记忆[/dim]")
 
 
 @app.command("gemini")
@@ -138,7 +136,7 @@ def migrate_gemini(
         config_file = clinerules_json
 
     if not config_file:
-        console.print(f"[red]错误：未找到 .clinerules 文件[/red]")
+        console.print("[red]错误：未找到 .clinerules 文件[/red]")
         console.print(f"[dim]请在项目目录: {project_path} 中创建 .clinerules[/dim]")
         raise typer.Exit(1)
 
@@ -168,7 +166,7 @@ def migrate_gemini(
     )
 
     console.print(f"[green]✓[/green] 配置已导入到: {output_file}")
-    console.print(f"[dim]可使用 'omc memory view' 查看导入的记忆[/dim]")
+    console.print("[dim]可使用 'omc memory view' 查看导入的记忆[/dim]")
 
 
 def _parse_claude_config(content: str) -> dict:
