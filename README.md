@@ -177,13 +177,13 @@ Oh My Coder 是一个**多智能体协作编程系统**，通过多个专业 Age
 ### 三步快速配置
 
 ```bash
-# 方式1: DeepSeek（推荐，60元免费额度）
+# 方式1: DeepSeek（推荐）
 omc config set -k DEEPSEEK_API_KEY -v "your_key"
 
-# 方式2: 智谱 GLM（200万 Tokens 免费）
+# 方式2: 智谱 GLM（免费额度）
 omc config set -k GLM_API_KEY -v "free"
 
-# 方式3: MiMo（完全免费，1M上下文）
+# 方式3: MiMo（长上下文支持）
 omc config set -k MIMOX_API_KEY -v "your_key"
 ```
 
@@ -191,9 +191,9 @@ omc config set -k MIMOX_API_KEY -v "your_key"
 
 | 模型 | 免费额度 | 上下文 | 推荐理由 |
 |------|----------|--------|----------|
-| **DeepSeek** | 60元 | 64K | 首选，性价比最高 |
-| **MiMo** | 无限 | 1M | 大文件处理首选 |
-| **智谱 GLM** | 200万 Tokens | 128K | 中文优化，搬家计划 |
+| **DeepSeek** | 免费额度 | 64K | 首选，性价比最高 |
+| **MiMo** | 免费额度 | 长上下文 | 大文件处理首选 |
+| **智谱 GLM** | 免费额度 | 128K | 中文优化，搬家计划 |
 
 详细对比: [免费模型推荐](docs/guide/free-models.md)
 
