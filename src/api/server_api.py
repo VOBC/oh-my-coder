@@ -229,7 +229,11 @@ async def run_agent_task(prompt: str, task_id: str, store: TaskStore) -> None:
                 "output": prompt,  # echo back
                 "status": "degraded",
                 "note": "Orchestrator not available, returning prompt echo",
-                "error": type(e).__name__ + ": " + str(e.args[0]) if e.args else type(e).__name__,
+                "error": (
+                    type(e).__name__ + ": " + str(e.args[0])
+                    if e.args
+                    else type(e).__name__
+                ),
             }
 
         await store.update(task_id, TaskStatus.COMPLETED, result=result)
