@@ -53,6 +53,35 @@ BUILTIN_TEMPLATES = {
         "estimated_time": "20-40 分钟",
         "agents": ["explorer", "debugger", "executor", "verifier"],
     },
+    # 新增模板
+    "enterprise": {
+        "name": "enterprise",
+        "display_name": "企业级开发",
+        "category": "enterprise",
+        "description": "企业级项目工作流 - 团队协作、审计日志、安全合规",
+        "workflow": "build",
+        "estimated_time": "60-120 分钟",
+        "agents": [
+            "architect",
+            "planner",
+            "executor",
+            "test-engineer",
+            "verifier",
+            "security-reviewer",
+            "document-agent",
+        ],
+        "features": ["审计日志", "团队协作", "安全合规", "CI/CD 集成"],
+    },
+    "multimodal": {
+        "name": "multimodal",
+        "display_name": "多模态开发",
+        "category": "multimodal",
+        "description": "多模态开发工作流 - 截图分析、UI 自动生成、视觉理解",
+        "workflow": "build",
+        "estimated_time": "30-60 分钟",
+        "agents": ["vision-agent", "executor", "designer-agent", "verifier"],
+        "features": ["截图分析", "UI 代码生成", "视觉理解", "多模态交互"],
+    },
 }
 
 
