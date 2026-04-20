@@ -73,6 +73,26 @@ omc run "你好，介绍一下你自己"
 
 ---
 
+## 🏆 差异化优势
+
+与 Claude Code、Gemini CLI 等国际工具相比，oh-my-coder 的三大核心优势：
+
+### 1️⃣ 国产模型全家桶（12家 vs 单家）
+- **Claude Code**：仅支持 Claude（需翻墙，$25/月）
+- **Gemini CLI**：仅支持 Google Gemini
+- **oh-my-coder**：✅ **12家国产模型**（智谱、DeepSeek、阿里、腾讯、百度等），GLM-4.7-Flash **完全免费**
+
+### 2️⃣ 中文友好（中文文档 vs 英文为主）
+- **Claude Code / Gemini CLI**：英文为主，中文支持有限
+- **oh-my-coder**：✅ **全中文交互**，中文文档、中文错误提示、中文 Agent 命名
+
+### 3️⃣ 完全开源可私有部署（vs 闭源）
+- **Claude Code**：闭源，无法自托管
+- **Gemini CLI**：开源 CLI，但依赖 Google 云服务
+- **oh-my-coder**：✅ **MIT 协议完全开源**，支持本地离线运行、私有部署、二次开发
+
+---
+
 ### 完整竞品对比（2026年AI编程工具生态）
 
 #### 多Agent编排框架对比
