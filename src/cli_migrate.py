@@ -53,7 +53,9 @@ def list_sources():
         )
 
     console.print(table)
-    console.print("\n[dim]使用 'omc migrate claude <path>' 或 'omc migrate gemini <path>' 导入配置[/dim]")
+    console.print(
+        "\n[dim]使用 'omc migrate claude <path>' 或 'omc migrate gemini <path>' 导入配置[/dim]"
+    )
 
 
 @app.command("claude")

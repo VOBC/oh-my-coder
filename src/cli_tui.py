@@ -32,20 +32,43 @@ WORKFLOWS = [
 # Agent 分类
 AGENT_CATEGORIES = {
     "构建/分析": [
-        "ExploreAgent", "AnalystAgent", "PlannerAgent", "ArchitectAgent",
-        "ExecutorAgent", "VerifierAgent", "DebuggerAgent", "TracerAgent", "PerformanceAgent",
+        "ExploreAgent",
+        "AnalystAgent",
+        "PlannerAgent",
+        "ArchitectAgent",
+        "ExecutorAgent",
+        "VerifierAgent",
+        "DebuggerAgent",
+        "TracerAgent",
+        "PerformanceAgent",
     ],
     "审查": [
-        "CodeReviewerAgent", "SecurityReviewerAgent",
+        "CodeReviewerAgent",
+        "SecurityReviewerAgent",
     ],
     "领域": [
-        "TestEngineerAgent", "DesignerAgent", "VisionAgent", "DocumentAgent",
-        "WriterAgent", "ScientistAgent", "GitMasterAgent", "CodeSimplifierAgent",
-        "QATesterAgent", "DatabaseAgent", "APIAgent", "DevOpsAgent",
-        "UMLAgent", "MigrationAgent", "AuthAgent", "DataAgent",
+        "TestEngineerAgent",
+        "DesignerAgent",
+        "VisionAgent",
+        "DocumentAgent",
+        "WriterAgent",
+        "ScientistAgent",
+        "GitMasterAgent",
+        "CodeSimplifierAgent",
+        "QATesterAgent",
+        "DatabaseAgent",
+        "APIAgent",
+        "DevOpsAgent",
+        "UMLAgent",
+        "MigrationAgent",
+        "AuthAgent",
+        "DataAgent",
     ],
     "协调": [
-        "PromptAgent", "SelfImprovingAgent", "SkillManageAgent", "CriticAgent",
+        "PromptAgent",
+        "SelfImprovingAgent",
+        "SkillManageAgent",
+        "CriticAgent",
     ],
 }
 
@@ -55,11 +78,13 @@ def start(
     task: Optional[str] = typer.Argument(None, help="任务描述（可选）"),
 ):
     """启动交互式 TUI 界面"""
-    console.print(Panel.fit(
-        "[bold cyan]🤖 Oh My Coder TUI[/bold cyan]\n"
-        "[dim]快速选择 Agent 和工作流[/dim]",
-        border_style="cyan",
-    ))
+    console.print(
+        Panel.fit(
+            "[bold cyan]🤖 Oh My Coder TUI[/bold cyan]\n"
+            "[dim]快速选择 Agent 和工作流[/dim]",
+            border_style="cyan",
+        )
+    )
 
     # 如果直接提供了任务，直接执行
     if task:
@@ -83,7 +108,8 @@ def start(
     # 选择工作流
     choice = Prompt.ask(
         "\n[bold]选择工作流[/bold] (输入编号或名称)",
-        choices=[str(i) for i in range(1, len(WORKFLOWS) + 1)] + [w[0] for w in WORKFLOWS],
+        choices=[str(i) for i in range(1, len(WORKFLOWS) + 1)]
+        + [w[0] for w in WORKFLOWS],
         default="1",
     )
 
@@ -111,7 +137,7 @@ def _select_workflow(workflow: str):
 
     console.print(f"\n[green]✓[/green] 任务: {task}")
     console.print("\n[cyan]运行命令:[/cyan]")
-    console.print(f"  [bold]omc run[/bold] \"{task}\" --workflow {workflow}")
+    console.print(f'  [bold]omc run[/bold] "{task}" --workflow {workflow}')
 
     # 询问是否立即执行
     run_now = Prompt.ask(
@@ -131,11 +157,12 @@ def _select_workflow(workflow: str):
 @app.command("agents")
 def list_agents():
     """列出所有 Agent"""
-    console.print(Panel.fit(
-        "[bold cyan]🤖 Agent 清单[/bold cyan]\n"
-        "[dim]共 31 个专业 Agent[/dim]",
-        border_style="cyan",
-    ))
+    console.print(
+        Panel.fit(
+            "[bold cyan]🤖 Agent 清单[/bold cyan]\n" "[dim]共 31 个专业 Agent[/dim]",
+            border_style="cyan",
+        )
+    )
 
     for category, agents in AGENT_CATEGORIES.items():
         table = Table(title=f"\n[bold]{category}[/bold]", box=box.SIMPLE)
@@ -152,7 +179,9 @@ def list_agents():
 
         console.print(table)
 
-    console.print(f"\n[dim]共 {sum(len(a) for a in AGENT_CATEGORIES.values())} 个 Agent[/dim]")
+    console.print(
+        f"\n[dim]共 {sum(len(a) for a in AGENT_CATEGORIES.values())} 个 Agent[/dim]"
+    )
 
 
 @app.command("workflows")
