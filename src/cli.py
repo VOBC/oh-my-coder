@@ -43,6 +43,7 @@ from .cli_commands import app as commands_app
 from .cli_package_manager import app as pkg_app
 from .cli_lsp import app as lsp_app
 from .cli_search import app as search_app
+from .cli_server import app as server_app
 
 # 版本信息
 __version__ = "1.0.0"
@@ -74,6 +75,7 @@ app.add_typer(commands_app, name="cmd", help="命令系统 - 运行自定义 Mar
 app.add_typer(pkg_app, name="pkg", help="包管理器 - Homebrew/npm/scoop/winget/AUR")
 app.add_typer(lsp_app, name="lsp", help="LSP 集成 - 读取代码诊断信息")
 app.add_typer(search_app, name="search", help="代码搜索 - Sourcegraph 公开代码库搜索")
+app.add_typer(server_app, name="server", help="远程 Server - HTTP REST API 服务")
 
 # 代码清理命令
 try:
