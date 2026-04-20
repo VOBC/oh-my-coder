@@ -36,6 +36,7 @@ class Keys:
     Escape = "\x1b"
     CtrlC = "\x03"
 
+
 app = typer.Typer(help="TUI 交互界面 - 键盘驱动的终端交互")
 console = Console()
 
