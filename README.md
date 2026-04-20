@@ -473,7 +473,7 @@ Oh My Coder 内置 **31 个专业 Agent**，覆盖代码生成、审查、测试
 一键切换默认模型，无需重启：
 
 ```bash
-omc model list            # 列出所有 12 个支持的模型
+omc model list            # 列出 12 个模型（✅ 7 个生产就绪，⚠️ 5 个 Beta/待完善）
 omc model current         # 显示当前模型
 omc model switch glm      # 切换到智谱 GLM
 ```

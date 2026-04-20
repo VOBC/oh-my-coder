@@ -195,7 +195,7 @@ def frame_intro(progress):
     # 副标题淡入
     if progress > 0.4:
         pass  # alpha controls subtitle fade, computed inline
-        sub1 = "🤖 31 个专业 Agent  ·  12 家国产大模型  ·  GLM-4.7 完全免费"
+        sub1 = "🤖 31 个专业 Agent  ·  12 家国产大模型（7✅生产就绪+5⚠️）·  GLM-4.7 完全免费"
         sub2 = "🌐 多 Agent 协作  ·  本地运行  ·  完全开源"
         draw.text((W // 2, H // 2 + 80), sub1, font=FONT_M, fill=DIM_TEXT, anchor="mm")
         draw.text(
@@ -478,7 +478,7 @@ def frame_result(progress):
         (f"{WHITE_TXT}", "=" * 50),
         (f"{DIM_TEXT}", ""),
         (f"{CYAN_TXT}", "📝 ModelRouter 核心功能:"),
-        (f"{WHITE_TXT}", "  1. 支持 12 家国产大模型"),
+        (f"{WHITE_TXT}", "  1. 支持 12 家国产大模型（7✅生产就绪+5⚠️Beta）"),
         (f"{WHITE_TXT}", "  2. 智能路由选择最优模型"),
         (f"{WHITE_TXT}", "  3. 成本控制与用量统计"),
         (f"{DIM_TEXT}", ""),
