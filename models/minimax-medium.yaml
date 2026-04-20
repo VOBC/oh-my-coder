@@ -1,0 +1,16 @@
+# Catwalk 模型配置 - MiniMax (Medium Tier)
+name: "MiniMax 丁页生 6.5S"
+provider: minimax
+model: abab6.5s-chat
+tier: medium
+pricing:
+  input: 0.005
+  output: 0.015
+  unit: "元/百万token"
+context: 8000
+features:
+  - 主力模型
+  - 低成本
+  - 中文优化
+note: >
+  "MiniMax 主力模型，性价比高

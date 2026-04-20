@@ -1,0 +1,16 @@
+# Catwalk 模型配置 - Kimi (Low Tier)
+name: "Kimi Moonshot V1 8K"
+provider: kimi
+model: moonshot-v1-8k
+tier: low
+pricing:
+  input: 0.03
+  output: 0.06
+  unit: "元/百万token"
+context: 8000
+features:
+  - 长上下文
+  - 中文优化
+  - 多轮对话
+note: >
+  "Kimi 入门模型，适合简单对话和短任务

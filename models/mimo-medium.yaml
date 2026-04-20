@@ -1,0 +1,16 @@
+# Catwalk 模型配置 - 小米 MiMo (Medium Tier)
+name: "小米 MiMo V2 Flash"
+provider: mimo
+model: mimo-v2-flash
+tier: medium
+pricing:
+  input: 0.0
+  output: 0.0
+  unit: "元/百万token"
+context: 262144
+features:
+  - 超长上下文
+  - 低成本
+  - 中文优化
+note: >
+  "小米 MiMo Flash，256K 上下文，限时免费

@@ -1,0 +1,16 @@
+# Catwalk 模型配置 - Kimi (Medium Tier)
+name: "Kimi Moonshot V1 32K"
+provider: kimi
+model: moonshot-v1-32k
+tier: medium
+pricing:
+  input: 0.06
+  output: 0.12
+  unit: "元/百万token"
+context: 32000
+features:
+  - 中等上下文
+  - 中文优化
+  - 代码生成
+note: >
+  "Kimi 主力模型，性价比与能力平衡

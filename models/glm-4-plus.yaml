@@ -1,0 +1,17 @@
+# Catwalk 模型配置 - 智谱 GLM-4-Plus
+name: "GLM-4-Plus"
+provider: glm
+model: glm-4-plus
+tier: medium
+pricing:
+  input: 1.0
+  output: 1.0
+  unit: "元/百万token"
+context: 128000
+features:
+  - 旗舰模型
+  - 工具调用
+  - 函数执行
+  - 复杂推理
+note: >
+  "智谱最强模型，适合高精度任务

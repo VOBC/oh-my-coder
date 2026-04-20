@@ -1,0 +1,16 @@
+# Catwalk 模型配置 - 讯飞星火 (Medium Tier)
+name: "讯飞星火 V3.5"
+provider: spark
+model: generalv3.5
+tier: medium
+pricing:
+  input: 0.0
+  output: 0.0
+  unit: "元/百万token"
+context: 8000
+features:
+  - 语音集成
+  - 中文优化
+  - 讯飞生态
+note: >
+  "讯飞星火主力模型，定价待确认

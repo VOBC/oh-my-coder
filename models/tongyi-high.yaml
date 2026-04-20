@@ -1,0 +1,16 @@
+# Catwalk 模型配置 - 通义千问 (High Tier)
+name: "通义千问 Qwen Max"
+provider: tongyi
+model: qwen-max
+tier: high
+pricing:
+  input: 0.04
+  output: 0.12
+  unit: "元/百万token"
+context: 8000
+features:
+  - 旗舰模型
+  - 最强中文
+  - 复杂推理
+note: >
+  "通义最强模型，高精度复杂任务

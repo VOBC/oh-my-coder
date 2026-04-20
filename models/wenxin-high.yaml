@@ -1,0 +1,16 @@
+# Catwalk 模型配置 - 文心一言 (High Tier)
+name: "文心一言 ERNIE-Bot 4"
+provider: wenxin
+model: completions
+tier: high
+pricing:
+  input: 0.12
+  output: 0.12
+  unit: "元/百万token"
+context: 8000
+features:
+  - 旗舰模型
+  - 中文优化
+  - 复杂推理
+note: >
+  "文心最强模型，高精度中文任务

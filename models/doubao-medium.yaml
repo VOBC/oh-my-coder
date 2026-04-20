@@ -1,0 +1,16 @@
+# Catwalk 模型配置 - 豆包 (Medium Tier)
+name: "豆包 Doubao Pro 32K"
+provider: doubao
+model: doubao-pro-32k
+tier: medium
+pricing:
+  input: 0.006
+  output: 0.018
+  unit: "元/百万token"
+context: 32000
+features:
+  - 中等上下文
+  - 低成本
+  - 中文优化
+note: >
+  "豆包主力模型，价格极低，推荐日常使用

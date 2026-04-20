@@ -1,0 +1,16 @@
+# Catwalk 模型配置 - 百川智能 (Medium Tier)
+name: "百川 Baichuan4"
+provider: baichuan
+model: Baichuan4
+tier: medium
+pricing:
+  input: 0.0
+  output: 0.0
+  unit: "元/百万token"
+context: 8000
+features:
+  - 中文优化
+  - 多轮对话
+  - 代码生成
+note: >
+  "百川4旗舰模型，定价待确认

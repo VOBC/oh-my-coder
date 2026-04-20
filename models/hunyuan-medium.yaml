@@ -1,0 +1,16 @@
+# Catwalk 模型配置 - 腾讯混元 (Medium Tier)
+name: "混元 Hunyuan Standard"
+provider: hunyuan
+model: hunyuan-standard
+tier: medium
+pricing:
+  input: 0.0
+  output: 0.0
+  unit: "元/百万token"
+context: 8000
+features:
+  - 中文优化
+  - 腾讯生态
+  - 多轮对话
+note: >
+  "腾讯混元主力模型，定价待确认

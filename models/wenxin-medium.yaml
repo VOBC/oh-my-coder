@@ -1,0 +1,16 @@
+# Catwalk 模型配置 - 文心一言 (Medium Tier)
+name: "文心一言 ERNIE-Bot"
+provider: wenxin
+model: completions_pro
+tier: medium
+pricing:
+  input: 0.012
+  output: 0.012
+  unit: "元/百万token"
+context: 8000
+features:
+  - 中文优化
+  - 百度生态
+  - 多轮对话
+note: >
+  "文心标准模型，百度出品，适合中文通用任务

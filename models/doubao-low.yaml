@@ -1,0 +1,16 @@
+# Catwalk 模型配置 - 豆包 (Low Tier)
+name: "豆包 Doubao Pro 4K"
+provider: doubao
+model: doubao-pro-4k
+tier: low
+pricing:
+  input: 0.003
+  output: 0.009
+  unit: "元/百万token"
+context: 4000
+features:
+  - 低成本
+  - 快速响应
+  - 中文优化
+note: >
+  "豆包入门模型，极低价格，适合简单任务

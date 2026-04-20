@@ -1,0 +1,17 @@
+# Catwalk 模型配置 - DeepSeek Coder
+name: "DeepSeek Coder"
+provider: deepseek
+model: deepseek-coder
+tier: free
+pricing:
+  input: 0.0
+  output: 0.0
+  unit: "元/百万token"
+context: 64000
+features:
+  - 代码生成
+  - 代码补全
+  - 代码修复
+  - 技术文档
+note: >
+  "代码专用模型，免费额度内优先使用

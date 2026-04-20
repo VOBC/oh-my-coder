@@ -1,0 +1,16 @@
+# Catwalk 模型配置 - 通义千问 (Low Tier)
+name: "通义千问 Qwen Turbo"
+provider: tongyi
+model: qwen-turbo
+tier: low
+pricing:
+  input: 0.004
+  output: 0.012
+  unit: "元/百万token"
+context: 8000
+features:
+  - 低成本
+  - 阿里云集成
+  - 中文优化
+note: >
+  "通义入门模型，适合简单快速任务

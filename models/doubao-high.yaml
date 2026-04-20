@@ -1,0 +1,16 @@
+# Catwalk 模型配置 - 豆包 (High Tier)
+name: "豆包 Doubao Pro 128K"
+provider: doubao
+model: doubao-pro-128k
+tier: high
+pricing:
+  input: 0.012
+  output: 0.036
+  unit: "元/百万token"
+context: 128000
+features:
+  - 超长上下文
+  - 低成本
+  - 中文优化
+note: >
+  "豆包旗舰模型，超长上下文+极低价格

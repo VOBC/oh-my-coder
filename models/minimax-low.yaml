@@ -1,0 +1,16 @@
+# Catwalk 模型配置 - MiniMax (Low Tier)
+name: "MiniMax 丁页生 6B"
+provider: minimax
+model: abab6.5s-chat
+tier: low
+pricing:
+  input: 0.01
+  output: 0.02
+  unit: "元/百万token"
+context: 8000
+features:
+  - 低成本
+  - 快速响应
+  - 中文优化
+note: >
+  "MiniMax 入门模型，适合简单任务

@@ -1,0 +1,16 @@
+# Catwalk 模型配置 - Kimi (High Tier)
+name: "Kimi Moonshot V1 128K"
+provider: kimi
+model: moonshot-v1-128k
+tier: high
+pricing:
+  input: 0.12
+  output: 0.24
+  unit: "元/百万token"
+context: 128000
+features:
+  - 超长上下文
+  - 中文优化
+  - 复杂推理
+note: >
+  "Kimi 旗舰模型，适合超长文档分析和复杂推理

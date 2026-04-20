@@ -1,0 +1,17 @@
+# Catwalk 模型配置 - DeepSeek Chat
+name: "DeepSeek Chat"
+provider: deepseek
+model: deepseek-chat
+tier: free
+pricing:
+  input: 0.0
+  output: 0.0
+  unit: "元/百万token"
+context: 64000
+features:
+  - 中文优化
+  - 多轮对话
+  - 代码生成
+  - 数学推理
+note: >
+  "每日 4000 万 token 免费额度，推荐日常使用
