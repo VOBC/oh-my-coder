@@ -20,11 +20,21 @@ from typing import Optional
 
 import typer
 from rich.console import Console
-from rich.keys import Keys
 from rich.live import Live
 from rich.panel import Panel
 from rich.table import Table
 from rich.text import Text
+
+
+# Rich 14 removed Keys, define manually
+class Keys:
+    Up = "\x1b[A"
+    Down = "\x1b[B"
+    Left = "\x1b[D"
+    Right = "\x1b[C"
+    Enter = "\r"
+    Escape = "\x1b"
+    CtrlC = "\x03"
 
 app = typer.Typer(help="TUI 交互界面 - 键盘驱动的终端交互")
 console = Console()

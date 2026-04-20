@@ -38,6 +38,10 @@ from .cli_mcp import app as mcp_app
 from .cli_memory import app as memory_app
 from .cli_migrate import app as migrate_app
 from .cli_tui import app as tui_app
+from .cli_self_config import app as self_config_app
+from .cli_commands import app as commands_app
+from .cli_package_manager import app as pkg_app
+from .cli_lsp import app as lsp_app
 
 # 版本信息
 __version__ = "1.0.0"
@@ -62,6 +66,12 @@ app.add_typer(mcp_app, name="mcp")
 app.add_typer(memory_app, name="memory", help="分层记忆管理 - 查看核心/精选/完整记忆")
 app.add_typer(migrate_app, name="migrate", help="记忆迁移 - 从 Claude/Gemini 导入配置")
 app.add_typer(tui_app, name="tui", help="TUI 交互界面 - 简易终端交互")
+app.add_typer(
+    self_config_app, name="self-config", help="自配置 - 自然语言配置 API Key/模型/代理"
+)
+app.add_typer(commands_app, name="cmd", help="命令系统 - 运行自定义 Markdown 命令")
+app.add_typer(pkg_app, name="pkg", help="包管理器 - Homebrew/npm/scoop/winget/AUR")
+app.add_typer(lsp_app, name="lsp", help="LSP 集成 - 读取代码诊断信息")
 
 # 代码清理命令
 try:
