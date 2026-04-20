@@ -21,6 +21,7 @@
 
 - [🎯 为什么选择 Oh My Coder？](#-为什么选择-oh-my-coder)
 - [🚀 Claude Code 迁移指南](#-claude-code-迁移指南)
+- [💰 零成本起步](#️-零成本起步) **[NEW]**
 - [🎯 项目简介](#-项目简介)
 - [🚀 快速开始](#-快速开始)
 - [👀 快速示例](#-快速示例)
@@ -168,6 +169,36 @@ Oh My Coder 是一个**多智能体协作编程系统**，通过多个专业 Age
 - 🌐 **多平台 Gateway** - 支持 Telegram Bot / Discord Bot 双向消息，统一消息格式，跨平台协作，CLI 一键启动：`omc gateway start --telegram <token>`
 
 ---
+
+## 💰 零成本起步
+
+> 无需信用卡，无需充值，直接使用免费模型开始编程
+
+### 三步快速配置
+
+```bash
+# 方式1: DeepSeek（推荐，60元免费额度）
+omc config set -k DEEPSEEK_API_KEY -v "your_key"
+
+# 方式2: 智谱 GLM（200万 Tokens 免费）
+omc config set -k GLM_API_KEY -v "free"
+
+# 方式3: MiMo（完全免费，1M上下文）
+omc config set -k MIMOX_API_KEY -v "your_key"
+```
+
+### 免费模型对比
+
+| 模型 | 免费额度 | 上下文 | 推荐理由 |
+|------|----------|--------|----------|
+| **DeepSeek** | 60元 | 64K | 首选，性价比最高 |
+| **MiMo** | 无限 | 1M | 大文件处理首选 |
+| **智谱 GLM** | 200万 Tokens | 128K | 中文优化，搬家计划 |
+
+详细对比: [免费模型推荐](docs/guide/free-models.md)
+
+---
+
 ## ⚡ 快速开始
 
 > 📖 [完整安装与配置指南](docs/guide/quickstart-detailed.md)（安装依赖、API Key 配置、模型特定配置、运行方式）

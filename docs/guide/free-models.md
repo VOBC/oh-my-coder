@@ -1,0 +1,191 @@
+# 免费模型推荐
+
+> 零成本开始 AI 编程之旅
+
+## 推荐概览
+
+| 模型 | 状态 | 免费额度 | 推荐指数 | 适用场景 |
+|------|------|----------|----------|----------|
+| **DeepSeek** | ✅ Production | 60元免费额度 | ⭐⭐⭐⭐⭐ | 首选，性价比最高 |
+| **MiMo** | ✅ Production | 完全免费 | ⭐⭐⭐⭐ | 大上下文需求 |
+| **智谱 GLM** | ✅ Production | 200万 Tokens | ⭐⭐⭐⭐ | 中文优化 |
+
+## 详细说明
+
+### 1. DeepSeek（强烈推荐）⭐⭐⭐⭐⭐
+
+**状态**: Production Ready ✅
+
+**特点**:
+- 60 元免费额度（新用户）
+- 响应速度快
+- 代码能力强
+- 支持函数调用
+
+**配置方法**:
+
+```bash
+# 设置 API Key
+omc config set -k DEEPSEEK_API_KEY -v "your_api_key"
+
+# 设置为默认模型
+omc config set -k DEFAULT_MODEL -v "deepseek"
+```
+
+**获取 API Key**: [DeepSeek 开放平台](https://platform.deepseek.com/)
+
+---
+
+### 2. MiMo（小米大模型）⭐⭐⭐⭐
+
+**状态**: Production Ready ✅
+
+**特点**:
+- `mimo-v2-flash` 完全免费
+- 1M 上下文（100万 Tokens）
+- 支持长文本处理
+
+**配置方法**:
+
+```bash
+# 设置 API Key
+omc config set -k MIMOX_API_KEY -v "your_api_key"
+
+# 设置为默认模型
+omc config set -k DEFAULT_MODEL -v "mimo"
+```
+
+**获取 API Key**: [小米开放平台](https://platform.ai.xiaomi.com/)
+
+**适用场景**:
+- 长代码文件分析
+- 大型项目理解
+- 文档处理
+
+---
+
+### 3. 智谱 GLM ⭐⭐⭐⭐
+
+**状态**: Production Ready ✅
+
+**特点**:
+- 200 万 Tokens 免费额度
+- 中文优化
+- 智谱搬家计划（针对 Claude 用户）
+
+**配置方法**:
+
+```bash
+# 免费版本（无需 Key）
+omc config set -k GLM_API_KEY -v "free"
+
+# 或使用智谱 API Key
+omc config set -k GLM_API_KEY -v "your_api_key"
+
+# 设置为默认模型
+omc config set -k DEFAULT_MODEL -v "glm"
+```
+
+**获取 API Key**: [智谱 AI 开放平台](https://open.bigmodel.cn/)
+
+**特别说明**: 智谱已推出"Claude 用户搬家计划"，新用户赠送 2000 万 Tokens。
+
+---
+
+## 不推荐 ❌
+
+### MiniMax（Beta 状态）
+
+| 问题 | 说明 |
+|------|------|
+| **状态** | Beta，未正式发布 |
+| **函数调用** | 不支持 |
+| **稳定性** | 可能随时变更 |
+
+**建议**: 等待 MiniMax 正式发布后再考虑。
+
+---
+
+## 快速开始
+
+### 1. 选择最适合你的模型
+
+```bash
+# 如果你是新用户，推荐 DeepSeek
+omc config set -k DEEPSEEK_API_KEY -v "your_key"
+omc config set -k DEFAULT_MODEL -v "deepseek"
+
+# 如果需要大上下文，选择 MiMo
+omc config set -k MIMOX_API_KEY -v "your_key"
+omc config set -k DEFAULT_MODEL -v "mimo"
+
+# 如果主要处理中文，选择 GLM
+omc config set -k GLM_API_KEY -v "free"
+omc config set -k DEFAULT_MODEL -v "glm"
+```
+
+### 2. 验证配置
+
+```bash
+omc run "你好，介绍一下你自己"
+```
+
+### 3. 开始编程
+
+```bash
+# 代码解释
+omc run "解释这段代码" --workflow explore --file main.py
+
+# 代码重构
+omc run "重构这个函数" --workflow build --file utils.py
+
+# Bug 修复
+omc run "修复这个错误" --workflow debug --file buggy.py
+```
+
+---
+
+## 模型对比
+
+| 特性 | DeepSeek | MiMo | GLM |
+|------|----------|------|-----|
+| **免费额度** | 60元 | 无限 | 200万 Tokens |
+| **上下文长度** | 64K | 1M | 128K |
+| **中文能力** | ⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ |
+| **代码能力** | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐⭐ |
+| **响应速度** | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐⭐ |
+| **函数调用** | ✅ | ✅ | ✅ |
+
+---
+
+## 常见问题
+
+### Q: 我应该选择哪个模型？
+
+**A**: 
+- **日常开发**: DeepSeek（首选，速度快，能力强）
+- **大文件处理**: MiMo（1M 上下文）
+- **纯中文任务**: GLM（中文优化最好）
+
+### Q: 免费额度用完了怎么办？
+
+**A**: 
+1. 换一个模型继续使用
+2. 等待下个月额度重置
+3. 使用 MiMo（完全免费）
+
+### Q: 可以同时配置多个模型吗？
+
+**A**: 可以。`DEFAULT_MODEL` 设置首选，任务中可用 `--model` 指定其他模型：
+
+```bash
+omc run "任务" --model glm
+```
+
+---
+
+## 相关文档
+
+- [模型配置](model-config.md)
+- [模型列表](models.md)
+- [Claude 迁移指南](claude-migration.md)
