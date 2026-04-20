@@ -81,7 +81,7 @@ omc run "你好，介绍一下你自己"
 ### 1️⃣ 国产模型全家桶（12家 vs 单家）
 - **Claude Code**：仅支持 Claude（需翻墙，$25/月）
 - **Gemini CLI**：仅支持 Google Gemini
-- **oh-my-coder**：✅ **12家国产模型**（智谱、DeepSeek、阿里、腾讯、百度等），GLM-4.7-Flash **完全免费**
+- **oh-my-coder**：✅ **12家国产模型**（GLM-4.7-Flash、DeepSeek-V3、通义千问、Kimi、豆包等），GLM-4.7-Flash **完全免费**
 
 ### 2️⃣ 中文友好（中文文档 vs 英文为主）
 - **Claude Code / Gemini CLI**：英文为主，中文支持有限
