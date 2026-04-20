@@ -37,6 +37,7 @@ from .cli_checkpoint import app as checkpoint_app
 from .cli_mcp import app as mcp_app
 from .cli_memory import app as memory_app
 from .cli_migrate import app as migrate_app
+from .cli_tui import app as tui_app
 
 # 版本信息
 __version__ = "1.0.0"
@@ -60,6 +61,7 @@ app.add_typer(checkpoint_app, name="checkpoint")
 app.add_typer(mcp_app, name="mcp")
 app.add_typer(memory_app, name="memory", help="分层记忆管理 - 查看核心/精选/完整记忆")
 app.add_typer(migrate_app, name="migrate", help="记忆迁移 - 从 Claude/Gemini 导入配置")
+app.add_typer(tui_app, name="tui", help="TUI 交互界面 - 简易终端交互")
 
 # 代码清理命令
 try:
