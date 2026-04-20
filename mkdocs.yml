@@ -59,6 +59,7 @@ nav:
     - guide/install.md
     - guide/quick-start.md
     - guide/models.md
+    - guide/free-models.md
     - guide/agents.md
     - guide/workflows.md
     - guide/gateway.md
