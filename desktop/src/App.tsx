@@ -88,7 +88,7 @@ function ChatMessage({ msg }: { msg: Message }) {
 }
 
 // ── Component: ConfigPanel ──────────────────────────────────────────────────────
-interface ApiKeyEntry { model: string; apiKey: string; isCustom?: boolean; isFree?: boolean; }
+interface ApiKeyEntry { model: string; displayName?: string; apiKey: string; isCustom?: boolean; isFree?: boolean; }
 
 function ConfigPanel({ onClose, models }: { onClose: () => void; models: Model[] }) {
   const [entries, setEntries] = useState<ApiKeyEntry[]>([]);
@@ -101,11 +101,12 @@ function ConfigPanel({ onClose, models }: { onClose: () => void; models: Model[]
     const saved = localStorage.getItem('omc-api-keys');
     const savedEntries: ApiKeyEntry[] = saved ? JSON.parse(saved) : [];
     
-    // Build entries from omc models
+    // Build entries from omc models (display name, store id)
     const modelEntries: ApiKeyEntry[] = models.map(m => {
       const savedEntry = savedEntries.find(e => e.model === m.id);
       return {
-        model: m.id,
+        model: m.id,          // unique key (id)
+        displayName: m.name,  // display label (Chinese name)
         apiKey: savedEntry?.apiKey || '',
         isFree: m.tier === 'free'
       };
@@ -199,7 +200,7 @@ function ConfigPanel({ onClose, models }: { onClose: () => void; models: Model[]
                   />
                 ) : (
                   <span className="config-entry__model">
-                    {entry.model}
+                    {entry.displayName || entry.model}
                     {entry.isFree && <span className="config-entry__free"> (Free)</span>}
                   </span>
                 )}

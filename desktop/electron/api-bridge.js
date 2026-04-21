@@ -102,6 +102,18 @@ const CHINESE_PROVIDERS = [
   'hunyuan', 'minimax', 'tiangong', 'spark', 'baichuan', 'zhipu'
 ];
 
+// Production-ready models (7 core providers)
+// Only these models are shown in Settings and Models list
+const PRODUCTION_PROVIDERS = [
+  'deepseek',   // DeepSeek V3
+  'glm',        // GLM-4-Flash
+  'mimo',       // MiMo V2 Flash
+  'kimi',       // Kimi 128K
+  'doubao',     // Doubao-Pro
+  'tiangong',   // TianGong 3.0
+  'baichuan',   // Baichuan 4
+];
+
 const ApiBridge = {
   /**
    * Get model list from `omc model list --json`
@@ -115,20 +127,31 @@ const ApiBridge = {
       return [];
     }
 
-    const filtered = result.data.filter(m => {
+    // Filter: only Chinese providers with valid endpoints
+    let filtered = result.data.filter(m => {
       if (!CHINESE_PROVIDERS.includes(m.provider)) return false;
       if (!m.endpoint || !m.endpoint.startsWith('http')) return false;
+      // Only show production-ready models (7 core providers)
+      if (!PRODUCTION_PROVIDERS.includes(m.provider)) return false;
       return true;
     });
 
-    filtered.sort((a, b) => {
-      const tierOrder = { 'free': 0, 'low': 1, 'medium': 2, 'high': 3 };
-      const ta = tierOrder[a.tier] ?? 2;
-      const tb = tierOrder[b.tier] ?? 2;
-      return ta - tb;
-    });
+    // Deduplicate: keep one default model per provider
+    // Priority: free > low > medium > high (prefer free/low as defaults)
+    const seen = new Set();
+    const deduped = [];
+    for (const m of filtered) {
+      if (!seen.has(m.provider)) {
+        seen.add(m.provider);
+        deduped.push(m);
+      }
+    }
 
-    return filtered.map(m => ({
+    // Sort by PRODUCTION_PROVIDERS order
+    const providerOrder = Object.fromEntries(PRODUCTION_PROVIDERS.map((p, i) => [p, i]));
+    deduped.sort((a, b) => (providerOrder[a.provider] ?? 99) - (providerOrder[b.provider] ?? 99));
+
+    return deduped.map(m => ({
       id: m.model || m.name?.toLowerCase().replace(/[^a-z0-9]/g, '-'),
       name: m.name,
       provider: m.provider,
