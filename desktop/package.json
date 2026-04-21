@@ -2,7 +2,7 @@
   "name": "oh-my-coder-desktop-electron",
   "private": true,
   "version": "0.1.0",
-  "type": "module",
+  "main": "electron/main.js",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
@@ -42,5 +42,7 @@
     "linux": {
       "target": "AppImage"
     }
-  }
+  },
+  "description": "Oh My Coder - AI-powered coding assistant desktop app",
+  "author": "VOBC"
 }

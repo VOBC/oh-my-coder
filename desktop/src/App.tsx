@@ -22,7 +22,26 @@ const TIER_COLOR: Record<string, string> = { free: '#4ade80', low: '#94a3b8', me
 
 // ── API helpers ────────────────────────────────────────────────────────────────
 declare global { interface Window { omc: any; } }
-const api = () => window.omc;
+const mockApi = {
+  modelList: async () => ({ models: FALLBACK_MODELS }),
+  modelCurrent: async () => 'gpt-4o',
+  modelSwitch: async () => {},
+  chatSend: async (opts: any) => ({ code: 0, stdout: `Mock response for: ${opts.message}`, stderr: '' }),
+  configGet: async () => ({}),
+  configSet: async () => {},
+  serverStatus: async () => ({ running: false }),
+  serverStart: async () => {},
+  serverStop: async () => {},
+  historyList: async () => [],
+  historyGet: async () => ({}),
+  openExternal: async () => {},
+  openPath: async () => {},
+  appInfo: async () => ({ version: '0.1.0' }),
+  onNavigate: () => () => {},
+  onChatChunk: () => () => {},
+  onChatError: () => () => {},
+};
+const api = () => window.omc || mockApi;
 
 // ── Component: ModelSelector ───────────────────────────────────────────────────
 function ModelSelector({ models, current, onSwitch }: { models: Model[]; current: string; onSwitch: (id: string) => void }) {

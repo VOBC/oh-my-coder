@@ -294,7 +294,7 @@ function createWindow() {
   if (isDev) {
     mainWindow.loadURL('http://localhost:1420');
   } else {
-    mainWindow.loadFile(path.join(OMC_ROOT, 'desktop', 'dist', 'index.html'));
+    mainWindow.loadFile(path.join(__dirname, '..', 'dist', 'index.html'));
   }
 
   mainWindow.once('ready-to-show', () => mainWindow.show());
