@@ -4,6 +4,7 @@ const path = require('path');
 const { spawn, execSync } = require('child_process');
 const fs = require('fs');
 const os = require('os');
+const { ApiBridge } = require('./api-bridge');
 
 // ── Paths ────────────────────────────────────────────────────────────────────
 const isDev = !app.isPackaged;
@@ -97,59 +98,21 @@ function stopOmcServer() {
 function setupIpc() {
   // Get current model config
   ipcMain.handle('omc:model:list', async () => {
-    try {
-      const out = execSync('omc model list --json 2>/dev/null || omc model list 2>/dev/null', {
-        cwd: OMC_ROOT,
-        encoding: 'utf-8',
-        timeout: 10000,
-      });
-      // Try JSON parse, fallback to raw
-      try { return JSON.parse(out); } catch { return { raw: out, models: [] }; }
-    } catch (e) {
-      return { error: e.message, models: [] };
-    }
+    const models = ApiBridge.getModelList();
+    return { models };
   });
 
   ipcMain.handle('omc:model:current', async () => {
-    try {
-      const out = execSync('omc model current --json 2>/dev/null || echo "{}"', {
-        cwd: OMC_ROOT,
-        encoding: 'utf-8',
-        timeout: 10000,
-      });
-      return JSON.parse(out);
-    } catch { return {}; }
+    return ApiBridge.getCurrentModel() || 'glm-4-flash';
   });
 
   ipcMain.handle('omc:model:switch', async (_, modelId) => {
-    try {
-      const out = execSync(`omc model switch ${modelId}`, {
-        cwd: OMC_ROOT,
-        encoding: 'utf-8',
-        timeout: 10000,
-      });
-      return { ok: true, output: out };
-    } catch (e) {
-      return { ok: false, error: e.message };
-    }
+    return ApiBridge.switchModel(modelId);
   });
 
   // Chat — send task to omc and stream response
-  ipcMain.handle('omc:chat:send', async (event, { message, model }) => {
-    return new Promise((resolve) => {
-      try {
-        const args = ['run', '--no-interactive', '--json', message];
-        if (model) args.push('--model', model);
-        const child = spawn('omc', args, { cwd: OMC_ROOT, stdio: ['pipe', 'pipe', 'pipe'] });
-
-        let stdout = '', stderr = '';
-        child.stdout.on('data', (d) => { stdout += d.toString(); event.sender.send('omc:chat:chunk', stdout); });
-        child.stderr.on('data', (d) => { stderr += d.toString(); event.sender.send('omc:chat:error', stderr); });
-        child.on('close', (code) => resolve({ code, stdout, stderr }));
-      } catch (e) {
-        resolve({ code: 1, stdout: '', stderr: e.message });
-      }
-    });
+  ipcMain.handle('omc:chat:send', async (event, opts) => {
+    return ApiBridge.chatSend(event, opts);
   });
 
   // Config

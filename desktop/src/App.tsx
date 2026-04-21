@@ -4,44 +4,24 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import './App.css';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
-interface Model { id: string; name: string; provider: string; tier: string; context?: number; }
+interface Model { id: string; name: string; provider: string; tier: string; context?: number; endpoint?: string; pricing?: Record<string, number>; features?: string[]; }
 interface Message { id: string; role: 'user' | 'assistant' | 'system'; content: string; timestamp: number; }
 interface HistoryItem { id: string; title: string; updated: string; model?: string; }
 
-// ── Mock / fallback data ───────────────────────────────────────────────────────
-const FALLBACK_MODELS: Model[] = [
-  { id: 'gpt-4o', name: 'GPT-4o', provider: 'openai', tier: 'high' },
-  { id: 'gpt-4o-mini', name: 'GPT-4o Mini', provider: 'openai', tier: 'medium' },
-  { id: 'claude-3-5-sonnet', name: 'Claude 3.5 Sonnet', provider: 'anthropic', tier: 'high' },
-  { id: 'deepseek-chat', name: 'DeepSeek V3', provider: 'deepseek', tier: 'medium' },
-  { id: 'glm-4', name: 'GLM-4', provider: 'zhipu', tier: 'low' },
-];
-
+// ── Tier display config ───────────────────────────────────────────────────────
 const TIER_ICON: Record<string, string> = { free: '◈', low: '◇', medium: '◆', high: '★' };
 const TIER_COLOR: Record<string, string> = { free: '#4ade80', low: '#94a3b8', medium: '#d4a017', high: '#f59e0b' };
 
 // ── API helpers ────────────────────────────────────────────────────────────────
 declare global { interface Window { omc: any; } }
-const mockApi = {
-  modelList: async () => ({ models: FALLBACK_MODELS }),
-  modelCurrent: async () => 'gpt-4o',
-  modelSwitch: async () => {},
-  chatSend: async (opts: any) => ({ code: 0, stdout: `Mock response for: ${opts.message}`, stderr: '' }),
-  configGet: async () => ({}),
-  configSet: async () => {},
-  serverStatus: async () => ({ running: false }),
-  serverStart: async () => {},
-  serverStop: async () => {},
-  historyList: async () => [],
-  historyGet: async () => ({}),
-  openExternal: async () => {},
-  openPath: async () => {},
-  appInfo: async () => ({ version: '0.1.0' }),
-  onNavigate: () => () => {},
-  onChatChunk: () => () => {},
-  onChatError: () => () => {},
-};
-const api = () => window.omc || mockApi;
+
+/** Get the omc API (from preload contextBridge) */
+function api() {
+  if (!window.omc) {
+    console.warn('[App] window.omc not available — preload may not be loaded');
+  }
+  return window.omc;
+}
 
 // ── Component: ModelSelector ───────────────────────────────────────────────────
 function ModelSelector({ models, current, onSwitch }: { models: Model[]; current: string; onSwitch: (id: string) => void }) {
@@ -166,8 +146,8 @@ function ConfigPanel({ onClose }: { onClose: () => void }) {
 
 // ── Main App ────────────────────────────────────────────────────────────────────
 export default function App() {
-  const [models, setModels] = useState<Model[]>(FALLBACK_MODELS);
-  const [currentModel, setCurrentModel] = useState('gpt-4o');
+  const [models, setModels] = useState<Model[]>([]);
+  const [currentModel, setCurrentModel] = useState<string>('');
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -181,12 +161,21 @@ export default function App() {
 
   // Load models + history
   useEffect(() => {
-    api().modelList().then(data => {
+    const omcApi = api();
+    if (!omcApi) {
+      console.warn('[App] omc API not available, skipping model load');
+      return;
+    }
+    omcApi.modelList().then((data: any) => {
       if (data?.models?.length) setModels(data.models);
-      else if (data?.length) setModels(data);
+      else if (Array.isArray(data)) setModels(data);
+    }).catch((e: any) => console.error('[App] modelList failed:', e));
+    omcApi.modelCurrent().then((m: any) => {
+      if (typeof m === 'string' && m) setCurrentModel(m);
+      else if (m?.model) setCurrentModel(m.model);
     }).catch(() => {});
-    api().historyList().then(setHistory).catch(() => {});
-    api().serverStatus().then(s => setServerStatus(s.running ? 'running' : 'stopped')).catch(() => {});
+    omcApi.historyList().then(setHistory).catch(() => {});
+    omcApi.serverStatus().then((s: any) => setServerStatus(s.running ? 'running' : 'stopped')).catch(() => {});
   }, []);
 
   // Scroll to bottom on new messages
