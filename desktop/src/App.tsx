@@ -88,72 +88,179 @@ function ChatMessage({ msg }: { msg: Message }) {
 }
 
 // ── Component: ConfigPanel ──────────────────────────────────────────────────────
-function ConfigPanel({ onClose }: { onClose: () => void }) {
-  const [config, setConfig] = useState<Record<string, string>>({});
-  const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
+interface ApiKeyEntry { model: string; apiKey: string; isCustom?: boolean; isFree?: boolean; }
 
+function ConfigPanel({ onClose, models }: { onClose: () => void; models: Model[] }) {
+  const [entries, setEntries] = useState<ApiKeyEntry[]>([]);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [toast, setToast] = useState<{msg: string; type: 'success'|'error'} | null>(null);
+  const [confirmClose, setConfirmClose] = useState(false);
+
+  // Initialize from localStorage + omc models
   useEffect(() => {
-    api().configGet().then(setConfig);
-  }, []);
+    const saved = localStorage.getItem('omc-api-keys');
+    const savedEntries: ApiKeyEntry[] = saved ? JSON.parse(saved) : [];
+    
+    // Build entries from omc models
+    const modelEntries: ApiKeyEntry[] = models.map(m => {
+      const savedEntry = savedEntries.find(e => e.model === m.id);
+      return {
+        model: m.id,
+        apiKey: savedEntry?.apiKey || '',
+        isFree: m.tier === 'free'
+      };
+    });
+    
+    // Add custom entries not in models
+    const customEntries = savedEntries.filter(e => !models.some(m => m.id === e.model));
+    
+    setEntries([...modelEntries, ...customEntries]);
+  }, [models]);
 
-  const handleSave = async (key: string, value: string) => {
-    setSaving(true);
-    await api().configSet(key, value);
-    setConfig(prev => ({ ...prev, [key]: value }));
-    setSaving(false);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+  const updateEntry = (index: number, apiKey: string) => {
+    setEntries(prev => prev.map((e, i) => i === index ? { ...e, apiKey } : e));
+    setHasUnsavedChanges(true);
+  };
+
+  const removeEntry = (index: number) => {
+    setEntries(prev => prev.filter((_, i) => i !== index));
+    setHasUnsavedChanges(true);
+  };
+
+  const addCustomEntry = () => {
+    setEntries(prev => [...prev, { model: '', apiKey: '', isCustom: true }]);
+    setHasUnsavedChanges(true);
+  };
+
+  const updateCustomModel = (index: number, model: string) => {
+    setEntries(prev => prev.map((e, i) => i === index ? { ...e, model } : e));
+    setHasUnsavedChanges(true);
+  };
+
+  const handleSave = () => {
+    // Validate: non-empty keys should start with sk-
+    const invalid = entries.filter(e => e.apiKey && !e.apiKey.startsWith('sk-'));
+    if (invalid.length > 0) {
+      setToast({ msg: 'Invalid API Key format (should start with sk-)', type: 'error' });
+      setTimeout(() => setToast(null), 3000);
+      return;
+    }
+    
+    // Save to localStorage
+    localStorage.setItem('omc-api-keys', JSON.stringify(entries));
+    setHasUnsavedChanges(false);
+    setToast({ msg: 'Configuration saved', type: 'success' });
+    setTimeout(() => setToast(null), 2000);
+  };
+
+  const handleClose = () => {
+    if (hasUnsavedChanges && !confirmClose) {
+      setConfirmClose(true);
+      return;
+    }
+    onClose();
+  };
+
+  const uiText = {
+    settings: 'Settings',
+    apiKeys: 'API Keys',
+    about: 'About',
+    addCustom: '+ Add Custom Model',
+    save: 'Save Configuration',
+    unsavedTitle: 'Unsaved Changes',
+    unsavedMsg: 'You have unsaved changes. Leave without saving?',
+    leave: 'Leave',
+    cancel: 'Cancel',
+    optional: 'optional',
+    modelName: 'Model name'
   };
 
   return (
     <div className="config-panel">
       <div className="config-panel__header">
-        <span className="config-panel__title">⚙ Settings</span>
-        <button className="config-panel__close" onClick={onClose}>✕</button>
+        <span className="config-panel__title">⚙ {uiText.settings}</span>
+        <button className="config-panel__close" onClick={handleClose}>✕</button>
       </div>
+      
       <div className="config-panel__body">
         <div className="config-section">
-          <div className="config-section__label">API Keys</div>
-          {[
-            {key:'DEEPSEEK_API_KEY', label:'🌊 DeepSeek（深度求索）', models: ['DeepSeek V3', 'DeepSeek R1']},
-            {key:'ZHIPU_API_KEY', label:'🧠 智谱 GLM', models: ['GLM-4-Flash (free)', 'GLM-4V-Flash (free)', 'GLM-4-Plus']},
-            {key:'DASHSCOPE_API_KEY', label:'🌐 通义千问 Qwen', models: ['Qwen 2.5']},
-            {key:'MOONSHOT_API_KEY', label:'🌙 月之暗面 Kimi', models: ['Kimi Moonshot V1 128K']},
-            {key:'ARK_API_KEY', label:'🎵 字节豆包 Doubao', models: ['Doubao-Pro 128K']},
-            {key:'ERNIE_API_KEY', label:'🐻 百度文心 Ernie', models: ['ERNIE-Bot 4']},
-            {key:'HUNYUAN_API_KEY', label:'🐧 腾讯混元 Hunyuan', models: ['Hunyuan Standard']},
-            {key:'MINIMAX_API_KEY', label:'🎭 MiniMax', models: ['MiniMax 汀灵 6B']},
-            {key:'TIANGONG_API_KEY', label:'⚡ 天工 AI', models: ['天工 3.0']},
-            {key:'SPARK_API_KEY', label:'🔥 讯飞星火 Spark', models: ['讯飞星火 V3.5']},
-            {key:'BAICHUAN_API_KEY', label:'🌊 百川 Baichuan', models: ['Baichuan 4']},
-            {key:'MIMO_API_KEY', label:'🤖 小米 MiMo', models: ['MiMo V2 Flash (free)']}
-          ].map(({key, label, models: modelList}) => (
-            <div className="config-field" key={key}>
-              <label className="config-field__label">{label}</label>
-              <div className="config-field__models">{modelList.join(' · ')}</div>
-              <div className="config-field__row">
-                <input
-                  type="password"
-                  className="config-field__input"
-                  defaultValue={config[key] || ''}
-                  placeholder="sk-..."
-                  onBlur={e => handleSave(key, e.target.value)}
-                />
+          <div className="config-section__label">{uiText.apiKeys}</div>
+          
+          {entries.map((entry, idx) => (
+            <div className="config-entry" key={`${entry.model}-${idx}`}>
+              <div className="config-entry__header">
+                {entry.isCustom ? (
+                  <input
+                    type="text"
+                    className="config-entry__model-input"
+                    value={entry.model}
+                    placeholder={uiText.modelName}
+                    onChange={e => updateCustomModel(idx, e.target.value)}
+                  />
+                ) : (
+                  <span className="config-entry__model">
+                    {entry.model}
+                    {entry.isFree && <span className="config-entry__free"> (Free)</span>}
+                  </span>
+                )}
+                <button 
+                  className="config-entry__remove" 
+                  onClick={() => removeEntry(idx)}
+                  title="Remove"
+                >
+                  −
+                </button>
               </div>
+              <input
+                type="password"
+                className="config-entry__input"
+                value={entry.apiKey}
+                placeholder={entry.isFree ? uiText.optional : 'sk-...'}
+                onChange={e => updateEntry(idx, e.target.value)}
+              />
             </div>
           ))}
+          
+          <button className="config-add-btn" onClick={addCustomEntry}>
+            {uiText.addCustom}
+          </button>
         </div>
+        
         <div className="config-section">
-          <div className="config-section__label">About</div>
+          <div className="config-section__label">{uiText.about}</div>
           <div className="config-about">
             <div className="config-about__row"><span>Oh My Coder</span><span>v0.1.0</span></div>
             <div className="config-about__row"><span>Platform</span><span>{navigator.platform}</span></div>
             <div className="config-about__row"><span>API</span><span>window.omc (IPC)</span></div>
           </div>
         </div>
-        {saved && <div className="config-saved">✓ Saved</div>}
+        
+        <button 
+          className={`config-save-btn${hasUnsavedChanges ? ' unsaved' : ''}`}
+          onClick={handleSave}
+        >
+          💾 {uiText.save}
+        </button>
       </div>
+      
+      {toast && (
+        <div className={`config-toast ${toast.type}`}>
+          {toast.type === 'success' ? '✓' : '✗'} {toast.msg}
+        </div>
+      )}
+      
+      {confirmClose && (
+        <div className="config-confirm-overlay">
+          <div className="config-confirm">
+            <div className="config-confirm__title">{uiText.unsavedTitle}</div>
+            <div className="config-confirm__msg">{uiText.unsavedMsg}</div>
+            <div className="config-confirm__actions">
+              <button className="config-confirm__leave" onClick={onClose}>{uiText.leave}</button>
+              <button className="config-confirm__cancel" onClick={() => setConfirmClose(false)}>{uiText.cancel}</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -385,7 +492,7 @@ export default function App() {
       </main>
 
       {/* Config modal */}
-      {showConfig && <ConfigPanel onClose={() => setShowConfig(false)} />}
+      {showConfig && <ConfigPanel onClose={() => setShowConfig(false)} models={models} />}
     </div>
   );
 }
