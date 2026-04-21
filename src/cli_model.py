@@ -25,6 +25,13 @@ from rich.table import Table
 from rich.panel import Panel
 from rich.prompt import Prompt, Confirm
 
+# 导入模型发现模块
+try:
+    from model_discovery import ModelDiscovery, get_discovery_summary
+except ImportError:
+    ModelDiscovery = None
+    get_discovery_summary = None
+
 console = Console()
 
 app = typer.Typer(
@@ -537,6 +544,31 @@ def list_models(
         console.print(f"[dim]当前模型: {current}[/dim]")
         console.print("[dim]使用 [cyan]--extended[/cyan] 查看 Catwalk 详细模式[/dim]")
 
+        # 检查新模型（非阻塞，使用缓存或快速发现）
+        if get_discovery_summary and not json_output:
+            try:
+                summary = get_discovery_summary(BUILTIN_CATWALK_MODELS)
+                if summary.get("has_new"):
+                    new_models = summary.get("new_models", [])
+                    if new_models:
+                        # 只显示前3个新模型
+                        display_models = new_models[:3]
+                        model_names = ", ".join(
+                            [f"{m['model_id']} ({m['provider']})" for m in display_models]
+                        )
+                        if len(new_models) > 3:
+                            model_names += f" 等 {len(new_models)} 个"
+                        console.print()
+                        console.print(
+                            f"[bold yellow]💡 发现新模型:[/] [cyan]{model_names}[/]"
+                        )
+                        console.print(
+                            f"[dim]   运行 [cyan]omc model sync[/cyan] 查看详情并同步[/dim]"
+                        )
+            except Exception:
+                # 静默失败，不影响主功能
+                pass
+
 
 @app.command("catwalk")
 def catwalk(
@@ -846,6 +878,83 @@ def switch_model_cmd(
     console.print(f"  [dim]配置文件:[/] {CONFIG_FILE}")
     console.print()
     console.print("[dim]提示: 环境变量 OMC_DEFAULT_MODEL 会覆盖配置文件[/dim]")
+
+
+@app.command("sync")
+def sync_models(
+    force: bool = typer.Option(False, "--force", "-f", help="强制刷新，忽略缓存"),
+    timeout: int = typer.Option(5, "--timeout", "-t", help="请求超时时间（秒）"),
+) -> None:
+    """同步检查各厂商最新模型"""
+    if ModelDiscovery is None:
+        console.print("[red]✗ 模型发现模块未加载[/red]")
+        raise typer.Exit(1)
+
+    console.print()
+    console.print("[bold cyan]🔍 正在检查各厂商最新模型...[/bold cyan]")
+    console.print()
+
+    discovery = ModelDiscovery()
+
+    # 检查缓存状态
+    if not force:
+        cached = discovery.get_cached()
+        if cached:
+            cached_at = cached.get("cached_at", "未知")
+            console.print(f"[dim]使用缓存数据（{cached_at}），使用 --force 强制刷新[/dim]")
+            console.print()
+
+    # 执行同步
+    result = discovery.sync(force=force, timeout=timeout)
+
+    if result.get("status") == "cached":
+        discovered = result.get("data", {})
+        console.print("[yellow]⚠ 使用缓存数据，跳过实时检查[/yellow]")
+    else:
+        discovered = result.get("data", {})
+        providers_stats = result.get("providers", {})
+
+        # 显示各厂商状态
+        for provider, count in providers_stats.items():
+            if count > 0:
+                console.print(f"  [green]✅[/] {provider}: 发现 {count} 个模型")
+            else:
+                # 检查是否有 API key
+                config = discovery.PROVIDER_APIS.get(provider, {})
+                if config.get("skip"):
+                    reason = config.get("reason", "不支持动态发现")
+                    console.print(f"  [dim]⏭️  {provider}: {reason}[/dim]")
+                elif config.get("key_env") and not os.getenv(config["key_env"]):
+                    console.print(f"  [yellow]⚠️[/] {provider}: API Key 未配置")
+                else:
+                    console.print(f"  [dim]⚪ {provider}: 无可用模型或请求失败[/dim]")
+
+    # 对比内置模型
+    comparison = discovery.compare_with_builtin(discovered, BUILTIN_CATWALK_MODELS)
+    new_models = comparison.get("new_models", [])
+    removed_models = comparison.get("removed_models", [])
+
+    console.print()
+
+    if new_models:
+        console.print(f"[bold green]✨ 发现 {len(new_models)} 个新模型:[/bold green]")
+        for m in new_models[:10]:  # 最多显示10个
+            console.print(f"   • {m['model_id']} ({m['provider']})")
+        if len(new_models) > 10:
+            console.print(f"   ... 还有 {len(new_models) - 10} 个")
+        console.print()
+        console.print("[dim]💡 提示: 使用 [cyan]omc model import <url>[/cyan] 添加新模型[/dim]")
+    else:
+        console.print("[dim]未发现新模型[/dim]")
+
+    if removed_models:
+        console.print()
+        console.print(f"[yellow]⚠️  {len(removed_models)} 个模型可能已下线:[/yellow]")
+        for m in removed_models[:5]:
+            console.print(f"   • {m['name']} ({m['model_id']})")
+
+    console.print()
+    console.print(f"[dim]缓存文件: {discovery.CACHE_FILE}[/dim]")
 
 
 # 别名：支持 omc model switch 和 omc modelswitch
