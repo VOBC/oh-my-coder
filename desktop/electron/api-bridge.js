@@ -1,29 +1,51 @@
 // electron/api-bridge.js — Bridge between Electron main process and omc CLI
 const { execSync, exec } = require('child_process');
 const path = require('path');
+const os = require('os');
 const fs = require('fs');
 
 // ── Resolve omc binary ───────────────────────────────────────────────────────
 function resolveOmcBin() {
-  const OMC_ROOT = path.join(__dirname, '..');
-  // In packaged app: OMC_ROOT is asar root; try system PATH first
-  // In dev: try local .venv/bin/omc or bin/omc
-  const candidates = [
-    'omc',  // system PATH (most reliable in production)
+  const OMC_ROOT = path.resolve(path.join(__dirname, '..'));
+  // Candidates ordered by priority:
+  //   1. Absolute paths to known omc locations (most reliable)
+  //   2. Project-local paths (dev mode)
+  //   3. System PATH (production, if omc is in PATH)
+  const absCandidates = [
+    // macOS pip install (most common on macOS)
+    path.join(os.homedir(), 'Library', 'Python', '3.9', 'bin', 'omc'),
+    path.join(os.homedir(), 'Library', 'Python', '3.10', 'bin', 'omc'),
+    path.join(os.homedir(), 'Library', 'Python', '3.11', 'bin', 'omc'),
+    path.join(os.homedir(), 'Library', 'Python', '3.12', 'bin', 'omc'),
+    path.join(os.homedir(), '.local', 'bin', 'omc'),
+    // Linux
+    path.join(os.homedir(), '.local', 'bin', 'omc'),
+    // Windows
+    path.join(process.env.APPDATA || '', 'Python', 'Scripts', 'omc.exe'),
+    // Project-local (dev mode)
     path.join(OMC_ROOT, '.venv', 'bin', 'omc'),
     path.join(OMC_ROOT, 'bin', 'omc'),
-    path.join(OMC_ROOT, '..', '.venv', 'bin', 'omc'), // desktop/../.venv
+    path.join(OMC_ROOT, '..', '.venv', 'bin', 'omc'),
   ];
-  for (const c of candidates) {
+  const allCandidates = [...absCandidates, 'omc'];  // PATH last resort
+
+  for (const c of allCandidates) {
     try {
       if (c === 'omc') {
         execSync('omc --version', { stdio: 'pipe', timeout: 5000 });
+        console.log('[api-bridge] Found omc via PATH');
       } else if (fs.existsSync(c)) {
         execSync(c + ' --version', { stdio: 'pipe', timeout: 5000 });
+        console.log('[api-bridge] Found omc at:', c);
+      } else {
+        continue;
       }
       return c;
-    } catch {}
+    } catch (e) {
+      // Silently skip unavailable candidates
+    }
   }
+  console.warn('[api-bridge] omc CLI not found in any location');
   return null;
 }
 
@@ -53,10 +75,10 @@ function runOmc(args, opts = {}) {
   const timeout = opts.timeout || 15000;
 
   try {
-    const stdout = execSync(
-      `${typeof bin === 'string' && bin.includes(' ') ? `"${bin}"` : bin} ${args.map(a => a.includes(' ') ? `"${a}"` : a).join(' ')} --json`,
-      { encoding: 'utf-8', cwd, timeout, stdio: ['pipe', 'pipe', 'pipe'] }
-    );
+    const { execFileSync } = require('child_process');
+    const stdout = execFileSync(bin, [...args, '--json'], {
+      encoding: 'utf-8', cwd, timeout, stdio: ['pipe', 'pipe', 'pipe'],
+    });
     const data = JSON.parse(stdout.trim());
     return { ok: true, data };
   } catch (e) {
@@ -118,7 +140,8 @@ const ApiBridge = {
     const bin = getOmcBin();
     if (!bin) return { ok: false, error: 'omc not found' };
     try {
-      const stdout = execSync(`${bin} model switch "${modelId}"`, {
+      const { execFileSync } = require('child_process');
+      const stdout = execFileSync(bin, ['model', 'switch', modelId], {
         encoding: 'utf-8', timeout: 10000,
       });
       return { ok: true, output: stdout.trim() };
