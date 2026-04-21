@@ -97,10 +97,16 @@ function runOmc(args, opts = {}) {
 
 // ── Public API ────────────────────────────────────────────────────────────────
 
+const CHINESE_PROVIDERS = [
+  'deepseek', 'glm', 'mimo', 'wenxin', 'tongyi', 'kimi', 'doubao',
+  'hunyuan', 'minimax', 'tiangong', 'spark', 'baichuan', 'zhipu'
+];
+
 const ApiBridge = {
   /**
    * Get model list from `omc model list --json`
    * Returns normalized array: [{id, name, provider, tier, context, endpoint, pricing}]
+   * Only includes Chinese production models with valid endpoints.
    */
   getModelList() {
     const result = runOmc(['model', 'list']);
@@ -108,8 +114,21 @@ const ApiBridge = {
       console.error('[api-bridge] model list failed:', result.error);
       return [];
     }
-    // Normalize: map omc's format to frontend Model type
-    return result.data.map(m => ({
+
+    const filtered = result.data.filter(m => {
+      if (!CHINESE_PROVIDERS.includes(m.provider)) return false;
+      if (!m.endpoint || !m.endpoint.startsWith('http')) return false;
+      return true;
+    });
+
+    filtered.sort((a, b) => {
+      const tierOrder = { 'free': 0, 'low': 1, 'medium': 2, 'high': 3 };
+      const ta = tierOrder[a.tier] ?? 2;
+      const tb = tierOrder[b.tier] ?? 2;
+      return ta - tb;
+    });
+
+    return filtered.map(m => ({
       id: m.model || m.name?.toLowerCase().replace(/[^a-z0-9]/g, '-'),
       name: m.name,
       provider: m.provider,
