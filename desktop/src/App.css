@@ -534,10 +534,11 @@ html, body, #root {
 .config-field { margin-bottom: 12px; }
 .config-field__label {
   display: block;
-  font-size: 11px;
-  font-family: var(--font-mono);
-  color: var(--gray-2);
-  margin-bottom: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text);
+  margin-bottom: 6px;
+  letter-spacing: 0.02em;
 }
 .config-field__input {
   width: 100%;
@@ -556,6 +557,12 @@ html, body, #root {
   box-shadow: 0 0 0 2px var(--amber-glow);
 }
 .config-field__input::placeholder { color: var(--gray-3); }
+.config-field__models {
+  font-size: 10px; color: var(--gray-3);
+  margin-bottom: 6px; font-family: var(--font-mono);
+  line-height: 1.4;
+}
+.config-field__models .free { color: var(--green-dim); }
 
 .config-about { display: flex; flex-direction: column; gap: 6px; }
 .config-about__row {

@@ -115,9 +115,23 @@ function ConfigPanel({ onClose }: { onClose: () => void }) {
       <div className="config-panel__body">
         <div className="config-section">
           <div className="config-section__label">API Keys</div>
-          {['OPENAI_API_KEY', 'ANTHROPIC_API_KEY', 'DEEPSEEK_API_KEY', 'ZHIPU_API_KEY'].map(key => (
+          {[
+            {key:'DEEPSEEK_API_KEY', label:'🌊 DeepSeek（深度求索）', models: ['DeepSeek V3', 'DeepSeek R1']},
+            {key:'ZHIPU_API_KEY', label:'🧠 智谱 GLM', models: ['GLM-4-Flash (free)', 'GLM-4V-Flash (free)', 'GLM-4-Plus']},
+            {key:'DASHSCOPE_API_KEY', label:'🌐 通义千问 Qwen', models: ['Qwen 2.5']},
+            {key:'MOONSHOT_API_KEY', label:'🌙 月之暗面 Kimi', models: ['Kimi Moonshot V1 128K']},
+            {key:'ARK_API_KEY', label:'🎵 字节豆包 Doubao', models: ['Doubao-Pro 128K']},
+            {key:'ERNIE_API_KEY', label:'🐻 百度文心 Ernie', models: ['ERNIE-Bot 4']},
+            {key:'HUNYUAN_API_KEY', label:'🐧 腾讯混元 Hunyuan', models: ['Hunyuan Standard']},
+            {key:'MINIMAX_API_KEY', label:'🎭 MiniMax', models: ['MiniMax 汀灵 6B']},
+            {key:'TIANGONG_API_KEY', label:'⚡ 天工 AI', models: ['天工 3.0']},
+            {key:'SPARK_API_KEY', label:'🔥 讯飞星火 Spark', models: ['讯飞星火 V3.5']},
+            {key:'BAICHUAN_API_KEY', label:'🌊 百川 Baichuan', models: ['Baichuan 4']},
+            {key:'MIMO_API_KEY', label:'🤖 小米 MiMo', models: ['MiMo V2 Flash (free)']}
+          ].map(({key, label, models: modelList}) => (
             <div className="config-field" key={key}>
-              <label className="config-field__label">{key}</label>
+              <label className="config-field__label">{label}</label>
+              <div className="config-field__models">{modelList.join(' · ')}</div>
               <div className="config-field__row">
                 <input
                   type="password"
