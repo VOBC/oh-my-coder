@@ -29,8 +29,11 @@ from rich.prompt import Prompt, Confirm
 try:
     from model_discovery import ModelDiscovery, get_discovery_summary
 except ImportError:
-    ModelDiscovery = None
-    get_discovery_summary = None
+    try:
+        from src.model_discovery import ModelDiscovery, get_discovery_summary
+    except ImportError:
+        ModelDiscovery = None
+        get_discovery_summary = None
 
 console = Console()
 
