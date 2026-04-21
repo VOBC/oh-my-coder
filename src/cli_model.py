@@ -557,7 +557,10 @@ def list_models(
                         # 只显示前3个新模型
                         display_models = new_models[:3]
                         model_names = ", ".join(
-                            [f"{m['model_id']} ({m['provider']})" for m in display_models]
+                            [
+                                f"{m['model_id']} ({m['provider']})"
+                                for m in display_models
+                            ]
                         )
                         if len(new_models) > 3:
                             model_names += f" 等 {len(new_models)} 个"
@@ -566,7 +569,7 @@ def list_models(
                             f"[bold yellow]💡 发现新模型:[/] [cyan]{model_names}[/]"
                         )
                         console.print(
-                            f"[dim]   运行 [cyan]omc model sync[/cyan] 查看详情并同步[/dim]"
+                            "[dim]   运行 [cyan]omc model sync[/cyan] 查看详情并同步[/dim]"
                         )
             except Exception:
                 # 静默失败，不影响主功能
@@ -904,7 +907,9 @@ def sync_models(
         cached = discovery.get_cached()
         if cached:
             cached_at = cached.get("cached_at", "未知")
-            console.print(f"[dim]使用缓存数据（{cached_at}），使用 --force 强制刷新[/dim]")
+            console.print(
+                f"[dim]使用缓存数据（{cached_at}），使用 --force 强制刷新[/dim]"
+            )
             console.print()
 
     # 执行同步
@@ -946,7 +951,9 @@ def sync_models(
         if len(new_models) > 10:
             console.print(f"   ... 还有 {len(new_models) - 10} 个")
         console.print()
-        console.print("[dim]💡 提示: 使用 [cyan]omc model import <url>[/cyan] 添加新模型[/dim]")
+        console.print(
+            "[dim]💡 提示: 使用 [cyan]omc model import <url>[/cyan] 添加新模型[/dim]"
+        )
     else:
         console.print("[dim]未发现新模型[/dim]")
 
