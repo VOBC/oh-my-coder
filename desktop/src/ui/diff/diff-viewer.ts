@@ -25,6 +25,8 @@ const TAG_NAME = 'diff-viewer';
 export class DiffViewerElement extends HTMLElement {
   private _original: string = '';
   private _modified: string = '';
+  private _onAccept: (() => void) | null = null;
+  private _onReject: (() => void) | null = null;
   private shadow: ShadowRoot;
 
   static get observedAttributes() {
@@ -52,6 +54,22 @@ export class DiffViewerElement extends HTMLElement {
   set modified(value: string) {
     this._modified = value;
     this.render();
+  }
+
+  get onAccept(): (() => void) | null {
+    return this._onAccept;
+  }
+
+  set onAccept(handler: (() => void) | null) {
+    this._onAccept = handler;
+  }
+
+  get onReject(): (() => void) | null {
+    return this._onReject;
+  }
+
+  set onReject(handler: (() => void) | null) {
+    this._onReject = handler;
   }
 
   attributeChangedCallback(name: string, oldValue: string, newValue: string) {
@@ -186,8 +204,21 @@ export class DiffViewerElement extends HTMLElement {
             ${rightLines.join('')}
           </div>
         </div>
+        <div class="diff-actions">
+          <button class="diff-btn diff-btn--accept" id="btn-accept">
+            <span class="diff-btn__icon">✓</span>
+            <span class="diff-btn__text">Accept</span>
+          </button>
+          <button class="diff-btn diff-btn--reject" id="btn-reject">
+            <span class="diff-btn__icon">✕</span>
+            <span class="diff-btn__text">Reject</span>
+          </button>
+        </div>
       </div>
     `;
+    
+    // Bind button events after rendering
+    this.bindEvents();
   }
 
   private renderLine(line: DiffLine, side: 'left' | 'right'): string {
@@ -221,6 +252,40 @@ export class DiffViewerElement extends HTMLElement {
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;')
       .replace(/'/g, '&#039;');
+  }
+
+  /**
+   * Bind button click events after rendering
+   */
+  private bindEvents(): void {
+    const acceptBtn = this.shadow.querySelector('#btn-accept');
+    const rejectBtn = this.shadow.querySelector('#btn-reject');
+    
+    if (acceptBtn) {
+      acceptBtn.addEventListener('click', () => {
+        if (this._onAccept) {
+          this._onAccept();
+        }
+        // Dispatch custom event for external listeners
+        this.dispatchEvent(new CustomEvent('accept', { 
+          bubbles: true,
+          detail: { original: this._original, modified: this._modified }
+        }));
+      });
+    }
+    
+    if (rejectBtn) {
+      rejectBtn.addEventListener('click', () => {
+        if (this._onReject) {
+          this._onReject();
+        }
+        // Dispatch custom event for external listeners
+        this.dispatchEvent(new CustomEvent('reject', {
+          bubbles: true,
+          detail: { original: this._original, modified: this._modified }
+        }));
+      });
+    }
   }
 
   private getStyles(): string {
@@ -393,6 +458,54 @@ export class DiffViewerElement extends HTMLElement {
       .diff-panel::-webkit-scrollbar-thumb:hover {
         background: #565f89;
       }
+
+      /* Action buttons */
+      .diff-actions {
+        display: flex;
+        gap: 12px;
+        justify-content: flex-end;
+        padding: 12px 16px;
+        background: #24283b;
+        border-top: 1px solid #3b3f5c;
+      }
+
+      .diff-btn {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 16px;
+        border: none;
+        border-radius: 6px;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        font-size: 13px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.15s ease;
+      }
+
+      .diff-btn__icon {
+        font-size: 14px;
+      }
+
+      .diff-btn--accept {
+        background: #4ade80;
+        color: #052e16;
+      }
+
+      .diff-btn--accept:hover {
+        background: #22c55e;
+        box-shadow: 0 2px 8px rgba(74, 222, 128, 0.3);
+      }
+
+      .diff-btn--reject {
+        background: #f87171;
+        color: #450a0a;
+      }
+
+      .diff-btn--reject:hover {
+        background: #ef4444;
+        box-shadow: 0 2px 8px rgba(248, 113, 113, 0.3);
+      }
     `;
   }
 }
@@ -416,10 +529,16 @@ if (!customElements.get(TAG_NAME)) {
 }
 
 // Export for programmatic use
-export function createDiffViewer(original: string, modified: string): DiffViewerElement {
+export function createDiffViewer(
+  original: string, 
+  modified: string,
+  callbacks?: { onAccept?: () => void; onReject?: () => void }
+): DiffViewerElement {
   const el = document.createElement(TAG_NAME) as DiffViewerElement;
   el.original = original;
   el.modified = modified;
+  if (callbacks?.onAccept) el.onAccept = callbacks.onAccept;
+  if (callbacks?.onReject) el.onReject = callbacks.onReject;
   return el;
 }
 
