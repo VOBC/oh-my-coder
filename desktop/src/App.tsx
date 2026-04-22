@@ -3,6 +3,8 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import './App.css';
 import { getKeyboardShortcutsController } from './controllers/KeyboardShortcutsController';
+import { useChatHistory } from './hooks/useChatHistory';
+import HistoryPanel from './components/HistoryPanel';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface Model { id: string; name: string; provider: string; tier: string; context?: number; endpoint?: string; pricing?: Record<string, number>; features?: string[]; }
@@ -271,16 +273,28 @@ function ConfigPanel({ onClose, models }: { onClose: () => void; models: Model[]
 export default function App() {
   const [models, setModels] = useState<Model[]>([]);
   const [currentModel, setCurrentModel] = useState<string>('');
-  const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
-  const [history, setHistory] = useState<HistoryItem[]>([]);
   const [showHistory, setShowHistory] = useState(false);
   const [showConfig, setShowConfig] = useState(false);
   const [serverStatus, setServerStatus] = useState<'stopped' | 'starting' | 'running'>('stopped');
   const [tab, setTab] = useState<'chat' | 'models'>('chat');
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+
+  // Use chat history hook for persistence
+  const {
+    sessions,
+    activeId,
+    activeMessages,
+    activeModel,
+    createSession,
+    switchSession,
+    addMessage,
+    updateModel,
+    deleteSession,
+    clearActive,
+  } = useChatHistory();
 
   // Initialize keyboard shortcuts controller
   useEffect(() => {
@@ -293,7 +307,7 @@ export default function App() {
       ctrlKey: false,
       description: 'Clear current chat',
       handler: () => {
-        setMessages([]);
+        clearActive();
         console.log('[Shortcuts] Chat cleared');
       },
     });
@@ -322,7 +336,7 @@ export default function App() {
       ctrlKey: false,
       description: 'Start new chat',
       handler: () => {
-        setMessages([]);
+        createSession(currentModel);
         inputRef.current?.focus();
         console.log('[Shortcuts] New chat started');
       },
@@ -350,15 +364,17 @@ export default function App() {
       if (typeof m === 'string' && m) setCurrentModel(m);
       else if (m?.model) setCurrentModel(m.model);
     }).catch(() => {});
-    omcApi.historyList().then(setHistory).catch(() => {});
+    // omcApi.historyList().then(setHistory).catch(() => {});
+    // Note: Using localStorage-based useChatHistory instead
     omcApi.serverStatus().then((s: any) => setServerStatus(s.running ? 'running' : 'stopped')).catch(() => {});
   }, []);
 
   // Scroll to bottom on new messages
-  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
+  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [activeMessages]);
 
   const handleSwitch = async (id: string) => {
     setCurrentModel(id);
+    updateModel(id);
     await api().modelSwitch(id);
   };
 
@@ -370,7 +386,7 @@ export default function App() {
       content: input.trim(),
       timestamp: Date.now(),
     };
-    setMessages(prev => [...prev, userMsg]);
+    addMessage(userMsg);
     const text = input;
     setInput('');
     setLoading(true);
@@ -383,18 +399,18 @@ export default function App() {
         content: result.stdout || result.stderr || (result.code === 0 ? 'Done.' : `Exit code: ${result.code}`),
         timestamp: Date.now(),
       };
-      setMessages(prev => [...prev, assistantMsg]);
+      addMessage(assistantMsg);
     } catch (e: any) {
-      setMessages(prev => [...prev, {
+      addMessage({
         id: (Date.now() + 1).toString(),
         role: 'assistant',
         content: `Error: ${e.message}`,
         timestamp: Date.now(),
-      }]);
+      });
     } finally {
       setLoading(false);
     }
-  }, [input, loading, currentModel]);
+  }, [input, loading, currentModel, addMessage]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); }
@@ -411,11 +427,17 @@ export default function App() {
     }
   };
 
-  const handleHistorySelect = (item: HistoryItem) => {
-    api().historyGet(item.id).then(data => {
-      if (data?.messages) setMessages(data.messages);
-      else if (data?.content) setMessages([{ id: '1', role: 'assistant', content: data.content, timestamp: Date.now() }]);
-    });
+  const handleHistorySelect = (id: string) => {
+    switchSession(id);
+    setShowHistory(false);
+  };
+
+  const handleHistoryDelete = (id: string) => {
+    deleteSession(id);
+  };
+
+  const handleHistoryNew = () => {
+    createSession(currentModel);
     setShowHistory(false);
   };
 
@@ -432,16 +454,13 @@ export default function App() {
 
         {/* History panel */}
         {showHistory ? (
-          <div className="sidebar__history">
-            <div className="sidebar__section-title">History</div>
-            {history.length === 0 && <div className="sidebar__empty">No history yet</div>}
-            {history.map(h => (
-              <button key={h.id} className="sidebar__history-item" onClick={() => handleHistorySelect(h)}>
-                <div className="sidebar__history-title">{h.title}</div>
-                <div className="sidebar__history-meta">{h.updated}</div>
-              </button>
-            ))}
-          </div>
+          <HistoryPanel
+            sessions={sessions}
+            activeId={activeId}
+            onSelect={handleHistorySelect}
+            onDelete={handleHistoryDelete}
+            onNew={handleHistoryNew}
+          />
         ) : (
           <>
             {/* Server toggle */}
@@ -474,7 +493,7 @@ export default function App() {
               </div>
             ) : (
               <div className="sidebar__models">
-                <button className="sidebar__new-chat" onClick={() => setMessages([])}>+ New Chat</button>
+                <button className="sidebar__new-chat" onClick={() => createSession(currentModel)}>+ New Chat</button>
               </div>
             )}
 
@@ -503,7 +522,7 @@ export default function App() {
 
         {/* Messages */}
         <div className="messages">
-          {messages.length === 0 && (
+          {activeMessages.length === 0 && (
             <div className="messages__empty">
               <div className="messages__empty-icon">⬡</div>
               <div className="messages__empty-title">Oh My Coder Desktop</div>
@@ -511,7 +530,7 @@ export default function App() {
               <div className="messages__empty-hint">Press Enter to send · Shift+Enter for newline</div>
             </div>
           )}
-          {messages.map(msg => <ChatMessage key={msg.id} msg={msg} />)}
+          {activeMessages.map(msg => <ChatMessage key={msg.id} msg={msg} />)}
           {loading && (
             <div className="message message--assistant">
               <div className="message__avatar">
