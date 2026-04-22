@@ -192,6 +192,54 @@ function setupIpc() {
     omcRoot: OMC_ROOT,
     configPath: CONFIG_PATH,
   }));
+
+  // File operations (for diff acceptance)
+  ipcMain.handle('omc:file:read', async (_, filePath) => {
+    try {
+      // Security: only allow reading files within project
+      const resolved = path.resolve(OMC_ROOT, filePath);
+      if (!resolved.startsWith(OMC_ROOT)) {
+        return { ok: false, error: 'Access denied: path outside project' };
+      }
+      if (!fs.existsSync(resolved)) {
+        return { ok: false, error: 'File not found' };
+      }
+      const content = fs.readFileSync(resolved, 'utf-8');
+      return { ok: true, content };
+    } catch (e) {
+      return { ok: false, error: e.message };
+    }
+  });
+
+  ipcMain.handle('omc:file:write', async (_, { path: filePath, content }) => {
+    try {
+      // Security: only allow writing files within project
+      const resolved = path.resolve(OMC_ROOT, filePath);
+      if (!resolved.startsWith(OMC_ROOT)) {
+        return { ok: false, error: 'Access denied: path outside project' };
+      }
+      // Ensure parent directory exists
+      const dir = path.dirname(resolved);
+      fs.mkdirSync(dir, { recursive: true });
+      fs.writeFileSync(resolved, content, 'utf-8');
+      log('File written:', resolved);
+      return { ok: true, path: resolved };
+    } catch (e) {
+      return { ok: false, error: e.message };
+    }
+  });
+
+  ipcMain.handle('omc:file:exists', async (_, filePath) => {
+    try {
+      const resolved = path.resolve(OMC_ROOT, filePath);
+      if (!resolved.startsWith(OMC_ROOT)) {
+        return { ok: false, exists: false };
+      }
+      return { ok: true, exists: fs.existsSync(resolved) };
+    } catch (e) {
+      return { ok: false, exists: false };
+    }
+  });
 }
 
 // ── Window ───────────────────────────────────────────────────────────────────

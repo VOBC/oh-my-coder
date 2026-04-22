@@ -33,6 +33,11 @@ contextBridge.exposeInMainWorld('omc', {
   historyList: () => ipcRenderer.invoke('omc:history:list'),
   historyGet: (id) => ipcRenderer.invoke('omc:history:get', id),
 
+  // File operations (for diff acceptance)
+  fileRead: (path) => ipcRenderer.invoke('omc:file:read', path),
+  fileWrite: (path, content) => ipcRenderer.invoke('omc:file:write', { path, content }),
+  fileExists: (path) => ipcRenderer.invoke('omc:file:exists', path),
+
   // Shell
   openExternal: (url) => ipcRenderer.invoke('shell:openExternal', url),
   openPath: (p) => ipcRenderer.invoke('shell:openPath', p),

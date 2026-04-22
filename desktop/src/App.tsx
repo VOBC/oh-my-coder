@@ -5,10 +5,56 @@ import './App.css';
 import { getKeyboardShortcutsController } from './controllers/KeyboardShortcutsController';
 import { useChatHistory } from './hooks/useChatHistory';
 import HistoryPanel from './components/HistoryPanel';
+import DiffView, { FileDiff, DiffLine } from './components/DiffView';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface Model { id: string; name: string; provider: string; tier: string; context?: number; endpoint?: string; pricing?: Record<string, number>; features?: string[]; }
 interface Message { id: string; role: 'user' | 'assistant' | 'system'; content: string; timestamp: number; }
+
+// ── Diff Parsing ──────────────────────────────────────────────────────────────
+/**
+ * Parse diff content from message if present
+ * Supports format: ```diff\n...\n```
+ */
+function parseDiffFromMessage(content: string): FileDiff | null {
+  const diffMatch = content.match(/```diff\n([\s\S]*?)\n```/);
+  if (!diffMatch) return null;
+
+  const pathMatch = content.match(/(?:File|文件|修改)[:\s]+`?([^`\n]+)`?/i);
+  const path = pathMatch ? pathMatch[1].trim() : 'unknown-file';
+
+  const diffText = diffMatch[1];
+  const lines: DiffLine[] = [];
+  const diffLines = diffText.split('\n');
+  let oldLine = 0;
+  let newLine = 0;
+
+  for (const line of diffLines) {
+    if (line.startsWith('@@')) {
+      const match = line.match(/@@ -?(\d+).* \+?(\d+)/);
+      if (match) {
+        oldLine = parseInt(match[1], 10);
+        newLine = parseInt(match[2], 10);
+      }
+      continue;
+    }
+    if (line.startsWith('---') || line.startsWith('+++')) continue;
+
+    if (line.startsWith('+')) {
+      newLine++;
+      lines.push({ type: 'add', content: line.slice(1), newLineNumber: newLine });
+    } else if (line.startsWith('-')) {
+      oldLine++;
+      lines.push({ type: 'delete', content: line.slice(1), oldLineNumber: oldLine });
+    } else {
+      oldLine++;
+      newLine++;
+      lines.push({ type: 'context', content: line.slice(1), oldLineNumber: oldLine, newLineNumber: newLine });
+    }
+  }
+
+  return { path, hunks: lines };
+}
 
 // ── Tier display config ───────────────────────────────────────────────────────
 const TIER_ICON: Record<string, string> = { free: '◈', low: '◇', medium: '◆', high: '★' };
@@ -89,8 +135,24 @@ function ModelSelector({ models, current, onSwitch, trigger, open: controlledOpe
 }
 
 // ── Component: ChatMessage ──────────────────────────────────────────────────────
-function ChatMessage({ msg }: { msg: Message }) {
+interface ChatMessageProps {
+  msg: Message;
+  onDiffAccept?: (path: string) => void;
+  onDiffReject?: (path: string) => void;
+}
+
+function ChatMessage({ msg, onDiffAccept, onDiffReject }: ChatMessageProps) {
   const isUser = msg.role === 'user';
+  const [pendingDiff, setPendingDiff] = useState<FileDiff | null>(null);
+
+  // Parse diff from message content
+  useEffect(() => {
+    if (msg.role === 'assistant') {
+      const diff = parseDiffFromMessage(msg.content);
+      if (diff) setPendingDiff(diff);
+    }
+  }, [msg.content]);
+
   return (
     <div className={`message message--${msg.role}`}>
       <div className="message__avatar">
@@ -106,6 +168,14 @@ function ChatMessage({ msg }: { msg: Message }) {
             <React.Fragment key={i}>{line}{i < msg.content.split('\n').length - 1 && <br/>}</React.Fragment>
           ))}
         </div>
+        {/* Diff visualization */}
+        {pendingDiff && (
+          <DiffView
+            diff={pendingDiff}
+            onAccept={onDiffAccept}
+            onReject={onDiffReject}
+          />
+        )}
         <div className="message__time">{new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
       </div>
     </div>
@@ -436,6 +506,43 @@ export default function App() {
   // Scroll to bottom on new messages
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [activeMessages]);
 
+  // Diff acceptance/rejection
+  const [diffFiles, setDiffFiles] = useState<Map<string, { old: string; new_: string }>>(new Map());
+
+  const handleDiffAccept = useCallback(async (path: string) => {
+    const diffData = diffFiles.get(path);
+    if (!diffData) {
+      console.warn('[Diff] No diff data for:', path);
+      return;
+    }
+    try {
+      // Write the new content to file
+      const result = await api().fileWrite(path, diffData.new_);
+      if (result.ok) {
+        console.log('[Diff] File accepted:', path);
+        // Remove from pending diffs
+        setDiffFiles(prev => {
+          const next = new Map(prev);
+          next.delete(path);
+          return next;
+        });
+      } else {
+        console.error('[Diff] Write failed:', result.error);
+      }
+    } catch (e: any) {
+      console.error('[Diff] Accept error:', e.message);
+    }
+  }, [diffFiles]);
+
+  const handleDiffReject = useCallback((path: string) => {
+    console.log('[Diff] File rejected:', path);
+    setDiffFiles(prev => {
+      const next = new Map(prev);
+      next.delete(path);
+      return next;
+    });
+  }, []);
+
   const handleSwitch = async (id: string) => {
     setCurrentModel(id);
     updateModel(id);
@@ -608,7 +715,14 @@ export default function App() {
               <div className="messages__empty-hint">Press Enter to send · Shift+Enter for newline</div>
             </div>
           )}
-          {activeMessages.map(msg => <ChatMessage key={msg.id} msg={msg} />)}
+          {activeMessages.map(msg => (
+            <ChatMessage
+              key={msg.id}
+              msg={msg}
+              onDiffAccept={handleDiffAccept}
+              onDiffReject={handleDiffReject}
+            />
+          ))}
           {loading && (
             <div className="message message--assistant">
               <div className="message__avatar">
