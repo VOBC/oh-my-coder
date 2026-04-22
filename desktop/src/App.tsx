@@ -687,7 +687,7 @@ export default function App() {
               <button className="sidebar__settings" onClick={() => setShowConfig(true)}>
                 ⚙ Settings
               </button>
-              <button className="sidebar__shortcuts" onClick={() => setShowConfig(true)}>
+              <button className="sidebar__shortcuts" onClick={() => setShortcutsPanelOpen(true)}>
                 ⌨ 快捷键
               </button>
             </div>
