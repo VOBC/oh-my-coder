@@ -1220,3 +1220,126 @@ html, body, #root {
   margin: 0 3px;
 }
 
+/* ── Inline Input (Cursor Mode) ─────────────────────────────────────────────── */
+.inline-input-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 20vh;
+  z-index: 2000;
+  animation: fadeIn 150ms ease;
+}
+
+.inline-input-container {
+  width: 90%;
+  max-width: 640px;
+  animation: slideDown 200ms ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.inline-input-box {
+  background: var(--bg-2);
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+}
+
+.inline-input-field {
+  flex: 1;
+  background: transparent;
+  border: none;
+  padding: 16px 20px;
+  font-size: 15px;
+  color: var(--text);
+  font-family: var(--font-mono);
+  outline: none;
+}
+
+.inline-input-field::placeholder {
+  color: var(--gray-2);
+}
+
+.inline-input-send {
+  background: var(--amber);
+  border: none;
+  width: 44px;
+  height: 44px;
+  margin: 6px 8px;
+  border-radius: var(--radius);
+  color: var(--bg);
+  font-size: 18px;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.inline-input-send:hover {
+  background: var(--amber-dim);
+}
+
+.inline-input-send:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.inline-input-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 20px;
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  border-top: none;
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+}
+
+.inline-input-model {
+  font-size: 11px;
+  color: var(--amber);
+  font-family: var(--font-mono);
+}
+
+.inline-input-hint {
+  font-size: 11px;
+  color: var(--gray-2);
+}
+
+.inline-input-hint kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--gray-1);
+  margin: 0 2px;
+}
+
+.inline-input-esc {
+  margin-left: 8px;
+}
+

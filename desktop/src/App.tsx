@@ -7,6 +7,7 @@ import { useChatHistory } from './hooks/useChatHistory';
 import HistoryPanel from './components/HistoryPanel';
 import DiffView, { FileDiff, DiffLine } from './components/DiffView';
 import { ShortcutsPanel } from './components/ShortcutsPanel';
+import { InlineInputPanel } from './components/InlineInputPanel';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface Model { id: string; name: string; provider: string; tier: string; context?: number; endpoint?: string; pricing?: Record<string, number>; features?: string[]; }
@@ -392,6 +393,7 @@ export default function App() {
   // Track open overlays/popups for Esc to close
   const [modelSelectorOpen, setModelSelectorOpen] = useState(false);
   const [shortcutsPanelOpen, setShortcutsPanelOpen] = useState(false);
+  const [inlineInputOpen, setInlineInputOpen] = useState(false);
 
   // Initialize keyboard shortcuts controller
   useEffect(() => {
@@ -408,14 +410,14 @@ export default function App() {
       },
     });
 
-    // Cmd+K: Inline edit (placeholder - for future implementation)
+    // Cmd+K: Inline input (Cursor mode)
     controller.register('inline-edit', {
       key: 'k',
       metaKey: true,
-      description: '内联编辑',
+      description: '内联输入',
       handler: () => {
-        // TODO: Implement inline edit UI
-        console.log('[Shortcuts] Inline edit (not yet implemented)');
+        setInlineInputOpen(v => !v);
+        console.log('[Shortcuts] Inline input toggled');
       },
     });
 
@@ -475,6 +477,7 @@ export default function App() {
         setShowConfig(false);
         setShowHistory(false);
         setShortcutsPanelOpen(false);
+        setInlineInputOpen(false);
         console.log('[Shortcuts] All overlays closed');
       },
     });
@@ -563,17 +566,15 @@ export default function App() {
     await api().modelSwitch(id);
   };
 
-  const handleSend = useCallback(async () => {
-    if (!input.trim() || loading) return;
+  const handleSendMessage = useCallback(async (text: string) => {
+    if (!text.trim() || loading) return;
     const userMsg: Message = {
       id: Date.now().toString(),
       role: 'user',
-      content: input.trim(),
+      content: text.trim(),
       timestamp: Date.now(),
     };
     addMessage(userMsg);
-    const text = input;
-    setInput('');
     setLoading(true);
 
     try {
@@ -595,7 +596,14 @@ export default function App() {
     } finally {
       setLoading(false);
     }
-  }, [input, loading, currentModel, addMessage]);
+  }, [loading, currentModel, addMessage]);
+
+  const handleSend = useCallback(async () => {
+    if (!input.trim() || loading) return;
+    const text = input.trim();
+    setInput('');
+    await handleSendMessage(text);
+  }, [input, loading, handleSendMessage]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); }
@@ -778,6 +786,17 @@ export default function App() {
       <ShortcutsPanel 
         isOpen={shortcutsPanelOpen} 
         onClose={() => setShortcutsPanelOpen(false)} 
+      />
+      
+      {/* Inline input (Cursor mode) */}
+      <InlineInputPanel
+        isOpen={inlineInputOpen}
+        onClose={() => setInlineInputOpen(false)}
+        onSend={(msg) => {
+          setInput('');
+          handleSendMessage(msg);
+        }}
+        currentModel={currentModel}
       />
     </div>
   );
