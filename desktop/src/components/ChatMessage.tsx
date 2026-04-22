@@ -1,7 +1,9 @@
 // src/components/ChatMessage.tsx — Bubble tea style message bubbles
 // P0-1: Replaced inline ToolCallCard with <tool-card> custom element
 // P1-3: Added diff visualization support
+// P3-2: Markdown rendering for AI messages
 import React, { useEffect, useRef, useState } from 'react';
+import ReactMarkdown from 'react-markdown';
 import { ChatMessage } from '../hooks/useChatHistory';
 import { ToolCardElement, ToolCallData, createToolCard } from './ToolCard';
 import DiffView, { FileDiff, DiffLine } from './DiffView';
@@ -127,12 +129,69 @@ export default function ChatMessageBubble({ msg, toolCalls, diff, onDiffAccept, 
         {/* Content */}
         <div className="bubble__body">
           <div className="bubble__content">
-            {msg.content.split('\n').map((line, i, arr) => (
-              <React.Fragment key={i}>
-                {line}
-                {i < arr.length - 1 && <br />}
-              </React.Fragment>
-            ))}
+            {isUser ? (
+              // User message: plain text with line breaks
+              msg.content.split('\n').map((line, i, arr) => (
+                <React.Fragment key={i}>
+                  {line}
+                  {i < arr.length - 1 && <br />}
+                </React.Fragment>
+              ))
+            ) : (
+              // AI message: Markdown rendering
+              <ReactMarkdown
+                components={{
+                  // Code block
+                  code: ({ node, inline, className, children, ...props }: any) => {
+                    if (inline) {
+                      return <code className="md-inline-code" {...props}>{children}</code>;
+                    }
+                    return (
+                      <div className="md-code-block">
+                        <div className="md-code-header">
+                          <span className="md-code-lang">{className?.replace('language-', '') || 'code'}</span>
+                          <button
+                            className="md-code-copy"
+                            onClick={() => {
+                              navigator.clipboard.writeText(String(children).replace(/\n$/, ''));
+                            const btn = document.activeElement as HTMLButtonElement;
+                              btn.textContent = 'Copied!';
+                              setTimeout(() => btn.textContent = 'Copy', 1500);
+                            }}
+                          >
+                            Copy
+                          </button>
+                        </div>
+                        <code className={className} {...props}>{children}</code>
+                      </div>
+                    );
+                  },
+                  // Paragraph
+                  p: ({ children }) => <p className="md-paragraph">{children}</p>,
+                  // List
+                  ul: ({ children }) => <ul className="md-list">{children}</ul>,
+                  ol: ({ children }) => <ol className="md-list md-list--ordered">{children}</ol>,
+                  li: ({ children }) => <li className="md-list-item">{children}</li>,
+                  // Headings
+                  h1: ({ children }) => <h1 className="md-heading md-heading--1">{children}</h1>,
+                  h2: ({ children }) => <h2 className="md-heading md-heading--2">{children}</h2>,
+                  h3: ({ children }) => <h3 className="md-heading md-heading--3">{children}</h3>,
+                  // Strong & emphasis
+                  strong: ({ children }) => <strong className="md-strong">{children}</strong>,
+                  em: ({ children }) => <em className="md-em">{children}</em>,
+                  // Blockquote
+                  blockquote: ({ children }) => <blockquote className="md-blockquote">{children}</blockquote>,
+                  // Link
+                  a: ({ href, children }) => (
+                    <a href={href} className="md-link" target="_blank" rel="noopener noreferrer">
+                      {children}
+                    </a>
+                  ),
+                }}
+              >
+                {msg.content}
+              </ReactMarkdown>
+            )}
           </div>
           <div className="bubble__time">
             {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
