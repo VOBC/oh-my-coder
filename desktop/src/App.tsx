@@ -6,6 +6,7 @@ import { getKeyboardShortcutsController } from './controllers/KeyboardShortcutsC
 import { useChatHistory } from './hooks/useChatHistory';
 import HistoryPanel from './components/HistoryPanel';
 import DiffView, { FileDiff, DiffLine } from './components/DiffView';
+import { ShortcutsPanel } from './components/ShortcutsPanel';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface Model { id: string; name: string; provider: string; tier: string; context?: number; endpoint?: string; pricing?: Record<string, number>; features?: string[]; }
@@ -390,6 +391,7 @@ export default function App() {
 
   // Track open overlays/popups for Esc to close
   const [modelSelectorOpen, setModelSelectorOpen] = useState(false);
+  const [shortcutsPanelOpen, setShortcutsPanelOpen] = useState(false);
 
   // Initialize keyboard shortcuts controller
   useEffect(() => {
@@ -472,7 +474,19 @@ export default function App() {
         setModelSelectorOpen(false);
         setShowConfig(false);
         setShowHistory(false);
+        setShortcutsPanelOpen(false);
         console.log('[Shortcuts] All overlays closed');
+      },
+    });
+
+    // Cmd+/: Show shortcuts panel
+    controller.register('shortcuts-panel', {
+      key: '/',
+      metaKey: true,
+      description: '显示快捷键',
+      handler: () => {
+        setShortcutsPanelOpen(v => !v);
+        console.log('[Shortcuts] Shortcuts panel toggled');
       },
     });
 
@@ -759,6 +773,12 @@ export default function App() {
 
       {/* Config modal */}
       {showConfig && <ConfigPanel onClose={() => setShowConfig(false)} models={models} />}
+      
+      {/* Shortcuts panel */}
+      <ShortcutsPanel 
+        isOpen={shortcutsPanelOpen} 
+        onClose={() => setShortcutsPanelOpen(false)} 
+      />
     </div>
   );
 }
