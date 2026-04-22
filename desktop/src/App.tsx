@@ -2,6 +2,7 @@
 // Design: Terminal Forge — dark industrial, amber accents, precision UI
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import './App.css';
+import { getKeyboardShortcutsController } from './controllers/KeyboardShortcutsController';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface Model { id: string; name: string; provider: string; tier: string; context?: number; endpoint?: string; pricing?: Record<string, number>; features?: string[]; }
@@ -280,6 +281,59 @@ export default function App() {
   const [tab, setTab] = useState<'chat' | 'models'>('chat');
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+
+  // Initialize keyboard shortcuts controller
+  useEffect(() => {
+    const controller = getKeyboardShortcutsController();
+
+    // Cmd+L: Clear chat
+    controller.register('clear-chat', {
+      key: 'l',
+      metaKey: true,
+      ctrlKey: false,
+      description: 'Clear current chat',
+      handler: () => {
+        setMessages([]);
+        console.log('[Shortcuts] Chat cleared');
+      },
+    });
+
+    // Cmd+M: Focus model selector
+    controller.register('focus-model', {
+      key: 'm',
+      metaKey: true,
+      ctrlKey: false,
+      description: 'Focus model selector',
+      handler: () => {
+        // Find the model selector trigger button and click it
+        const selectorBtn = document.querySelector('.model-selector__trigger') as HTMLButtonElement;
+        if (selectorBtn) {
+          selectorBtn.click();
+          selectorBtn.focus();
+          console.log('[Shortcuts] Model selector focused');
+        }
+      },
+    });
+
+    // Cmd+N: New chat
+    controller.register('new-chat', {
+      key: 'n',
+      metaKey: true,
+      ctrlKey: false,
+      description: 'Start new chat',
+      handler: () => {
+        setMessages([]);
+        inputRef.current?.focus();
+        console.log('[Shortcuts] New chat started');
+      },
+    });
+
+    controller.start();
+
+    return () => {
+      controller.dispose();
+    };
+  }, []);
 
   // Load models + history
   useEffect(() => {
