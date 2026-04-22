@@ -387,6 +387,9 @@ export default function App() {
     addMessage,
     updateModel,
     deleteSession,
+    renameSession,
+    exportSession,
+    clearAllSessions,
     // clearActive, // unused after removing Cmd+L clear chat
   } = useChatHistory();
 
@@ -634,6 +637,28 @@ export default function App() {
     setShowHistory(false);
   };
 
+  const handleHistoryRename = (id: string, newTitle: string) => {
+    renameSession(id, newTitle);
+  };
+
+  const handleHistoryExport = (id: string) => {
+    const json = exportSession(id);
+    if (!json) return;
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `chat-${id}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleHistoryClearAll = () => {
+    if (window.confirm('Delete all chat history? This cannot be undone.')) {
+      clearAllSessions();
+    }
+  };
+
   return (
     <div className="app">
       {/* Sidebar */}
@@ -653,6 +678,9 @@ export default function App() {
             onSelect={handleHistorySelect}
             onDelete={handleHistoryDelete}
             onNew={handleHistoryNew}
+            onRename={handleHistoryRename}
+            onExport={handleHistoryExport}
+            onClearAll={handleHistoryClearAll}
           />
         ) : (
           <>

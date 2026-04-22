@@ -1,6 +1,6 @@
 // src/components/HistoryPanel.tsx — Session history sidebar panel
-// Uses <history-list> web component for Shadow DOM encapsulation
-import React, { useRef, useEffect } from 'react';
+// P3-3: Enhanced with rename, export, clear all
+import { useRef, useEffect } from 'react';
 import { ChatSession } from '../hooks/useChatHistory';
 
 interface HistoryPanelProps {
@@ -9,9 +9,11 @@ interface HistoryPanelProps {
   onSelect: (id: string) => void;
   onDelete: (id: string) => void;
   onNew: () => void;
+  onRename: (id: string, newTitle: string) => void;
+  onExport: (id: string) => void;
+  onClearAll: () => void;
 }
 
-// Type augmentation for the custom element
 declare global {
   interface HTMLElementTagNameMap {
     'history-list': HTMLElement & {
@@ -20,19 +22,29 @@ declare global {
       onSelect?: (id: string) => void;
       onDelete?: (id: string) => void;
       onNew?: () => void;
+      onRename?: (id: string, newTitle: string) => void;
+      onExport?: (id: string) => void;
+      onClearAll?: () => void;
     };
   }
 }
 
-export default function HistoryPanel({ sessions, activeId, onSelect, onDelete, onNew }: HistoryPanelProps) {
+export default function HistoryPanel({
+  sessions,
+  activeId,
+  onSelect,
+  onDelete,
+  onNew,
+  onRename,
+  onExport,
+  onClearAll,
+}: HistoryPanelProps) {
   const historyListRef = useRef<HTMLElementTagNameMap['history-list']>(null);
 
-  // Sync sessions to web component
+  // Sync sessions
   useEffect(() => {
     const el = historyListRef.current;
     if (!el) return;
-
-    // Convert sessions to plain objects for the web component
     el.sessions = sessions.map(s => ({
       id: s.id,
       title: s.title,
@@ -41,14 +53,14 @@ export default function HistoryPanel({ sessions, activeId, onSelect, onDelete, o
     }));
   }, [sessions]);
 
-  // Sync activeId to web component
+  // Sync activeId
   useEffect(() => {
     const el = historyListRef.current;
     if (!el) return;
     el.activeId = activeId;
   }, [activeId]);
 
-  // Set up event handlers
+  // Event handlers
   useEffect(() => {
     const el = historyListRef.current;
     if (!el) return;
@@ -56,8 +68,10 @@ export default function HistoryPanel({ sessions, activeId, onSelect, onDelete, o
     el.onSelect = onSelect;
     el.onDelete = onDelete;
     el.onNew = onNew;
+    el.onRename = onRename;
+    el.onExport = onExport;
+    el.onClearAll = onClearAll;
 
-    // Also listen for custom events (for external listeners)
     const handleSelect = (e: Event) => {
       const detail = (e as CustomEvent).detail;
       if (detail?.id) onSelect(detail.id);
@@ -70,16 +84,34 @@ export default function HistoryPanel({ sessions, activeId, onSelect, onDelete, o
 
     const handleNew = () => onNew();
 
+    const handleRename = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (detail?.id && detail?.newTitle) onRename(detail.id, detail.newTitle);
+    };
+
+    const handleExport = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (detail?.id) onExport(detail.id);
+    };
+
+    const handleClearAll = () => onClearAll();
+
     el.addEventListener('session-select', handleSelect);
     el.addEventListener('session-delete', handleDelete);
     el.addEventListener('session-new', handleNew);
+    el.addEventListener('session-rename', handleRename);
+    el.addEventListener('session-export', handleExport);
+    el.addEventListener('sessions-clear-all', handleClearAll);
 
     return () => {
       el.removeEventListener('session-select', handleSelect);
       el.removeEventListener('session-delete', handleDelete);
       el.removeEventListener('session-new', handleNew);
+      el.removeEventListener('session-rename', handleRename);
+      el.removeEventListener('session-export', handleExport);
+      el.removeEventListener('sessions-clear-all', handleClearAll);
     };
-  }, [onSelect, onDelete, onNew]);
+  }, [onSelect, onDelete, onNew, onRename, onExport, onClearAll]);
 
   return (
     <div className="history-panel">

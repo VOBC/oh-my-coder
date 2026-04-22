@@ -166,6 +166,34 @@ export function useChatHistory() {
     });
   }, [activeId, persist]);
 
+  // ── Rename session ──────────────────────────────────────────────────────────
+  const renameSession = useCallback((id: string, newTitle: string) => {
+    setSessions(prev => {
+      const next = prev.map(s => {
+        if (s.id !== id) return s;
+        return { ...s, title: newTitle.slice(0, 50), updated: now(), updatedAt: Date.now() };
+      });
+      persist(next);
+      return next;
+    });
+  }, [persist]);
+
+  // ── Export session as JSON ──────────────────────────────────────────────────
+  const exportSession = useCallback((id: string): string | null => {
+    const session = sessions.find(s => s.id === id);
+    if (!session) return null;
+    return JSON.stringify(session, null, 2);
+  }, [sessions]);
+
+  // ── Clear all sessions ─────────────────────────────────────────────────────
+  const clearAllSessions = useCallback(() => {
+    setSessions([]);
+    setActiveId('');
+    setActiveMessages([]);
+    setActiveModel('');
+    persist([]);
+  }, [persist]);
+
   return {
     sessions,
     activeId,
@@ -177,5 +205,8 @@ export function useChatHistory() {
     updateModel,
     deleteSession,
     clearActive,
+    renameSession,
+    exportSession,
+    clearAllSessions,
   };
 }
