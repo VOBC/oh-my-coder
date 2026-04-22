@@ -1,15 +1,19 @@
 // src/controllers/KeyboardShortcutsController.ts
 // Keyboard shortcuts management for Oh My Coder Desktop
-// Handles Cmd+L (Clear chat), Cmd+M (Focus model selector), Cmd+N (New chat)
+// Supports Cmd/Ctrl combinations, Shift modifiers, and standalone keys (Esc)
 
 export type ShortcutHandler = () => void;
 
 export interface ShortcutConfig {
   key: string;
-  metaKey: boolean;
-  ctrlKey: boolean;
+  metaKey?: boolean;  // Cmd on Mac, Ctrl on Windows
+  ctrlKey?: boolean;
+  shiftKey?: boolean;
+  altKey?: boolean;
   description: string;
   handler: ShortcutHandler;
+  /** If true, this shortcut works without meta/ctrl (e.g., Esc) */
+  standalone?: boolean;
 }
 
 export class KeyboardShortcutsController {
@@ -66,26 +70,31 @@ export class KeyboardShortcutsController {
   }
 
   /**
-   * Get all registered shortcuts
+   * Get all registered shortcuts (for display)
    */
   getShortcuts(): ShortcutConfig[] {
     return Array.from(this.shortcuts.values());
   }
 
+  /**
+   * Get shortcuts as formatted list (for UI)
+   */
+  getShortcutsList(): Array<{ id: string; keys: string; description: string }> {
+    return Array.from(this.shortcuts.entries()).map(([id, config]) => {
+      const parts: string[] = [];
+      if (config.metaKey) parts.push('⌘');
+      if (config.ctrlKey) parts.push('Ctrl');
+      if (config.shiftKey) parts.push('⇧');
+      if (config.altKey) parts.push('⌥');
+      parts.push(config.key.toUpperCase());
+      return { id, keys: parts.join('+'), description: config.description };
+    });
+  }
+
   private handleKeyDown(e: KeyboardEvent): void {
-    // Only process if meta (Cmd on Mac) or ctrl is pressed
-    if (!e.metaKey && !e.ctrlKey) return;
-
-    const key = e.key.toLowerCase();
-    const isMeta = e.metaKey;
-    const isCtrl = e.ctrlKey;
-
+    // Find matching shortcut
     for (const [id, config] of this.shortcuts) {
-      if (
-        config.key.toLowerCase() === key &&
-        config.metaKey === isMeta &&
-        config.ctrlKey === isCtrl
-      ) {
+      if (this.matchesShortcut(e, config)) {
         e.preventDefault();
         e.stopPropagation();
         console.log(`[KeyboardShortcuts] Triggered: ${id} (${config.description})`);
@@ -93,6 +102,27 @@ export class KeyboardShortcutsController {
         return;
       }
     }
+  }
+
+  private matchesShortcut(e: KeyboardEvent, config: ShortcutConfig): boolean {
+    const key = e.key.toLowerCase();
+    const configKey = config.key.toLowerCase();
+
+    // Key must match
+    if (key !== configKey) return false;
+
+    // For standalone shortcuts (like Esc), no modifiers required
+    if (config.standalone) {
+      return !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey;
+    }
+
+    // Check modifier keys (default false for optional)
+    const metaMatch = (config.metaKey ?? false) === e.metaKey;
+    const ctrlMatch = (config.ctrlKey ?? false) === e.ctrlKey;
+    const shiftMatch = (config.shiftKey ?? false) === e.shiftKey;
+    const altMatch = (config.altKey ?? false) === e.altKey;
+
+    return metaMatch && ctrlMatch && shiftMatch && altMatch;
   }
 
   /**

@@ -219,8 +219,14 @@ html, body, #root {
 .sidebar__history-meta { color: var(--text-dim); font-size: 10px; margin-top: 2px; }
 
 /* Footer */
-.sidebar__footer { padding: 12px 16px; border-top: 1px solid var(--border); }
-.sidebar__settings {
+.sidebar__footer {
+  padding: 12px 16px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.sidebar__settings, .sidebar__shortcuts {
   width: 100%;
   display: flex;
   align-items: center;
@@ -234,7 +240,7 @@ html, body, #root {
   cursor: pointer;
   transition: all var(--transition);
 }
-.sidebar__settings:hover { background: var(--bg-hover); color: var(--text); }
+.sidebar__settings:hover, .sidebar__shortcuts:hover { background: var(--bg-hover); color: var(--text); }
 
 /* ── Main ───────────────────────────────────────────────────────────────────── */
 .main {

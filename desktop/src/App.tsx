@@ -315,39 +315,46 @@ export default function App() {
     addMessage,
     updateModel,
     deleteSession,
-    clearActive,
+    // clearActive, // unused after removing Cmd+L clear chat
   } = useChatHistory();
+
+  // Track open overlays/popups for Esc to close
+  const [modelSelectorOpen, setModelSelectorOpen] = useState(false);
 
   // Initialize keyboard shortcuts controller
   useEffect(() => {
     const controller = getKeyboardShortcutsController();
 
-    // Cmd+L: Clear chat
-    controller.register('clear-chat', {
+    // Cmd+L: Focus input ("Focus sidebar chat")
+    controller.register('focus-input', {
       key: 'l',
       metaKey: true,
-      ctrlKey: false,
-      description: 'Clear current chat',
+      description: '聚焦输入框',
       handler: () => {
-        clearActive();
-        console.log('[Shortcuts] Chat cleared');
+        inputRef.current?.focus();
+        console.log('[Shortcuts] Input focused');
       },
     });
 
-    // Cmd+M: Focus model selector
-    controller.register('focus-model', {
+    // Cmd+K: Inline edit (placeholder - for future implementation)
+    controller.register('inline-edit', {
+      key: 'k',
+      metaKey: true,
+      description: '内联编辑',
+      handler: () => {
+        // TODO: Implement inline edit UI
+        console.log('[Shortcuts] Inline edit (not yet implemented)');
+      },
+    });
+
+    // Cmd+M: Toggle model selector
+    controller.register('model-selector', {
       key: 'm',
       metaKey: true,
-      ctrlKey: false,
-      description: 'Focus model selector',
+      description: '切换模型',
       handler: () => {
-        // Find the model selector trigger button and click it
-        const selectorBtn = document.querySelector('.model-selector__trigger') as HTMLButtonElement;
-        if (selectorBtn) {
-          selectorBtn.click();
-          selectorBtn.focus();
-          console.log('[Shortcuts] Model selector focused');
-        }
+        setModelSelectorOpen(v => !v);
+        console.log('[Shortcuts] Model selector toggled');
       },
     });
 
@@ -355,12 +362,47 @@ export default function App() {
     controller.register('new-chat', {
       key: 'n',
       metaKey: true,
-      ctrlKey: false,
-      description: 'Start new chat',
+      description: '新建会话',
       handler: () => {
         createSession(currentModel);
         inputRef.current?.focus();
         console.log('[Shortcuts] New chat started');
+      },
+    });
+
+    // Cmd+Shift+S: Open Settings
+    controller.register('settings-shift', {
+      key: 's',
+      metaKey: true,
+      shiftKey: true,
+      description: '打开设置',
+      handler: () => {
+        setShowConfig(true);
+        console.log('[Shortcuts] Settings opened (Cmd+Shift+S)');
+      },
+    });
+
+    // Cmd+,: Open Settings (VS Code standard)
+    controller.register('settings-comma', {
+      key: ',',
+      metaKey: true,
+      description: '打开设置',
+      handler: () => {
+        setShowConfig(true);
+        console.log('[Shortcuts] Settings opened (Cmd+,)');
+      },
+    });
+
+    // Esc: Close all overlays/popups
+    controller.register('escape', {
+      key: 'Escape',
+      standalone: true,
+      description: '关闭所有浮层',
+      handler: () => {
+        setModelSelectorOpen(false);
+        setShowConfig(false);
+        setShowHistory(false);
+        console.log('[Shortcuts] All overlays closed');
       },
     });
 
@@ -369,7 +411,7 @@ export default function App() {
     return () => {
       controller.dispose();
     };
-  }, []);
+  }, [currentModel, createSession]);
 
   // Load models + history
   useEffect(() => {
@@ -521,7 +563,12 @@ export default function App() {
 
             {/* Settings */}
             <div className="sidebar__footer">
-              <button className="sidebar__settings" onClick={() => setShowConfig(true)}>⚙ Settings</button>
+              <button className="sidebar__settings" onClick={() => setShowConfig(true)}>
+                ⚙ Settings
+              </button>
+              <button className="sidebar__shortcuts" onClick={() => setShowConfig(true)}>
+                ⌨ 快捷键
+              </button>
             </div>
           </>
         )}
@@ -535,6 +582,8 @@ export default function App() {
             models={models}
             current={currentModel}
             onSwitch={handleSwitch}
+            open={modelSelectorOpen}
+            onOpenChange={setModelSelectorOpen}
             trigger={
               <div className="topbar__model-badge topbar__model-badge--clickable">
                 <span style={{ color: TIER_COLOR[models.find(m => m.id === currentModel)?.tier || 'free'] }}>
