@@ -9,7 +9,6 @@ import HistoryPanel from './components/HistoryPanel';
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface Model { id: string; name: string; provider: string; tier: string; context?: number; endpoint?: string; pricing?: Record<string, number>; features?: string[]; }
 interface Message { id: string; role: 'user' | 'assistant' | 'system'; content: string; timestamp: number; }
-interface HistoryItem { id: string; title: string; updated: string; model?: string; }
 
 // ── Tier display config ───────────────────────────────────────────────────────
 const TIER_ICON: Record<string, string> = { free: '◈', low: '◇', medium: '◆', high: '★' };
@@ -27,28 +26,51 @@ function api() {
 }
 
 // ── Component: ModelSelector ───────────────────────────────────────────────────
-function ModelSelector({ models, current, onSwitch }: { models: Model[]; current: string; onSwitch: (id: string) => void }) {
-  const [open, setOpen] = useState(false);
+interface ModelSelectorProps {
+  models: Model[];
+  current: string;
+  onSwitch: (id: string) => void;
+  trigger?: React.ReactNode;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+}
+
+function ModelSelector({ models, current, onSwitch, trigger, open: controlledOpen, onOpenChange }: ModelSelectorProps) {
+  const [internalOpen, setInternalOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const cur = models.find(m => m.id === current) || models[0];
+  
+  // Use controlled or internal state
+  const open = controlledOpen !== undefined ? controlledOpen : internalOpen;
+  const setOpen = (v: boolean) => {
+    if (onOpenChange) onOpenChange(v);
+    if (controlledOpen === undefined) setInternalOpen(v);
+  };
 
   useEffect(() => {
     const h = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
     document.addEventListener('mousedown', h);
     return () => document.removeEventListener('mousedown', h);
-  }, []);
+  }, [setOpen]);
 
   return (
     <div className="model-selector" ref={ref}>
-      <button className="model-selector__trigger" onClick={() => setOpen(v => !v)}>
-        <span className="model-selector__icon" style={{ color: TIER_COLOR[cur?.tier] || '#d4a017' }}>
-          {TIER_ICON[cur?.tier] || '◆'}
-        </span>
-        <span className="model-selector__name">{cur?.name || 'Select model'}</span>
-        <span className="model-selector__caret">{open ? '▲' : '▼'}</span>
-      </button>
+      {trigger ? (
+        <div onClick={() => setOpen(!open)}>{trigger}</div>
+      ) : (
+        <button className="model-selector__trigger" onClick={() => setOpen(!open)}>
+          <span className="model-selector__icon" style={{ color: TIER_COLOR[cur?.tier] || '#d4a017' }}>
+            {TIER_ICON[cur?.tier] || '◆'}
+          </span>
+          <span className="model-selector__name">{cur?.name || 'Select model'}</span>
+          <span className="model-selector__caret">{open ? '▲' : '▼'}</span>
+        </button>
+      )}
       {open && (
         <div className="model-selector__dropdown">
+          <div className="model-selector__shortcut-hint">
+            <kbd>⌘</kbd><kbd>M</kbd> 快速切换
+          </div>
           {models.map(m => (
             <button
               key={m.id}
@@ -287,7 +309,7 @@ export default function App() {
     sessions,
     activeId,
     activeMessages,
-    activeModel,
+    // activeModel, // unused - model tracked by currentModel state
     createSession,
     switchSession,
     addMessage,
@@ -509,15 +531,22 @@ export default function App() {
       <main className="main">
         {/* Top bar */}
         <div className="topbar">
-          <div className="topbar__title">
-            <span className="topbar__model-badge">
-              <span style={{ color: TIER_COLOR[models.find(m => m.id === currentModel)?.tier] }}>
-                {TIER_ICON[models.find(m => m.id === currentModel)?.tier]}
-              </span>
-              {models.find(m => m.id === currentModel)?.name || currentModel}
-            </span>
-          </div>
-          <ModelSelector models={models} current={currentModel} onSwitch={handleSwitch} />
+          <ModelSelector
+            models={models}
+            current={currentModel}
+            onSwitch={handleSwitch}
+            trigger={
+              <div className="topbar__model-badge topbar__model-badge--clickable">
+                <span style={{ color: TIER_COLOR[models.find(m => m.id === currentModel)?.tier || 'free'] }}>
+                  {TIER_ICON[models.find(m => m.id === currentModel)?.tier || 'free']}
+                </span>
+                <span className="topbar__model-name">
+                  {models.find(m => m.id === currentModel)?.name || currentModel}
+                </span>
+                <span className="topbar__model-caret">▼</span>
+              </div>
+            }
+          />
         </div>
 
         {/* Messages */}

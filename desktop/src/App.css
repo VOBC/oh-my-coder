@@ -274,6 +274,28 @@ html, body, #root {
   color: var(--gray-1);
 }
 
+.topbar__model-badge--clickable {
+  cursor: pointer;
+  padding: 8px 12px;
+  border-radius: var(--radius);
+  transition: background 0.15s;
+}
+
+.topbar__model-badge--clickable:hover {
+  background: var(--bg-hover);
+}
+
+.topbar__model-name {
+  color: var(--text);
+  font-weight: 500;
+}
+
+.topbar__model-caret {
+  color: var(--gray-3);
+  font-size: 10px;
+  margin-left: 4px;
+}
+
 /* Model selector */
 .model-selector { position: relative; }
 .model-selector__trigger {
@@ -296,8 +318,8 @@ html, body, #root {
 .model-selector__dropdown {
   position: absolute;
   top: calc(100% + 4px);
-  right: 0;
-  min-width: 240px;
+  left: 0;
+  min-width: 280px;
   background: var(--bg-3);
   border: 1px solid var(--border-2);
   border-radius: var(--radius-lg);
@@ -309,6 +331,30 @@ html, body, #root {
 @keyframes dropdownIn {
   from { opacity: 0; transform: translateY(-4px); }
   to   { opacity: 1; transform: translateY(0); }
+}
+
+.model-selector__shortcut-hint {
+  padding: 8px 12px;
+  font-size: 10px;
+  color: var(--gray-3);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.model-selector__shortcut-hint kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 18px;
+  padding: 0 4px;
+  background: var(--bg-2);
+  border: 1px solid var(--border-2);
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--gray-2);
 }
 
 .model-selector__item {
