@@ -73,7 +73,7 @@ html, body, #root {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 16px;
+  padding: 12px 16px 12px 80px;
   border-bottom: 1px solid var(--border);
 }
 
