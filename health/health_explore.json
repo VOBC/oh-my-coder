@@ -1,0 +1,10 @@
+{
+  "agent_name": "explore",
+  "status": "stale",
+  "last_heartbeat": "2026-04-23T20:57:12.536555",
+  "task_id": null,
+  "retry_count": 1,
+  "last_error": "Agent explore 执行超时（>300.0s）",
+  "workflow_id": null,
+  "step_index": -1
+}
