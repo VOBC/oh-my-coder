@@ -3,6 +3,6 @@
 支持内置 Skill 和用户自定义 Skill（~/.omc/skills/）。
 """
 
-from .registry import SkillRegistry, Skill, SkillResult
+from .registry import SkillRegistry, Skill, SkillResult, get_registry
 
-__all__ = ["SkillRegistry", "Skill", "SkillResult"]
+__all__ = ["SkillRegistry", "Skill", "SkillResult", "get_registry"]
