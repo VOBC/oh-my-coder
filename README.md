@@ -214,6 +214,8 @@ pip install -e .
 export DEEPSEEK_API_KEY=your_key && python -m src.web.app
 ```
 
+> 要求：Python 3.10+，pip>=21.3
+
 ## 👀 快速示例
 
 ### CLI 示例
