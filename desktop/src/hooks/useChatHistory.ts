@@ -37,9 +37,11 @@ function now(): string {
 export function useChatHistory() {
   const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [activeId, setActiveId] = useState<string>('');
-  const [activeMessages, setActiveMessages] = useState<ChatMessage[]>([]);
   const [activeModel, setActiveModel] = useState<string>('');
   const isLoading = useRef(false);
+  
+  // Derive activeMessages from sessions to ensure single source of truth
+  const activeMessages = sessions.find(s => s.id === activeId)?.messages || [];
 
   // ── Load from localStorage on mount ─────────────────────────────────────
   useEffect(() => {
@@ -52,7 +54,6 @@ export function useChatHistory() {
         if (parsed.length > 0) {
           const last = parsed[0];
           setActiveId(last.id);
-          setActiveMessages(last.messages);
           setActiveModel(last.model || '');
         }
       }
@@ -87,26 +88,20 @@ export function useChatHistory() {
       return next;
     });
     setActiveId(id);
-    setActiveMessages([]);
     setActiveModel(model || '');
     return id;
   }, [persist]);
 
   const switchSession = useCallback((id: string) => {
-    setSessions(prev => {
-      const found = prev.find(s => s.id === id);
-      if (found) {
-        setActiveId(id);
-        setActiveMessages([...found.messages]);
-        setActiveModel(found.model || '');
-      }
-      return prev;
-    });
-  }, []);
+    const found = sessions.find(s => s.id === id);
+    if (found) {
+      setActiveId(id);
+      setActiveModel(found.model || '');
+    }
+  }, [sessions]);
 
   // ── Append a message to the active session ───────────────────────────────
   const addMessage = useCallback((msg: ChatMessage) => {
-    setActiveMessages(prev => [...prev, msg]);
     setSessions(prev => {
       const next = prev.map(s => {
         if (s.id !== activeId) return s;
@@ -142,11 +137,9 @@ export function useChatHistory() {
       persist(next);
       if (id === activeId && next.length > 0) {
         setActiveId(next[0].id);
-        setActiveMessages([...next[0].messages]);
         setActiveModel(next[0].model || '');
       } else if (id === activeId) {
         setActiveId('');
-        setActiveMessages([]);
         setActiveModel('');
       }
       return next;
@@ -155,7 +148,6 @@ export function useChatHistory() {
 
   // ── Clear active session ──────────────────────────────────────────────────
   const clearActive = useCallback(() => {
-    setActiveMessages([]);
     setSessions(prev => {
       const next = prev.map(s => {
         if (s.id !== activeId) return s;
@@ -189,7 +181,6 @@ export function useChatHistory() {
   const clearAllSessions = useCallback(() => {
     setSessions([]);
     setActiveId('');
-    setActiveMessages([]);
     setActiveModel('');
     persist([]);
   }, [persist]);
