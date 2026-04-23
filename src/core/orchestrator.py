@@ -21,7 +21,10 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from ..agents.health_check import HealthChecker
 
 
 class WorkflowStatus(Enum):
@@ -206,6 +209,9 @@ class Orchestrator:
         # Checkpoint 管理器（懒加载）
         self._checkpoint_manager = None  # type: ignore
 
+        # HealthChecker 管理器（懒加载）
+        self._health_checker: Optional["HealthChecker"] = None
+
         # Agent 实例缓存
         self._agents: Dict[str, Any] = {}
 
@@ -249,6 +255,21 @@ class Orchestrator:
             base = self._project_path or self.state_dir.parent
             self._memory_manager = MemoryManager.from_project(base)
         return self._memory_manager
+
+    @property
+    def health_checker(self) -> "HealthChecker":
+        """懒加载 HealthChecker"""
+        if self._health_checker is None:
+            from ..agents.health_check import HealthChecker
+
+            self._health_checker = HealthChecker(
+                orchestrator=self,
+                check_interval=60.0,
+                stale_threshold=300.0,
+                max_retries=3,
+                state_dir=self.state_dir.parent.parent / "health",
+            )
+        return self._health_checker
 
     def inject_memory_context(self) -> str:
         """
@@ -533,7 +554,7 @@ class Orchestrator:
 
         except Exception as e:
             result.status = WorkflowStatus.FAILED
-            result.error = f"{type(e).__name__}: {str(e)[:200]}"  # 截断防止泄露
+            result.error = f"{type(e).__name__}: [执行异常，请查看工作流日志]"  # 不输出原始错误，防止泄露
 
         finally:
             result.execution_time = time.time() - start_time
@@ -559,7 +580,7 @@ class Orchestrator:
         context: Dict[str, Any],
         result: WorkflowResult,
     ):
-        """顺序执行步骤"""
+        """顺序执行步骤（集成健康检查与自动重试）"""
 
         for step in steps:
             # 检查依赖
@@ -567,29 +588,86 @@ class Orchestrator:
                 if dep not in result.steps_completed:
                     raise ValueError(f"步骤 {step.agent_name} 的依赖 {dep} 未完成")
 
-            try:
-                # 执行步骤
-                agent = self.get_agent(step.agent_name)
+            agent_name = step.agent_name
+            retry_count = 0
+            max_retries = getattr(self, "_health_checker", None)
+            max_retries = max_retries.max_retries if max_retries else 3
 
-                # 构建上下文（Tier 0: 注入 Skill 经验 + 核心记忆）
-                agent_context = self._build_agent_context(step.agent_name, context)
-
-                output = await asyncio.wait_for(
-                    agent.execute(agent_context),
-                    timeout=step.timeout,
+            while True:
+                # ---- 注册健康检查：Agent 开始执行 ----
+                hc = self.health_checker
+                hc.register_agent(
+                    agent_name=agent_name,
+                    task_id=f"wf_{result.workflow_id}_step_{step.agent_name}",
+                    workflow_id=result.workflow_id,
+                    step_index=steps.index(step),
                 )
 
-                if output.status.value == "completed":
-                    result.steps_completed.append(step.agent_name)
-                    result.outputs[step.agent_name] = output
-                    result.total_tokens += output.usage.get("total_tokens", 0)
-                else:
-                    result.steps_failed.append(step.agent_name)
-                    raise Exception(f"Agent {step.agent_name} 执行失败: {output.error}")
+                try:
+                    agent = self.get_agent(agent_name)
+                    agent_context = self._build_agent_context(agent_name, context)
 
-            except asyncio.TimeoutError:
-                result.steps_failed.append(step.agent_name)
-                raise Exception(f"Agent {step.agent_name} 执行超时")
+                    output = await asyncio.wait_for(
+                        agent.execute(agent_context),
+                        timeout=step.timeout,
+                    )
+
+                    # ---- 心跳注册：执行成功，取消注册 ----
+                    hc.unregister_agent(agent_name)
+
+                    if output.status.value == "completed":
+                        result.steps_completed.append(agent_name)
+                        result.outputs[agent_name] = output
+                        result.total_tokens += output.usage.get("total_tokens", 0)
+                        break  # 进入下一步
+                    else:
+                        raise Exception(f"Agent {agent_name} 执行失败: {output.error}")
+
+                except asyncio.TimeoutError:
+                    error = f"Agent {agent_name} 执行超时（>{step.timeout}s）"
+                    hc.unregister_agent(agent_name)
+
+                    if hc.record_failure(agent_name, error):
+                        # 超过重试上限
+                        result.steps_failed.append(agent_name)
+                        raise Exception(error)
+
+                    # 仍可重试 → 找空闲 Agent 重分配
+                    retry_count += 1
+                    new_agent = hc.reassign_task(
+                        agent_name=agent_name,
+                        workflow_id=result.workflow_id,
+                        step=step,
+                    )
+                    if new_agent:
+                        agent_name = new_agent
+                        hc.register_agent(agent_name, workflow_id=result.workflow_id)
+                    else:
+                        result.steps_failed.append(agent_name)
+                        raise Exception(f"无法重分配任务：{error}")
+                    # 重试
+
+                except Exception as step_err:
+                    hc.unregister_agent(agent_name)
+                    error_msg = str(step_err)
+
+                    if hc.record_failure(agent_name, error_msg):
+                        result.steps_failed.append(agent_name)
+                        raise
+
+                    retry_count += 1
+                    new_agent = hc.reassign_task(
+                        agent_name=agent_name,
+                        workflow_id=result.workflow_id,
+                        step=step,
+                    )
+                    if new_agent:
+                        agent_name = new_agent
+                        hc.register_agent(agent_name, workflow_id=result.workflow_id)
+                    else:
+                        result.steps_failed.append(agent_name)
+                        raise
+                    # 重试
 
     async def _execute_parallel(
         self,

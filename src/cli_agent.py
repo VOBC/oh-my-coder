@@ -486,5 +486,86 @@ def decision_stats():
     console.print(table)
 
 
+@app.command("health")
+def agent_health(
+    show_logs: bool = typer.Option(
+        False, "--logs", "-l", help="同时显示最近的重分配日志"
+    ),
+):
+    """显示所有 Agent 的健康状态（读取 .omc/state/health/ 目录）"""
+    from pathlib import Path
+    from .agents.health_check import format_health_display
+
+    state_dir = Path.cwd() / ".omc" / "state" / "health"
+
+    if not state_dir.exists():
+        console.print("[yellow]暂无健康检查记录（工作流尚未执行）[/yellow]")
+        return
+
+    # 读取所有健康记录
+    health_files = sorted(state_dir.glob("health_*.json"))
+    health_map: dict[str, dict] = {}
+
+    import json
+
+    for f in health_files:
+        try:
+            data = json.loads(f.read_text(encoding="utf-8"))
+            name = data.get("agent_name", f.stem.replace("health_", ""))
+            health_map[name] = data
+        except Exception:
+            pass
+
+    # 读取统计摘要
+    status_file = state_dir / "status.json"
+    summary: dict = {}
+    if status_file.exists():
+        try:
+            summary = json.loads(status_file.read_text(encoding="utf-8"))
+        except Exception:
+            pass
+
+    # 打印摘要
+    if summary:
+        summary_table = Table(title="健康检查摘要", show_header=False)
+        summary_table.add_column("指标", style="cyan")
+        summary_table.add_column("值", style="green")
+        summary_table.add_row("总注册 Agent", str(summary.get("total_registered", 0)))
+        summary_table.add_row("✅ Healthy", str(summary.get("healthy", 0)))
+        summary_table.add_row("⚠️  Stale", str(summary.get("stale", 0)))
+        summary_table.add_row("❌ Failed", str(summary.get("failed", 0)))
+        summary_table.add_row("🔄 已重分配", str(summary.get("total_reassignments", 0)))
+        summary_table.add_row("运行中", str(summary.get("running", 0)))
+        summary_table.add_row("检查间隔", f"{summary.get('check_interval', 60):.0f}s")
+        summary_table.add_row("超时阈值", f"{summary.get('stale_threshold', 300):.0f}s")
+        summary_table.add_row("最大重试", str(summary.get("max_retries", 3)))
+        console.print(summary_table)
+        console.print()
+
+    # 打印各 Agent 状态
+    if health_map:
+        console.print("[bold cyan]Agent 健康状态：[/bold cyan]")
+        display = format_health_display(health_map)
+        console.print(display)
+    else:
+        console.print("[yellow]暂无活跃 Agent 健康记录[/yellow]")
+
+    # 打印最近重分配日志
+    if show_logs:
+        reassign_files = sorted(state_dir.glob("reassignment_*.json"))[-5:]
+        if reassign_files:
+            console.print("\n[bold yellow]最近重分配记录：[/bold yellow]")
+            for f in reassign_files:
+                try:
+                    data = json.loads(f.read_text(encoding="utf-8"))
+                    ts = data.get("timestamp", "")
+                    console.print(
+                        f"  [{ts}] {data.get('from_agent')} → {data.get('to_agent')}"
+                        f"  | step: {data.get('step')} | reason: {data.get('reason')}"
+                    )
+                except Exception:
+                    pass
+
+
 if __name__ == "__main__":
     app()
