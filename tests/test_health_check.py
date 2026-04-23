@@ -4,11 +4,12 @@
 运行: pytest tests/test_health_check.py -v
 """
 
-import asyncio
 import json
 import sys
 import time
 from unittest.mock import MagicMock
+
+import pytest
 
 
 sys.path.insert(0, "/Users/vobc/.qclaw/workspace-agent-bf627e2b/projects/oh-my-coder")
@@ -250,24 +251,27 @@ class TestPeriodicCheck:
     def setup_method(self):
         self.hc = HealthChecker(stale_threshold=1.0, max_retries=3)  # 1秒超时
 
-    def test_check_detects_stale_agent(self):
+    @pytest.mark.asyncio
+    async def test_check_detects_stale_agent(self):
         """检测到超时的 Agent 并标记为 STALE"""
         h = self.hc.register_agent("executor", workflow_id="wf-1")
         h.last_heartbeat = time.time() - 10  # 10秒前（> 1秒阈值）
 
-        result = asyncio.get_event_loop().run_until_complete(self.hc._check_all())
+        result = await self.hc._check_all()
 
         assert result is not None
         assert result.stale_count >= 1
         assert result.checked_agents >= 1
         assert self.hc._agent_health["executor"].status == AgentStatus.STALE
 
-    def test_check_empty_returns_none(self):
+    @pytest.mark.asyncio
+    async def test_check_empty_returns_none(self):
         """无 Agent 时检查返回 None"""
-        result = asyncio.get_event_loop().run_until_complete(self.hc._check_all())
+        result = await self.hc._check_all()
         assert result is None
 
-    def test_check_auto_retry_on_stale(self):
+    @pytest.mark.asyncio
+    async def test_check_auto_retry_on_stale(self):
         """STALE Agent 自动重试并触发重分配"""
         h = self.hc.register_agent("executor", workflow_id="wf-1")
         h.last_heartbeat = time.time() - 10
@@ -275,16 +279,17 @@ class TestPeriodicCheck:
         # 同时注册一个空闲的备份 Agent
         self.hc.register_agent("executor-backup", workflow_id="wf-1")
 
-        result = asyncio.get_event_loop().run_until_complete(self.hc._check_all())
+        result = await self.hc._check_all()
 
         assert result is not None
         assert result.stale_count >= 1
         assert result.reassigned_count >= 1
 
-    def test_check_healthy_agent_untouched(self):
+    @pytest.mark.asyncio
+    async def test_check_healthy_agent_untouched(self):
         """健康 Agent 不受影响"""
         self.hc.register_agent("executor")
-        result = asyncio.get_event_loop().run_until_complete(self.hc._check_all())
+        result = await self.hc._check_all()
         assert result.healthy_count >= 1
         assert self.hc._agent_health["executor"].status == AgentStatus.HEALTHY
 
@@ -391,7 +396,8 @@ class TestIntegrationTimeoutReassignment:
     def setup_method(self):
         self.hc = HealthChecker(check_interval=60.0, stale_threshold=1.0, max_retries=3)
 
-    def test_timeout_triggers_reassignment(self):
+    @pytest.mark.asyncio
+    async def test_timeout_triggers_reassignment(self):
         """
         场景：
         1. executor-1 注册并开始执行
@@ -408,7 +414,7 @@ class TestIntegrationTimeoutReassignment:
         h1.last_heartbeat = time.time() - 10
 
         # Step 3: 触发检查
-        result = asyncio.get_event_loop().run_until_complete(self.hc._check_all())
+        result = await self.hc._check_all()
 
         # 验证
         assert result is not None

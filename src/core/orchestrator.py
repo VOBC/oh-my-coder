@@ -827,8 +827,8 @@ class Orchestrator:
         if TraceContext is not None:
             trace_ctx = TraceContext(
                 agent_name=agent_name,
-                session_id=session_id or self.workflow_id or "default",
-                workflow_id=self.workflow_id,
+                session_id=session_id or "default",
+                workflow_id="",
             )
             trace_ctx.start()
 
