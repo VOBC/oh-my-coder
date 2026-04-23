@@ -68,8 +68,8 @@ omc config set -k DEFAULT_MODEL -v "deepseek"
 **配置方法**:
 
 ```bash
-# 免费版本（无需 API Key）
-omc config set -k GLM_API_KEY -v "free"
+# 智谱 GLM（需注册获取 API Key，有免费额度）
+omc config set -k GLM_API_KEY -v "your_key"  # https://open.bigmodel.cn/
 
 # 设置为默认模型
 omc config set -k DEFAULT_MODEL -v "glm"
@@ -115,7 +115,7 @@ omc config set -k DEFAULT_MODEL -v "mimo"
 
 ```bash
 # 方案 A：零成本（推荐新手）
-omc config set -k GLM_API_KEY -v "free"
+omc config set -k GLM_API_KEY -v "your_key"  # https://open.bigmodel.cn/
 omc config set -k DEFAULT_MODEL -v "glm"
 
 # 方案 B：代码能力强（推荐开发者）
