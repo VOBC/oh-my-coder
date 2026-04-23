@@ -26,6 +26,7 @@ from rich.table import Table
 from .core.orchestrator import Orchestrator
 from .core.router import ModelRouter, RouterConfig
 from .wiki import WikiGenerator
+from .agents.cross_validation import CrossValidationLayer
 from .quest import QuestStatus
 from .cli_context import context_app
 from .capabilities import app as cap_app
@@ -194,6 +195,11 @@ def run(
     no_checkpoint: bool = typer.Option(
         False, "--no-checkpoint", help="跳过自动快照（断点续传）"
     ),
+    cross_validate: bool = typer.Option(
+        False,
+        "--cross-validate",
+        help="工作流结束后执行 Agent 交叉验证（独立视角审视产出）",
+    ),
 ):
     """执行编程任务"""
     # 前置检查
@@ -258,6 +264,38 @@ def run(
 
             # 显示结果
             _display_result(result)
+
+            # ---- 交叉验证：独立视角审视工作流产出 ----
+            if cross_validate:
+                cv_progress = progress.add_task("🔍 交叉验证...", total=None)
+                try:
+                    cv_layer = CrossValidationLayer(
+                        model_router=router,
+                        state_dir=project_path / ".omc" / "state",
+                    )
+                    cv_result = asyncio.run(
+                        cv_layer.validate_workflow(result, workflow)
+                    )
+                    progress.remove_task(cv_progress)
+
+                    # 显示验证摘要
+                    _display_cross_validation_result(cv_result)
+
+                    # 验证失败时以非零退出码结束
+                    if cv_result.status.value in ("fail", "need_fix"):
+                        console.print(
+                            Panel.fit(
+                                "[yellow]⚠️  交叉验证发现问题，建议修复后重试[/yellow]\n"
+                                "[dim]验证报告已保存至 .omc/state/cross_validation/[/dim]",
+                                title="⚠️  验证提醒",
+                                border_style="yellow",
+                            )
+                        )
+                except Exception as cv_err:
+                    progress.remove_task(cv_progress)
+                    console.print(
+                        f"[yellow]⚠️  交叉验证出错（不影响主流程）: {cv_err}[/yellow]"
+                    )
 
             # 发送通知
             if notify:
@@ -1310,6 +1348,64 @@ def _display_result(result):
 
     if result.error:
         console.print(f"\n[red]错误: {result.error}[/red]")
+
+
+def _display_cross_validation_result(result):
+    """显示交叉验证结果"""
+
+    status_color = {
+        "pass": "green",
+        "fail": "red",
+        "need_fix": "yellow",
+        "skipped": "dim",
+    }.get(result.status.value, "white")
+
+    status_icon = {
+        "pass": "✅",
+        "fail": "❌",
+        "need_fix": "⚠️",
+        "skipped": "⏭",
+    }.get(result.status.value, "?")
+
+    panel_color = {
+        "pass": "green",
+        "fail": "red",
+        "need_fix": "yellow",
+        "skipped": "dim",
+    }.get(result.status.value, "white")
+
+    lines = [
+        f"**验证 ID**: `{result.validation_id}`",
+        f"**工作流**: `{result.workflow_name}` (`{result.workflow_id}`)",
+        f"**状态**: [{status_color}]{result.status.value.upper()}[/{status_color}]",
+        f"**发现的问题**: {len(result.issues)} 个",
+        f"**验证耗时**: {result.execution_time:.1f}s",
+    ]
+
+    if result.issues:
+        lines.append("")
+        lines.append("[bold]问题列表:[/bold]")
+        for i, issue in enumerate(result.issues, 1):
+            severity_icon = {
+                "critical": "🔴",
+                "high": "🟠",
+                "medium": "🟡",
+                "low": "⚪",
+            }.get(issue.severity.value, "⚪")
+            lines.append(
+                f"{i}. {severity_icon} **[{issue.severity.value.upper()}]**"
+                f"[{issue.category}] {issue.description}"
+            )
+            if issue.location:
+                lines.append(f"   📍 {issue.location}")
+            if issue.suggestion:
+                lines.append(f"   💡 {issue.suggestion}")
+
+    panel_title = f"{status_icon} 交叉验证结果"
+
+    console.print(
+        Panel.fit("\n".join(lines), title=panel_title, border_style=panel_color)
+    )
 
 
 @app.command()
