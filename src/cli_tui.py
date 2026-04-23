@@ -15,13 +15,16 @@ TUI 交互界面 - 简易交互界面
 
 from __future__ import annotations
 
+import subprocess
 from enum import Enum
+from pathlib import Path
 from typing import Optional
 
 import typer
 from rich.console import Console
 from rich.live import Live
 from rich.panel import Panel
+from rich.syntax import Syntax
 from rich.table import Table
 from rich.text import Text
 
@@ -294,6 +297,80 @@ class TUISession:
 
         return True
 
+    def _handle_slash_command(self, raw_input: str) -> bool:
+        """检测并执行 /skill 命令，返回是否保持 TUI（False=退出）"""
+        # 解析 /skill-name [file-path]
+        parts = raw_input.strip().split(maxsplit=2)
+        if not parts or not parts[0].startswith("/"):
+            return False
+
+        skill_name = parts[0][1:]  # 去掉 /
+        file_path = parts[1] if len(parts) > 1 else None
+
+        # 读取代码
+        code_content = ""
+        if file_path:
+            p = Path(file_path)
+            if p.is_file():
+                code_content = p.read_text()
+            else:
+                console.print(f"[red]File not found: {file_path}[/red]")
+                return True
+        else:
+            # 尝试从当前工作区读取
+            ws_code = self._collect_workspace_code()
+            code_content = ws_code if ws_code else "# No code provided"
+
+        # 执行 skill（通过 omc skill run）
+        cmd = ["omc", "skill", "run", skill_name]
+        try:
+            result = subprocess.run(
+                cmd, input=code_content, capture_output=True, text=True, timeout=30
+            )
+            console.print(
+                Panel.fit(
+                    f"[green]✓ Skill /{skill_name} executed[/green]",
+                    border_style="green",
+                )
+            )
+            if result.stdout:
+                console.print(
+                    Syntax(
+                        result.stdout[:2000],
+                        "python",
+                        theme="monokai",
+                        line_numbers=True,
+                    )
+                )
+            if result.stderr:
+                console.print(f"[red]{result.stderr[:500]}[/red]")
+        except subprocess.TimeoutExpired:
+            console.print("[red]✗ Skill execution timed out[/red]")
+        except Exception as exc:
+            console.print(f"[red]✗ Skill failed: {exc}[/red]")
+
+        console.print("[dim]Press any key to continue...[/dim]")
+        self._wait_key()
+        return True
+
+    def _collect_workspace_code(self) -> str:
+        """收集当前工作区中的代码文件"""
+        code_files = list(Path.cwd().rglob("*.py"))[:10]
+        snippets = []
+        for f in code_files[:3]:
+            try:
+                lines = f.read_text().splitlines()[:50]
+                snippets.append(
+                    f"# === {f.relative_to(Path.cwd())} ===\n" + "\n".join(lines)
+                )
+            except Exception:
+                pass
+        return "\n\n".join(snippets)
+
+    def _wait_key(self) -> None:
+        """等待任意键输入"""
+        console.input("")
+
     def _handle_main(self, key: str) -> bool:
         """主菜单键盘处理"""
         if key == Keys.Up:
@@ -355,7 +432,13 @@ class TUISession:
             self.state = State.MAIN
         elif key in ["\n", "enter"]:
             if self.task_input.strip():
-                self.state = State.CONFIRM
+                # 检测 /skill 命令
+                if self.task_input.strip().startswith("/"):
+                    self._handle_slash_command(self.task_input)
+                    self.task_input = ""
+                    self.state = State.MAIN
+                else:
+                    self.state = State.CONFIRM
         elif key == "backspace":
             self.task_input = self.task_input[:-1]
         elif len(key) == 1:
