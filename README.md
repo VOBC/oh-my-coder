@@ -68,7 +68,7 @@
 **迁移指南**：如果你之前用 Claude Code，切换到 oh-my-coder 只需：
 ```bash
 pip install oh-my-coder
-omc config set -k GLM_API_KEY -v "free"  # GLM-4.7-Flash 完全免费
+omc config set -k GLM_API_KEY -v "your_key"  # 注册获取：https://open.bigmodel.cn/
 omc run "你好，介绍一下你自己"
 ```
 
@@ -180,8 +180,8 @@ Oh My Coder 是一个**多智能体协作编程系统**，通过多个专业 Age
 # 方式1: DeepSeek（推荐）
 omc config set -k DEEPSEEK_API_KEY -v "your_key"
 
-# 方式2: 智谱 GLM（免费额度）
-omc config set -k GLM_API_KEY -v "free"
+# 方式2: 智谱 GLM（需注册获取 API Key，有免费额度）
+omc config set -k GLM_API_KEY -v "your_key"  # https://open.bigmodel.cn/
 
 # 方式3: MiMo（长上下文支持）
 omc config set -k MIMOX_API_KEY -v "your_key"
