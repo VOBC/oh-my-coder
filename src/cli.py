@@ -38,6 +38,7 @@ from .cli_checkpoint import app as checkpoint_app
 from .cli_mcp import app as mcp_app
 from .cli_memory import app as memory_app
 from .cli_skill import app as skill_app
+from .cli_trace import app as trace_app
 from .cli_migrate import app as migrate_app
 from .cli_tui import app as tui_app
 from .cli_self_config import app as self_config_app
@@ -67,7 +68,10 @@ app.add_typer(multiagent_app, name="multiagent")
 app.add_typer(security_app, name="security")
 app.add_typer(checkpoint_app, name="checkpoint")
 app.add_typer(mcp_app, name="mcp")
-app.add_typer(skill_app, name="skill", help="Skill 系统 - 内置和自定义 Skill 管理与执行")
+app.add_typer(
+    skill_app, name="skill", help="Skill 系统 - 内置和自定义 Skill 管理与执行"
+)
+app.add_typer(trace_app, name="trace", help="Trace 执行记录 - 查看 Agent 执行过程")
 app.add_typer(memory_app, name="memory", help="分层记忆管理 - 查看核心/精选/完整记忆")
 app.add_typer(migrate_app, name="migrate", help="记忆迁移 - 从 Claude/Gemini 导入配置")
 app.add_typer(tui_app, name="tui", help="TUI 交互界面 - 简易终端交互")

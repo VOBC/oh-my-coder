@@ -27,6 +27,15 @@ if TYPE_CHECKING:
     from ..agents.health_check import HealthChecker
 
 
+def _get_trace_context_cls():
+    try:
+        from ..agents.transparency import TraceContext
+
+        return TraceContext
+    except ImportError:
+        return None
+
+
 class WorkflowStatus(Enum):
     """工作流状态"""
 
@@ -800,6 +809,7 @@ class Orchestrator:
         self,
         agent_name: str,
         context: Dict[str, Any],
+        session_id: str = "",
     ):
         """
         执行单个 Agent
@@ -807,13 +817,40 @@ class Orchestrator:
         Args:
             agent_name: Agent 名称
             context: 执行上下文
+            session_id: Trace session ID（由调用方传入）
 
         Returns:
             AgentOutput: 执行结果
         """
-        agent = self.get_agent(agent_name)
-        agent_context = self._build_agent_context(agent_name, context)
-        return await agent.execute(agent_context)
+        TraceContext = _get_trace_context_cls()
+        trace_ctx = None
+        if TraceContext is not None:
+            trace_ctx = TraceContext(
+                agent_name=agent_name,
+                session_id=session_id or self.workflow_id or "default",
+                workflow_id=self.workflow_id,
+            )
+            trace_ctx.start()
+
+        try:
+            agent = self.get_agent(agent_name)
+            agent_context = self._build_agent_context(agent_name, context)
+            output = await agent.execute(agent_context)
+            if trace_ctx is not None:
+                summary = ""
+                if hasattr(output, "output"):
+                    summary = str(output.output)[:200]
+                trace_ctx.stop(
+                    status="completed",
+                    output_summary=summary,
+                )
+            return output
+        except Exception as e:
+            if trace_ctx is not None:
+                error_name = type(e).__name__
+                trace_ctx.log_error(error_name)
+                trace_ctx.stop(status="failed", error=error_name)
+            raise
 
     def _save_workflow_result(self, result: WorkflowResult):
         """保存工作流结果"""
