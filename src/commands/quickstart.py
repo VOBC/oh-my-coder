@@ -564,7 +564,7 @@ async def _call_model_demo(model_info: dict) -> dict:
     except httpx.TimeoutException:
         return {"success": False, "error": "请求超时，请检查网络连接"}
     except Exception as e:
-        return {"success": False, "error": str(e)}
+        return {"success": False, "error": "请求失败"}
 
 
 def _get_wenxin_access_token(api_key: str) -> str | None:
