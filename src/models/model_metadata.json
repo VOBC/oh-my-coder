@@ -1,0 +1,148 @@
+{
+  "_meta": {
+    "version": 1,
+    "description": "Model readiness metadata for oh-my-coder"
+  },
+  "_providers": {
+    "deepseek": "production",
+    "glm": "production",
+    "mimo": "production",
+    "kimi": "production",
+    "doubao": "production",
+    "baichuan": "production",
+    "tiangong": "production",
+    "wenxin": "beta",
+    "tongyi": "beta",
+    "hunyuan": "beta",
+    "spark": "beta"
+  },
+
+  "deepseek-chat": {
+    "status": "production",
+    "name": "DeepSeek V3",
+    "provider": "DeepSeek",
+    "tier": "low",
+    "context": 64000,
+    "description": "高性能对话模型，支持函数调用"
+  },
+  "deepseek-reasoner": {
+    "status": "production",
+    "name": "DeepSeek R1",
+    "provider": "DeepSeek",
+    "tier": "low",
+    "context": 64000,
+    "description": "深度推理模型，适合复杂逻辑任务"
+  },
+  "glm-4-flash": {
+    "status": "production",
+    "name": "GLM-4-Flash",
+    "provider": "Zhipu",
+    "tier": "free",
+    "context": 128000,
+    "description": "免费高性能，支持函数调用、视觉"
+  },
+  "glm-4v-flash": {
+    "status": "production",
+    "name": "GLM-4V-Flash",
+    "provider": "Zhipu",
+    "tier": "free",
+    "context": 128000,
+    "description": "免费视觉模型，支持图像理解"
+  },
+  "MiniMax-Text-01": {
+    "status": "production",
+    "name": "MiMo V2 Flash",
+    "provider": "MiniMax",
+    "tier": "free",
+    "context": 1000000,
+    "description": "免费超长上下文（100万 token）"
+  },
+  "moonshot-v1-128k": {
+    "status": "production",
+    "name": "Kimi 128K",
+    "provider": "Moonshot",
+    "tier": "medium",
+    "context": 128000,
+    "description": "128K 超长上下文"
+  },
+  "doubao-pro-32k": {
+    "status": "production",
+    "name": "Doubao-Pro-32K",
+    "provider": "Volcengine",
+    "tier": "medium",
+    "context": 32000,
+    "description": "豆包 Pro，性价比高"
+  },
+  "tiangong-3": {
+    "status": "production",
+    "name": "天工 3.0",
+    "provider": "Tiangong",
+    "tier": "medium",
+    "context": 128000,
+    "description": "天工大模型 3.0"
+  },
+  "Baichuan4": {
+    "status": "production",
+    "name": "百川 4",
+    "provider": "Baichuan",
+    "tier": "medium",
+    "context": 128000,
+    "description": "百川智能 4"
+  },
+  "ernie-4.0-8k-latest": {
+    "status": "beta",
+    "name": "文心一言 4.0",
+    "provider": "Baidu",
+    "tier": "medium",
+    "context": 8000,
+    "description": "百度文心一言 4.0（Beta）"
+  },
+  "qwen-plus": {
+    "status": "beta",
+    "name": "通义千问 2.5",
+    "provider": "Alibaba",
+    "tier": "medium",
+    "context": 131072,
+    "description": "阿里通义千问（Beta）"
+  },
+  "hunyuan-turbo": {
+    "status": "beta",
+    "name": "混元 Turbo",
+    "provider": "Tencent",
+    "tier": "medium",
+    "context": 128000,
+    "description": "腾讯混元（Beta）"
+  },
+  "generalv4.0": {
+    "status": "beta",
+    "name": "讯飞星火 4.0",
+    "provider": "iFlytek",
+    "tier": "medium",
+    "context": 128000,
+    "description": "讯飞星火 4.0（Beta）"
+  },
+  "gpt-4o-mini": {
+    "status": "beta",
+    "name": "GPT-4o-mini",
+    "provider": "OpenAI",
+    "tier": "high",
+    "context": 128000,
+    "description": "OpenAI GPT-4o mini（Beta，需海外网络）"
+  },
+  "claude-3-5-haiku-20241022": {
+    "status": "beta",
+    "name": "Claude 3.5 Haiku",
+    "provider": "Anthropic",
+    "tier": "high",
+    "context": 200000,
+    "description": "Anthropic Claude 3.5 Haiku（Beta，需海外网络）"
+  },
+  "gemini-2.0-flash": {
+    "status": "beta",
+    "name": "Gemini 2.0 Flash",
+    "provider": "Google",
+    "tier": "low",
+    "context": 1000000,
+    "description": "Google Gemini 2.0 Flash（Beta，需海外网络）"
+  }
+}

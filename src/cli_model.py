@@ -422,12 +422,42 @@ def list_models(
     ),
     tier: str = typer.Option(None, "--tier", help="按层级过滤: free/low/medium/high"),
     provider: str = typer.Option(None, "--provider", "-p", help="按供应商过滤"),
+    status: str = typer.Option(
+        None,
+        "--status",
+        help="按就绪状态过滤: production/beta/deprecated/all (默认 production)",
+    ),
+    all: bool = typer.Option(
+        False,
+        "--all",
+        "-a",
+        help="显示全部模型（含 beta/deprecated，等效于 --status all）",
+    ),
+    beta: bool = typer.Option(False, "--beta", "-b", help="显示 beta 模型"),
     json_output: bool = typer.Option(False, "--json", help="JSON 输出"),
     source: str = typer.Option(
         None, "--source", "-s", help="数据源: builtin(内置)/user(用户)/all"
     ),
 ) -> None:
     """列出所有可用模型（支持 Catwalk 详细视图）"""
+    from src.models import (
+        enrich_with_status,
+        filter_by_status,
+        get_model_status,
+    )  # noqa: E402
+
+    # Resolve effective status filter
+    if all or status == "all":
+        _show_prod, _show_beta, _show_dep = True, True, True
+    elif beta or status == "beta":
+        _show_prod, _show_beta, _show_dep = False, True, False
+    elif status == "deprecated":
+        _show_prod, _show_beta, _show_dep = False, False, True
+    elif status in ("production", None):
+        _show_prod, _show_beta, _show_dep = True, False, False
+    else:
+        _show_prod, _show_beta, _show_dep = True, False, False
+
     if extended or json_output:
         # Catwalk 详细模式
         all_configs: list[dict[str, Any]] = []
@@ -442,13 +472,33 @@ def list_models(
         for cfg in _list_yaml_configs():
             all_configs.append(cfg)
 
-        # 过滤
+        # Enrich with status metadata
+        all_configs = enrich_with_status(all_configs)
+
+        # Filter
         if tier:
             all_configs = [c for c in all_configs if c.get("tier") == tier]
         if provider:
             all_configs = [c for c in all_configs if c.get("provider") == provider]
         if source:
             all_configs = [c for c in all_configs if c.get("_source") == source]
+
+        # Apply status filter (not combined with source/tier/provider)
+        if status or all or beta:
+            all_configs = filter_by_status(
+                all_configs,
+                show_production=_show_prod,
+                show_beta=_show_beta,
+                show_deprecated=_show_dep,
+            )
+        else:
+            # Default: production only
+            all_configs = filter_by_status(
+                all_configs,
+                show_production=True,
+                show_beta=False,
+                show_deprecated=False,
+            )
 
         if json_output:
             # JSON 输出（供 AI 消费）
@@ -467,6 +517,7 @@ def list_models(
                         "context": cfg.get("context"),
                         "features": cfg.get("features", []),
                         "source": cfg.get("_source"),
+                        "model_status": cfg.get("model_status", "beta"),
                     }
                 )
             console.print_json(json.dumps(out, ensure_ascii=False, indent=2))
@@ -480,9 +531,9 @@ def list_models(
         table.add_column("模型", style="cyan", no_wrap=False)
         table.add_column("供应商", style="blue")
         table.add_column("Tier", style="yellow", no_wrap=True)
-        table.add_column("价格（元/百万token）", style="magenta")
+        table.add_column("就绪", style="magenta", no_wrap=True)
+        table.add_column("价格（元/百万token）", style="dim")
         table.add_column("上下文", style="green")
-        table.add_column("特性", style="dim", no_wrap=False)
         table.add_column("来源", style="white")
 
         current = _get_current_model()
@@ -497,6 +548,14 @@ def list_models(
             tier_label = cfg.get("tier", "medium")
             source_label = cfg.get("_source", "builtin")
 
+            # Status badge
+            raw_status = cfg.get("model_status", "beta")
+            status_badge = {
+                "production": "✅生产",
+                "beta": "🔶Beta",
+                "deprecated": "⛔废弃",
+            }.get(raw_status, raw_status)
+
             # 高亮当前模型
             provider_id = cfg.get("provider", "")
             is_current = "★" if provider_id == current else ""
@@ -505,9 +564,9 @@ def list_models(
                 f"{cfg.get('name', '')} {is_current}",
                 cfg.get("provider", ""),
                 tier_label,
+                status_badge,
                 price_str,
                 str(cfg.get("context", "-")),
-                features,
                 source_label,
             )
 
@@ -526,18 +585,33 @@ def list_models(
         table.add_column("模型 ID", style="cyan")
         table.add_column("名称", style="green")
         table.add_column("层级", style="yellow")
-        table.add_column("备注", style="dim")
-        table.add_column("当前", style="magenta")
+        table.add_column("就绪", style="magenta")
+        table.add_column("当前", style="white")
 
         current = _get_current_model()
 
         for model_id, info in SUPPORTED_MODELS.items():
             is_current = "★" if model_id == current else ""
+            status_raw = get_model_status(model_id)
+            status_map = {
+                "production": "✅生产",
+                "beta": "🔶Beta",
+                "deprecated": "⛔废弃",
+            }
+            status_str = status_map.get(status_raw, status_raw)
+            # Filtering logic:
+            # --all: show all; --beta: show only beta; default: production only
+            if beta:
+                if status_raw != "beta" and status_raw != "deprecated":
+                    continue
+            elif not all:
+                if status_raw != "production":
+                    continue
             table.add_row(
                 model_id,
                 info["name"],
                 info["tier"],
-                info["note"],
+                status_str,
                 is_current,
             )
 
