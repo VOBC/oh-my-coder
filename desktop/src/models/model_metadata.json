@@ -1,0 +1,21 @@
+{
+  "production": [
+    { "id": "deepseek-chat", "provider": "DeepSeek", "name": "DeepSeek V3" },
+    { "id": "deepseek-reasoner", "provider": "DeepSeek", "name": "DeepSeek R1" },
+    { "id": "glm-4-flash", "provider": "Zhipu", "name": "GLM-4-Flash" },
+    { "id": "glm-4v-flash", "provider": "Zhipu", "name": "GLM-4V-Flash" },
+    { "id": "qwen-plus", "provider": "Alibaba", "name": "Qwen2.5-72B" },
+    { "id": "qwen-vl-plus", "provider": "Alibaba", "name": "Qwen2.5-VL-72B" },
+    { "id": "doubao-pro-32k", "provider": "Volcengine", "name": "Doubao-Pro-32K" }
+  ],
+  "beta": [
+    { "id": "moonshot-v1-128k", "provider": "Moonshot", "name": "Kimi-V3-Pro" },
+    { "id": "MiniMax-Text-01", "provider": "MiniMax", "name": "MiMo-Text-01" },
+    { "id": "tiangong-3", "provider": "Tiangong", "name": "天工AI 3.0" },
+    { "id": "Baichuan4", "provider": "Baichuan", "name": "Baichuan4-Turbo" },
+    { "id": "ernie-4.0-8k-latest", "provider": "Baidu", "name": "文心一言 4.0" },
+    { "id": "hunyuan-turbo", "provider": "Tencent", "name": "腾讯混元 Turbo" },
+    { "id": "generalv4.0", "provider": "iFlytek", "name": "Spark-4.0-Ultra" }
+  ],
+  "deprecated": []
+}
