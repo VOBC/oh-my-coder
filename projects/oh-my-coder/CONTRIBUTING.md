@@ -85,7 +85,7 @@ source venv/bin/activate  # Linux/Mac
 pip install -r requirements.txt
 
 # 4. 设置环境变量
-cp .env.example .env
+cp examples/.env.example .env
 # 编辑 .env 文件，填入 API Key
 
 # 5. 验证安装

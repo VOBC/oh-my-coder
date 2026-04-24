@@ -11,8 +11,7 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import AsyncIterator, Optional, Dict, Any, List
-import time
+from typing import Any, AsyncIterator, Dict, List, Optional
 
 
 class ModelTier(Enum):
@@ -29,9 +28,18 @@ class ModelProvider(Enum):
     DEEPSEEK = "deepseek"
     WENXIN = "wenxin"  # 文心一言
     TONGYI = "tongyi"  # 通义千问
-    GLM = "glm"  # ChatGLM
-    OPENAI = "openai"  # 备用
-    CLAUDE = "claude"  # 备用
+    GLM = "glm"  # 智谱 ChatGLM
+    OPENAI = "openai"  # OpenAI GPT
+    CLAUDE = "claude"  # Anthropic Claude
+    MINIMAX = "minimax"  # MiniMax
+    KIMI = "kimi"  # Kimi
+    HUNYUAN = "hunyuan"  # 腾讯混元
+    DOUBAO = "doubao"  # 字节豆包
+    TIANGONG = "tiangong"  # 天工AI
+    SPARK = "spark"  # 讯飞星火
+    BAICHUAN = "baichuan"  # 百川智能
+    MIMO = "mimo"  # 小米 MiMo
+    OLLAMA = "ollama"  # Ollama 本地模型（零成本）
 
 
 @dataclass

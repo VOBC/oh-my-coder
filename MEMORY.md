@@ -1,6 +1,7 @@
 # MEMORY.md - 长期记忆
 
 > 最后更新：2026-04-11
+> 最后更新：2026-04-24
 
 ---
 
@@ -42,6 +43,23 @@ git status                           # 4. 确认所有更改都已暂存
 ```
 
 **或者用 pre-commit.sh**：
+### Git 黄金规则
+**每完成一个 commit 立即 push，不攒。**
+收到任务 → 完成 → commit → push → 汇报，这条链不要断开。
+
+### 🚨 多 git 仓库陷阱（2026-04-24 教训）
+这个 workspace 结构特殊：
+- **根目录**（`workspace-agent-bf627e2b/`）= 一个 git 仓库
+- **`projects/oh-my-coder/`** = 另一个独立的 git 仓库
+- **两个仓库指向同一个远程** `github.com/VOBC/oh-my-coder.git`
+
+**教训：**
+1. 修改 `projects/oh-my-coder/` 下的文件时，必须确认**在该仓库内** add + commit + push
+2. 在根目录仓库的 commit 中创建 `projects/oh-my-coder/` 内的文件，会写入到根目录仓库的 git 历史，**子目录仓库不会感知这个文件**
+3. 提交前执行：`cd projects/oh-my-coder && git status` 检查是否有未跟踪的文件
+4. 最简单的方案：以后所有 `projects/oh-my-coder/` 的操作都 `cd` 到该目录执行
+
+**GitHub 443 超时**：
 ```bash
 ./scripts/pre-commit.sh && git commit -m "message"
 ```

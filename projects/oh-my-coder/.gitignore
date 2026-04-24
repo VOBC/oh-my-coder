@@ -65,3 +65,13 @@ logs/
 .mypy_cache/
 .dmypy.json
 dmypy.json
+
+# Build artifacts & local state
+site/
+.learnings/
+
+# Desktop app
+desktop/node_modules/
+desktop/dist/
+desktop/.parcel-cache/
+

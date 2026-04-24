@@ -10,18 +10,17 @@ Writer Agent - 文档编写智能体
 模型层级：LOW（快速，对应 haiku）
 """
 
-from typing import List, Dict, Any
-from pathlib import Path
+from typing import Dict, List
 
+from ..core.router import TaskType
 from .base import (
-    BaseAgent,
     AgentContext,
+    AgentLane,
     AgentOutput,
     AgentStatus,
-    AgentLane,
+    BaseAgent,
     register_agent,
 )
-from ..core.router import TaskType
 
 
 @register_agent

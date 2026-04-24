@@ -1,101 +1,80 @@
-# 更新日志 (Changelog)
+# Changelog
 
-所有重要的项目变更都将记录在此文件中。
+All notable changes to this project will be documented in this file.
 
-格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/) 规范。
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [v0.1.0] - 2026-04-04
+## [1.0.0] - 2026-04-13
 
-### 🎉 首次发布
+### Added
 
-这是 Oh My Coder 的首个公开版本！
+- **30 专业 Agent 系统**
+  - 构建/分析通道：ExploreAgent、AnalystAgent、PlannerAgent、ArchitectAgent、ExecutorAgent、VerifierAgent、DebuggerAgent、TracerAgent
+  - 审查通道：CodeReviewerAgent、SecurityReviewerAgent
+  - 领域通道：TestEngineer、Designer、Vision、Document、Writer、Scientist、GitMaster、Database、API、DevOps、UML、Performance、Migration、Prompt、Auth、Data
+  - 协调通道：CriticAgent、SelfImprovingAgent
 
-### 新增功能
+- **7 种执行模式**
+  - `sequential`：顺序执行
+  - `parallel`：并行执行
+  - `conditional`：条件分支
+  - `doc`：文档生成
+  - `build`：完整开发流程
+  - `review`：代码审查
+  - `autopilot`：自动路由
 
-#### 🤖 智能 Agent 系统（18个）
+- **多模型支持（12 家国产模型，7 个生产就绪，5 个 Beta/待完善）**
+  - DeepSeek（性价比最高，推荐）
+  - 智谱 GLM（GLM-4-Flash 开源免费）
+  - 文心一言（百度云）
+  - 通义千问（阿里云）
+  - Kimi（月之暗面）
+  - 混元（腾讯云）
+  - 豆包（字节跳动）
+  - 天工（昆仑万维）
+  - 讯飞星火（科大讯飞）
+  - 百川（百川智能）
+  - GLM 自定义（支持私有部署）
 
-**Build/Analysis Lane（构建/分析通道）**
-- `explore` - 代码库探索智能体，快速扫描项目结构
-- `analyst` - 需求分析智能体，深度理解需求
-- `planner` - 任务规划智能体，制定执行计划
-- `architect` - 架构设计智能体，系统设计
-- `executor` - 代码实现智能体，功能开发
-- `verifier` - 验证测试智能体，质量保证
-- `debugger` - 调试修复智能体，问题定位
-- `tracer` - 因果追踪智能体，根因分析
+- **能力包系统（Capability Pack）**
+  - `.omcp` 打包分享
+  - Skill 自进化系统
+  - Tier 0 自动注入
 
-**Review Lane（审查通道）**
-- `code-reviewer` - 代码审查智能体
-- `security-reviewer` - 安全审查智能体
+- **MCP Server 扩展**
+  - Tools: run / explore / quest / checkpoint
+  - Resources: project structure / git history / agent states
+  - Prompts: task templates / workflow guides
 
-**Domain Lane（领域通道）**
-- `test-engineer` - 测试工程师智能体
-- `designer` - UI/UX 设计智能体
-- `writer` - 文档编写智能体
-- `git-master` - Git 操作智能体
-- `code-simplifier` - 代码简化智能体
-- `scientist` - 数据分析智能体
-- `qa-tester` - QA 测试智能体
+- **Checkpoint & Rollback**
+  - 断点续传
+  - 进度回退
+  - 状态快照
 
-**Coordination Lane（协调通道）**
-- `critic` - 批评家智能体，审查计划
+- **Web 界面**
+  - HTTP API（`/api/execute`、`/api/status`、`/api/agent/live`）
+  - SSE 实时推送
+  - 团队协作统计
 
-#### 🔌 模型适配器
+- **MkDocs 文档站**
+  - Material 主题
+  - 中英双语
+  - Demo 截图
 
-- **DeepSeek** - 免费额度高，优先使用
-- **文心一言** - 百度，中文能力强
-- **通义千问** - 阿里，多模型选择
+- **Quest Mode**
+  - 后台异步任务
+  - 实时进度推送
+  - 任务管理 CLI
 
-#### ⚙️ 核心功能
+### Security
 
-- **三层模型路由** - LOW/MEDIUM/HIGH 自动选择
-- **智能编排引擎** - 支持顺序/并行/条件执行
-- **工作流模板** - build/review/debug/test
-- **完整 CLI 工具** - agents/status/run 命令
+- 危险命令拦截（`rm -rf`、`sudo` 等）
+- 沙箱执行环境
+- 审计日志
 
-### 技术特性
+### Documentation
 
-- ✅ Python 3.10+ 
-- ✅ 异步 API 设计
-- ✅ 类型注解完整
-- ✅ 统一模型接口
-- ✅ 成本控制机制
-- ✅ 状态持久化
-
-### 文档
-
-- ✅ README.md - 项目介绍
-- ✅ CHANGELOG.md - 更新日志
-- ✅ CONTRIBUTING.md - 贡献指南
-- ✅ LICENSE - MIT 协议
-- ✅ 架构文档 - docs/ARCHITECTURE.md
-
-### 快速开始
-
-```bash
-# 克隆项目
-git clone <repository-url>
-cd oh-my-coder
-
-# 安装依赖
-pip install -r requirements.txt
-
-# 配置 API Key
-export DEEPSEEK_API_KEY=your_key
-
-# 运行演示
-python demo.py
-```
-
-### 致谢
-
-- 感谢 [oh-my-claudecode](https://github.com/Yeachan-Heo/oh-my-claudecode) 项目启发
-- 感谢 DeepSeek、文心一言、通义千问提供的 API
-- 感谢所有测试用户
-
----
-
-## 版本说明
-
-- **v0.1.0** - 首个公开版本，功能基本完善
-- 后续版本将持续优化和增加功能
+- README.md：快速开始 + 架构说明
+- docs/：MkDocs 文档站
+- CHANGELOG.md：版本变更记录

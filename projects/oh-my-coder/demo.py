@@ -57,7 +57,7 @@ def init_oh_my_coder():
     router = ModelRouter(config)
     
     print("✅ Oh My Coder 初始化成功!")
-    print(f"   - 模型: DeepSeek")
+    print("   - 模型: DeepSeek")
     print(f"   - 每日预算: ¥{config.daily_budget}")
     print()
     

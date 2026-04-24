@@ -110,28 +110,6 @@ function setupIpc() {
     return ApiBridge.switchModel(modelId);
   });
 
-  // Model config (new model-centric settings)
-  ipcMain.handle('omc:model:config:list', async () => {
-    // Auto-migrate on first access
-    const mig = ApiBridge.migrateProvidersConfig();
-    if (mig.ok && mig.migrated > 0) {
-      console.log(`[main] Migrated ${mig.migrated} model configs from providers.json`);
-    }
-    return ApiBridge.getModelConfigList();
-  });
-
-  ipcMain.handle('omc:model:config:get', async (_, modelId) => {
-    return ApiBridge.getModelConfig(modelId);
-  });
-
-  ipcMain.handle('omc:model:config:set', async (_, { modelId, cfg }) => {
-    return ApiBridge.setModelConfig(modelId, cfg);
-  });
-
-  ipcMain.handle('omc:model:config:delete', async (_, modelId) => {
-    return ApiBridge.deleteModelConfig(modelId);
-  });
-
   // Chat — send task to omc and stream response
   ipcMain.handle('omc:chat:send', async (event, opts) => {
     return ApiBridge.chatSend(event, opts);

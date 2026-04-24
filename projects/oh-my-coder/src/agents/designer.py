@@ -10,18 +10,17 @@ Designer Agent - UI/UX 设计智能体
 模型层级：MEDIUM（平衡，对应 sonnet）
 """
 
-from typing import List, Dict, Any
-from pathlib import Path
+from typing import Dict, List
 
+from ..core.router import TaskType
 from .base import (
-    BaseAgent,
     AgentContext,
+    AgentLane,
     AgentOutput,
     AgentStatus,
-    AgentLane,
+    BaseAgent,
     register_agent,
 )
-from ..core.router import TaskType
 
 
 @register_agent

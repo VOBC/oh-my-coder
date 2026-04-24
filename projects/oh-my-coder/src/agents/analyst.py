@@ -17,20 +17,18 @@ Analyst Agent - 需求分析智能体
 5. 生成需求文档
 """
 
-from typing import List, Dict, Any
-from pathlib import Path
 from dataclasses import dataclass
-import json
+from typing import Dict, List
 
+from ..core.router import TaskType
 from .base import (
-    BaseAgent,
     AgentContext,
+    AgentLane,
     AgentOutput,
     AgentStatus,
-    AgentLane,
+    BaseAgent,
     register_agent,
 )
-from ..core.router import TaskType
 
 
 @dataclass
