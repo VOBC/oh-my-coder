@@ -7,6 +7,13 @@ contextBridge.exposeInMainWorld('omc', {
   modelCurrent: () => ipcRenderer.invoke('omc:model:current'),
   modelSwitch: (id) => ipcRenderer.invoke('omc:model:switch', id),
 
+  // Model config (model-centric settings)
+  modelConfigList: () => ipcRenderer.invoke('omc:model:config:list'),
+  modelConfigGet: (modelId) => ipcRenderer.invoke('omc:model:config:get', modelId),
+  modelConfigSet: (modelId, cfg) => ipcRenderer.invoke('omc:model:config:set', { modelId, cfg }),
+  modelConfigDelete: (modelId) => ipcRenderer.invoke('omc:model:config:delete', modelId),
+  modelConfigTest: (modelId, cfg) => ipcRenderer.invoke('omc:model:config:test', modelId, cfg),
+
   // Chat
   chatSend: (opts) => ipcRenderer.invoke('omc:chat:send', opts),
   onChatChunk: (cb) => {

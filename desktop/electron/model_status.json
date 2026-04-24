@@ -1,0 +1,18 @@
+{
+  "deepseek-chat": "production",
+  "deepseek-reasoner": "production",
+  "glm-4-flash": "production",
+  "glm-4v-flash": "production",
+  "MiniMax-Text-01": "production",
+  "moonshot-v1-128k": "production",
+  "doubao-pro-32k": "production",
+  "tiangong-3": "production",
+  "Baichuan4": "production",
+  "ernie-4.0-8k-latest": "beta",
+  "qwen-plus": "beta",
+  "hunyuan-turbo": "beta",
+  "generalv4.0": "beta",
+  "gpt-4o-mini": "beta",
+  "claude-3-5-haiku-20241022": "beta",
+  "gemini-2.0-flash": "beta"
+}

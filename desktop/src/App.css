@@ -1565,3 +1565,60 @@ html, body, #root {
   margin-left: 8px;
 }
 
+
+/* Model filtering UI */
+.settings-sidebar__label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.settings-sidebar__toggle-beta {
+  background: var(--bg-hover);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text-dim);
+  cursor: pointer;
+  font-size: 12px;
+  padding: 4px 8px;
+  text-align: left;
+  transition: all 0.2s ease;
+}
+
+.settings-sidebar__toggle-beta:hover {
+  background: var(--accent);
+  color: var(--bg);
+}
+
+.settings-sidebar__search {
+  padding: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+.settings-sidebar__search-input {
+  width: 100%;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 13px;
+}
+
+.settings-sidebar__search-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.settings-model-item__status {
+  font-size: 10px;
+  margin-left: auto;
+}
+
+.settings-model-item__status.status-beta {
+  color: #f59e0b;
+}
+
+.settings-model-item__status.status-deprecated {
+  color: #ef4444;
+}

@@ -6,6 +6,7 @@ import { getKeyboardShortcutsController } from './controllers/KeyboardShortcutsC
 import { useChatHistory } from './hooks/useChatHistory';
 import HistoryPanel from './components/HistoryPanel';
 import DiffView, { FileDiff, DiffLine } from './components/DiffView';
+import { ModelSelector } from './components/ModelSelector';
 import { ShortcutsPanel } from './components/ShortcutsPanel';
 import { InlineInputPanel } from './components/InlineInputPanel';
 
@@ -71,69 +72,6 @@ function api() {
     console.warn('[App] window.omc not available — preload may not be loaded');
   }
   return window.omc;
-}
-
-// ── Component: ModelSelector ───────────────────────────────────────────────────
-interface ModelSelectorProps {
-  models: Model[];
-  current: string;
-  onSwitch: (id: string) => void;
-  trigger?: React.ReactNode;
-  open?: boolean;
-  onOpenChange?: (open: boolean) => void;
-}
-
-function ModelSelector({ models, current, onSwitch, trigger, open: controlledOpen, onOpenChange }: ModelSelectorProps) {
-  const [internalOpen, setInternalOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-  const cur = models.find(m => m.id === current) || models[0];
-  
-  // Use controlled or internal state
-  const open = controlledOpen !== undefined ? controlledOpen : internalOpen;
-  const setOpen = (v: boolean) => {
-    if (onOpenChange) onOpenChange(v);
-    if (controlledOpen === undefined) setInternalOpen(v);
-  };
-
-  useEffect(() => {
-    const h = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
-    document.addEventListener('mousedown', h);
-    return () => document.removeEventListener('mousedown', h);
-  }, [setOpen]);
-
-  return (
-    <div className="model-selector" ref={ref}>
-      {trigger ? (
-        <div onClick={() => setOpen(!open)}>{trigger}</div>
-      ) : (
-        <button className="model-selector__trigger" onClick={() => setOpen(!open)}>
-          <span className="model-selector__icon" style={{ color: TIER_COLOR[cur?.tier] || '#d4a017' }}>
-            {TIER_ICON[cur?.tier] || '◆'}
-          </span>
-          <span className="model-selector__name">{cur?.name || 'Select model'}</span>
-          <span className="model-selector__caret">{open ? '▲' : '▼'}</span>
-        </button>
-      )}
-      {open && (
-        <div className="model-selector__dropdown">
-          <div className="model-selector__shortcut-hint">
-            <kbd>⌘</kbd><kbd>M</kbd> 快速切换
-          </div>
-          {models.map(m => (
-            <button
-              key={m.id}
-              className={`model-selector__item${m.id === current ? ' active' : ''}`}
-              onClick={() => { onSwitch(m.id); setOpen(false); }}
-            >
-              <span className="model-selector__icon" style={{ color: TIER_COLOR[m.tier] }}>{TIER_ICON[m.tier]}</span>
-              <span className="model-selector__item-name">{m.name}</span>
-              <span className="model-selector__provider">{m.provider}</span>
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  );
 }
 
 // ── Component: ChatMessage ──────────────────────────────────────────────────────

@@ -1,5 +1,5 @@
 // electron/api-bridge.js — Bridge between Electron main process and omc CLI
-const { execSync, exec } = require('child_process');
+const { execFileSync, spawn } = require('child_process');
 const path = require('path');
 const os = require('os');
 const fs = require('fs');
@@ -75,7 +75,6 @@ function runOmc(args, opts = {}) {
   const timeout = opts.timeout || 15000;
 
   try {
-    const { execFileSync } = require('child_process');
     const stdout = execFileSync(bin, [...args, '--json'], {
       encoding: 'utf-8', cwd, timeout, stdio: ['pipe', 'pipe', 'pipe'],
     });
@@ -115,6 +114,117 @@ const PRODUCTION_PROVIDERS = [
 ];
 
 const ApiBridge = {
+  // ── Model Config ───────────────────────────────────────────────────────────
+  /**
+   * Get all model configs from ~/.omc/config/models.json
+   * @returns {Record<string, {api_key: string, base_url?: string, enabled?: boolean}>}
+   */
+  getModelConfigList() {
+    const cfgPath = getModelConfigPath();
+    try {
+      if (!fs.existsSync(cfgPath)) return {};
+      const raw = fs.readFileSync(cfgPath, 'utf-8');
+      return JSON.parse(raw);
+    } catch (e) {
+      console.error('[api-bridge] getModelConfigList failed:', e.message);
+      return {};
+    }
+  },
+
+  /**
+   * Get config for a single model
+   */
+  getModelConfig(modelId) {
+    const all = this.getModelConfigList();
+    return all[modelId] ?? null;
+  },
+
+  /**
+   * Set config for a single model (partial update)
+   */
+  setModelConfig(modelId, cfg) {
+    const cfgPath = getModelConfigPath();
+    try {
+      // Ensure directory exists
+      const dir = path.dirname(cfgPath);
+      if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+
+      // Load existing
+      let all = {};
+      if (fs.existsSync(cfgPath)) {
+        try { all = JSON.parse(fs.readFileSync(cfgPath, 'utf-8')); } catch {}
+      }
+
+      // Merge (replace only provided fields)
+      all[modelId] = {
+        ...(all[modelId] || {}),
+        ...cfg,
+        api_key: cfg.api_key ?? '',
+        base_url: cfg.base_url ?? all[modelId]?.base_url ?? '',
+      };
+
+      fs.writeFileSync(cfgPath, JSON.stringify(all, null, 2), 'utf-8');
+      return { ok: true };
+    } catch (e) {
+      return { ok: false, error: e.message };
+    }
+  },
+
+  /**
+   * Delete config for a model
+   */
+  deleteModelConfig(modelId) {
+    const cfgPath = getModelConfigPath();
+    try {
+      if (!fs.existsSync(cfgPath)) return { ok: true };
+      const all = JSON.parse(fs.readFileSync(cfgPath, 'utf-8'));
+      delete all[modelId];
+      fs.writeFileSync(cfgPath, JSON.stringify(all, null, 2), 'utf-8');
+      return { ok: true };
+    } catch (e) {
+      return { ok: false, error: e.message };
+    }
+  },
+
+  /**
+   * Migrate old providers.json to new models.json
+   */
+  migrateProvidersConfig() {
+    const providersPath = getProvidersConfigPath();
+    const modelsPath = getModelConfigPath();
+    try {
+      if (!fs.existsSync(providersPath)) return { ok: true, migrated: 0 };
+      if (fs.existsSync(modelsPath)) return { ok: true, migrated: 0 }; // already migrated
+
+      const providers = JSON.parse(fs.readFileSync(providersPath, 'utf-8'));
+      const models: Record<string, any> = {};
+
+      // Old format: { provider: { api_key, models: [...] } }
+      // New format: { "model-id": { api_key, provider } }
+      for (const [provider, pcfg] of Object.entries(providers)) {
+        const pc = pcfg as any;
+        if (!pc.api_key) continue;
+        for (const m of (pc.models || [])) {
+          const modelId = typeof m === 'string' ? m : (m.id || m.model || m.name);
+          if (modelId) {
+            models[modelId] = { api_key: pc.api_key, base_url: pc.base_url || '', provider };
+          }
+        }
+      }
+
+      if (Object.keys(models).length === 0) return { ok: true, migrated: 0 };
+
+      // Ensure directory
+      const dir = path.dirname(modelsPath);
+      if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+
+      fs.writeFileSync(modelsPath, JSON.stringify(models, null, 2), 'utf-8');
+      return { ok: true, migrated: Object.keys(models).length };
+    } catch (e) {
+      return { ok: false, error: e.message };
+    }
+  },
+
   /**
    * Get model list from `omc model list --json`
    * Returns normalized array: [{id, name, provider, tier, context, endpoint, pricing}]
@@ -182,7 +292,6 @@ const ApiBridge = {
     const bin = getOmcBin();
     if (!bin) return { ok: false, error: 'omc not found' };
     try {
-      const { execFileSync } = require('child_process');
       const stdout = execFileSync(bin, ['model', 'switch', modelId], {
         encoding: 'utf-8', timeout: 10000,
       });
