@@ -564,6 +564,8 @@ omc context browser
 
 **推荐**：只需配置 `DEEPSEEK_API_KEY` 即可开始使用。
 
+> ⚠️ **安全提醒**：API Key 通过环境变量或 `~/.omc/config.yaml` 配置，**切勿将 Key 文件提交到 git**。项目 `.gitignore` 已排除 `.env`、`*.key`、`.omc/` 等路径，请确保遵守。
+
 ---
 
 ## 🔄 工作流
@@ -770,6 +772,8 @@ A: 设置对应模型的环境变量即可：
    export KIMI_API_KEY=your_key        # 备选模型
    ```
    路由器会根据任务类型和成本自动选择最优模型。
+   
+   ⚠️ **注意**：不要将包含 API Key 的脚本提交到 git，确保 `.gitignore` 已排除相关文件。
 
 **Q: 生成的代码有安全问题怎么办？**
 A: Oh My Coder 内置 SecurityReviewerAgent，会对生成的代码进行安全审查。建议配合 `omc run -w review` 进行额外审查后再合并代码。
