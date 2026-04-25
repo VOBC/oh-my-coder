@@ -784,6 +784,26 @@ A: 支持。提供三种方式：
    2. Docker 部署：`docker compose up -d`
    3. 支持对接本地模型 API（如 Ollama）
 
+### 🖥️ 本地模型支持（Ollama）
+
+oh-my-coder 支持通过 Ollama 运行本地模型，零成本使用 AI：
+
+```bash
+# 检查 Ollama 状态（含健康检查和延迟测试）
+omc local status
+
+# 列出本地可用模型
+omc local list
+
+# 拉取模型
+omc local pull qwen2:7b
+
+# 设置默认本地模型
+export OLLAMA_MODEL=qwen2:7b
+```
+
+**智能检测**：启动时自动检测 Ollama 可用性，未运行时自动 failover 到云端模型，无需手动配置。
+
 ---
 
 ## 🤝 贡献
