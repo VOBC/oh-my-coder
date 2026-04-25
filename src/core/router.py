@@ -115,6 +115,7 @@ class RouterConfig:
     ollama_base_url: Optional[str] = None
     ollama_model: Optional[str] = None  # 如 qwen2:7b
     prefer_local: bool = False  # 默认不优先本地模型，避免未装 ollama 时超时
+    auto_detect_local: bool = True  # 自动检测本地模型可用性，关闭后跳过检测
 
     # 成本预算（元）
     daily_budget: float = 10.0
@@ -144,6 +145,11 @@ class RouterConfig:
         )
         self.ollama_model = self.ollama_model or os.getenv("OLLAMA_MODEL", "qwen2:7b")
         self.prefer_local = os.getenv("PREFER_LOCAL_MODEL", "false").lower() in (
+            "true",
+            "1",
+            "yes",
+        )
+        self.auto_detect_local = os.getenv("AUTO_DETECT_LOCAL", "true").lower() in (
             "true",
             "1",
             "yes",
@@ -302,12 +308,38 @@ class ModelRouter:
 
     def _initialize_models(self) -> None:
         """初始化所有可用模型（惰性初始化）"""
-        # Ollama 本地模型（优先检测）
+        # Ollama 本地模型（智能检测）
         try:
             from ..models.ollama import OllamaModel, OLLAMA_DEFAULT_URL
 
             base_url = self.config.ollama_base_url or OLLAMA_DEFAULT_URL
-            if OllamaModel.is_available(base_url):
+            ollama_available = False
+
+            # 使用健康检查模块（如果启用自动检测）
+            if self.config.auto_detect_local:
+                try:
+                    from .ollama_health import OllamaHealthChecker
+
+                    health = OllamaHealthChecker(base_url=base_url)
+                    status = health.check_ollama()
+                    ollama_available = status.running
+                    if ollama_available:
+                        logger.info(
+                            f"Ollama 健康检查通过: {status.model_count} 个模型, "
+                            f"延迟 {status.latency_ms:.0f}ms"
+                        )
+                    else:
+                        logger.info(
+                            "Ollama 未运行，跳过本地模型（自动 failover 到云端）"
+                        )
+                except ImportError:
+                    logger.debug("ollama_health 模块未找到，使用基础检测")
+                    ollama_available = OllamaModel.is_available(base_url)
+            else:
+                ollama_available = OllamaModel.is_available(base_url)
+                logger.debug("auto_detect_local 已关闭，使用基础检测")
+
+            if ollama_available:
                 model_name = self.config.ollama_model or "qwen2:7b"
                 for tier in ["low", "medium", "high"]:
                     cfg = ModelConfig(api_key="", base_url=base_url)
@@ -316,10 +348,28 @@ class ModelRouter:
                     )
                 logger.info(f"Ollama 本地模型已初始化 ({model_name})")
 
-                # 列出可用模型
-                available = OllamaModel.list_models(base_url)
-                if available:
-                    logger.info(f"本地可用模型: {[m['name'] for m in available[:5]]}")
+                # 列出可用模型（使用发现模块）
+                if self.config.auto_detect_local:
+                    try:
+                        from .local_model_discovery import discover_ollama_models
+
+                        discovered = discover_ollama_models(base_url)
+                        if discovered:
+                            logger.info(
+                                f"本地可用模型: {[m.model_name for m in discovered[:5]]}"
+                            )
+                    except ImportError:
+                        available = OllamaModel.list_models(base_url)
+                        if available:
+                            logger.info(
+                                f"本地可用模型: {[m['name'] for m in available[:5]]}"
+                            )
+                else:
+                    available = OllamaModel.list_models(base_url)
+                    if available:
+                        logger.info(
+                            f"本地可用模型: {[m['name'] for m in available[:5]]}"
+                        )
             else:
                 logger.debug(f"Ollama 服务不可用 ({base_url})")
         except Exception as e:
