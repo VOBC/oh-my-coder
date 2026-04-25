@@ -1,0 +1,15 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+pre { @apply bg-gray-900 text-gray-100 rounded-lg p-4 overflow-x-auto text-sm; }
+code { @apply font-mono; }
+p code, li code { @apply bg-gray-100 text-pink-600 px-1.5 py-0.5 rounded text-sm; }
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: #f1f1f1; }
+::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #a1a1a1; }
+
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+.message-enter { animation: fadeIn 0.2s ease-out; }
