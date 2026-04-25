@@ -166,8 +166,6 @@ class TestExploreAgent:
         assert "Python" in stats["language_distribution"]
 
 
-
-
 class TestRateLimitHandling:
     """测试 429 限流错误处理"""
 
@@ -208,10 +206,14 @@ class TestRateLimitHandling:
         glm_model = router._models.get("glm", {}).get("low")
 
         if deepseek_model and glm_model:
-            with patch.object(deepseek_model, "generate", new_callable=AsyncMock) as mock_ds:
+            with patch.object(
+                deepseek_model, "generate", new_callable=AsyncMock
+            ) as mock_ds:
                 mock_ds.side_effect = http_error_429
 
-                with patch.object(glm_model, "generate", new_callable=AsyncMock) as mock_glm:
+                with patch.object(
+                    glm_model, "generate", new_callable=AsyncMock
+                ) as mock_glm:
                     mock_glm.return_value = success_response
 
                     # DeepSeek 429 -> 应立即切换到 GLM，不等 3 次重试
@@ -246,7 +248,9 @@ class TestRateLimitHandling:
 
         deepseek_model = router._models.get("deepseek", {}).get("low")
         if deepseek_model:
-            with patch.object(deepseek_model, "generate", new_callable=AsyncMock) as mock_ds:
+            with patch.object(
+                deepseek_model, "generate", new_callable=AsyncMock
+            ) as mock_ds:
                 mock_ds.side_effect = http_error_429
 
                 messages = [Message(role="user", content="test")]
@@ -284,7 +288,9 @@ class TestRateLimitHandling:
 
         deepseek_model = router._models.get("deepseek", {}).get("low")
         if deepseek_model:
-            with patch.object(deepseek_model, "generate", new_callable=AsyncMock) as mock_ds:
+            with patch.object(
+                deepseek_model, "generate", new_callable=AsyncMock
+            ) as mock_ds:
                 mock_ds.side_effect = http_error_500
 
                 messages = [Message(role="user", content="test")]
