@@ -20,25 +20,25 @@ export GLM_API_KEY=your_key_here
 
 ## 第三步：运行
 
-=== "CLI"
+## CLI
 
-    ```bash
-    # 探索当前项目
-    omc explore .
+```bash
+# 探索当前项目
+omc explore .
 
-    # 执行开发任务
-    omc run "实现一个 REST API"
+# 执行开发任务
+omc run "实现一个 REST API"
 
-    # 启动后台任务
-    omc quest start "重构用户模块"
-    ```
+# 启动后台任务
+omc quest start "重构用户模块"
+```
 
-=== "Web 界面"
+## Web 界面
 
-    ```bash
-    python -m src.web.app
-    # 打开浏览器访问 http://localhost:8000
-    ```
+```bash
+python -m src.web.app
+# 打开浏览器访问 http://localhost:8000
+```
 
 ## 常见任务示例
 

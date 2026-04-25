@@ -53,23 +53,23 @@ $ omc run "实现一个 REST API"
 
 ## 安装
 
-=== "DeepSeek（推荐）"
+## DeepSeek（推荐）
 
-    ```bash
-    git clone https://github.com/VOBC/oh-my-coder.git
-    cd oh-my-coder
-    pip install -e .
-    export DEEPSEEK_API_KEY=sk-xxxxx
-    omc explore .          # 探索当前项目
-    omc run "实现一个 REST API"   # 执行任务
-    ```
+```bash
+git clone https://github.com/VOBC/oh-my-coder.git
+cd oh-my-coder
+pip install -e .
+export DEEPSEEK_API_KEY=sk-xxxxx
+omc explore .          # 探索当前项目
+omc run "实现一个 REST API"   # 执行任务
+```
 
-=== "GLM（免费）"
+## GLM（免费）
 
-    ```bash
-    export GLM_API_KEY=your_key_here
-    omc explore .
-    ```
+```bash
+export GLM_API_KEY=your_key_here
+omc explore .
+```
 
 ## 与同类工具对比
 
