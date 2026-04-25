@@ -22,6 +22,8 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
+import httpx
+
 from ..models.base import (
     BaseModel,
     Message,
@@ -636,6 +638,23 @@ class ModelRouter:
 
                     return response
 
+                except httpx.HTTPStatusError as e:
+                    # 429 限流：不重试，直接切换到下一个 provider
+                    if e.response.status_code == 429:
+                        last_error = e
+                        logger.warning(
+                            f"{provider} 触发限流 (429)，切换到下一个 provider"
+                        )
+                        break  # 跳出 attempt 循环，进入下一个 provider
+                    # 其他 HTTP 错误：原有重试逻辑
+                    last_error = e
+                    logger.warning(
+                        f"请求失败（{provider}/{decision.selected_tier}, "
+                        f"attempt={attempt + 1}/3）: HTTP {e.response.status_code}"
+                    )
+                    if attempt < 2:
+                        await asyncio.sleep(2 * (attempt + 1))  # 递增等待
+
                 except Exception as e:
                     last_error = e
                     logger.warning(
@@ -647,6 +666,18 @@ class ModelRouter:
 
         # 所有尝试都失败
         logger.error(f"所有提供商均失败: {last_error}")
+
+        # 检查是否是 429 限流导致
+        if (
+            isinstance(last_error, httpx.HTTPStatusError)
+            and last_error.response.status_code == 429
+        ):
+            raise RateLimitError(
+                "所有模型均触发限流。建议：\n"
+                "1. 等待几分钟后重试\n"
+                '2. 配置多个 API Key 以自动切换：omc config set -k DEEPSEEK_API_KEY -v "your-key"'
+            ) from last_error
+
         raise NoModelAvailableError(
             f"所有模型均不可用（task={task_type}）: {last_error}"
         ) from last_error
@@ -693,5 +724,11 @@ class ModelRouter:
 # ============================================================
 class NoModelAvailableError(Exception):
     """没有可用模型"""
+
+    pass
+
+
+class RateLimitError(Exception):
+    """API 限流错误 (429)"""
 
     pass
