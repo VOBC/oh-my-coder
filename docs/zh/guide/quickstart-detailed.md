@@ -92,8 +92,8 @@ python -m src.web.app
 # 浏览器打开: http://localhost:8000
 
 # 💻 CLI
-python -m src.cli explore .
-python -m src.cli run "实现一个 REST API"
+omc explore .
+omc run "实现一个 REST API"
 ```
 
 ---
