@@ -28,10 +28,63 @@ def check_status():
 
     console.print(f"[cyan]检测 Ollama 服务 ({base_url})...[/cyan]")
 
-    if OllamaModel.is_available(base_url):
+    # 尝试使用健康检查模块（增强版）
+    try:
+        from ..core.ollama_health import OllamaHealthChecker
+
+        health = OllamaHealthChecker(base_url=base_url)
+        status = health.check_ollama()
+
+        if status.running:
+            console.print("[green]✓ Ollama 服务运行中[/green]")
+            console.print(f"  版本: {status.version or '未知'}")
+            console.print(f"  模型数: {status.model_count}")
+            console.print(f"  延迟: {status.latency_ms:.0f}ms")
+
+            # 列出本地模型（使用模型发现）
+            if status.available_models:
+                console.print(
+                    f"\n[bold]本地可用模型 ({len(status.available_models)} 个):[/bold]"
+                )
+                try:
+                    from ..core.local_model_discovery import discover_ollama_models
+
+                    discovered = discover_ollama_models(base_url)
+                    table = Table()
+                    table.add_column("模型名称", style="cyan")
+                    table.add_column("大小")
+                    table.add_column("参数量")
+                    table.add_column("量化")
+
+                    for m in discovered:
+                        size_str = f"{m.size_gb:.1f} GB" if m.size_gb >= 1 else f"{m.size_mb:.0f} MB"
+                        table.add_row(
+                            m.model_name,
+                            size_str,
+                            m.parameter_size or "-",
+                            m.quantization or "-",
+                        )
+                    console.print(table)
+                except ImportError:
+                    for name in status.available_models:
+                        console.print(f"  • {name}")
+            else:
+                console.print("[yellow]暂无本地模型[/yellow]")
+                console.print("\n[dim]运行以下命令拉取模型：[/dim]")
+                console.print("[green]  omc local pull qwen2:7b[/green]")
+        else:
+            console.print("[red]✗ Ollama 服务未运行[/red]")
+            console.print("\n[yellow]请先启动 Ollama：[/yellow]")
+            console.print("[green]  ollama serve[/green]")
+            console.print("\n或安装 Ollama：https://ollama.ai/")
+        return
+    except ImportError:
+        pass  # 回退到基础检测
+
+    # 回退：基础检测
         console.print("[green]✓ Ollama 服务运行中[/green]")
 
-        # 列出本地模型
+        # 列出本地模型（基础版）
         models = OllamaModel.list_models(base_url)
         if models:
             console.print(f"\n[bold]本地可用模型 ({len(models)} 个):[/bold]")
