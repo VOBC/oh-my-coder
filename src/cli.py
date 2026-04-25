@@ -14,6 +14,7 @@ Oh My Coder CLI - 命令行入口
 """
 
 import asyncio
+import logging
 import os
 from pathlib import Path
 
@@ -89,16 +90,16 @@ try:
     from .cli_clean import app as clean_app
 
     app.add_typer(clean_app, name="clean", help="代码清理 - 检测和清理冗余代码")
-except Exception:
-    pass
+except Exception as e:
+    logging.warning("cli_clean 模块加载失败，跳过 clean 子命令: %s", e)
 
 # 成本优化命令
 try:
     from .cli_cost import app as cost_app
 
     app.add_typer(cost_app, name="cost", help="成本优化 - 根据任务推荐最优模型")
-except Exception:
-    pass
+except Exception as e:
+    logging.warning("cli_cost 模块加载失败，跳过 cost 子命令: %s", e)
 
 # 本地模型命令
 try:
@@ -107,8 +108,8 @@ try:
     app.add_typer(
         local_models_app, name="local", help="本地模型管理 - Ollama 零成本运行"
     )
-except Exception:
-    pass
+except Exception as e:
+    logging.warning("cli_local_models 模块加载失败，跳过 local 子命令: %s", e)
 
 # model 子命令
 from .cli_model import app as model_app  # noqa: E402
@@ -120,24 +121,24 @@ try:
     from .cli_gateway import app as gateway_app  # noqa: E402
 
     app.add_typer(gateway_app, name="gateway", help="多平台网关 - Telegram / Discord")
-except Exception:
-    pass  # gateway 依赖缺失时跳过
+except Exception as e:
+    logging.warning("cli_gateway 模块加载失败，跳过 gateway 子命令: %s", e)
 
 # agent 子命令 - Agent 配置管理与自进化
 try:
     from .cli_agent import app as agent_app  # noqa: E402
 
     app.add_typer(agent_app, name="agent", help="Agent 管理 - 导出/导入/进化")
-except Exception:
-    pass
+except Exception as e:
+    logging.warning("cli_agent 模块加载失败，跳过 agent 子命令: %s", e)
 
 # template 子命令 - 工作流模板
 try:
     from .cli_template import app as template_app  # noqa: E402
 
     app.add_typer(template_app, name="template", help="工作流模板 - 列出/使用模板")
-except Exception:
-    pass
+except Exception as e:
+    logging.warning("cli_template 模块加载失败，跳过 template 子命令: %s", e)
 
 console = Console()
 
@@ -434,8 +435,8 @@ def _detect_project_name(project_path: Path) -> str:
                 data = tomllib.load(f)
             if "project" in data and "name" in data["project"]:
                 return data["project"]["name"]
-        except Exception:
-            pass
+        except Exception as e:
+            logging.warning("pyproject.toml 解析失败，使用目录名: %s", e)
 
     # 尝试从 setup.py 读取
     setup_py = project_path / "setup.py"
@@ -447,8 +448,8 @@ def _detect_project_name(project_path: Path) -> str:
             match = re.search(r'name\s*=\s*["\']([^"\']+)["\']', content)
             if match:
                 return match.group(1)
-        except Exception:
-            pass
+        except Exception as e:
+            logging.warning("setup.py 解析失败，使用目录名: %s", e)
 
     # 默认使用目录名
     return project_path.name
