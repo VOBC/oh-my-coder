@@ -19,6 +19,7 @@ from typing import Any, Dict, List, Optional
 from .short_term import ShortTermMemory, SessionContext
 from .long_term import LongTermMemory, UserPreference, ProjectPreference
 from .learnings import LearningsMemory, LearningEntry
+from .auto_compact import AutoCompact, CompactResult
 
 # 可选：tiktoken 用于精确 token 计算
 try:
@@ -40,6 +41,9 @@ class MemoryConfig:
     # 分层记忆限制（token 数）
     tier0_max_tokens: int = 500
     tier1_max_tokens: int = 2000
+    # 自动压缩配置
+    compact_threshold: float = 0.85
+    warning_threshold: float = 0.70
 
 
 class MemoryManager:
@@ -53,6 +57,11 @@ class MemoryManager:
         self.long_term = LongTermMemory(config.storage_dir)
         self.learnings = LearningsMemory(config.storage_dir)
         self._enc = self._get_encoder()
+        self.auto_compact = AutoCompact(
+            self,
+            compact_threshold=config.compact_threshold,
+            warning_threshold=config.warning_threshold,
+        )
 
     @staticmethod
     def _get_encoder():
@@ -69,6 +78,24 @@ class MemoryManager:
         if self._enc:
             return len(self._enc.encode(text))
         return int(len(text) / 2.5)  # 回退估算：英文~0.4 token/词
+
+    def auto_compact_check(
+        self,
+        session: SessionContext,
+        provider: str = "",
+        model: str = "",
+    ) -> CompactResult:
+        """检查并执行自动压缩
+
+        Args:
+            session: 当前会话上下文
+            provider: 模型提供商
+            model: 模型名称
+
+        Returns:
+            CompactResult: 压缩结果
+        """
+        return self.auto_compact.check_and_compact(session, provider, model)
 
     @classmethod
     def from_project(cls, project_path: Path) -> "MemoryManager":
