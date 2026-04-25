@@ -68,7 +68,7 @@ class MemoryManager:
         """计算 token 数"""
         if self._enc:
             return len(self._enc.encode(text))
-        return len(text) // 4  # 回退估算
+        return int(len(text) / 2.5)  # 回退估算：英文~0.4 token/词
 
     @classmethod
     def from_project(cls, project_path: Path) -> "MemoryManager":
