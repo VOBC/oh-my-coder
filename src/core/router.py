@@ -114,7 +114,7 @@ class RouterConfig:
     # Ollama 本地模型配置
     ollama_base_url: Optional[str] = None
     ollama_model: Optional[str] = None  # 如 qwen2:7b
-    prefer_local: bool = True  # 优先使用本地模型
+    prefer_local: bool = False  # 默认不优先本地模型，避免未装 ollama 时超时
 
     # 成本预算（元）
     daily_budget: float = 10.0
@@ -143,7 +143,7 @@ class RouterConfig:
             "OLLAMA_BASE_URL", "http://localhost:11434"
         )
         self.ollama_model = self.ollama_model or os.getenv("OLLAMA_MODEL", "qwen2:7b")
-        self.prefer_local = os.getenv("PREFER_LOCAL_MODEL", "true").lower() in (
+        self.prefer_local = os.getenv("PREFER_LOCAL_MODEL", "false").lower() in (
             "true",
             "1",
             "yes",
