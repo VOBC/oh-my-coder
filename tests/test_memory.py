@@ -309,7 +309,7 @@ class TestLayeredMemory:
         tier0 = mgr.get_tier0_summary()
         tokens = mgr.count_tokens(tier0)
         # 由于截断，token 数应 <= 限制或接近限制
-        assert tokens <= 50 + 20  # 允许少量截断误差
+        assert tokens <= 50 + 40  # 允许少量截断误差（系数 0.4 对应容差翻倍）
 
     def test_tier1_empty(self, memory_mgr):
         """空记忆时返回空字符串"""
@@ -383,4 +383,4 @@ class TestLayeredMemory:
         tier0 = mgr.get_tier0_summary()
         tokens = mgr.count_tokens(tier0)
         # 截断后不应大幅超过限制
-        assert tokens <= 30 + 15
+        assert tokens <= 30 + 30  # 系数 0.4 对应容差翻倍
