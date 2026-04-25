@@ -7,7 +7,7 @@
 import json
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List, Optional
+from typing import List
 
 from .short_term import SessionContext, Message
 
@@ -54,9 +54,7 @@ class AutoCompact:
         self.compact_threshold = compact_threshold
         self.warning_threshold = warning_threshold
 
-    def _get_model_context_window(
-        self, provider: str = "", model: str = ""
-    ) -> int:
+    def _get_model_context_window(self, provider: str = "", model: str = "") -> int:
         """从 model_metadata.json 获取模型的 context window"""
         if not model:
             return self.model_context_window
@@ -156,9 +154,7 @@ class AutoCompact:
         original_count = len(session.messages)
 
         # 分离 system 消息和非 system 消息
-        system_msgs: List[Message] = [
-            m for m in session.messages if m.role == "system"
-        ]
+        system_msgs: List[Message] = [m for m in session.messages if m.role == "system"]
         non_system_msgs: List[Message] = [
             m for m in session.messages if m.role != "system"
         ]
@@ -228,11 +224,7 @@ class AutoCompact:
 
         # 提取关键词（简单实现：找出现频率较高的词）
         all_text = " ".join(m.content for m in messages)
-        words = [
-            w.lower()
-            for w in all_text.split()
-            if len(w) > 3 and w.isalpha()
-        ]
+        words = [w.lower() for w in all_text.split() if len(w) > 3 and w.isalpha()]
 
         # 统计词频
         word_freq = {}

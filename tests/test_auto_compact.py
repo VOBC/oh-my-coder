@@ -1,7 +1,6 @@
 """AutoCompact 单元测试"""
 
 import pytest
-from pathlib import Path
 
 from src.memory.auto_compact import AutoCompact, CompactResult
 from src.memory.short_term import SessionContext, Message
@@ -75,8 +74,7 @@ class TestAutoCompact:
             session.add_message("assistant", f"Answer {i}: {long_content}")
 
         tokens_before = sum(
-            memory_manager.count_tokens(m.content) + 4
-            for m in session.messages
+            memory_manager.count_tokens(m.content) + 4 for m in session.messages
         )
 
         result = auto_compact.check_and_compact(session)
