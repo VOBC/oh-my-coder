@@ -131,7 +131,12 @@ class ShortTermMemory:
         )
 
     def compress_if_needed(self, session: SessionContext) -> List[Message]:
-        """当消息过多时压缩，返回保留的消息"""
+        """当消息过多时压缩，返回保留的消息
+
+        .. deprecated::
+            此方法已被标记为废弃，请使用 `memory.auto_compact.check_and_compact()`
+            替代。新实现基于 token 使用率而非消息条数，更加智能。
+        """
         if len(session.messages) <= self.max_messages:
             return session.messages
 
