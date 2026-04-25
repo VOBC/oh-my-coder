@@ -99,6 +99,7 @@ git clone https://github.com/VOBC/oh-my-coder.git
 cd oh-my-coder
 
 # 安装
+pip install --upgrade pip
 pip install -e .[dev]
 
 # 设置环境变量
@@ -206,6 +207,7 @@ uvicorn src.web.app:app --port 8001
 
 ```bash
 git pull origin main
+pip install --upgrade pip
 pip install -e .[dev]
 ```
 

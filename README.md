@@ -210,8 +210,9 @@ omc config set -k MIMOX_API_KEY -v "your_key"
 **最简三步**：
 ```bash
 git clone https://github.com/VOBC/oh-my-coder.git && cd oh-my-coder
+pip install --upgrade pip
 pip install -e .
-export DEEPSEEK_API_KEY=your_key && python -m src.web.app
+export DEEPSEEK_API_KEY=your_key && omc
 ```
 
 > 要求：Python 3.10+，pip>=21.3

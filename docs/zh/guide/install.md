@@ -11,6 +11,7 @@
 ```bash
 git clone https://github.com/VOBC/oh-my-coder.git
 cd oh-my-coder
+pip install --upgrade pip
 pip install -e .
 ```
 

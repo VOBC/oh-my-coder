@@ -19,6 +19,7 @@
 # 方式1: pip 安装（推荐）
 git clone https://github.com/VOBC/oh-my-coder.git
 cd oh-my-coder
+pip install --upgrade pip
 pip install -e '.[dev]'
 
 # 方式2: requirements.txt
@@ -334,7 +335,9 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
       - name: Install OMC
-        run: pip install -e '.[dev]'
+        run: |
+          pip install --upgrade pip
+          pip install -e '.[dev]'
       - name: AI Review
         env:
           DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}

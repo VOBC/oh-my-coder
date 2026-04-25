@@ -35,6 +35,7 @@ pip install oh-my-coder
 # 方法2：源码安装
 git clone https://github.com/VOBC/oh-my-coder.git
 cd oh-my-coder
+pip install --upgrade pip
 pip install -e .
 ```
 
@@ -212,6 +213,7 @@ pip install oh-my-coder -i https://pypi.tuna.tsinghua.edu.cn/simple
 # 方法2: 源码安装（推荐）
 git clone https://github.com/VOBC/oh-my-coder.git
 cd oh-my-coder
+pip install --upgrade pip
 pip install -e .
 ```
 

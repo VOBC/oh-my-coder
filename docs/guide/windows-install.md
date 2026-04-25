@@ -91,6 +91,7 @@ python -m venv venv
 ## 第四步：安装项目
 
 ```powershell
+pip install --upgrade pip
 pip install -e .
 ```
 
@@ -218,6 +219,7 @@ pip install -e . --trusted-host pypi.org --trusted-host files.pythonhosted.org
 pip show oh-my-coder
 
 # 3. 如果还是不行，重新安装
+pip install --upgrade pip
 pip install -e .
 ```
 
