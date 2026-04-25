@@ -31,6 +31,10 @@ from .base import (
 )
 
 # DeepSeek 模型配置
+# 路由策略：
+#   LOW      → deepseek-chat       便宜快速，适合简单任务
+#   MEDIUM   → deepseek-chat       TODO: 官方 reasoner 模型就绪后迁移
+#   HIGH     → deepseek-chat       TODO: 官方推出 deepseek-reasoner 后启用推理增强路由
 DEEPSEEK_MODELS = {
     ModelTier.LOW: {
         "name": "deepseek-chat",
@@ -38,12 +42,12 @@ DEEPSEEK_MODELS = {
         "cost_per_1k_completion": 0.0,
     },
     ModelTier.MEDIUM: {
-        "name": "deepseek-chat",
+        "name": "deepseek-chat",  # TODO: 迁移至 deepseek-reasoner
         "cost_per_1k_prompt": 0.0,
         "cost_per_1k_completion": 0.0,
     },
     ModelTier.HIGH: {
-        "name": "deepseek-chat",  # 暂时用 chat，后续可接入 DeepSeek-V3
+        "name": "deepseek-chat",  # TODO: 迁移至 deepseek-reasoner（推理增强）
         "cost_per_1k_prompt": 0.0,
         "cost_per_1k_completion": 0.0,
     },
