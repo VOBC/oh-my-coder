@@ -71,9 +71,7 @@ class OllamaHealthStatus:
             "available_models": self.available_models,
             "latency_ms": round(self.latency_ms, 2),
             "last_check_time": (
-                self.last_check_time.isoformat()
-                if self.last_check_time
-                else None
+                self.last_check_time.isoformat() if self.last_check_time else None
             ),
         }
 

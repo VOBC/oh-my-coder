@@ -57,7 +57,11 @@ def check_status():
                     table.add_column("量化")
 
                     for m in discovered:
-                        size_str = f"{m.size_gb:.1f} GB" if m.size_gb >= 1 else f"{m.size_mb:.0f} MB"
+                        size_str = (
+                            f"{m.size_gb:.1f} GB"
+                            if m.size_gb >= 1
+                            else f"{m.size_mb:.0f} MB"
+                        )
                         table.add_row(
                             m.model_name,
                             size_str,
@@ -81,7 +85,7 @@ def check_status():
     except ImportError:
         pass  # 回退到基础检测
 
-    # 回退：基础检测
+        # 回退：基础检测
         console.print("[green]✓ Ollama 服务运行中[/green]")
 
         # 列出本地模型（基础版）
