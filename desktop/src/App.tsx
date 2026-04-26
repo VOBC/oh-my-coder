@@ -66,12 +66,24 @@ const TIER_COLOR: Record<string, string> = { free: '#4ade80', low: '#94a3b8', me
 // ── API helpers ────────────────────────────────────────────────────────────────
 declare global { interface Window { omc: any; } }
 
-/** Get the omc API (from preload contextBridge) */
-function api() {
-  if (!window.omc) {
-    console.warn('[App] window.omc not available — preload may not be loaded');
-  }
-  return window.omc;
+/** Fallback models for standalone Vite dev mode (no Electron preload) */
+export const FALLBACK_MODELS: Model[] = [
+  { id: 'claude-3-5-sonnet-latest', name: 'Claude 3.5 Sonnet', provider: 'Anthropic', tier: 'high', context: 200000 },
+  { id: 'claude-3-5-haiku-latest',   name: 'Claude 3.5 Haiku',   provider: 'Anthropic', tier: 'low',   context: 200000 },
+  { id: 'gpt-4o',                    name: 'GPT-4o',             provider: 'OpenAI',   tier: 'high',  context: 128000 },
+  { id: 'gpt-4o-mini',               name: 'GPT-4o Mini',        provider: 'OpenAI',   tier: 'medium',context: 128000 },
+  { id: 'gpt-4-turbo',              name: 'GPT-4 Turbo',       provider: 'OpenAI',   tier: 'high',  context: 128000 },
+  { id: 'gemini-1-5-pro-latest',    name: 'Gemini 1.5 Pro',     provider: 'Google',   tier: 'high',  context: 2000000},
+  { id: 'gemini-1-5-flash-latest',  name: 'Gemini 1.5 Flash',   provider: 'Google',   tier: 'medium',context: 1000000},
+  { id: 'deepseek-chat',            name: 'DeepSeek Chat',     provider: 'DeepSeek', tier: 'medium',context: 64000  },
+  { id: 'Qwen2.5-72B-Instruct',     name: 'Qwen 2.5 72B',      provider: 'Qwen',     tier: 'medium',context: 32000  },
+  { id: 'yi-large',                 name: 'Yi Large',           provider: 'Yi',       tier: 'medium',context: 16000  },
+  { id: 'moonshot-v1-8k',           name: 'Moonshot V1 8K',     provider: 'Moonshot',  tier: 'medium',context: 8000   },
+];
+
+/** Get the omc API (from preload contextBridge). Returns null when not available. */
+function api(): any {
+  return window.omc ?? null;
 }
 
 // ── Component: ChatMessage ──────────────────────────────────────────────────────
@@ -445,13 +457,19 @@ export default function App() {
   useEffect(() => {
     const omcApi = api();
     if (!omcApi) {
-      console.warn('[App] omc API not available, skipping model load');
+      // Standalone Vite mode: use fallback models
+      console.warn('[App] omc API not available — using fallback model list');
+      setModels(FALLBACK_MODELS);
+      if (!currentModel) setCurrentModel(FALLBACK_MODELS[0]?.id ?? '');
       return;
     }
     omcApi.modelList().then((data: any) => {
       if (data?.models?.length) setModels(data.models);
       else if (Array.isArray(data)) setModels(data);
-    }).catch((e: any) => console.error('[App] modelList failed:', e));
+    }).catch((e: any) => {
+      console.error('[App] modelList failed, falling back:', e);
+      setModels(FALLBACK_MODELS);
+    });
     omcApi.modelCurrent().then((m: any) => {
       if (typeof m === 'string' && m) setCurrentModel(m);
       else if (m?.model) setCurrentModel(m.model);
@@ -519,7 +537,18 @@ export default function App() {
     setLoading(true);
 
     try {
-      const result = await api().chatSend({ message: text, model: currentModel });
+      const omcApi = api();
+      if (!omcApi) {
+        addMessage({
+          id: (Date.now() + 1).toString(),
+          role: 'assistant',
+          content: 'Error: omc API not available. Please run in Electron or check preload.',
+          timestamp: Date.now(),
+        });
+        setLoading(false);
+        return;
+      }
+      const result = await omcApi.chatSend({ message: text, model: currentModel });
       const assistantMsg: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
