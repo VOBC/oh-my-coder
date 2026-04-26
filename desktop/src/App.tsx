@@ -9,6 +9,7 @@ import DiffView, { FileDiff, DiffLine } from './components/DiffView';
 import { ModelSelector } from './components/ModelSelector';
 import { ShortcutsPanel } from './components/ShortcutsPanel';
 import { InlineInputPanel } from './components/InlineInputPanel';
+import SettingsPanel from './components/SettingsPanel';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface Model { id: string; name: string; provider: string; tier: string; context?: number; endpoint?: string; pricing?: Record<string, number>; features?: string[]; }
@@ -789,7 +790,7 @@ export default function App() {
       </main>
 
       {/* Config modal */}
-      {showConfig && <ConfigPanel onClose={() => setShowConfig(false)} models={models} />}
+      {showConfig && <SettingsPanel onClose={() => setShowConfig(false)} />}
       
       {/* Shortcuts panel */}
       <ShortcutsPanel 

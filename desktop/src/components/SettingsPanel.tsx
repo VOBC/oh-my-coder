@@ -1,8 +1,9 @@
 // src/components/SettingsPanel.tsx
-// Settings panel: model-centric API key configuration
+// Settings panel: model-centric API key configuration with encryption
 // - Left sidebar: collapsible provider groups → model list
 // - Right panel: selected model's API Key, base URL, test button
-// - Top: Import/Export JSON
+// - Top: Import/Export JSON, Reset to defaults
+// - Encryption: simple XOR + base64 for localStorage
 import React, { useState, useEffect, useCallback } from 'react';
 
 interface ModelInfo {
@@ -44,6 +45,65 @@ const PROVIDER_LABELS: Record<string, string> = {
   minimax: 'MiniMax',
   baichuan: '百川智能',
 };
+
+// ── Fallback Models for Vite dev mode ─────────────────────────────────────────
+const FALLBACK_MODELS: ModelInfo[] = [
+  { id: 'deepseek-chat', name: 'DeepSeek V3', provider: 'deepseek', tier: 'medium', context: 64000 },
+  { id: 'deepseek-reasoner', name: 'DeepSeek R1', provider: 'deepseek', tier: 'high', context: 64000 },
+  { id: 'glm-4-flash', name: 'GLM-4-Flash', provider: 'glm', tier: 'free', context: 128000 },
+  { id: 'doubao-pro-32k', name: 'Doubao-Pro-32K', provider: 'doubao', tier: 'medium', context: 32000 },
+  { id: 'kimi-moonshot', name: 'Kimi', provider: 'kimi', tier: 'medium', context: 200000 },
+  { id: 'qwen-plus', name: 'Qwen2.5-72B', provider: 'tongyi', tier: 'high', context: 128000 },
+];
+
+// ── Simple Encryption for localStorage ─────────────────────────────────────────
+const ENCRYPTION_KEY = 'omc-v1-key-2024'; // Simple XOR key
+
+function xorEncrypt(text: string, key: string): string {
+  let result = '';
+  for (let i = 0; i < text.length; i++) {
+    result += String.fromCharCode(text.charCodeAt(i) ^ key.charCodeAt(i % key.length));
+  }
+  return btoa(result); // base64 encode
+}
+
+function xorDecrypt(encoded: string, key: string): string {
+  try {
+    const text = atob(encoded); // base64 decode
+    let result = '';
+    for (let i = 0; i < text.length; i++) {
+      result += String.fromCharCode(text.charCodeAt(i) ^ key.charCodeAt(i % key.length));
+    }
+    return result;
+  } catch {
+    return encoded; // fallback for unencrypted data
+  }
+}
+
+function saveEncryptedConfig(configs: ModelConfig) {
+  const encrypted = xorEncrypt(JSON.stringify(configs), ENCRYPTION_KEY);
+  localStorage.setItem('omc-model-configs', encrypted);
+}
+
+function loadEncryptedConfig(): ModelConfig {
+  const stored = localStorage.getItem('omc-model-configs');
+  if (!stored) return {};
+  try {
+    const decrypted = xorDecrypt(stored, ENCRYPTION_KEY);
+    return JSON.parse(decrypted);
+  } catch {
+    // Try legacy unencrypted format
+    try {
+      return JSON.parse(stored);
+    } catch {
+      return {};
+    }
+  }
+}
+
+function clearEncryptedConfig() {
+  localStorage.removeItem('omc-model-configs');
+}
 
 function getProviderFromModelId(modelId: string): string {
   const known = Object.keys(PROVIDER_LABELS);
@@ -134,6 +194,7 @@ function ModelDetailPanel({
 }) {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [showKey, setShowKey] = useState(false);
 
   const provider = getProviderFromModelId(model.id);
   const label = PROVIDER_LABELS[provider] || provider;
@@ -155,6 +216,10 @@ function ModelDetailPanel({
     }
   };
 
+  const handleReset = () => {
+    onUpdate({ api_key: '', base_url: '', enabled: true });
+  };
+
   return (
     <div className="settings-detail">
       <div className="settings-detail__header">
@@ -173,7 +238,7 @@ function ModelDetailPanel({
         </label>
         <div className="settings-detail__input-row">
           <input
-            type="password"
+            type={showKey ? 'text' : 'password'}
             className="settings-detail__input"
             value={config.api_key ?? ''}
             placeholder={isFree ? '可选（无 API Key 时走环境变量）' : 'sk-...'}
@@ -182,14 +247,11 @@ function ModelDetailPanel({
             spellCheck={false}
           />
           <button
-            className="settings-detail__toggle-vis"
-            onClick={e => {
-              const input = (e.currentTarget as HTMLButtonElement).previousElementSibling as HTMLInputElement;
-              input.type = input.type === 'password' ? 'text' : 'password';
-            }}
-            title="Toggle visibility"
+            className={`settings-detail__toggle-vis ${showKey ? 'active' : ''}`}
+            onClick={() => setShowKey(v => !v)}
+            title={showKey ? 'Hide API Key' : 'Show API Key'}
           >
-            👁
+            {showKey ? '🙈' : '👁️'}
           </button>
         </div>
       </div>
@@ -219,9 +281,14 @@ function ModelDetailPanel({
 
       <TestConnection modelId={model.id} config={config} onResult={() => {}} />
 
-      <button className="settings-detail__save" onClick={handleSave} disabled={saving}>
-        {saving ? 'Saving...' : saved ? '✓ Saved' : '💾 Save Configuration'}
-      </button>
+      <div className="settings-detail__actions">
+        <button className="settings-detail__reset" onClick={handleReset} title="Clear API Key and Base URL">
+          ↺ Reset
+        </button>
+        <button className="settings-detail__save" onClick={handleSave} disabled={saving}>
+          {saving ? 'Saving...' : saved ? '✓ Saved' : '💾 Save Configuration'}
+        </button>
+      </div>
     </div>
   );
 }
@@ -266,22 +333,45 @@ export default function SettingsPanel({ onClose }: { onClose: () => void }) {
   const [exportDropdown, setExportDropdown] = useState(false);
   const [importError, setImportError] = useState<string | null>(null);
   const [migrationNotice, setMigrationNotice] = useState<string | null>(null);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
 
   useEffect(() => {
     const load = async () => {
       try {
-        const [modelList, cfgData] = await Promise.all([
-          (window.omc as any).modelList().catch(() => []),
-          (window.omc as any).modelConfigList().catch(() => ({})),
-        ]);
-        setModels(modelList as ModelInfo[]);
-        setConfigs(cfgData as ModelConfig);
-        setGroups(groupModels(modelList as ModelInfo[]));
-        if ((modelList as ModelInfo[]).length > 0) {
-          setSelectedModel((modelList as ModelInfo[])[0]);
+        // Load from localStorage (encrypted) first
+        const localConfigs = loadEncryptedConfig();
+        
+        let modelList: ModelInfo[] = [];
+        let cfgData: ModelConfig = {};
+        
+        try {
+          modelList = await (window.omc as any).modelList();
+          cfgData = await (window.omc as any).modelConfigList();
+        } catch {
+          // API not available, use fallback models
+          modelList = FALLBACK_MODELS;
+        }
+        
+        // Merge: API configs take precedence, but fill gaps from localStorage
+        const mergedConfigs = { ...localConfigs, ...cfgData };
+        
+        setModels(modelList);
+        setConfigs(mergedConfigs);
+        setGroups(groupModels(modelList));
+        if (modelList.length > 0) {
+          setSelectedModel(modelList[0]);
         }
       } catch (e) {
         console.error('[Settings] Load failed:', e);
+        // Fallback to localStorage only
+        const localConfigs = loadEncryptedConfig();
+        setConfigs(localConfigs);
+        // Use fallback models
+        setModels(FALLBACK_MODELS);
+        setGroups(groupModels(FALLBACK_MODELS));
+        if (FALLBACK_MODELS.length > 0) {
+          setSelectedModel(FALLBACK_MODELS[0]);
+        }
       } finally {
         setLoading(false);
       }
@@ -300,8 +390,18 @@ export default function SettingsPanel({ onClose }: { onClose: () => void }) {
   }, []);
 
   const handleConfigSave = useCallback(async (modelId: string, cfg: ModelConfigEntry) => {
-    await (window.omc as any).modelConfigSet(modelId, cfg);
-  }, []);
+    // Save to localStorage (encrypted)
+    const updatedConfigs = { ...configs, [modelId]: cfg };
+    saveEncryptedConfig(updatedConfigs);
+    setConfigs(updatedConfigs);
+    
+    // Also try to save via API
+    try {
+      await (window.omc as any).modelConfigSet(modelId, cfg);
+    } catch {
+      // API might not be available, localStorage is the fallback
+    }
+  }, [configs]);
 
   const toggleGroup = (provider: string) => {
     setGroups(prev => prev.map(g =>
@@ -339,6 +439,8 @@ export default function SettingsPanel({ onClose }: { onClose: () => void }) {
             await (window.omc as any).modelConfigSet(mid, cfg);
           } catch { /* skip per-key errors */ }
         }
+        // Save encrypted to localStorage
+        saveEncryptedConfig(merged);
         setConfigs(merged);
         setImportError(null);
       } catch (err: unknown) {
@@ -349,6 +451,14 @@ export default function SettingsPanel({ onClose }: { onClose: () => void }) {
     };
     reader.readAsText(file);
     e.target.value = '';
+  };
+
+  const handleResetAll = () => {
+    clearEncryptedConfig();
+    setConfigs({});
+    setShowResetConfirm(false);
+    // Reload page to reset all state
+    window.location.reload();
   };
 
   const currentConfig = selectedModel ? (configs[selectedModel.id] ?? { api_key: '' }) : { api_key: '' };
@@ -372,6 +482,9 @@ export default function SettingsPanel({ onClose }: { onClose: () => void }) {
               </div>
             )}
           </div>
+          <button className="settings-panel__reset-all" onClick={() => setShowResetConfirm(true)} title="Reset all settings to default">
+            ↺ Reset All
+          </button>
           <button className="settings-panel__close" onClick={onClose}>✕</button>
         </div>
       </div>
@@ -381,6 +494,25 @@ export default function SettingsPanel({ onClose }: { onClose: () => void }) {
       )}
       {importError && (
         <div className="settings-error">{importError}</div>
+      )}
+
+      {showResetConfirm && (
+        <div className="settings-reset-confirm">
+          <div className="settings-reset-confirm__content">
+            <div className="settings-reset-confirm__title">⚠️ Reset All Settings?</div>
+            <div className="settings-reset-confirm__desc">
+              This will clear all API keys and configuration. This action cannot be undone.
+            </div>
+            <div className="settings-reset-confirm__actions">
+              <button className="settings-reset-confirm__cancel" onClick={() => setShowResetConfirm(false)}>
+                Cancel
+              </button>
+              <button className="settings-reset-confirm__confirm" onClick={handleResetAll}>
+                Yes, Reset Everything
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {loading ? (
