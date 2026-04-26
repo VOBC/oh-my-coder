@@ -380,7 +380,35 @@ html, body, #root {
 .model-selector__item:hover { background: var(--bg-hover); color: var(--text); }
 .model-selector__item.active { background: var(--amber-glow); color: var(--amber); }
 .model-selector__item-name { flex: 1; }
+.model-selector__status-badge { font-size: 11px; margin-left: 2px; }
 .model-selector__provider { font-size: 10px; color: var(--gray-3); font-family: var(--font-mono); }
+.model-selector__search-wrap { padding: 6px 10px; border-bottom: 1px solid var(--border); }
+.model-selector__search {
+  width: 100%;
+  padding: 6px 10px;
+  background: var(--bg-2);
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-size: 12px;
+  outline: none;
+  transition: border-color var(--transition);
+}
+.model-selector__search:focus { border-color: var(--amber-dim); }
+.model-selector__search::placeholder { color: var(--gray-3); }
+.model-selector__toggle-beta {
+  width: 100%;
+  padding: 8px 14px;
+  border: none;
+  border-top: 1px solid var(--border);
+  background: none;
+  color: var(--gray-3);
+  font-size: 11px;
+  cursor: pointer;
+  text-align: center;
+  transition: color var(--transition);
+}
+.model-selector__toggle-beta:hover { color: var(--text-dim); }
 
 /* ── Messages ────────────────────────────────────────────────────────────────── */
 .messages {

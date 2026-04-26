@@ -453,7 +453,16 @@ export default function App() {
     };
   }, [currentModel, createSession]);
 
-  // Load models + history
+  // Fallback models for standalone Vite mode (without Electron preload)
+  const FALLBACK_MODELS: Model[] = [
+    { id: 'deepseek-chat', name: 'DeepSeek V3', provider: 'DeepSeek', tier: 'low' },
+    { id: 'deepseek-reasoner', name: 'DeepSeek R1', provider: 'DeepSeek', tier: 'medium' },
+    { id: 'glm-4-flash', name: 'GLM-4-Flash', provider: 'Zhipu', tier: 'free' },
+    { id: 'qwen-plus', name: 'Qwen2.5-72B', provider: 'Alibaba', tier: 'low' },
+    { id: 'doubao-pro-32k', name: 'Doubao-Pro-32K', provider: 'Volcengine', tier: 'low' },
+  ];
+
+  // Load
   useEffect(() => {
     const omcApi = api();
     if (!omcApi) {
