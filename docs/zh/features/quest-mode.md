@@ -81,7 +81,7 @@ omc quest-wait <quest-id>
 | **企业微信** | `--wecom <webhook_url>` | Webhook，Markdown 格式 |
 | **PushPlus** | `--pushplus <token>` | 微信公众号推送，最简配置 |
 
-> 📖 详细文档：[Quest Mode 详解](docs/QUEST_MODE.md)
+> 📖 详细文档：Quest Mode 详解
 
 ---
 

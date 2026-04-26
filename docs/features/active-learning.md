@@ -62,7 +62,7 @@ results = sm.search("sql 慢查询")
 
 ---
 
-> 📖 详细文档：[主动学习模块](docs/SELF_IMPROVING.md)
+> 📖 详细文档：主动学习模块
 
 ---
 

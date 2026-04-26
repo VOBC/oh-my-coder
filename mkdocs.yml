@@ -78,7 +78,7 @@ nav:
     - 快速开始: zh/getting-started.md
     - 教程: zh/tutorials.md
     - 安装指南: zh/guide/install.md
-    - 快速开始详细: zh/guide/quickstart-detailed.md
+    - 快速开始详细: zh/guide/quick-start.md
     - 模型配置: zh/guide/models.md
     - 模型详细配置: zh/guide/model-config.md
     - Agent 介绍: zh/guide/agents.md

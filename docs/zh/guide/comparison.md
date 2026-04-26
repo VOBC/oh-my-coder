@@ -147,6 +147,6 @@
 
 ## 下一步
 
-- 🚀 [快速开始](guide/quick-start.md) - 跑起来看看
-- 🧠 [模型选型指南](MODELS.md) - 选一个适合你的模型
-- 📖 [入门教程](STARTER.md) - 从零开始
+- 🚀 [快速开始](quick-start.md) - 跑起来看看
+- 🧠 [模型选型指南](models.md) - 选一个适合你的模型
+- 📖 [入门教程](quick-start.md) - 从零开始

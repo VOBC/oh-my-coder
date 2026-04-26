@@ -152,7 +152,7 @@ $env:DEEPSEEK_API_KEY = "sk-xxx"
 # 小米 MiMo（免费）
 $env:MIMOAPIKEY = "xxx"
 
-# 更多模型见 docs/guide/models.md
+# 更多模型见 docs/models.md
 ```
 
 ## 第六步：验证安装
@@ -251,6 +251,6 @@ Add-Content $PROFILE '$env:PYTHONUTF8 = "1"'
 
 ## 下一步
 
-- 📖 [入门教程](STARTER.md) - 从零开始用 Oh My Coder
-- 🤖 [模型选型指南](MODELS.md) - 选择最适合你的模型
-- ❓ [常见问题](FAQ.md) - 更多问题解答
+- 📖 [入门教程](quick-start.md) - 从零开始用 Oh My Coder
+- 🤖 [模型选型指南](models.md) - 选择最适合你的模型
+- ❓ [常见问题](../FAQ.md) - 更多问题解答
