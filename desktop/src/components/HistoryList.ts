@@ -1,26 +1,56 @@
 // src/components/HistoryList.ts — <history-list> web component
-// P3-3: Enhanced with right-click menu, rename, export, clear all
+// P1-3: Enhanced with search/filter, relative time, right-click menu, empty state
 
 export interface HistorySession {
   id: string;
   title: string;
-  updated: string;
+  updated: string; // ISO timestamp
   model?: string;
 }
 
 interface HistoryListState {
   sessions: HistorySession[];
+  filteredSessions: HistorySession[];
   activeId: string;
+  searchQuery: string;
   contextMenuId: string | null;
+  contextMenuPos: { x: number; y: number };
   renameDialogId: string | null;
   renameValue: string;
+}
+
+// ── Relative Time Formatter ───────────────────────────────────────────────────
+function formatRelativeTime(isoString: string): string {
+  const date = new Date(isoString);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffSec = Math.floor(diffMs / 1000);
+  const diffMin = Math.floor(diffSec / 60);
+  const diffHour = Math.floor(diffMin / 60);
+  const diffDay = Math.floor(diffHour / 24);
+
+  if (diffSec < 60) return '刚刚';
+  if (diffMin < 60) return `${diffMin}分钟前`;
+  if (diffHour < 24) return `${diffHour}小时前`;
+  if (diffDay === 1) return '昨天';
+  if (diffDay < 7) return `${diffDay}天前`;
+  if (diffDay < 30) return `${Math.floor(diffDay / 7)}周前`;
+  
+  // Older: show date
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
 }
 
 class HistoryList extends HTMLElement {
   private _state: HistoryListState = {
     sessions: [],
+    filteredSessions: [],
     activeId: '',
+    searchQuery: '',
     contextMenuId: null,
+    contextMenuPos: { x: 0, y: 0 },
     renameDialogId: null,
     renameValue: '',
   };
@@ -40,12 +70,13 @@ class HistoryList extends HTMLElement {
     super();
     this._shadow = this.attachShadow({ mode: 'open' });
     this.render();
-    // Close context menu on outside click
     document.addEventListener('click', this._handleOutsideClick.bind(this));
+    document.addEventListener('keydown', this._handleKeyDown.bind(this));
   }
 
   disconnectedCallback() {
     document.removeEventListener('click', this._handleOutsideClick.bind(this));
+    document.removeEventListener('keydown', this._handleKeyDown.bind(this));
   }
 
   private _handleOutsideClick(e: MouseEvent) {
@@ -53,6 +84,14 @@ class HistoryList extends HTMLElement {
     if (!path.includes(this._shadow.host)) {
       this._state.contextMenuId = null;
       this._state.renameDialogId = null;
+      this.render();
+    }
+  }
+
+  private _handleKeyDown(e: KeyboardEvent) {
+    // Close context menu on Escape
+    if (e.key === 'Escape' && this._state.contextMenuId) {
+      this._state.contextMenuId = null;
       this.render();
     }
   }
@@ -67,6 +106,7 @@ class HistoryList extends HTMLElement {
   // Public API
   set sessions(data: HistorySession[]) {
     this._state.sessions = data;
+    this._filterSessions();
     this.render();
   }
 
@@ -92,6 +132,18 @@ class HistoryList extends HTMLElement {
   set onExport(handler: (id: string) => void) { this._onExport = handler; }
   set onClearAll(handler: () => void) { this._onClearAll = handler; }
 
+  private _filterSessions() {
+    const query = this._state.searchQuery.toLowerCase().trim();
+    if (!query) {
+      this._state.filteredSessions = [...this._state.sessions];
+    } else {
+      this._state.filteredSessions = this._state.sessions.filter(s =>
+        s.title.toLowerCase().includes(query) ||
+        (s.model && s.model.toLowerCase().includes(query))
+      );
+    }
+  }
+
   private handleSelect(id: string) {
     this._state.activeId = id;
     this._state.contextMenuId = null;
@@ -100,8 +152,8 @@ class HistoryList extends HTMLElement {
     this.dispatchEvent(new CustomEvent('session-select', { detail: { id }, bubbles: true, composed: true }));
   }
 
-  private handleDelete(id: string, e: Event) {
-    e.stopPropagation();
+  private handleDelete(id: string, e?: Event) {
+    e?.stopPropagation();
     this._state.contextMenuId = null;
     this._onDelete?.(id);
     this.dispatchEvent(new CustomEvent('session-delete', { detail: { id }, bubbles: true, composed: true }));
@@ -130,10 +182,17 @@ class HistoryList extends HTMLElement {
     this.dispatchEvent(new CustomEvent('sessions-clear-all', { bubbles: true, composed: true }));
   }
 
+  private handleSearch(query: string) {
+    this._state.searchQuery = query;
+    this._filterSessions();
+    this.render();
+  }
+
   private showContextMenu(id: string, e: MouseEvent) {
     e.preventDefault();
     e.stopPropagation();
     this._state.contextMenuId = id;
+    this._state.contextMenuPos = { x: e.clientX, y: e.clientY };
     this.render();
   }
 
@@ -145,7 +204,8 @@ class HistoryList extends HTMLElement {
   }
 
   private render() {
-    const { sessions, activeId, contextMenuId, renameDialogId, renameValue } = this._state;
+    const { filteredSessions, activeId, searchQuery, contextMenuId, contextMenuPos, renameDialogId, renameValue, sessions } = this._state;
+    const hasSessions = sessions.length > 0;
 
     this._shadow.innerHTML = `
       <style>
@@ -193,19 +253,134 @@ class HistoryList extends HTMLElement {
 
         .new-btn:hover { background: #e5b028; }
 
+        /* Search */
+        .search-box {
+          padding: 12px 16px;
+          border-bottom: 1px solid #333;
+        }
+
+        .search-input-wrapper {
+          position: relative;
+          display: flex;
+          align-items: center;
+        }
+
+        .search-icon {
+          position: absolute;
+          left: 10px;
+          font-size: 12px;
+          opacity: 0.5;
+        }
+
+        .search-input {
+          width: 100%;
+          padding: 8px 10px 8px 28px;
+          border: 1px solid #333;
+          border-radius: 6px;
+          background: #0f0f0f;
+          color: #e5e5e5;
+          font-size: 13px;
+          outline: none;
+          transition: border-color 0.15s ease;
+        }
+
+        .search-input:focus { border-color: #d4a017; }
+
+        .search-input::placeholder { color: #666; }
+
+        .search-clear {
+          position: absolute;
+          right: 8px;
+          width: 16px;
+          height: 16px;
+          border: none;
+          border-radius: 50%;
+          background: #444;
+          color: #888;
+          font-size: 10px;
+          cursor: pointer;
+          display: ${searchQuery ? 'flex' : 'none'};
+          align-items: center;
+          justify-content: center;
+        }
+
+        .search-clear:hover { background: #555; color: #aaa; }
+
+        .search-stats {
+          font-size: 11px;
+          color: #666;
+          margin-top: 6px;
+          padding-left: 4px;
+        }
+
         .list {
           flex: 1;
           overflow-y: auto;
           padding: 8px;
         }
 
+        /* Empty State */
         .empty {
-          padding: 24px 16px;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          padding: 40px 20px;
           text-align: center;
-          color: #666;
-          font-size: 13px;
         }
 
+        .empty-icon {
+          font-size: 48px;
+          margin-bottom: 16px;
+          opacity: 0.3;
+        }
+
+        .empty-title {
+          font-size: 14px;
+          font-weight: 500;
+          color: #888;
+          margin-bottom: 8px;
+        }
+
+        .empty-desc {
+          font-size: 12px;
+          color: #666;
+          line-height: 1.5;
+        }
+
+        .empty-new-btn {
+          margin-top: 16px;
+          padding: 8px 16px;
+          border: 1px solid #d4a017;
+          border-radius: 6px;
+          background: transparent;
+          color: #d4a017;
+          font-size: 13px;
+          cursor: pointer;
+          transition: all 0.15s ease;
+        }
+
+        .empty-new-btn:hover {
+          background: #d4a01720;
+        }
+
+        /* No Search Results */
+        .no-results {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          padding: 40px 20px;
+          text-align: center;
+          color: #666;
+        }
+
+        .no-results-icon {
+          font-size: 32px;
+          margin-bottom: 12px;
+          opacity: 0.5;
+        }
+
+        /* Session Item */
         .session {
           display: flex;
           align-items: center;
@@ -214,17 +389,20 @@ class HistoryList extends HTMLElement {
           margin-bottom: 4px;
           border-radius: 8px;
           cursor: pointer;
-          transition: background 0.15s ease;
+          transition: all 0.15s ease;
           position: relative;
           user-select: none;
+          border: 1px solid transparent;
         }
 
         .session:hover { background: #2a2a2a; }
 
         .session.active {
-          background: #d4a01720;
-          border: 1px solid #d4a01740;
+          background: #d4a01715;
+          border-color: #d4a01740;
         }
+
+        .session.active .session-title { color: #d4a017; }
 
         .session-content {
           flex: 1;
@@ -252,7 +430,14 @@ class HistoryList extends HTMLElement {
           align-items: center;
           gap: 8px;
           font-size: 11px;
+        }
+
+        .session-time {
           color: #666;
+        }
+
+        .session.active .session-time {
+          color: #888;
         }
 
         .session-model {
@@ -261,6 +446,9 @@ class HistoryList extends HTMLElement {
           text-transform: uppercase;
           letter-spacing: 0.3px;
           font-weight: 500;
+          background: #d4a01715;
+          padding: 2px 6px;
+          border-radius: 3px;
         }
 
         .delete-btn {
@@ -289,9 +477,9 @@ class HistoryList extends HTMLElement {
           border: 1px solid #444;
           border-radius: 8px;
           padding: 4px;
-          min-width: 140px;
-          z-index: 1000;
-          box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+          min-width: 160px;
+          z-index: 10000;
+          box-shadow: 0 8px 24px rgba(0,0,0,0.5);
         }
 
         .menu-item {
@@ -303,23 +491,26 @@ class HistoryList extends HTMLElement {
           color: #ccc;
           cursor: pointer;
           border-radius: 4px;
-          transition: background 0.15s ease;
+          transition: all 0.15s ease;
         }
 
-        .menu-item:hover { background: #3a3a3a; }
+        .menu-item:hover { background: #3a3a3a; color: #fff; }
+        .menu-item.danger { color: #ff8888; }
         .menu-item.danger:hover { background: #ff444420; color: #ff6666; }
 
-        .menu-icon { width: 14px; text-align: center; }
+        .menu-icon { width: 16px; text-align: center; font-size: 14px; }
+        .menu-shortcut { margin-left: auto; font-size: 11px; color: #666; }
 
         /* Rename Dialog */
         .dialog-overlay {
           position: fixed;
           top: 0; left: 0; right: 0; bottom: 0;
-          background: rgba(0,0,0,0.6);
+          background: rgba(0,0,0,0.7);
           display: flex;
           align-items: center;
           justify-content: center;
-          z-index: 1001;
+          z-index: 10001;
+          backdrop-filter: blur(4px);
         }
 
         .dialog {
@@ -328,6 +519,7 @@ class HistoryList extends HTMLElement {
           border-radius: 12px;
           padding: 20px;
           min-width: 320px;
+          box-shadow: 0 20px 60px rgba(0,0,0,0.5);
         }
 
         .dialog-title {
@@ -347,6 +539,7 @@ class HistoryList extends HTMLElement {
           font-size: 13px;
           outline: none;
           box-sizing: border-box;
+          transition: border-color 0.15s ease;
         }
 
         .dialog-input:focus { border-color: #d4a017; }
@@ -389,6 +582,15 @@ class HistoryList extends HTMLElement {
           border-top: 1px solid #333;
         }
 
+        .footer-stats {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          font-size: 11px;
+          color: #666;
+          margin-bottom: 8px;
+        }
+
         .clear-all-btn {
           width: 100%;
           padding: 10px;
@@ -416,45 +618,78 @@ class HistoryList extends HTMLElement {
 
       <div class="header">
         <span class="title">Sessions</span>
-        <button class="new-btn" title="New Chat">+</button>
+        <button class="new-btn" title="New Chat (⌘N)">+</button>
       </div>
+
+      ${hasSessions ? `
+        <div class="search-box">
+          <div class="search-input-wrapper">
+            <span class="search-icon">🔍</span>
+            <input 
+              type="text" 
+              class="search-input" 
+              placeholder="搜索会话..."
+              value="${this.escapeHtml(searchQuery)}"
+              id="search-input"
+            />
+            <button class="search-clear" id="search-clear">✕</button>
+          </div>
+          ${searchQuery ? `<div class="search-stats">找到 ${filteredSessions.length} 个结果</div>` : ''}
+        </div>
+      ` : ''}
 
       <div class="list">
-        ${sessions.length === 0
-          ? '<div class="empty">No sessions yet</div>'
-          : sessions.map(s => `
-            <div class="session ${s.id === activeId ? 'active' : ''}" data-id="${s.id}">
-              <button class="session-content">
-                <div class="session-title">${this.escapeHtml(s.title)}</div>
-                <div class="session-meta">
-                  <span>${s.updated}</span>
-                  ${s.model ? `<span class="session-model">${this.escapeHtml(s.model)}</span>` : ''}
-                </div>
-              </button>
-              <button class="delete-btn" title="Delete">✕</button>
-            </div>
-          `).join('')}
+        ${!hasSessions ? `
+          <div class="empty">
+            <div class="empty-icon">💬</div>
+            <div class="empty-title">暂无会话</div>
+            <div class="empty-desc">开始新对话，让 AI 帮你写代码、<br/>解答问题或处理任务</div>
+            <button class="empty-new-btn" id="empty-new-btn">开始新对话</button>
+          </div>
+        ` : filteredSessions.length === 0 ? `
+          <div class="no-results">
+            <div class="no-results-icon">🔍</div>
+            <div>未找到匹配的会话</div>
+          </div>
+        ` : filteredSessions.map(s => `
+          <div class="session ${s.id === activeId ? 'active' : ''}" data-id="${s.id}">
+            <button class="session-content">
+              <div class="session-title">${this.escapeHtml(s.title)}</div>
+              <div class="session-meta">
+                <span class="session-time">${formatRelativeTime(s.updated)}</span>
+                ${s.model ? `<span class="session-model">${this.escapeHtml(s.model)}</span>` : ''}
+              </div>
+            </button>
+            <button class="delete-btn" title="Delete">✕</button>
+          </div>
+        `).join('')}
       </div>
 
-      ${sessions.length > 0 ? `
+      ${hasSessions && filteredSessions.length > 0 ? `
         <div class="footer">
-          <button class="clear-all-btn">Clear All History</button>
+          <div class="footer-stats">
+            <span>${filteredSessions.length} 个会话</span>
+            <span>${sessions.length > filteredSessions.length ? `(共 ${sessions.length})` : ''}</span>
+          </div>
+          <button class="clear-all-btn">清空所有历史</button>
         </div>
       ` : ''}
 
       ${contextMenuId ? `
-        <div class="context-menu" id="ctx-menu">
+        <div class="context-menu" id="ctx-menu" style="left: ${contextMenuPos.x}px; top: ${contextMenuPos.y}px;">
           <div class="menu-item" data-action="rename">
             <span class="menu-icon">✏️</span>
-            <span>Rename</span>
+            <span>重命名</span>
+            <span class="menu-shortcut">↵</span>
           </div>
           <div class="menu-item" data-action="export">
             <span class="menu-icon">📤</span>
-            <span>Export</span>
+            <span>导出</span>
           </div>
           <div class="menu-item danger" data-action="delete">
             <span class="menu-icon">🗑️</span>
-            <span>Delete</span>
+            <span>删除</span>
+            <span class="menu-shortcut">⌫</span>
           </div>
         </div>
       ` : ''}
@@ -462,11 +697,11 @@ class HistoryList extends HTMLElement {
       ${renameDialogId ? `
         <div class="dialog-overlay" id="rename-overlay">
           <div class="dialog">
-            <div class="dialog-title">Rename Session</div>
-            <input type="text" class="dialog-input" id="rename-input" value="${this.escapeHtml(renameValue)}" />
+            <div class="dialog-title">重命名会话</div>
+            <input type="text" class="dialog-input" id="rename-input" value="${this.escapeHtml(renameValue)}" placeholder="输入新名称..." />
             <div class="dialog-actions">
-              <button class="dialog-btn dialog-btn--cancel" id="rename-cancel">Cancel</button>
-              <button class="dialog-btn dialog-btn--save" id="rename-save">Save</button>
+              <button class="dialog-btn dialog-btn--cancel" id="rename-cancel">取消</button>
+              <button class="dialog-btn dialog-btn--save" id="rename-save">保存</button>
             </div>
           </div>
         </div>
@@ -481,13 +716,30 @@ class HistoryList extends HTMLElement {
     const newBtn = this._shadow.querySelector('.new-btn');
     newBtn?.addEventListener('click', () => this.handleNew());
 
+    // Empty state new button
+    const emptyNewBtn = this._shadow.querySelector('#empty-new-btn');
+    emptyNewBtn?.addEventListener('click', () => this.handleNew());
+
+    // Search input
+    const searchInput = this._shadow.querySelector('#search-input') as HTMLInputElement;
+    searchInput?.addEventListener('input', (e) => {
+      this.handleSearch((e.target as HTMLInputElement).value);
+    });
+
+    // Search clear
+    const searchClear = this._shadow.querySelector('#search-clear');
+    searchClear?.addEventListener('click', () => {
+      this.handleSearch('');
+      searchInput?.focus();
+    });
+
     // Clear all button
     const clearAllBtn = this._shadow.querySelector('.clear-all-btn');
     clearAllBtn?.addEventListener('click', () => this.handleClearAll());
 
     // Session items
-    const sessions = this._shadow.querySelectorAll('.session');
-    sessions.forEach(el => {
+    const sessionEls = this._shadow.querySelectorAll('.session');
+    sessionEls.forEach(el => {
       const id = el.getAttribute('data-id');
       if (!id) return;
 
@@ -517,11 +769,6 @@ class HistoryList extends HTMLElement {
           }
         });
       });
-
-      // Position context menu
-      const rect = this.getBoundingClientRect();
-      (ctxMenu as HTMLElement).style.left = `${Math.min(rect.right - 150, rect.left + 20)}px`;
-      (ctxMenu as HTMLElement).style.top = `${Math.min(rect.bottom - 120, rect.top + 100)}px`;
     }
 
     // Rename dialog
@@ -554,7 +801,6 @@ class HistoryList extends HTMLElement {
         }
       });
 
-      // Click overlay to close
       renameOverlay.addEventListener('click', (e) => {
         if (e.target === renameOverlay) {
           this._state.renameDialogId = null;
