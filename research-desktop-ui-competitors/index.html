@@ -1,0 +1,3518 @@
+
+<!doctype html>
+<html lang="zh" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="🤖 多智能体 AI 编程助手，支持国内大模型，31 个专业 Agent，多 Agent 协作">
+      
+      
+        <meta name="author" content="VOBC">
+      
+      
+        <link rel="canonical" href="https://vobc.github.io/oh-my-coder/research-desktop-ui-competitors/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>AI 编程工具桌面端 / Terminal UI 设计调研报告 - Oh My Coder 文档</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+  
+
+
+  
+  
+
+<script id="__analytics">function __md_analytics(){function e(){dataLayer.push(arguments)}window.dataLayer=window.dataLayer||[],e("js",new Date),e("config","G-XXXXXXXXXX"),document.addEventListener("DOMContentLoaded",(function(){document.forms.search&&document.forms.search.query.addEventListener("blur",(function(){this.value&&e("event","search",{search_term:this.value})}));document$.subscribe((function(){var t=document.forms.feedback;if(void 0!==t)for(var a of t.querySelectorAll("[type=submit]"))a.addEventListener("click",(function(a){a.preventDefault();var n=document.location.pathname,d=this.getAttribute("data-md-value");e("event","feedback",{page:n,data:d}),t.firstElementChild.disabled=!0;var r=t.querySelector(".md-feedback__note [data-md-value='"+d+"']");r&&(r.hidden=!1)})),t.hidden=!1})),location$.subscribe((function(t){e("config","G-XXXXXXXXXX",{page_path:t.pathname})}))}));var t=document.createElement("script");t.async=!0,t.src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX",document.getElementById("__analytics").insertAdjacentElement("afterEnd",t)}</script>
+  
+    <script>"undefined"!=typeof __md_analytics&&__md_analytics()</script>
+  
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#ai-terminal-ui" class="md-skip">
+          跳转至
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="页眉">
+    <a href=".." title="Oh My Coder 文档" class="md-header__button md-logo" aria-label="Oh My Coder 文档" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Oh My Coder 文档
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              AI 编程工具桌面端 / Terminal UI 设计调研报告
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="切换到深色模式"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="切换到深色模式" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="切换到浅色模式"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="切换到浅色模式" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="搜索" placeholder="搜索" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="查找">
+        
+        <button type="reset" class="md-search__icon md-icon" title="清空当前内容" aria-label="清空当前内容" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            正在初始化搜索引擎
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/VOBC/oh-my-coder" title="前往仓库" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    VOBC/oh-my-coder
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="导航栏" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Oh My Coder 文档" class="md-nav__button md-logo" aria-label="Oh My Coder 文档" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Oh My Coder 文档
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/VOBC/oh-my-coder" title="前往仓库" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    VOBC/oh-my-coder
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Guide
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Guide
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guide/install/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    安装指南
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guide/quick-start/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    快速开始详细指南
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guide/models/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    模型配置
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guide/free-models/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    免费模型推荐
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guide/agents/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Agent 系统
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guide/workflows/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    工作流
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guide/gateway/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    多平台消息网关
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guide/memory-system/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    分层记忆系统
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guide/checkpoint/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Checkpoint &amp; Rollback
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guide/auto-skill/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    自动生成 Skills
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/cli/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI 命令参考
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/http-api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    HTTP API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Features
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Features
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../features/capability-pack/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    能力包（Capability Pack）
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../features/checkpoint/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    检查点（Checkpoint）
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../features/mcp-server/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MCP Server
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    中文
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    中文
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../zh/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    首页
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../zh/getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    快速开始
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../zh/tutorials/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    教程
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../zh/guide/install/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    安装指南
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../zh/guide/quick-start/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    快速开始详细
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../zh/guide/models/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    模型配置
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../zh/guide/model-config/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    模型详细配置
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../zh/guide/agents/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Agent 介绍
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../zh/guide/workflows/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    工作流说明
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../zh/guide/deployment/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    部署说明
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../zh/guide/comparison/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    竞品对比
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../zh/FAQ/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    常见问题
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5_13" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_13" id="__nav_5_13_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    功能特性
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_13_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_13">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    功能特性
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../zh/features/active-learning/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    🧠 主动学习模块
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../zh/features/capability-pack/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    能力包（Capability Pack）
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../zh/features/checkpoint/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    检查点（Checkpoint）
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../zh/features/gep-protocol/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    🧬 GEP 协议支持 (WIP)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../zh/features/mcp-server/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MCP Server
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../zh/features/quest-mode/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    🧙 Quest Mode（异步自主编程）
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5_14" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_14" id="__nav_5_14_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    开发文档
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_14_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_14">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    开发文档
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../zh/dev/architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Oh My Coder 架构设计
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../zh/dev/development-report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    中长期功能开发报告
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../zh/dev/progress/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    📊 开发进度
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../zh/dev/task-tracking/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    代可行 - 开发任务文档
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../zh/dev/testing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    🧪 测试
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5_15" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_15" id="__nav_5_15_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    安全文档
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_15_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_15">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    安全文档
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../zh/security/CODEQL_SOLUTIONS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CodeQL 解决方案库
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../zh/security/coding-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    安全编码规范
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../zh/security/security-whackamole-investigation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GitHub Security "打地鼠" 问题深度调查报告
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../zh/security/user-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    安全指南 - API密钥管理
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="目录">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      目录
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-executive-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Executive Summary
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. 逐产品详细分析
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. 逐产品详细分析">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#21-opencode-anomalyco-charmbraceletcrush" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.1 OpenCode (anomalyco → charmbracelet/crush)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2.1 OpenCode (anomalyco → charmbracelet/crush)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        整体布局
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        视觉风格
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        关键交互
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        桌面端特有
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        亮点
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        缺陷
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#22-cursor" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.2 Cursor
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2.2 Cursor">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_7" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        整体布局
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_8" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        视觉风格
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_9" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        关键交互
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_10" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        桌面端特有
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_11" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        亮点
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_12" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        缺陷
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#23-windsurf" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.3 Windsurf
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2.3 Windsurf">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_13" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        整体布局
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_14" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        视觉风格
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_15" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        关键交互
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_16" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        亮点
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_17" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        缺陷
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#24-claude-code" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.4 Claude Code
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2.4 Claude Code">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_18" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        整体布局
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_19" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        视觉风格
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_20" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        关键交互
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_21" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        亮点
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_22" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        缺陷
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#25-aider" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.5 Aider
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2.5 Aider">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_23" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        整体布局
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_24" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        视觉风格
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_25" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        关键交互
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_26" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        亮点
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_27" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        缺陷
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#26-cline" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.6 Cline
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2.6 Cline">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_28" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        整体布局
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_29" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        视觉风格
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_30" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        关键交互
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_31" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        亮点
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_32" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        缺陷
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#27-roo-code" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.7 Roo Code
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2.7 Roo Code">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_33" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        整体布局
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_34" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        视觉风格
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_35" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        关键交互
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_36" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        亮点
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_37" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        缺陷
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#28-crush-charmbraceletcrush" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.8 Crush (charmbracelet/crush)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2.8 Crush (charmbracelet/crush)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#opencode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        与 OpenCode 的关系
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#opencode_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        额外亮点（相对 OpenCode）
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. 横向对比表
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. 横向对比表">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_38" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        特色功能对比
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-oh-my-coder-desktop" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. 对 Oh My Coder Desktop 的改进建议
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. 对 Oh My Coder Desktop 的改进建议">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#p0" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        P0 — 必须做（直接影响核心体验）
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="P0 — 必须做（直接影响核心体验）">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#p0-1-opencodecrush-bubble-tea-tui" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        P0-1：采用 OpenCode/Crush 的 Bubble Tea TUI 设计语言
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#p0-2-cursor-cmdk-cmdl" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        P0-2：实现 Cursor 的 Cmd+K / Cmd+L 双入口模式
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#p0-3-windsurf-memories" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        P0-3：实现 Windsurf 的 Memories / 持久化上下文机制
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#p1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        P1 — 重要（显著提升产品竞争力）
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="P1 — 重要（显著提升产品竞争力）">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#p1-1vim" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        P1-1：Vim 模式 + 传统模式并存
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#p1-2diff-permission" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        P1-2：Diff 可视化 + Permission 安全确认
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#p1-3mcp-provider" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        P1-3：MCP 集成 + Provider 切换面板
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#p2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        P2 — 增强（提升差异化竞争力）
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="P2 — 增强（提升差异化竞争力）">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#p2-1agent-skills" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        P2-1：Agent Skills 支持
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#p2-2sessionproject" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        P2-2：Session/Project 管理面板
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#p2-3codearchitectaskdebug" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        P2-3：模式切换（Code/Architect/Ask/Debug）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#p2-4token" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        P2-4：Token/费用实时追踪
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_39" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        附录：关键参考资源
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="附录：关键参考资源">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_40" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        截图/界面资源
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_41" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        技术参考
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#url-github-readme" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        截图 URL（来自产品 GitHub README）
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+    <a href="https://github.com/VOBC/oh-my-coder/edit/main/docs/research-desktop-ui-competitors.md" title="编辑此页" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
+    </a>
+  
+  
+    
+      
+    
+    <a href="https://github.com/VOBC/oh-my-coder/raw/main/docs/research-desktop-ui-competitors.md" title="查看本页的源代码" class="md-content__button md-icon">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 18c.56 0 1 .44 1 1s-.44 1-1 1-1-.44-1-1 .44-1 1-1m0-3c-2.73 0-5.06 1.66-6 4 .94 2.34 3.27 4 6 4s5.06-1.66 6-4c-.94-2.34-3.27-4-6-4m0 6.5a2.5 2.5 0 0 1-2.5-2.5 2.5 2.5 0 0 1 2.5-2.5 2.5 2.5 0 0 1 2.5 2.5 2.5 2.5 0 0 1-2.5 2.5M9.27 20H6V4h7v5h5v4.07c.7.08 1.36.25 2 .49V8l-6-6H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h4.5a8.2 8.2 0 0 1-1.23-2"/></svg>
+    </a>
+  
+
+
+<h1 id="ai-terminal-ui">AI 编程工具桌面端 / Terminal UI 设计调研报告</h1>
+<blockquote>
+<p>调研时间：2026-04-21
+调研范围：OpenCode / Cursor / Windsurf / Claude Code / Aider / Cline / Roo Code / Crush
+报告目标：为 Oh My Coder Desktop 提供 UI/UX 改进参考</p>
+</blockquote>
+<hr />
+<h2 id="1-executive-summary">1. Executive Summary</h2>
+<p><strong>一句话结论：</strong> 当前主流 AI 编程工具的 UI 分化为两个流派——以 Cursor/Windsurf 为代表的"IDE 内嵌 AI 面板"（侧边栏对话+内联 diff）和以 OpenCode/Crush/Aider 为代表的"Terminal TUI"（全屏终端交互）；最值得借鉴的桌面设计是 Cursor 的 Cmd+K/Cmd+L 双入口模式 + Windsurf 的 Cascade Flow 概念，而 OpenCode 的 Bubble Tea TUI + MCP 生态是最接近 Oh My Coder 的参考实现，Oh My Coder Desktop 应重点参考 OpenCode 的命令行 UX 和 Cursor 的可视化交互模式，走"Terminal TUI + 轻量桌面壳"的差异化路线。</p>
+<hr />
+<h2 id="2">2. 逐产品详细分析</h2>
+<hr />
+<h3 id="21-opencode-anomalyco-charmbraceletcrush">2.1 OpenCode (anomalyco → charmbracelet/crush)</h3>
+<p><strong>官方链接：</strong> https://opencode.ai | https://github.com/charmbracelet/crush</p>
+<p><strong>产品定位：</strong> 原 OpenCode 项目已迁移并重命名为 <strong>Crush</strong>，由 terminal.shop 团队和 Charm 团队联合开发，基于 Go 语言，用 Bubble Tea 框架构建 TUI。</p>
+<h4 id="_1">整体布局</h4>
+<ul>
+<li><strong>纯 Terminal TUI</strong>，无桌面 GUI壳——全屏终端应用，Vim-like 编辑体验</li>
+<li>主界面分为：</li>
+<li><strong>消息区域（上部）：</strong> 滚动显示对话历史，AI 回复带语法高亮和工具调用卡片</li>
+<li><strong>编辑/输入区（底部）：</strong> 类似 Vim 的多行编辑区，支持 <code>i</code> 进入编辑模式，<code>Esc</code> 切回消息浏览</li>
+<li><strong>覆盖层/对话框：</strong> Ctrl+K 命令面板、Ctrl+O 模型选择、Ctrl+A 会话切换，均以浮层形式覆盖</li>
+<li><strong>无侧边栏</strong>，文件管理通过 <code>ls</code>/<code>glob</code>/<code>grep</code> 等工具命令实现，由 AI 代为执行</li>
+<li>Settings 通过 JSON 配置文件（<code>crush.json</code>）管理，也支持内置的 <code>crush-config</code> skill 让 AI 自配置</li>
+</ul>
+<h4 id="_2">视觉风格</h4>
+<ul>
+<li><strong>Terminal 原生暗色</strong>：Charm 风格，使用 Lip Gloss 渲染样式，色彩在 ANSI 24-bit 范围内</li>
+<li><strong>字体</strong>：终端等宽字体（用户自定义）</li>
+<li><strong>配色</strong>：Bubble Tea 组件自带渐变色标题栏（如粉色/蓝色渐变），消息区黑白为主，工具调用卡片带边框高亮</li>
+<li><strong>图标</strong>：ASCII/Unicode 字符图标（如 ✓/✗/→），无外部图标依赖</li>
+<li><strong>动画</strong>：打字机效果（逐字输出）+ spinner 加载动画，丝滑流畅</li>
+<li><strong>间距</strong>：紧凑型，大量留白在对话气泡之间，按时间线排列</li>
+</ul>
+<h4 id="_3">关键交互</h4>
+<ul>
+<li><strong>模型切换</strong>：Ctrl+O 打开模型选择浮层，上下左右导航选择（类 VS Code 快捷键风格），支持切换 LLM 供应商（OpenAI/Anthropic/Gemini/Groq/OpenRouter/Vercel AI Gateway 等 20+）</li>
+<li><strong>API Key 配置</strong>：首次启动引导式输入；支持环境变量（ANTHROPIC_API_KEY 等）；crush.json 中配置 providers</li>
+<li><strong>对话历史</strong>：SQLite 本地持久化，自动 session 管理；Ctrl+A 切换会话，上下箭头导航历史</li>
+<li><strong>文件管理</strong>：AI 通过工具（ls/globs/grep/write/edit）操作，无原生文件树；支持 LSP 增强代码理解</li>
+<li><strong>上下文注入</strong>：<code>.crushignore</code> 文件类似 .gitignore，Agent Skills 支持（Skill 目录）</li>
+</ul>
+<h4 id="_4">桌面端特有</h4>
+<ul>
+<li><strong>无原生桌面窗口</strong>：纯 TUI，适合终端重度用户</li>
+<li><strong>快捷键体系</strong>：类 Vim + 类 VS Code 快捷键融合（Ctrl+K 命令、Ctrl+O 模型、Ctrl+A 会话）</li>
+<li><strong>MCP 支持</strong>：stdio / http / sse 三种传输方式，配置灵活</li>
+<li><strong>Agent Skills</strong>：<code>~/.config/agents/skills/</code> + <code>.agen/</code> 目录发现 SKILL.md</li>
+<li><strong>--yolo 模式</strong>：跳过所有工具执行确认，极速但危险</li>
+</ul>
+<h4 id="_5">亮点</h4>
+<ol>
+<li><strong>Bubble Tea TUI 美学标杆</strong>：Charm 团队的 TUI 设计语言非常成熟，渐变标题栏、精心调校的色彩层次是 Oh My Coder 可以直接借鉴的</li>
+<li><strong>Agent Skills 生态</strong>：支持 SKILL.md 技能包复用，与 Oh My Coder 定位高度重合</li>
+<li><strong>多供应商 + MCP 扩展</strong>：crush-config skill 自配置、丰富的 provider 支持，是完美的工具链集成参考</li>
+</ol>
+<h4 id="_6">缺陷</h4>
+<ol>
+<li><strong>纯 TUI，无桌面 GUI</strong>：对非终端用户有较高门槛，安装和首次配置体验不够友好</li>
+<li><strong>无原生文件树/项目管理界面</strong>：文件管理完全依赖 AI 工具调用，对习惯可视化操作的用户不够直观</li>
+</ol>
+<hr />
+<h3 id="22-cursor">2.2 Cursor</h3>
+<p><strong>官方链接：</strong> https://cursor.com | https://github.com/getcursor/cursor</p>
+<p><strong>产品定位：</strong> AI 原生代码编辑器，fork VS Code，深度集成 AI 的桌面应用；2026年已有完整桌面端 UI。</p>
+<h4 id="_7">整体布局</h4>
+<ul>
+<li><strong>IDE 布局（VS Code Fork）</strong>：</li>
+<li><strong>左侧活动栏</strong>：文件管理器/搜索/Git/扩展/AI 功能入口（图标式）</li>
+<li><strong>主编辑器区</strong>：代码编辑 + 内联 diff 展示</li>
+<li><strong>AI 面板（右侧/底部）</strong>：Cmd+K（内联编辑）、Cmd+L（侧边对话），可拖拽分屏</li>
+<li><strong>Chat 面板（Cmd+L）</strong>：右侧面板，滚动对话历史，支持 @ 文件/文档/代码库 引用</li>
+<li><strong>Composer（Cmd+I）</strong>：结构化编程模式，拆解任务为子步骤</li>
+<li><strong>Notepad</strong>：轻量临时笔记区</li>
+<li><strong>Settings</strong>：Ctrl+Shift+J 打开，完整 VS Code 风格设置页（General/Rules/Editor/Privacy/Tab/Chat 等）</li>
+</ul>
+<h4 id="_8">视觉风格</h4>
+<ul>
+<li><strong>暗色为主，官方主题</strong>：深蓝/灰色背景，白色文字，蓝色高亮（VS Code 暗色风格）</li>
+<li><strong>字体</strong>：用户自定义，编辑器默认 JetBrains Mono 或 Fira Code（支持连字）</li>
+<li><strong>AI 面板设计</strong>：对话框气泡风格，AI 回复带 Markdown 渲染和代码高亮</li>
+<li><strong>图标</strong>：VS Code 图标集（文件类型、活动栏图标）</li>
+<li><strong>间距</strong>：IDE 标准间距，消息气泡间距适中</li>
+<li><strong>动画</strong>：内联补全渐入、diff 视图平滑过渡</li>
+</ul>
+<h4 id="_9">关键交互</h4>
+<ul>
+<li><strong>模型切换</strong>：Settings &gt; General &gt; Account，可选内嵌订阅模式或自定义 API（支持 OpenAI/Anthropic/Gemini/xAI/Cursor 自有模型）；支持 Rules for AI（自定义行为规则）</li>
+<li><strong>API Key 配置</strong>：Settings 页面 GUI 配置，支持 Custom API Endpoint</li>
+<li><strong>对话历史</strong>：右侧面板滚动，消息按时间排列，支持引用特定消息</li>
+<li><strong>文件管理</strong>：完整 VS Code 文件资源管理器，支持多标签、分屏、终端面板</li>
+</ul>
+<h4 id="_10">桌面端特有</h4>
+<ul>
+<li><strong>macOS 标题栏交通灯</strong>：标准 macOS 窗口控件（关闭/最小化/缩放），与 VS Code 一致</li>
+<li><strong>原生菜单栏</strong>：完整的 macOS 菜单（文件/编辑/视图/终端/帮助等）</li>
+<li><strong>快捷键体系</strong>：VS Code 快捷键继承（Cmd+P 文件跳转、Cmd+Shift+P 命令面板等），AI 专用快捷键（Cmd+K/Cmd+L/Cmd+I）</li>
+<li><strong>窗口管理</strong>：VS Code 分屏/标签页体系完整继承，多工作区支持</li>
+<li><strong>隐私模式</strong>：Privacy mode 可关闭遥测</li>
+</ul>
+<h4 id="_11">亮点</h4>
+<ol>
+<li><strong>双入口 AI 交互（Cmd+K + Cmd+L）</strong>：内联编辑 + 侧边对话分离，体验极其流畅，Cursor 是这一范式的开创者</li>
+<li><strong>Codebase Indexing</strong>：完整理解代码库结构，聊天时自动检索相关文件上下文，无需手动 @ 大量文件</li>
+<li><strong>Diff 可视化</strong>：AI 修改直接以内联 diff 展示，用户逐块接受/拒绝，完全掌控感</li>
+</ol>
+<h4 id="_12">缺陷</h4>
+<ol>
+<li><strong>基于 VS Code Fork</strong>：UI 定制受限于 VS Code 架构，个性化空间有限，内存占用较高</li>
+<li><strong>订阅制依赖</strong>：完整功能需要付费订阅，对团队/企业用户成本较高</li>
+</ol>
+<hr />
+<h3 id="23-windsurf">2.3 Windsurf</h3>
+<p><strong>官方链接：</strong> https://windsurf.com | https://windsurf.ai</p>
+<p><strong>产品定位：</strong> Codeium 推出的"首个 Agentic IDE"，fork VS Code，以 Cascade AI 和 Flow 概念为核心。</p>
+<h4 id="_13">整体布局</h4>
+<ul>
+<li><strong>VS Code Fork 布局</strong>：与 Cursor 高度相似的 IDE 布局</li>
+<li><strong>左侧活动栏</strong>：Explorer/Search/Git/Debug/Windsurf AI（Cascade）</li>
+<li><strong>Cascade AI 面板</strong>：主 AI 交互区，包含 Chat、Write Mode、Flow Actions</li>
+<li><strong>Memories 面板</strong>：记录对代码库的记忆，类似 RAG 知识库</li>
+<li><strong>Rules 配置</strong>：AI 行为规则（.windsurfrc）</li>
+<li><strong>Flow Actions</strong>：将复杂任务分解为多步骤工作流，带进度指示</li>
+<li><strong>Supercomplete</strong>：深度代码补全，类似 Copilot 但更激进</li>
+</ul>
+<h4 id="_14">视觉风格</h4>
+<ul>
+<li><strong>暗色 IDE 风格</strong>：深灰背景，蓝色主色调，与 VS Code/Cursor 高度一致</li>
+<li><strong>字体</strong>：编辑器等宽字体</li>
+<li><strong>配色</strong>：蓝色高亮 + 绿色（接受）/ 红色（拒绝）diff 提示</li>
+<li><strong>Flow 可视化</strong>：任务步骤以卡片/列表形式展示，清晰直观</li>
+<li><strong>图标</strong>：VS Code 图标体系</li>
+</ul>
+<h4 id="_15">关键交互</h4>
+<ul>
+<li><strong>模型切换</strong>：Settings &gt; Account，订阅 Codeium Workspace 或配置自定义 API</li>
+<li><strong>API Key 配置</strong>：GUI 设置页，支持自定义 Provider</li>
+<li><strong>对话历史</strong>：Cascade 面板内滚动，带文件引用高亮</li>
+<li><strong>文件管理</strong>：VS Code 文件树，支持工作区管理</li>
+<li><strong>Memories</strong>：AI 记住关键代码结构和工作流偏好，类似持久化上下文</li>
+</ul>
+<h4 id="_16">亮点</h4>
+<ol>
+<li><strong>Memories 功能</strong>：RAG 风格的代码库记忆机制，解决长会话上下文丢失问题</li>
+<li><strong>Flow Actions</strong>：将复杂任务拆解为可管理的步骤，用户可以看到 AI 的完整执行计划</li>
+<li><strong>MCP Server 一键集成</strong>：Settings 中直接浏览和配置 MCP 服务（Figma/Slack/Stripe 等），开箱即用</li>
+</ol>
+<h4 id="_17">缺陷</h4>
+<ol>
+<li><strong>与 Cursor 功能高度重叠</strong>：没有足够差异化的 UX 创新，用户容易在两者间摇摆</li>
+<li><strong>VS Code Fork 的包袱</strong>：与 Cursor 面临相同的性能和定制化限制</li>
+</ol>
+<hr />
+<h3 id="24-claude-code">2.4 Claude Code</h3>
+<p><strong>官方链接：</strong> https://claude.ai/code</p>
+<p><strong>产品定位：</strong> Anthropic 官方 CLI 工具 + VS Code 扩展 + JetBrains 插件 + 桌面应用，五种运行环境。</p>
+<h4 id="_18">整体布局</h4>
+<ul>
+<li><strong>CLI（TUI）模式</strong>：</li>
+<li>全屏终端界面，打印模式输出（彩色进度、代码块高亮）</li>
+<li>命令面板通过 <code>/</code> 触发（<code>/search</code>/<code>/web-search</code>/<code>/lsp</code> 等）</li>
+<li>permission 确认交互：工具执行前弹确认提示</li>
+<li><strong>VS Code 扩展模式</strong>：</li>
+<li>侧边栏面板，聊天 + 命令入口</li>
+<li>内联编辑（Shift+Tab 切换模式）</li>
+<li>终端集成（VS Code v1.93+ Shell Integration）</li>
+<li><strong>桌面应用</strong>：独立 Electron 窗口，完整 GUI 界面</li>
+<li><strong>Settings</strong>：<code>.claude.json</code> 配置文件 + GUI 设置页</li>
+</ul>
+<h4 id="_19">视觉风格</h4>
+<ul>
+<li><strong>暗色 Terminal 输出</strong>：ASCII 表格、彩色状态指示（绿色成功/红色错误）</li>
+<li><strong>VS Code 扩展</strong>：继承 VS Code 暗色主题</li>
+<li><strong>字体</strong>：终端等宽字体（用户配置）</li>
+<li><strong>动画</strong>：打字机输出 + ASCII 进度条</li>
+<li><strong>代码块</strong>：语法高亮（ANSI 色彩或 Pygments 风格）</li>
+</ul>
+<h4 id="_20">关键交互</h4>
+<ul>
+<li><strong>模型切换</strong>：<code>/general-config</code> 命令 或 Settings GUI；支持环境变量 <code>ANTHROPIC_MODEL</code></li>
+<li><strong>API Key 配置</strong>：首次引导配置 + 环境变量（ANTHROPIC_API_KEY）+ Settings GUI；支持 Custom Endpoint</li>
+<li><strong>对话历史</strong>：基于会话，JSON 文件持久化；<code>--save-session</code> 导出</li>
+<li><strong>文件管理</strong>：CLI 下无文件树；VS Code 扩展模式下使用 VS Code 文件系统</li>
+<li><strong>模式切换</strong>：Shift+Tab 在默认/ask/edit 模式间切换</li>
+</ul>
+<h4 id="_21">亮点</h4>
+<ol>
+<li><strong>五种运行环境</strong>：Terminal/VS Code/JetBrains/Desktop/Web，适配所有用户习惯</li>
+<li><strong>Permission 安全机制</strong>：每步操作前确认，用户完全掌控，是"Human-in-the-loop"的最佳实践</li>
+<li><strong>LSP 集成 + 深度代码理解</strong>：Claude 的代码推理能力最强，IDE 扩展提供精确的代码库上下文</li>
+</ol>
+<h4 id="_22">缺陷</h4>
+<ol>
+<li><strong>国内访问限制</strong>：Anthropic 官方服务在中国大陆不可用，需要第三方代理或 API 站点配置，学习成本高</li>
+<li><strong>VS Code 扩展体验不如独立桌面应用</strong>：依赖 VS Code 版本（需要 v1.93+ shell integration）</li>
+</ol>
+<hr />
+<h3 id="25-aider">2.5 Aider</h3>
+<p><strong>官方链接：</strong> https://aider.chat | https://github.com/Aider-AI/aider</p>
+<p><strong>产品定位：</strong> 最流行的开源 CLI AI 编程工具，Python 实现，Terminal 内配对编程，强调 Git 集成。</p>
+<h4 id="_23">整体布局</h4>
+<ul>
+<li><strong>纯 Terminal 输出（无 TUI）</strong>：非交互式命令行输出，逐行打印 AI 响应</li>
+<li><strong>无 GUI 界面</strong>：所有交互在终端文本流中完成</li>
+<li><strong>工作方式</strong>：<code>cd project &amp;&amp; aider</code>，直接在代码库目录运行</li>
+<li><strong>输出格式</strong>：Markdown 渲染的 AI 响应 + diff 输出 + git commit 记录</li>
+<li><strong>无侧边栏/无面板</strong>：纯命令行体验</li>
+</ul>
+<h4 id="_24">视觉风格</h4>
+<ul>
+<li><strong>Terminal 原生</strong>：无自定义 UI，纯 ANSI 彩色输出</li>
+<li><strong>字体</strong>：用户终端字体配置</li>
+<li><strong>配色</strong>：基本的红/绿 diff 颜色 + Markdown ANSI 高亮</li>
+<li><strong>间距</strong>：紧凑型，终端标准输出密度</li>
+<li><strong>动画</strong>：无动画，纯文本流</li>
+</ul>
+<h4 id="_25">关键交互</h4>
+<ul>
+<li><strong>模型切换</strong>：<code>--model sonnet</code>/<code>--model deepseek</code> 命令行参数；<code>aider-install</code> 引导安装配置</li>
+<li><strong>API Key 配置</strong>：环境变量（ANTHROPIC_API_KEY 等）或 <code>~/.aider.conf.yml</code> 配置文件；引导式设置</li>
+<li><strong>对话历史</strong>：基于 git commit，自动生成 commit message；可通过 <code>--chat-mode</code> 选择交互模式</li>
+<li><strong>文件管理</strong>：无原生文件树，通过 git 管理变更</li>
+<li><strong>--read-only 模式</strong>：限制 AI 只读文件</li>
+<li><strong>Voice 输入</strong>：支持语音输入（voice mode）</li>
+</ul>
+<h4 id="_26">亮点</h4>
+<ol>
+<li><strong>Git 深度集成</strong>：每次变更自动 commit，git diff 可追溯，团队协作友好</li>
+<li><strong>Repo Map</strong>：代码库可视化地图，帮助 AI 理解大型项目结构</li>
+<li><strong>多语言支持 + 几乎所有 LLM</strong>：支持 Claude/DeepSeek/GPT/本地模型（Ollama/LM Studio）</li>
+</ol>
+<h4 id="_27">缺陷</h4>
+<ol>
+<li><strong>零 UI 设计</strong>：纯命令输出，新手门槛高，无法直观看到对话历史和管理会话</li>
+<li><strong>无 MCP/LSP 原生集成</strong>：代码理解能力依赖 prompt engineering，非结构化上下文</li>
+</ol>
+<hr />
+<h3 id="26-cline">2.6 Cline</h3>
+<p><strong>官方链接：</strong> https://github.com/cline/cline</p>
+<p><strong>产品定位：</strong> VS Code 扩展，自主 AI 编程 Agent，每步操作需用户授权，Human-in-the-loop 设计。</p>
+<h4 id="_28">整体布局</h4>
+<ul>
+<li><strong>VS Code 扩展界面</strong>：</li>
+<li><strong>侧边栏面板</strong>：主交互区，展示任务进度、工具调用、diff 预览</li>
+<li><strong>Diff 视图</strong>：AI 修改的文件以内联 diff 展示，可逐块接受/拒绝</li>
+<li><strong>Terminal 集成</strong>：命令在 VS Code 内置终端执行（v1.93+ Shell Integration）</li>
+<li><strong>Image 支持</strong>：支持上传图片作为上下文（界面截图、设计稿）</li>
+<li><strong>Timeline 追踪</strong>：所有变更记录在文件 Timeline 中</li>
+<li><strong>无独立桌面窗口</strong>：完全嵌入 VS Code</li>
+</ul>
+<h4 id="_29">视觉风格</h4>
+<ul>
+<li><strong>VS Code 扩展面板</strong>：继承 VS Code 暗色主题</li>
+<li><strong>消息气泡</strong>：AI 回复 + 工具调用卡片 + diff 展示的组合面板</li>
+<li><strong>配色</strong>：VS Code 标准配色，diff 用绿色（新增）/红色（删除）</li>
+<li><strong>图标</strong>：VS Code 图标集</li>
+<li><strong>权限确认 UI</strong>：弹窗式确认（Allow/Deny/Allow All Session）</li>
+</ul>
+<h4 id="_30">关键交互</h4>
+<ul>
+<li><strong>模型切换</strong>：Settings GUI，支持 OpenRouter（自动拉取最新模型列表）/Anthropic/OpenAI/Gemini/Bedrock 等；也支持本地模型（LM Studio/Ollama）</li>
+<li><strong>API Key 配置</strong>：VS Code Settings GUI，输入 API Key</li>
+<li><strong>对话历史</strong>：基于任务，每次任务独立，支持多轮迭代</li>
+<li><strong>文件管理</strong>：VS Code 文件系统 + Timeline 追踪</li>
+<li><strong>Token 和费用追踪</strong>：每步任务显示 Token 消耗和 API 费用</li>
+</ul>
+<h4 id="_31">亮点</h4>
+<ol>
+<li><strong>VS Code Shell Integration</strong>：在 VS Code 内置终端执行命令，完美融入开发者工作流</li>
+<li><strong>Image/截图上下文</strong>：支持设计稿截图，AI 可以基于视觉理解生成代码（Computer Use）</li>
+<li><strong>Permission 安全 + Diff 可视化</strong>：每步确认 + diff 逐块接受，用户完全掌控</li>
+</ol>
+<h4 id="_32">缺陷</h4>
+<ol>
+<li><strong>纯 VS Code 依赖</strong>：无法独立运行，不适合 JetBrains/其他编辑器用户</li>
+<li><strong>复杂的上下文管理</strong>：需要手动管理 token 预算，大型项目上下文压力大</li>
+</ol>
+<hr />
+<h3 id="27-roo-code">2.7 Roo Code</h3>
+<p><strong>官方链接：</strong> https://github.com/RooCodeInc/Roo-Code</p>
+<p><strong>产品定位：</strong> Cline 的社区分支（fork），定位为"VS Code 中的 AI 开发团队"，强调多模式工作流。</p>
+<h4 id="_33">整体布局</h4>
+<ul>
+<li><strong>VS Code 扩展</strong>：与 Cline 高度相似的界面</li>
+<li><strong>侧边栏面板</strong>：主交互区</li>
+<li><strong>Mode 切换</strong>：Code/Architect/Ask/Debug/Custom 五种模式</li>
+<li><strong>Checkpoints</strong>：快照/回滚机制，类似游戏存档</li>
+<li><strong>与 Cline 的区别</strong>：</li>
+<li>多模式系统（Code Mode 日常编辑 / Architect Mode 系统设计 / Ask Mode 快速问答 / Debug Mode 调试）</li>
+<li>Custom Mode：用户可自定义 AI 行为模式</li>
+<li>更积极的社区驱动迭代</li>
+</ul>
+<h4 id="_34">视觉风格</h4>
+<ul>
+<li><strong>继承 VS Code/Cline 风格</strong>：暗色主题，标准 VS Code UI</li>
+<li><strong>Mode 指示器</strong>：侧边栏顶部显示当前模式（Code/Architect/Ask/Debug）</li>
+<li><strong>配色</strong>：VS Code 标准配色</li>
+</ul>
+<h4 id="_35">关键交互</h4>
+<ul>
+<li><strong>模型切换</strong>：Settings GUI，支持多 Provider（Poe 直接集成）</li>
+<li><strong>API Key 配置</strong>：VS Code Settings GUI</li>
+<li><strong>对话历史</strong>：基于任务，多模式不影响历史记录</li>
+<li><strong>Codebase Indexing</strong>：大型项目上下文优化</li>
+</ul>
+<h4 id="_36">亮点</h4>
+<ol>
+<li><strong>多模式 UX 创新</strong>：Code/Architect/Ask/Debug/Custom 模式分离，不同场景用不同模式，UX 理念领先</li>
+<li><strong>Poe 集成</strong>：直接接入 Poe 平台模型，无需单独配置 API Key</li>
+<li><strong>Checkpoints 快照</strong>：类似游戏存档，回滚机制对实验性重构很有价值</li>
+</ol>
+<h4 id="_37">缺陷</h4>
+<ol>
+<li><strong>与 Cline 功能高度重叠</strong>：fork 自 Cline，核心 UX 差异不够大，社区维护可持续性存疑</li>
+<li><strong>VS Code 独占</strong>：与 Cline 相同的局限性</li>
+</ol>
+<hr />
+<h3 id="28-crush-charmbraceletcrush">2.8 Crush (charmbracelet/crush)</h3>
+<blockquote>
+<p>注：Crush 是 OpenCode 的后继者，同一团队开发，设计语言完全相同。</p>
+</blockquote>
+<h4 id="opencode">与 OpenCode 的关系</h4>
+<ul>
+<li><strong>同代码库</strong>：Crush = OpenCode 重命名并继续开发</li>
+<li><strong>相同 TUI 设计</strong>：Bubble Tea 框架、相同的交互模式、相同的 Charm 视觉风格</li>
+<li><strong>扩展功能</strong>：Crush 新增了 Agent Skills 支持（SKILL.md 技能包）和更丰富的 MCP 集成</li>
+</ul>
+<h4 id="opencode_1">额外亮点（相对 OpenCode）</h4>
+<ol>
+<li><strong>Agent Skills 生态</strong>：内置 <code>crush-config</code> skill + Agent Skills 开放标准，技能可复用可分发</li>
+<li><strong>更丰富的 Provider 集成</strong>：crush.json 中直接配置 providers，包括自定义 API endpoint</li>
+<li><strong>NixOS/Home Manager 模块</strong>：对 Nix 用户开箱即用</li>
+</ol>
+<hr />
+<h2 id="3">3. 横向对比表</h2>
+<table>
+<thead>
+<tr>
+<th>产品</th>
+<th>类型</th>
+<th>侧边栏</th>
+<th>主聊天区域</th>
+<th>输入框位置</th>
+<th>Settings 入口</th>
+<th>配色方案</th>
+<th>模型切换</th>
+<th>API Key 配置</th>
+<th>对话历史</th>
+<th>文件管理</th>
+<th>快捷键风格</th>
+<th>交通灯</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>OpenCode/Crush</strong></td>
+<td>Terminal TUI（Go/Bubble Tea）</td>
+<td>❌ 无</td>
+<td>上部消息区（可滚动）</td>
+<td>底部 Vim 编辑区</td>
+<td>JSON 配置文件 + 自配置 skill</td>
+<td>Charm 暗色/渐变标题栏</td>
+<td>Ctrl+O 浮层</td>
+<td>环境变量 + JSON 配置</td>
+<td>SQLite 持久化，Ctrl+A 切换</td>
+<td>无原生文件树（工具命令）</td>
+<td>Vim + VS Code 融合</td>
+<td>N/A（纯 TUI）</td>
+</tr>
+<tr>
+<td><strong>Cursor</strong></td>
+<td>Desktop IDE（VS Code Fork）</td>
+<td>✅ 左侧活动栏</td>
+<td>右侧面板（Cmd+L）/ 内联（Cmd+K）</td>
+<td>底部输入框</td>
+<td>Ctrl+Shift+J</td>
+<td>VS Code 暗色主题</td>
+<td>Settings GUI</td>
+<td>Settings GUI</td>
+<td>右侧面板滚动</td>
+<td>VS Code 文件树</td>
+<td>VS Code 快捷键 + AI 专用键</td>
+<td>✅ macOS 标准控件</td>
+</tr>
+<tr>
+<td><strong>Windsurf</strong></td>
+<td>Desktop IDE（VS Code Fork）</td>
+<td>✅ 左侧活动栏</td>
+<td>Cascade 面板（主 AI 面板）</td>
+<td>底部输入框</td>
+<td>Settings GUI</td>
+<td>VS Code 暗色主题</td>
+<td>Settings GUI</td>
+<td>Settings GUI</td>
+<td>Cascade 面板滚动</td>
+<td>VS Code 文件树</td>
+<td>VS Code 快捷键</td>
+<td>✅ macOS 标准控件</td>
+</tr>
+<tr>
+<td><strong>Claude Code</strong></td>
+<td>CLI TUI + VS Code 扩展</td>
+<td>❌ CLI 无 / ✅ 扩展有侧边栏</td>
+<td>CLI：终端打印 / 扩展：侧边栏</td>
+<td>CLI：stdin / 扩展：底部</td>
+<td><code>.claude.json</code> + GUI</td>
+<td>Terminal 暗色</td>
+<td><code>/general-config</code> 或 Settings</td>
+<td>环境变量 + 引导式 GUI</td>
+<td>基于会话文件</td>
+<td>CLI：无 / 扩展：VS Code</td>
+<td><code>/</code> 命令面板 + 扩展快捷键</td>
+<td>CLI 无 / 扩展 ✅</td>
+</tr>
+<tr>
+<td><strong>Aider</strong></td>
+<td>CLI（无 TUI，Python）</td>
+<td>❌ 无</td>
+<td>终端打印流</td>
+<td>stdin 参数</td>
+<td><code>~/.aider.conf.yml</code></td>
+<td>ANSI 彩色</td>
+<td><code>--model</code> 命令行参数</td>
+<td>环境变量 + 引导式</td>
+<td>基于 git commit</td>
+<td>git 管理</td>
+<td>命令行参数</td>
+<td>N/A（纯 CLI）</td>
+</tr>
+<tr>
+<td><strong>Cline</strong></td>
+<td>VS Code 扩展</td>
+<td>✅ 侧边栏面板</td>
+<td>侧边栏（任务/工具/diff）</td>
+<td>侧边栏底部</td>
+<td>VS Code Settings GUI</td>
+<td>VS Code 暗色主题</td>
+<td>VS Code Settings GUI</td>
+<td>VS Code Settings GUI</td>
+<td>基于任务</td>
+<td>VS Code 文件树 + Timeline</td>
+<td>VS Code 快捷键</td>
+<td>✅ 继承自 VS Code</td>
+</tr>
+<tr>
+<td><strong>Roo Code</strong></td>
+<td>VS Code 扩展</td>
+<td>✅ 侧边栏面板</td>
+<td>侧边栏（五模式切换）</td>
+<td>侧边栏底部</td>
+<td>VS Code Settings GUI</td>
+<td>VS Code 暗色主题</td>
+<td>VS Code Settings GUI + Poe</td>
+<td>VS Code Settings GUI</td>
+<td>基于任务</td>
+<td>VS Code 文件树</td>
+<td>VS Code 快捷键 + Mode 切换</td>
+<td>✅ 继承自 VS Code</td>
+</tr>
+<tr>
+<td><strong>Crush</strong></td>
+<td>Terminal TUI（Go/Bubble Tea）</td>
+<td>❌ 无</td>
+<td>上部消息区</td>
+<td>底部 Vim 编辑区</td>
+<td>JSON 配置文件 + crush-config skill</td>
+<td>Charm 暗色/渐变标题栏</td>
+<td>Ctrl+O 浮层</td>
+<td>环境变量 + JSON 配置</td>
+<td>SQLite 持久化</td>
+<td>无原生文件树</td>
+<td>Vim + VS Code 融合</td>
+<td>N/A（纯 TUI）</td>
+</tr>
+</tbody>
+</table>
+<h3 id="_38">特色功能对比</h3>
+<table>
+<thead>
+<tr>
+<th>产品</th>
+<th>特色功能</th>
+<th>最适合场景</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>OpenCode/Crush</strong></td>
+<td>Bubble Tea 美学 / Agent Skills / MCP / Auto-compact</td>
+<td>Terminal 重度用户 / 追求 TUI 美学</td>
+</tr>
+<tr>
+<td><strong>Cursor</strong></td>
+<td>Cmd+K 内联编辑 / Cmd+L 对话 / Codebase Indexing / Diff 接受</td>
+<td>日常开发 / VS Code 用户</td>
+</tr>
+<tr>
+<td><strong>Windsurf</strong></td>
+<td>Cascade Flow / Memories / MCP 一键集成</td>
+<td>AI 新手 / 需要持久化上下文</td>
+</tr>
+<tr>
+<td><strong>Claude Code</strong></td>
+<td>五种运行环境 / Permission 安全 / 深度代码理解</td>
+<td>Anthropic 生态用户 / 安全敏感场景</td>
+</tr>
+<tr>
+<td><strong>Aider</strong></td>
+<td>Git 自动 commit / Repo Map / 多 LLM 支持</td>
+<td>极简主义者 / Git 工作流团队</td>
+</tr>
+<tr>
+<td><strong>Cline</strong></td>
+<td>VS Code Shell 集成 / 图片上下文 / 费用追踪</td>
+<td>VS Code 用户 / 需要视觉上下文</td>
+</tr>
+<tr>
+<td><strong>Roo Code</strong></td>
+<td>多模式 / Checkpoints / Poe 集成</td>
+<td>VS Code 用户 / 需要模式分离</td>
+</tr>
+<tr>
+<td><strong>Crush</strong></td>
+<td>Agent Skills 生态 / 20+ Provider / Nix 集成</td>
+<td>Terminal 用户 / 多模型切换</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="4-oh-my-coder-desktop">4. 对 Oh My Coder Desktop 的改进建议</h2>
+<h3 id="p0">P0 — 必须做（直接影响核心体验）</h3>
+<h4 id="p0-1-opencodecrush-bubble-tea-tui">P0-1：采用 OpenCode/Crush 的 Bubble Tea TUI 设计语言</h4>
+<p><strong>改什么：</strong> 参考 Charm 团队的 Bubble Tea 视觉风格，实现 Oh My Coder 的 TUI 层：
+- 渐变色标题栏（参考 Crush 的 pink/blue 渐变）
+- 消息气泡带边框 + 间距节奏感
+- 工具调用卡片（带状态图标 ✓/✗/⏳）
+- 打字机效果 + spinner 加载动画
+- Lip Gloss 样式系统保证跨 Terminal 渲染一致性</p>
+<p><strong>参考谁：</strong> charmbracelet/crush + charmbracelet/bubbletea</p>
+<p><strong>为什么：</strong> Charm 团队是 TUI 设计的行业标杆，Bubble Tea 生态成熟，Oh My Coder 定位为 Terminal 工具，直接借鉴可获得业界顶级的 TUI 美学，无需从零设计。</p>
+<hr />
+<h4 id="p0-2-cursor-cmdk-cmdl">P0-2：实现 Cursor 的 Cmd+K / Cmd+L 双入口模式</h4>
+<p><strong>改什么：</strong> 在桌面应用的编辑器区域和独立 AI 面板中同时支持：
+- <strong>Cmd+K（内联编辑）</strong>：选中代码 → Cmd+K → AI 在原位编辑，带 inline diff 预览和逐块接受/拒绝
+- <strong>Cmd+L（侧边对话）</strong>：独立侧边栏面板，滚动对话历史，支持 @ 文件/文件夹引用</p>
+<p><strong>参考谁：</strong> Cursor</p>
+<p><strong>为什么：</strong> Cmd+K/Cmd+L 是 Cursor 开创并验证的最佳 AI 编程交互范式，内联编辑保持代码上下文不丢失，侧边对话适合探索性问答，两者互补无死角。</p>
+<hr />
+<h4 id="p0-3-windsurf-memories">P0-3：实现 Windsurf 的 Memories / 持久化上下文机制</h4>
+<p><strong>改什么：</strong> 参考 Windsurf 的 Cascade Memories，在 Oh My Coder 中实现：
+- AI 记住代码库结构、工作流偏好、重要文件位置
+- 持久化到本地数据库（SQLite 或 JSON）
+- 新会话时加载 relevant memories，减少上下文重复注入</p>
+<p><strong>参考谁：</strong> Windsurf Cascade Memories</p>
+<p><strong>为什么：</strong> 长会话中上下文丢失是 Terminal AI 编程的最大痛点，Memories 机制直接解决这一问题，提升多轮对话质量。</p>
+<hr />
+<h3 id="p1">P1 — 重要（显著提升产品竞争力）</h3>
+<h4 id="p1-1vim">P1-1：Vim 模式 + 传统模式并存</h4>
+<p><strong>改什么：</strong> 参考 OpenCode 的设计，在输入组件中同时支持：
+- <strong>传统模式</strong>：标准文本输入框，适合鼠标用户
+- <strong>Vim 模式</strong>：<code>i</code> 进入编辑，<code>Esc</code> 切回浏览，<code>Ctrl+E</code> 外部编辑器
+- Ctrl+K 命令面板（类 VS Code）
+- Ctrl+A 会话切换面板
+- 上下箭头浏览历史</p>
+<p><strong>参考谁：</strong> OpenCode + VS Code</p>
+<p><strong>为什么：</strong> 开发者群体中 Vim 用户比例高，Vim 模式是专业 Terminal 工具的标配；但也要兼顾非 Vim 用户，模式并存是最佳平衡。</p>
+<hr />
+<h4 id="p1-2diff-permission">P1-2：Diff 可视化 + Permission 安全确认</h4>
+<p><strong>改什么：</strong> 参考 Cline 的设计：
+- AI 修改文件时，弹出 diff 视图，用户逐块接受/拒绝
+- 敏感操作（rm / 网络请求 / 高危命令）需显式授权
+- 支持 "Allow All for Session" 快速信任
+- 权限确认面板（类似 Cline 的 Allow/Deny 弹窗）</p>
+<p><strong>参考谁：</strong> Cline</p>
+<p><strong>为什么：</strong> 安全确认是 AI Agent 落地的信任基础，diff 逐块接受让用户保持掌控感，是"Human-in-the-loop"理念的最佳实现。</p>
+<hr />
+<h4 id="p1-3mcp-provider">P1-3：MCP 集成 + Provider 切换面板</h4>
+<p><strong>改什么：</strong> 参考 Crush 的 MCP 配置和 Windsurf 的 MCP 一键集成：
+- Settings 中提供 MCP Server 管理面板（stdio/http/sse 三种传输）
+- 模型选择面板（Ctrl+O 快捷键）：支持 OpenAI/Anthropic/Gemini/Groq/OpenRouter 等
+- 每个 provider 配置 API Key（支持环境变量引用，敏感信息不上屏）
+- 支持自定义 API endpoint（兼容 OpenAI 格式）</p>
+<p><strong>参考谁：</strong> Crush + Windsurf</p>
+<p><strong>为什么：</strong> 多模型竞争格局下，灵活性是核心需求；MCP 是 AI Agent 的扩展标准，早集成早受益。</p>
+<hr />
+<h3 id="p2">P2 — 增强（提升差异化竞争力）</h3>
+<h4 id="p2-1agent-skills">P2-1：Agent Skills 支持</h4>
+<p><strong>改什么：</strong> 参考 Crush 的 Agent Skills 生态：
+- 支持 <code>.ohmycoder/skills/</code> 目录发现 SKILL.md 技能包
+- 内置 <code>ohmycoder-config</code> skill 让 AI 自配置
+- 支持从 ClawdHub/SkillHub 搜索和安装技能</p>
+<p><strong>参考谁：</strong> Crush Agent Skills + Oh My Coder 的 SkillHub 生态</p>
+<p><strong>为什么：</strong> Oh My Coder 已有 SkillHub 生态，将 Skills 能力延伸到 Terminal TUI 层，形成桌面端 + 命令行统一的技能体系，差异化竞争力强。</p>
+<hr />
+<h4 id="p2-2sessionproject">P2-2：Session/Project 管理面板</h4>
+<p><strong>改什么：</strong> 参考 OpenCode 的 Ctrl+A 会话切换 + Windsurf 的工作区概念：
+- 项目列表面板（Recent Projects）
+- Session 历史面板（带时间戳和摘要预览）
+- 支持 Session 导出/导入
+- Session 持久化到 SQLite</p>
+<p><strong>参考谁：</strong> OpenCode + Cursor</p>
+<p><strong>为什么：</strong> 多项目管理是刚需，用户经常在多个项目间切换，独立的项目/会话管理面板比文件树更直观。</p>
+<hr />
+<h4 id="p2-3codearchitectaskdebug">P2-3：模式切换（Code/Architect/Ask/Debug）</h4>
+<p><strong>改什么：</strong> 参考 Roo Code 的多模式设计：
+- <strong>Code Mode</strong>：日常编辑、文件操作
+- <strong>Architect Mode</strong>：系统设计、架构讨论
+- <strong>Ask Mode</strong>：快速问答、代码解释
+- <strong>Debug Mode</strong>：问题追踪、日志分析
+- 侧边栏顶部模式指示器，不同模式不同的 system prompt</p>
+<p><strong>参考谁：</strong> Roo Code</p>
+<p><strong>为什么：</strong> 模式分离让 AI 在不同场景下表现更专业，减少"全能但平庸"的问题；用户也更容易建立对 AI 行为的预期。</p>
+<hr />
+<h4 id="p2-4token">P2-4：Token/费用实时追踪</h4>
+<p><strong>改什么：</strong> 参考 Cline 的 token 计数和费用显示：
+- 当前会话的 Token 消耗（输入/输出）
+- 当前请求的 API 费用
+- 上下文窗口使用百分比（参考 OpenCode 的 auto-compact 阈值）</p>
+<p><strong>参考谁：</strong> Cline</p>
+<p><strong>为什么：</strong> 开发者对成本敏感，实时显示 Token 和费用有助于用户合理规划使用，防止意外超支。</p>
+<hr />
+<h2 id="_39">附录：关键参考资源</h2>
+<h3 id="_40">截图/界面资源</h3>
+<ul>
+<li><strong>Cursor UI 详解</strong>：https://zhuanlan.zhihu.com/p/26745647855</li>
+<li><strong>Windsurf 界面截图</strong>：https://blog.csdn.net/chusi777/article/details/143994369</li>
+<li><strong>OpenCode/Crush GitHub</strong>：https://github.com/charmbracelet/crush</li>
+<li><strong>Cline VS Code 扩展截图</strong>：https://github.com/cline/cline</li>
+<li><strong>Windsurf 官网</strong>：https://windsurf.com</li>
+</ul>
+<h3 id="_41">技术参考</h3>
+<ul>
+<li><strong>Bubble Tea 框架</strong>：https://github.com/charmbracelet/bubbletea（TUI 构建框架）</li>
+<li><strong>Lip Gloss</strong>：https://github.com/charmbracelet/lip gloss（终端样式库）</li>
+<li><strong>OpenCode README</strong>：https://github.com/opencode-ai/opencode</li>
+<li><strong>Crush README</strong>：https://github.com/charmbracelet/crush</li>
+<li><strong>Aider 文档</strong>：https://aider.chat/docs/</li>
+<li><strong>Claude Code 文档</strong>：https://docs.anthropic.com/en/docs/claude-code/overview</li>
+<li><strong>Roo Code 文档</strong>：https://docs.roocode.com</li>
+</ul>
+<h3 id="url-github-readme">截图 URL（来自产品 GitHub README）</h3>
+<ul>
+<li>Crush UI GIF：https://private-user-images.githubusercontent.com/25087/471774478-58280caf-851b-470a-b6f7-d5c4ea8a1968.gif</li>
+<li>Cline Demo GIF：https://media.githubusercontent.com/media/cline/cline/main/assets/docs/demo.gif</li>
+<li>Cline Settings：https://private-user-images.githubusercontent.com/7799382/374832520-3cf21e04-7ce9-4d22-a7b9-ba2c595e88a4.png</li>
+<li>Cline Diff View：https://private-user-images.githubusercontent.com/7799382/374832624-81be79a8-1fdb-4028-9129-5fe055e01e76.png</li>
+<li>Cline Terminal：https://private-user-images.githubusercontent.com/7799382/374860276-ee14e6f7-20b8-4391-9091-8e8e25561929.png</li>
+</ul>
+<hr />
+<p><em>报告生成时间：2026-04-21</em>
+<em>调研方式：GitHub README 文档抓取 + 官方文档页面获取 + CSDN/博客园产品评测文章</em></p>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/VOBC/oh-my-coder" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.instant", "navigation.trimming", "navigation.sections", "navigation.expand", "search.suggest", "search.highlight", "content.code.copy", "content.action.edit", "content.action.view"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "\u5df2\u590d\u5236", "clipboard.copy": "\u590d\u5236", "search.result.more.one": "\u5728\u8be5\u9875\u4e0a\u8fd8\u6709 1 \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.more.other": "\u5728\u8be5\u9875\u4e0a\u8fd8\u6709 # \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.none": "\u6ca1\u6709\u627e\u5230\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.one": "\u627e\u5230 1 \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.other": "# \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.placeholder": "\u952e\u5165\u4ee5\u5f00\u59cb\u641c\u7d22", "search.result.term.missing": "\u7f3a\u5c11", "select.version": "\u9009\u62e9\u5f53\u524d\u7248\u672c"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>
