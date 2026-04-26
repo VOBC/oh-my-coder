@@ -469,7 +469,12 @@ export default function App() {
       // Standalone Vite mode: use fallback models
       console.warn('[App] omc API not available — using fallback model list');
       setModels(FALLBACK_MODELS);
-      if (!currentModel) setCurrentModel(FALLBACK_MODELS[0]?.id ?? '');
+      const fallbackModel = FALLBACK_MODELS[0]?.id ?? '';
+      if (!currentModel) setCurrentModel(fallbackModel);
+      // Auto-create session if none exists (for standalone Vite demo)
+      if (!activeId && fallbackModel) {
+        createSession(fallbackModel);
+      }
       return;
     }
     omcApi.modelList().then((data: any) => {
