@@ -1,638 +1,213 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Oh My Coder - 项目仪表板</title>
+    <title>项目仪表板 - Oh My Coder</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-        }
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-        }
-        .header {
-            text-align: center;
-            color: white;
-            margin-bottom: 30px;
-        }
-        .header h1 {
-            font-size: 2.5em;
-            margin-bottom: 10px;
-        }
-        .header p { opacity: 0.9; }
-        
-        /* 统计卡片 */
-        .stats-grid {
+        .dashboard-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-bottom: 32px;
         }
-        .stat-card {
-            background: white;
-            border-radius: 16px;
-            padding: 25px;
-            text-align: center;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
-            transition: transform 0.3s;
+        .dash-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            transition: var(--transition);
         }
-        .stat-card:hover {
-            transform: translateY(-5px);
-        }
-        .stat-icon {
-            font-size: 3em;
-            margin-bottom: 10px;
-        }
-        .stat-value {
-            font-size: 2.5em;
-            font-weight: bold;
-            color: #333;
-        }
-        .stat-label {
-            color: #666;
-            margin-top: 5px;
-        }
-        .stat-change {
-            font-size: 0.9em;
-            margin-top: 10px;
-            padding: 4px 12px;
-            border-radius: 20px;
-        }
-        .stat-change.up { background: #d4edda; color: #155724; }
-        .stat-change.down { background: #f8d7da; color: #721c24; }
-        
-        /* 内容区域 */
-        .content-grid {
-            display: grid;
-            grid-template-columns: 2fr 1fr;
-            gap: 20px;
-        }
-        @media (max-width: 1024px) {
-            .content-grid { grid-template-columns: 1fr; }
-        }
-        .card {
-            background: white;
-            border-radius: 16px;
-            padding: 25px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
-        }
-        .card-title {
-            font-size: 1.3em;
-            margin-bottom: 20px;
-            color: #333;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        
-        /* 活动图表 */
-        .activity-chart {
-            height: 200px;
-            display: flex;
-            align-items: flex-end;
-            gap: 8px;
-            padding: 20px 0;
-        }
-        .chart-bar {
-            flex: 1;
-            background: linear-gradient(to top, #667eea, #764ba2);
-            border-radius: 4px 4px 0 0;
-            min-height: 20px;
-            position: relative;
-            transition: all 0.3s;
-        }
-        .chart-bar:hover {
-            opacity: 0.8;
-        }
-        .chart-bar::after {
-            content: attr(data-day);
-            position: absolute;
-            bottom: -25px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 0.8em;
-            color: #666;
-        }
-        
-        /* 最近任务 */
-        .task-list { list-style: none; }
-        .task-item {
-            padding: 15px;
-            border-bottom: 1px solid #eee;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            transition: background 0.3s;
-        }
-        .task-item:hover { background: #f8f9fa; }
-        .task-item:last-child { border-bottom: none; }
-        .task-status {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-        }
-        .task-status.completed { background: #28a745; }
-        .task-status.running { background: #ffc107; animation: pulse 1s infinite; }
-        .task-status.failed { background: #dc3545; }
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-        .task-info { flex: 1; }
-        .task-name { font-weight: 500; color: #333; }
-        .task-meta { font-size: 0.85em; color: #666; margin-top: 3px; }
-        .task-time { font-size: 0.85em; color: #999; }
-        
-        /* Agent 状态 */
-        .agent-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
-        }
-        .agent-item {
-            padding: 12px;
-            background: #f8f9fa;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .agent-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-        }
-        .agent-dot.idle { background: #6c757d; }
-        .agent-dot.running { background: #28a745; }
-        .agent-dot.error { background: #dc3545; }
-        .agent-name { font-size: 0.9em; color: #333; }
-        
-        /* 快速操作 */
-        .quick-actions {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
-            margin-top: 20px;
-        }
-        .action-btn {
-            padding: 12px;
-            border: 2px solid #667eea;
-            border-radius: 10px;
-            background: white;
-            color: #667eea;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-        .action-btn:hover {
-            background: #667eea;
-            color: white;
-        }
-        .action-btn.primary {
-            background: #667eea;
-            color: white;
-        }
-        .action-btn.primary:hover {
-            background: #5a6fd6;
-        }
-        
-        /* 实时协作面板 */
-        .collab-panel {
-            margin-top: 20px;
-        }
-        .collab-header {
+        .dash-card:hover { border-color: var(--border-hover); }
+        .dash-card-header {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-bottom: 15px;
+            margin-bottom: 16px;
         }
-        .collab-badge {
-            font-size: 0.75em;
-            padding: 2px 8px;
-            border-radius: 10px;
-            background: #28a745;
-            color: white;
-            animation: blink 2s infinite;
+        .dash-card-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-secondary);
         }
-        @keyframes blink {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.4; }
+        .dash-card-icon { font-size: 20px; }
+        .dash-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--primary);
+            font-family: var(--font-mono);
         }
-        .collab-progress {
-            font-size: 0.85em;
-            color: #666;
-            margin-bottom: 12px;
-            font-weight: 500;
+        .dash-label {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-top: 4px;
         }
-        .agent-row {
+        .agent-list { display: flex; flex-direction: column; gap: 8px; }
+        .agent-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: var(--bg-secondary);
+            border-radius: var(--radius);
+            font-size: 14px;
+        }
+        .agent-dot {
+            width: 8px; height: 8px; border-radius: 50%;
+        }
+        .agent-dot.idle { background: var(--text-muted); }
+        .agent-dot.running { background: var(--success); animation: pulse 1.5s infinite; }
+        .agent-dot.error { background: var(--danger); }
+        .agent-name { font-weight: 600; color: var(--text); flex: 1; }
+        .agent-status { font-size: 12px; color: var(--text-muted); }
+        .file-list { display: flex; flex-direction: column; gap: 4px; }
+        .file-item {
             display: flex;
             align-items: center;
             gap: 8px;
-            padding: 6px 0;
-            border-bottom: 1px solid #f0f0f0;
-            font-size: 0.9em;
+            padding: 8px 12px;
+            font-family: var(--font-mono);
+            font-size: 13px;
+            color: var(--text-secondary);
+            border-radius: 6px;
         }
-        .agent-row:last-child { border-bottom: none; }
-        .status-dot {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            flex-shrink: 0;
-        }
-        .status-dot.active { background: #dc3545; box-shadow: 0 0 4px #dc3545; }
-        .status-dot.done { background: #28a745; }
-        .status-dot.pending { background: #ccc; }
-        .agent-info { flex: 1; }
-        .agent-name { font-weight: 500; color: #333; }
-        .agent-task { font-size: 0.8em; color: #888; margin-top: 1px; }
-        .agent-badge {
-            font-size: 0.75em;
-            padding: 1px 6px;
-            border-radius: 8px;
-        }
-        .agent-badge.working { background: #f8d7da; color: #721c24; }
-        .agent-badge.done { background: #d4edda; color: #155724; }
-        .agent-badge.pending { background: #f8f9fa; color: #666; }
-        
-        /* 实时日志 */
-        .log-stream {
-            margin-top: 15px;
-            background: #1a1a2e;
-            border-radius: 10px;
-            padding: 12px;
-            max-height: 200px;
-            overflow-y: auto;
-            font-family: 'Courier New', monospace;
-            font-size: 0.8em;
-            line-height: 1.6;
-        }
-        .log-stream::-webkit-scrollbar { width: 6px; }
-        .log-stream::-webkit-scrollbar-track { background: #1a1a2e; }
-        .log-stream::-webkit-scrollbar-thumb { background: #555; border-radius: 3px; }
-        .log-entry { color: #a0a0a0; }
-        .log-entry.ts { color: #6c757d; }
-        .log-entry.active { color: #ffc107; }
-        .log-entry.done { color: #28a745; }
-        .log-entry.error { color: #dc3545; }
-        .log-entry.pending { color: #6c757d; }
-        .log-time { color: #555; margin-right: 6px; }
-        
-        /* 导航 */
-        .nav {
-            display: flex;
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-        .nav a {
-            color: white;
-            text-decoration: none;
-            padding: 10px 20px;
-            border-radius: 8px;
-            background: rgba(255,255,255,0.2);
-            transition: background 0.3s;
-        }
-        .nav a:hover, .nav a.active {
-            background: rgba(255,255,255,0.4);
+        .file-item:hover { background: var(--bg-secondary); }
+        .file-icon { color: var(--text-muted); }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+        @media (max-width: 768px) {
+            .dashboard-grid { grid-template-columns: 1fr; }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>📊 Oh My Coder</h1>
-            <p>多智能体 AI 编程助手 - 项目仪表板</p>
-        </div>
-        
-        <div class="nav">
-            <a href="/">🏠 首页</a>
-            <a href="/dashboard" class="active">📊 仪表板</a>
-            <a href="/history">📜 历史记录</a>
-            <a href="/agents">🤖 Agents</a>
-        </div>
-        
-        <!-- 统计卡片 -->
-        <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-icon">📝</div>
-                <div class="stat-value" id="totalTasks">156</div>
-                <div class="stat-label">总任务数</div>
-                <div class="stat-change up">↑ 12% 本周</div>
+    <!-- Nav -->
+    <nav class="nav">
+        <div class="nav-content">
+            <a href="/" class="nav-brand">
+                <span class="nav-brand-icon">🤖</span>
+                <span class="nav-brand-name">Oh My Coder</span>
+            </a>
+            <div class="nav-links" id="navLinks">
+                <a href="/" class="nav-link">首页</a>
+                <a href="/dashboard" class="nav-link active">仪表板</a>
+                <a href="/history" class="nav-link">历史</a>
+                <a href="/docs" class="nav-link">文档</a>
+                <a href="/settings" class="nav-link">设置</a>
             </div>
-            <div class="stat-card">
-                <div class="stat-icon">✅</div>
-                <div class="stat-value" id="completedTasks">142</div>
-                <div class="stat-label">已完成</div>
-                <div class="stat-change up">91% 成功率</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon">🔄</div>
-                <div class="stat-value" id="runningTasks">3</div>
-                <div class="stat-label">执行中</div>
-                <div class="stat-change down">2 个排队等待</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon">⚡</div>
-                <div class="stat-value" id="avgTime">45s</div>
-                <div class="stat-label">平均耗时</div>
-                <div class="stat-change up">↓ 8% 优化</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon">🪙</div>
-                <div class="stat-value" id="totalTokens">2.3M</div>
-                <div class="stat-label">总 Token</div>
-                <div class="stat-change up">本月消耗</div>
+            <div class="nav-actions">
+                <div class="nav-toggle" id="themeToggle" title="切换主题">☀️</div>
+                <button class="nav-hamburger" id="navHamburger">☰</button>
             </div>
         </div>
-        
-        <!-- 内容区域 -->
-        <div class="content-grid">
-            <!-- 左侧：活动和任务 -->
-            <div class="card">
-                <div class="card-title">📈 最近 7 天活动</div>
-                <div class="activity-chart" id="activityChart">
-                    <!-- JavaScript 填充 -->
-                </div>
-                
-                <div class="card-title" style="margin-top: 30px;">📋 最近任务</div>
-                <ul class="task-list" id="recentTasks">
-                    <li class="task-item">
-                        <div class="task-status completed"></div>
-                        <div class="task-info">
-                            <div class="task-name">实现用户登录功能</div>
-                            <div class="task-meta">build 工作流 · DeepSeek</div>
-                        </div>
-                        <div class="task-time">5 分钟前</div>
-                    </li>
-                    <li class="task-item">
-                        <div class="task-status running"></div>
-                        <div class="task-info">
-                            <div class="task-name">生成 API 文档</div>
-                            <div class="task-meta">document 工作流 · 通义千问</div>
-                        </div>
-                        <div class="task-time">执行中...</div>
-                    </li>
-                    <li class="task-item">
-                        <div class="task-status completed"></div>
-                        <div class="task-info">
-                            <div class="task-name">代码审查 PR #42</div>
-                            <div class="task-meta">review 工作流 · 文心一言</div>
-                        </div>
-                        <div class="task-time">1 小时前</div>
-                    </li>
-                    <li class="task-item">
-                        <div class="task-status failed"></div>
-                        <div class="task-info">
-                            <div class="task-name">修复数据库连接问题</div>
-                            <div class="task-meta">debug 工作流 · Kimi</div>
-                        </div>
-                        <div class="task-time">2 小时前</div>
-                    </li>
-                </ul>
-            </div>
-            
-            <!-- 右侧：Agent 状态和快速操作 -->
-            <div>
-                <div class="card">
-                    <div class="card-title">🤖 Agent 状态</div>
-                    <div class="agent-grid" id="agentStatus">
-                        <div class="agent-item">
-                            <div class="agent-dot idle"></div>
-                            <span class="agent-name">Planner</span>
-                        </div>
-                        <div class="agent-item">
-                            <div class="agent-dot running"></div>
-                            <span class="agent-name">Writer</span>
-                        </div>
-                        <div class="agent-item">
-                            <div class="agent-dot idle"></div>
-                            <span class="agent-name">Executor</span>
-                        </div>
-                        <div class="agent-item">
-                            <div class="agent-dot idle"></div>
-                            <span class="agent-name">Reviewer</span>
-                        </div>
-                        <div class="agent-item">
-                            <div class="agent-dot idle"></div>
-                            <span class="agent-name">Debugger</span>
-                        </div>
-                        <div class="agent-item">
-                            <div class="agent-dot idle"></div>
-                            <span class="agent-name">Architect</span>
-                        </div>
-                    </div>
-                </div>
+    </nav>
 
-                <!-- 实时协作面板 -->
-                <div class="card collab-panel">
-                    <div class="collab-header">
-                        <div class="card-title" style="margin:0">
-                            🔴 实时协作
-                        </div>
-                        <span class="collab-badge" id="collabBadge">LIVE</span>
-                    </div>
-                    <div class="collab-progress" id="collabProgress">
-                        等待任务开始...
-                    </div>
-                    <div id="collabAgents">
-                        <div style="color:#999;font-size:0.9em;text-align:center;padding:20px 0;">
-                            当前无活跃工作流
-                        </div>
-                    </div>
-                    <div class="log-stream" id="logStream">
-                        <div class="log-entry ts">⏳ 正在连接实时状态...</div>
-                    </div>
-                </div>
+    <main class="container-wide">
+        <h1 class="page-title">📊 项目仪表板</h1>
+        <p class="page-desc">实时查看项目状态、Agent 协作和运行指标。</p>
 
-                <div class="card" style="margin-top: 20px;">
-                    <div class="card-title">⚡ 快速操作</div>
-                    <div class="quick-actions">
-                        <button class="action-btn primary" onclick="newTask()">
-                            ➕ 新建任务
-                        </button>
-                        <button class="action-btn" onclick="location.href='/history'">
-                            📜 查看历史
-                        </button>
-                        <button class="action-btn" onclick="location.href='/agents'">
-                            🤖 管理 Agents
-                        </button>
-                        <button class="action-btn" onclick="showSettings()">
-                            ⚙️ 设置
-                        </button>
-                    </div>
+        <div class="dashboard-grid">
+            <div class="dash-card">
+                <div class="dash-card-header">
+                    <span class="dash-card-title">已完成任务</span>
+                    <span class="dash-card-icon">✅</span>
+                </div>
+                <div class="dash-value" id="totalTasks">0</div>
+                <div class="dash-label">累计执行</div>
+            </div>
+            <div class="dash-card">
+                <div class="dash-card-header">
+                    <span class="dash-card-title">Token 消耗</span>
+                    <span class="dash-card-icon">🪙</span>
+                </div>
+                <div class="dash-value" id="totalTokens">0</div>
+                <div class="dash-label">Total Tokens</div>
+            </div>
+            <div class="dash-card">
+                <div class="dash-card-header">
+                    <span class="dash-card-title">估算成本</span>
+                    <span class="dash-card-icon">💰</span>
+                </div>
+                <div class="dash-value" id="totalCost">¥0</div>
+                <div class="dash-label">DeepSeek 免费额度内</div>
+            </div>
+        </div>
+
+        <div class="dashboard-grid" style="grid-template-columns: 1fr 1fr;">
+            <div class="dash-card">
+                <div class="dash-card-header">
+                    <span class="dash-card-title">🤖 Agent 状态</span>
+                </div>
+                <div class="agent-list" id="agentList">
+                    <div class="agent-item"><div class="agent-dot idle"></div><span class="agent-name">🔍 Explorer</span><span class="agent-status">空闲</span></div>
+                    <div class="agent-item"><div class="agent-dot idle"></div><span class="agent-name">🧠 Analyst</span><span class="agent-status">空闲</span></div>
+                    <div class="agent-item"><div class="agent-dot idle"></div><span class="agent-name">🏗️ Architect</span><span class="agent-status">空闲</span></div>
+                    <div class="agent-item"><div class="agent-dot idle"></div><span class="agent-name">💻 Executor</span><span class="agent-status">空闲</span></div>
+                    <div class="agent-item"><div class="agent-dot idle"></div><span class="agent-name">✅ Verifier</span><span class="agent-status">空闲</span></div>
+                    <div class="agent-item"><div class="agent-dot idle"></div><span class="agent-name">🐛 Debugger</span><span class="agent-status">空闲</span></div>
+                    <div class="agent-item"><div class="agent-dot idle"></div><span class="agent-name">🔎 Reviewer</span><span class="agent-status">空闲</span></div>
+                    <div class="agent-item"><div class="agent-dot idle"></div><span class="agent-name">🛡️ Security</span><span class="agent-status">空闲</span></div>
+                </div>
+            </div>
+            <div class="dash-card">
+                <div class="dash-card-header">
+                    <span class="dash-card-title">📁 项目文件</span>
+                </div>
+                <div class="file-list" id="fileList">
+                    <div style="color:var(--text-muted);font-size:14px;">加载中...</div>
                 </div>
             </div>
         </div>
-    </div>
-    
+    </main>
+
+    <footer class="footer"><p>Made with ❤️ by Oh My Coder</p></footer>
+
     <script>
-        // 渲染活动图表
-        function renderActivityChart() {
-            const chart = document.getElementById('activityChart');
-            const days = ['一', '二', '三', '四', '五', '六', '日'];
-            const data = [12, 19, 8, 15, 22, 18, 14];
-            const max = Math.max(...data);
-            
-            chart.innerHTML = data.map((value, i) => {
-                const height = (value / max) * 150;
-                return `<div class="chart-bar" style="height: ${height}px" data-day="${days[i]}" title="${value} 个任务"></div>`;
-            }).join('');
+        // Theme
+        function loadTheme() {
+            const t = localStorage.getItem('theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', t);
+            document.getElementById('themeToggle').textContent = t === 'dark' ? '☀️' : '🌙';
         }
-        
-        // 新建任务
-        function newTask() {
-            const task = prompt('请输入任务描述：');
-            if (task) {
-                fetch('/api/execute', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({task: task, workflow: 'build'})
-                }).then(r => r.json()).then(data => {
-                    alert('任务已创建: ' + data.task_id);
-                    location.reload();
-                });
-            }
-        }
-        
-        // 显示设置
-        function showSettings() {
-            alert('设置功能开发中...');
-        }
-        
-        // ========================================
-        // 实时协作面板 - SSE 连接
-        // ========================================
-        let collabSource = null;
-        let logSeq = 0;
+        document.getElementById('themeToggle').addEventListener('click', () => {
+            const c = document.documentElement.getAttribute('data-theme');
+            const n = c === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', n);
+            document.getElementById('themeToggle').textContent = n === 'dark' ? '☀️' : '🌙';
+            localStorage.setItem('theme', n);
+        });
+        loadTheme();
 
-        function formatTime(isoStr) {
+        // Mobile nav
+        document.getElementById('navHamburger').addEventListener('click', () => {
+            document.getElementById('navLinks').classList.toggle('open');
+        });
+
+        // Load dashboard data
+        async function loadDashboard() {
             try {
-                const d = new Date(isoStr);
-                return d.toLocaleTimeString('zh-CN', {hour: '2-digit', minute: '2-digit', second: '2-digit'});
-            } catch { return ''; }
-        }
+                const res = await fetch('/api/dashboard/stats');
+                const data = await res.json();
+                if (data.total_tasks !== undefined) document.getElementById('totalTasks').textContent = data.total_tasks;
+                if (data.total_tokens !== undefined) document.getElementById('totalTokens').textContent = data.total_tokens.toLocaleString();
+                if (data.total_cost !== undefined) document.getElementById('totalCost').textContent = '¥' + data.total_cost.toFixed(4);
+            } catch (e) {}
 
-        function appendLog(msg, cls) {
-            const stream = document.getElementById('logStream');
-            const entry = document.createElement('div');
-            entry.className = `log-entry ${cls}`;
-            entry.innerHTML = `<span class="log-time">[${formatTime(new Date().toISOString())}]</span> ${msg}`;
-            stream.appendChild(entry);
-            stream.scrollTop = stream.scrollHeight;
-            logSeq++;
-            // 限制最多 100 条
-            while (stream.children.length > 100) stream.removeChild(stream.firstChild);
-        }
-
-        function renderCollabState(state) {
-            const agentsEl = document.getElementById('collabAgents');
-            const progressEl = document.getElementById('collabProgress');
-
-            progressEl.textContent = `进度: ${state.total_progress}`;
-
-            // 合并所有 Agent 状态
-            const nameSet = new Set([
-                ...state.active_agents.map(a => a.name),
-                ...state.completed_agents.map(a => a.name),
-                ...state.pending_agents,
-            ]);
-
-            if (nameSet.size === 0) {
-                agentsEl.innerHTML = `<div style="color:#999;font-size:0.9em;text-align:center;padding:20px 0;">当前无活跃工作流</div>`;
-                return;
-            }
-
-            const rows = [];
-            for (const name of nameSet) {
-                const active = state.active_agents.find(a => a.name === name);
-                const done = state.completed_agents.find(a => a.name === name);
-                const pending = state.pending_agents.includes(name);
-
-                let dot, cls, badge, taskText;
-                if (active) {
-                    dot = 'active'; cls = 'working'; badge = '执行中';
-                    taskText = active.task || 'working...';
-                } else if (done) {
-                    dot = 'done'; cls = 'done'; badge = '完成';
-                    taskText = done.task || 'completed';
-                } else {
-                    dot = 'pending'; cls = 'pending'; badge = '等待';
-                    taskText = 'pending...';
+            try {
+                const res = await fetch('/api/dashboard/files');
+                const data = await res.json();
+                if (data.files) {
+                    document.getElementById('fileList').innerHTML = data.files.slice(0, 15).map(f =>
+                        `<div class="file-item"><span class="file-icon">📄</span><span>${f.name}</span><span style="margin-left:auto;color:var(--text-muted)">${f.size || ''}</span></div>`
+                    ).join('');
                 }
-
-                rows.push(`
-                    <div class="agent-row">
-                        <div class="status-dot ${dot}"></div>
-                        <div class="agent-info">
-                            <div class="agent-name">${name}</div>
-                            <div class="agent-task">${taskText}</div>
-                        </div>
-                        <span class="agent-badge ${cls}">${badge}</span>
-                    </div>
-                `);
+            } catch (e) {
+                document.getElementById('fileList').innerHTML = '<div style="color:var(--text-muted);font-size:14px;">无法加载文件列表</div>';
             }
-            agentsEl.innerHTML = rows.join('');
         }
-
-        function connectCollabSSE() {
-            // 关闭旧连接
-            if (collabSource) { collabSource.close(); collabSource = null; }
-
-            collabSource = new EventSource('/api/agent/live');
-
-            collabSource.onopen = () => {
-                appendLog('🔗 SSE 连接已建立', 'ts');
-            };
-
-            collabSource.onmessage = (event) => {
-                try {
-                    const state = JSON.parse(event.data);
-
-                    if (state.error) {
-                        appendLog(`⚠️ ${state.error}`, 'error');
-                        return;
-                    }
-
-                    // 日志条目
-                    const active = state.active_agents || [];
-                    const done = (state.completed_agents || []).slice(-active.length > 0 ? 0 : -3);
-                    const pending = state.pending_agents || [];
-
-                    if (active.length > 0) {
-                        appendLog(`🔴 ${active.map(a => a.name).join(', ')} 正在执行`, 'active');
-                    }
-                    if (done.length > 0) {
-                        done.forEach(a => appendLog(`✅ ${a.name} 完成 (${a.duration})`, 'done'));
-                    }
-                    if (pending.length > 0) {
-                        appendLog(`⏳ 等待: ${pending.join(', ')}`, 'pending');
-                    }
-
-                    // 更新 UI
-                    renderCollabState(state);
-                } catch (e) {
-                    appendLog(`⚠️ 解析失败: ${e.message}`, 'error');
-                }
-            };
-
-            collabSource.onerror = () => {
-                appendLog('❌ SSE 连接断开，3秒后重连...', 'error');
-                collabSource.close();
-                collabSource = null;
-                setTimeout(connectCollabSSE, 3000);
-            };
-        }
-
-        // ========================================
-        // 初始化
-        // ========================================
-        renderActivityChart();
-        connectCollabSSE();
+        loadDashboard();
     </script>
 </body>
 </html>

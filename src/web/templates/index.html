@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,16 +10,14 @@
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
-        /* ===== Agent Pipeline Visualization ===== */
+        /* Pipeline */
         .pipeline-container {
             display: flex;
             align-items: center;
-            gap: 0;
             margin: 32px 0 40px;
             overflow-x: auto;
             padding: 8px 0;
         }
-
         .pipeline-step {
             display: flex;
             flex-direction: column;
@@ -27,23 +25,20 @@
             gap: 10px;
             flex-shrink: 0;
         }
-
         .pipeline-icon {
-            width: 64px;
-            height: 64px;
-            border-radius: 16px;
+            width: 60px;
+            height: 60px;
+            border-radius: 14px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 28px;
-            background: rgba(99, 102, 241, 0.1);
+            font-size: 26px;
+            background: var(--primary-light);
             border: 2px solid rgba(99, 102, 241, 0.2);
             color: var(--primary);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: all 0.3s;
             position: relative;
-            cursor: default;
         }
-
         .pipeline-icon.active {
             background: linear-gradient(135deg, var(--primary), var(--primary-dark));
             border-color: var(--primary);
@@ -51,86 +46,64 @@
             box-shadow: 0 8px 32px rgba(99, 102, 241, 0.4);
             transform: translateY(-4px);
         }
-
         .pipeline-icon.completed {
             background: linear-gradient(135deg, #10b981, #059669);
             border-color: #10b981;
             color: white;
-            box-shadow: 0 4px 16px rgba(16, 185, 129, 0.3);
         }
-
         .pipeline-icon.failed {
             background: linear-gradient(135deg, #ef4444, #dc2626);
             border-color: #ef4444;
             color: white;
-            box-shadow: 0 4px 16px rgba(239, 68, 68, 0.3);
         }
-
         .pipeline-icon.waiting {
             opacity: 0.4;
-            background: rgba(148, 163, 184, 0.1);
-            border-color: rgba(148, 163, 184, 0.2);
+            background: var(--bg-secondary);
+            border-color: var(--border);
             color: var(--text-muted);
         }
-
-        .pipeline-label {
-            font-size: 12px;
-            font-weight: 600;
-            color: var(--text-secondary);
-            text-align: center;
-            letter-spacing: 0.5px;
-        }
-
+        .pipeline-label { font-size: 12px; font-weight: 600; color: var(--text-secondary); }
         .pipeline-arrow {
-            display: flex;
-            align-items: center;
             padding: 0 12px;
             color: var(--border);
-            font-size: 20px;
+            font-size: 18px;
             flex-shrink: 0;
         }
-
-        .pipeline-arrow.active {
-            color: var(--primary);
-        }
-
+        .pipeline-arrow.active { color: var(--primary); }
         .step-spinner {
-            width: 20px;
-            height: 20px;
-            border: 2px solid rgba(255, 255, 255, 0.3);
+            width: 20px; height: 20px;
+            border: 2px solid rgba(255,255,255,0.3);
             border-top-color: white;
             border-radius: 50%;
             animation: spin 0.8s linear infinite;
             display: none;
         }
+        .pipeline-icon.active .step-spinner { display: block; }
+        .pipeline-icon.active .step-emoji { display: none; }
 
-        .pipeline-icon.active .step-spinner {
-            display: block;
+        /* Task Card */
+        .task-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-xl);
+            padding: 32px;
+            box-shadow: var(--shadow);
+            margin-bottom: 40px;
         }
+        .task-header { margin-bottom: 24px; }
+        .task-header h2 { font-size: 20px; font-weight: 600; margin-bottom: 4px; }
+        .task-subtitle { font-size: 14px; color: var(--text-muted); }
 
-        .pipeline-icon.active .step-emoji {
-            display: none;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        /* ===== Response Viewer ===== */
-        .response-container {
-            margin-top: 32px;
-        }
-
+        /* Response */
+        .response-container { margin-top: 32px; }
         .response-tabs {
             display: flex;
-            gap: 8px;
+            gap: 4px;
             margin-bottom: 16px;
             border-bottom: 1px solid var(--border);
-            padding-bottom: 0;
         }
-
         .response-tab {
-            padding: 8px 20px;
+            padding: 8px 16px;
             border: none;
             background: none;
             color: var(--text-secondary);
@@ -139,318 +112,210 @@
             cursor: pointer;
             border-bottom: 2px solid transparent;
             margin-bottom: -1px;
-            transition: all 0.2s;
             font-family: inherit;
         }
-
-        .response-tab:hover {
-            color: var(--text);
-        }
-
-        .response-tab.active {
-            color: var(--primary);
-            border-bottom-color: var(--primary);
-        }
-
+        .response-tab.active { color: var(--primary); border-bottom-color: var(--primary); }
         .response-panel {
             display: none;
             background: var(--card);
             border: 1px solid var(--border);
-            border-radius: 16px;
+            border-radius: var(--radius-lg);
             padding: 24px;
-            min-height: 300px;
+            min-height: 200px;
             max-height: 600px;
             overflow-y: auto;
         }
+        .response-panel.active { display: block; }
 
-        .response-panel.active {
-            display: block;
-        }
-
-        /* Markdown Content Styling */
-        .markdown-body {
-            font-size: 14px;
-            line-height: 1.8;
-            color: var(--text);
-        }
-
-        .markdown-body h1, .markdown-body h2, .markdown-body h3 {
-            margin: 24px 0 12px;
-            font-weight: 600;
-            color: var(--text);
-        }
-
-        .markdown-body h1 { font-size: 22px; }
-        .markdown-body h2 { font-size: 18px; }
-        .markdown-body h3 { font-size: 16px; }
-
-        .markdown-body p {
-            margin: 12px 0;
-        }
-
-        .markdown-body code {
-            background: rgba(99, 102, 241, 0.08);
-            color: var(--primary);
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 13px;
-        }
-
-        .markdown-body pre {
-            background: #0d1117;
-            border-radius: 12px;
-            padding: 20px;
-            overflow-x: auto;
-            margin: 16px 0;
-        }
-
-        .markdown-body pre code {
-            background: none;
-            color: #c9d1d9;
-            padding: 0;
-            font-size: 13px;
-        }
-
-        .markdown-body ul, .markdown-body ol {
-            padding-left: 24px;
-            margin: 12px 0;
-        }
-
-        .markdown-body li {
-            margin: 6px 0;
-        }
-
-        .markdown-body blockquote {
-            border-left: 4px solid var(--primary);
-            margin: 16px 0;
-            padding: 12px 20px;
-            background: rgba(99, 102, 241, 0.05);
-            border-radius: 0 8px 8px 0;
-            color: var(--text-secondary);
-        }
-
-        .markdown-body table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 16px 0;
-            font-size: 14px;
-        }
-
-        .markdown-body th, .markdown-body td {
-            border: 1px solid var(--border);
-            padding: 10px 14px;
-            text-align: left;
-        }
-
-        .markdown-body th {
-            background: rgba(99, 102, 241, 0.05);
-            font-weight: 600;
-        }
-
-        /* ===== Stats Cards ===== */
-        .stats-grid {
+        /* Model list */
+        .models-section { margin-bottom: 40px; }
+        .models-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-            gap: 16px;
-            margin: 24px 0;
-        }
-
-        .stat-card {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 20px;
-            text-align: center;
-        }
-
-        .stat-value {
-            font-size: 28px;
-            font-weight: 700;
-            color: var(--primary);
-            font-family: 'JetBrains Mono', monospace;
-        }
-
-        .stat-label {
-            font-size: 12px;
-            color: var(--text-muted);
-            margin-top: 4px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        /* ===== Toast Notifications ===== */
-        .toast-container {
-            position: fixed;
-            top: 24px;
-            right: 24px;
-            z-index: 9999;
-            display: flex;
-            flex-direction: column;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
             gap: 12px;
         }
-
-        .toast {
+        .model-item {
             background: var(--card);
             border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 16px 20px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+            border-radius: var(--radius);
+            padding: 16px;
             display: flex;
             align-items: center;
+            gap: 14px;
+            transition: var(--transition);
+            cursor: default;
+        }
+        .model-item:hover { border-color: var(--border-hover); }
+        .model-item-icon {
+            width: 42px; height: 42px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            background: var(--primary-light);
+            flex-shrink: 0;
+        }
+        .model-item-info { flex: 1; min-width: 0; }
+        .model-item-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .model-item-provider {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+        .model-item-status {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        .model-item-status.online { background: var(--success); }
+        .model-item-status.offline { background: var(--text-muted); }
+
+        /* Examples */
+        .examples-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
             gap: 12px;
-            animation: toastIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            max-width: 360px;
         }
-
-        .toast.success { border-left: 4px solid #10b981; }
-        .toast.error { border-left: 4px solid #ef4444; }
-        .toast.info { border-left: 4px solid var(--primary); }
-
-        @keyframes toastIn {
-            from { opacity: 0; transform: translateX(20px); }
-            to { opacity: 1; transform: translateX(0); }
+        .example-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 16px 14px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: var(--transition);
+            text-align: center;
+            font-family: inherit;
         }
+        .example-card:hover {
+            border-color: var(--primary);
+            box-shadow: 0 4px 16px rgba(99, 102, 241, 0.1);
+            transform: translateY(-2px);
+        }
+        .example-icon { font-size: 24px; }
+        .example-title { font-size: 13px; font-weight: 600; color: var(--text); }
+        .example-desc { font-size: 11px; color: var(--text-muted); }
 
-        .toast-icon { font-size: 20px; flex-shrink: 0; }
-        .toast-message { font-size: 14px; color: var(--text); }
-
-        /* ===== Mobile Responsive ===== */
         @media (max-width: 768px) {
-            .pipeline-container {
-                gap: 0;
-            }
-            .pipeline-icon {
-                width: 52px;
-                height: 52px;
-                font-size: 22px;
-            }
-            .pipeline-arrow {
-                padding: 0 8px;
-                font-size: 16px;
-            }
-            .pipeline-label {
-                font-size: 10px;
-            }
-            .stats-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
+            .task-card { padding: 20px; border-radius: var(--radius-lg); }
+            .examples-grid { grid-template-columns: repeat(2, 1fr); }
+            .pipeline-icon { width: 48px; height: 48px; font-size: 20px; }
+            .pipeline-arrow { padding: 0 8px; font-size: 14px; }
+            .models-grid { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 480px) {
+            .examples-grid { grid-template-columns: 1fr; }
         }
     </style>
 </head>
 <body>
     <div class="toast-container" id="toastContainer"></div>
 
-    <!-- Header -->
-    <header class="header">
-        <div class="header-content">
-            <div class="logo">
-                <div class="logo-icon">🤖</div>
-                <div class="logo-text">
-                    <span class="logo-name">Oh My Coder</span>
-                    <span class="logo-tagline">多智能体 AI 编程助手</span>
-                </div>
+    <!-- Nav -->
+    <nav class="nav">
+        <div class="nav-content">
+            <a href="/" class="nav-brand">
+                <span class="nav-brand-icon">🤖</span>
+                <span class="nav-brand-name">Oh My Coder</span>
+            </a>
+            <div class="nav-links" id="navLinks">
+                <a href="/" class="nav-link active">首页</a>
+                <a href="/dashboard" class="nav-link">仪表板</a>
+                <a href="/history" class="nav-link">历史</a>
+                <a href="/docs" class="nav-link">文档</a>
+                <a href="/settings" class="nav-link">设置</a>
             </div>
-            <div class="header-actions">
-                <a href="https://github.com" target="_blank" class="btn btn-ghost">
-                    <span>📦</span> GitHub
-                </a>
-                <div class="theme-toggle" id="themeToggle" title="切换主题">🌙</div>
+            <div class="nav-actions">
+                <div class="nav-toggle" id="themeToggle" title="切换主题">☀️</div>
+                <button class="nav-hamburger" id="navHamburger">☰</button>
             </div>
         </div>
-    </header>
+    </nav>
 
     <main class="container">
-        <!-- Hero Section -->
+        <!-- Hero -->
         <section class="hero">
             <div class="hero-badge">
                 <span class="badge-dot"></span>
                 <span>Powered by DeepSeek · 零成本智能编程</span>
             </div>
             <h1 class="hero-title">让 AI 团队帮你写代码</h1>
-            <p class="hero-desc">
-                多智能体协作，自动完成从需求分析到代码实现的完整流程。
-                像指挥一个专业的工程团队一样，指挥多个 AI 智能体协作开发。
-            </p>
+            <p class="hero-desc">多智能体协作，自动完成从需求分析到代码实现的完整流程。像指挥一个专业的工程团队一样，指挥多个 AI 智能体协作开发。</p>
+        </section>
+
+        <!-- Model List -->
+        <section class="models-section">
+            <h3 style="font-size:18px;font-weight:600;text-align:center;margin-bottom:20px;">🖥️ 可用模型</h3>
+            <div class="models-grid" id="modelsGrid">
+                <!-- 动态加载 -->
+            </div>
         </section>
 
         <!-- Agent Pipeline -->
         <div class="pipeline-container">
             <div class="pipeline-step">
                 <div class="pipeline-icon waiting" id="step-explore" data-step="explore">
-                    <span class="step-emoji">🔍</span>
-                    <div class="step-spinner"></div>
+                    <span class="step-emoji">🔍</span><div class="step-spinner"></div>
                 </div>
                 <span class="pipeline-label">探索</span>
             </div>
             <div class="pipeline-arrow" id="arrow-1">→</div>
             <div class="pipeline-step">
                 <div class="pipeline-icon waiting" id="step-analyst" data-step="analyst">
-                    <span class="step-emoji">🧠</span>
-                    <div class="step-spinner"></div>
+                    <span class="step-emoji">🧠</span><div class="step-spinner"></div>
                 </div>
                 <span class="pipeline-label">分析</span>
             </div>
             <div class="pipeline-arrow" id="arrow-2">→</div>
             <div class="pipeline-step">
                 <div class="pipeline-icon waiting" id="step-architect" data-step="architect">
-                    <span class="step-emoji">🏗️</span>
-                    <div class="step-spinner"></div>
+                    <span class="step-emoji">🏗️</span><div class="step-spinner"></div>
                 </div>
                 <span class="pipeline-label">设计</span>
             </div>
             <div class="pipeline-arrow" id="arrow-3">→</div>
             <div class="pipeline-step">
                 <div class="pipeline-icon waiting" id="step-executor" data-step="executor">
-                    <span class="step-emoji">💻</span>
-                    <div class="step-spinner"></div>
+                    <span class="step-emoji">💻</span><div class="step-spinner"></div>
                 </div>
                 <span class="pipeline-label">实现</span>
             </div>
             <div class="pipeline-arrow" id="arrow-4">→</div>
             <div class="pipeline-step">
                 <div class="pipeline-icon waiting" id="step-verifier" data-step="verifier">
-                    <span class="step-emoji">✅</span>
-                    <div class="step-spinner"></div>
+                    <span class="step-emoji">✅</span><div class="step-spinner"></div>
                 </div>
                 <span class="pipeline-label">验证</span>
             </div>
         </div>
 
-        <!-- Task Input Form -->
+        <!-- Task Form -->
         <div class="task-card">
             <div class="task-header">
                 <h2>🚀 开始新任务</h2>
                 <p class="task-subtitle">描述你的需求，AI 团队将自动协作完成</p>
             </div>
-
-            <form id="taskForm" class="task-form">
+            <form id="taskForm">
                 <div class="form-group">
                     <label for="taskInput" class="form-label">任务描述</label>
-                    <textarea
-                        id="taskInput"
-                        class="form-textarea"
-                        placeholder="例如：实现一个用户认证系统，包括注册、登录、JWT 令牌、密码重置等功能"
-                        rows="4"
-                        required
-                    ></textarea>
-                    <div class="form-hint">
-                        <span>💡 越详细的需求描述，AI 团队的理解和实现效果越好</span>
-                    </div>
+                    <textarea id="taskInput" class="form-textarea" placeholder="例如：实现一个用户认证系统，包括注册、登录、JWT 令牌、密码重置等功能" rows="4" required></textarea>
+                    <div class="form-hint">💡 越详细的需求描述，AI 团队的理解和实现效果越好</div>
                 </div>
-
                 <div class="form-row">
                     <div class="form-group">
                         <label for="projectPath" class="form-label">项目路径</label>
-                        <input
-                            type="text"
-                            id="projectPath"
-                            class="form-input"
-                            placeholder="留空则在当前目录工作"
-                            value="."
-                        >
+                        <input type="text" id="projectPath" class="form-input" placeholder="." value=".">
                     </div>
-
                     <div class="form-group">
                         <label for="modelSelect" class="form-label">模型选择</label>
                         <select id="modelSelect" class="form-select">
@@ -459,37 +324,33 @@
                             <option value="wenxin">文心一言</option>
                         </select>
                     </div>
-
                     <div class="form-group">
                         <label for="workflowSelect" class="form-label">工作流</label>
                         <select id="workflowSelect" class="form-select">
-                            <option value="build" selected>🚀 完整开发流程</option>
+                            <option value="build" selected>🚀 完整开发</option>
                             <option value="review">🔍 代码审查</option>
                             <option value="debug">🐛 调试修复</option>
                             <option value="test">🧪 测试用例</option>
                         </select>
                     </div>
                 </div>
-
                 <button type="submit" class="btn btn-primary btn-submit" id="submitBtn">
-                    <span class="btn-icon">▶</span>
-                    <span class="btn-text">启动 AI 团队</span>
+                    <span class="btn-text">▶ 启动 AI 团队</span>
                     <div class="btn-spinner"></div>
                 </button>
             </form>
         </div>
 
-        <!-- Response Section (hidden by default) -->
-        <div id="responseSection" class="response-container" style="display: none;">
+        <!-- Response (hidden) -->
+        <div id="responseSection" class="response-container" style="display:none;">
             <div class="response-tabs">
                 <button class="response-tab active" data-tab="result">📋 执行结果</button>
-                <button class="response-tab" data-tab="explore">🔍 Explore 输出</button>
-                <button class="response-tab" data-tab="analyst">🧠 Analyst 输出</button>
-                <button class="response-tab" data-tab="architect">🏗️ Architect 输出</button>
-                <button class="response-tab" data-tab="executor">💻 Executor 输出</button>
-                <button class="response-tab" data-tab="stats">📊 统计信息</button>
+                <button class="response-tab" data-tab="explore">🔍 Explore</button>
+                <button class="response-tab" data-tab="analyst">🧠 Analyst</button>
+                <button class="response-tab" data-tab="architect">🏗️ Architect</button>
+                <button class="response-tab" data-tab="executor">💻 Executor</button>
+                <button class="response-tab" data-tab="stats">📊 统计</button>
             </div>
-
             <div class="response-panel active" data-panel="result" id="panel-result"></div>
             <div class="response-panel" data-panel="explore" id="panel-explore"></div>
             <div class="response-panel" data-panel="analyst" id="panel-analyst"></div>
@@ -498,65 +359,41 @@
             <div class="response-panel" data-panel="stats" id="panel-stats"></div>
         </div>
 
-        <!-- Example Tasks -->
-        <section class="examples">
-            <h3 class="examples-title">💡 试试这些任务</h3>
+        <!-- Examples -->
+        <section style="margin-bottom:40px;">
+            <h3 style="font-size:18px;font-weight:600;text-align:center;margin-bottom:20px;">💡 试试这些任务</h3>
             <div class="examples-grid">
                 <button class="example-card" data-task="实现一个 REST API 用户管理接口，包含 CRUD 操作，使用 FastAPI 框架" data-workflow="build">
                     <span class="example-icon">🌐</span>
-                    <div class="example-content">
-                        <span class="example-title">REST API 开发</span>
-                        <span class="example-desc">FastAPI 用户管理 CRUD</span>
-                    </div>
+                    <span class="example-title">REST API 开发</span>
+                    <span class="example-desc">FastAPI 用户管理 CRUD</span>
                 </button>
                 <button class="example-card" data-task="审查当前项目的代码质量和安全漏洞" data-workflow="review">
                     <span class="example-icon">🔍</span>
-                    <div class="example-content">
-                        <span class="example-title">代码审查</span>
-                        <span class="example-desc">质量 + 安全检查</span>
-                    </div>
+                    <span class="example-title">代码审查</span>
+                    <span class="example-desc">质量 + 安全检查</span>
                 </button>
                 <button class="example-card" data-task="修复登录页面无法正确跳转的问题" data-workflow="debug">
                     <span class="example-icon">🐛</span>
-                    <div class="example-content">
-                        <span class="example-title">Bug 调试</span>
-                        <span class="example-desc">定位并修复问题</span>
-                    </div>
+                    <span class="example-title">Bug 调试</span>
+                    <span class="example-desc">定位并修复问题</span>
                 </button>
                 <button class="example-card" data-task="为项目编写单元测试，覆盖核心业务逻辑" data-workflow="test">
                     <span class="example-icon">🧪</span>
-                    <div class="example-content">
-                        <span class="example-title">测试用例</span>
-                        <span class="example-desc">核心逻辑全覆盖</span>
-                    </div>
+                    <span class="example-title">测试用例</span>
+                    <span class="example-desc">核心逻辑全覆盖</span>
                 </button>
             </div>
         </section>
 
         <!-- Features -->
-        <section class="features">
-            <h3 class="features-title">⚡ 核心能力</h3>
-            <div class="features-grid">
-                <div class="feature-card">
-                    <span class="feature-icon">🧠</span>
-                    <h4>智能路由</h4>
-                    <p>根据任务复杂度自动选择最优模型，节省 30-50% Token</p>
-                </div>
-                <div class="feature-card">
-                    <span class="feature-icon">🤝</span>
-                    <h4>多 Agent 协作</h4>
-                    <p>多个专业 Agent 分工协作，像真实工程团队一样工作</p>
-                </div>
-                <div class="feature-card">
-                    <span class="feature-icon">💰</span>
-                    <h4>零成本运行</h4>
-                    <p>优先使用 DeepSeek 免费额度，几乎零成本使用</p>
-                </div>
-                <div class="feature-card">
-                    <span class="feature-icon">🔄</span>
-                    <h4>全流程覆盖</h4>
-                    <p>从探索分析到代码实现、测试验证的完整流程</p>
-                </div>
+        <section style="margin-bottom:40px;">
+            <h3 style="font-size:18px;font-weight:600;text-align:center;margin-bottom:20px;">⚡ 核心能力</h3>
+            <div class="grid-4">
+                <div class="feature-card"><span class="feature-icon">🧠</span><h4>智能路由</h4><p>按任务复杂度自动选模型，节省 30-50% Token</p></div>
+                <div class="feature-card"><span class="feature-icon">🤝</span><h4>多 Agent 协作</h4><p>多个专业 Agent 分工协作</p></div>
+                <div class="feature-card"><span class="feature-icon">💰</span><h4>零成本运行</h4><p>优先使用 DeepSeek 免费额度</p></div>
+                <div class="feature-card"><span class="feature-icon">🔄</span><h4>全流程覆盖</h4><p>从探索分析到代码实现、测试验证</p></div>
             </div>
         </section>
     </main>
@@ -566,101 +403,101 @@
     </footer>
 
     <script>
-        // ===== State Management =====
-        const state = {
-            isRunning: false,
-            currentTask: null,
-            result: null,
-            stepStatus: {}, // step name -> 'waiting' | 'active' | 'completed' | 'failed'
-            stepOutputs: {} // step name -> output text
-        };
+        // ===== State =====
+        const state = { isRunning: false, currentTask: null, result: null, stepStatus: {}, stepOutputs: {} };
 
-        // ===== DOM Elements =====
-        const elements = {
-            form: document.getElementById('taskForm'),
-            taskInput: document.getElementById('taskInput'),
-            projectPath: document.getElementById('projectPath'),
-            modelSelect: document.getElementById('modelSelect'),
-            workflowSelect: document.getElementById('workflowSelect'),
-            submitBtn: document.getElementById('submitBtn'),
-            responseSection: document.getElementById('responseSection'),
-            toastContainer: document.getElementById('toastContainer'),
-            themeToggle: document.getElementById('themeToggle')
-        };
-
-        // ===== Toast Notifications =====
-        function showToast(message, type = 'info', duration = 4000) {
+        // ===== Toast =====
+        function showToast(msg, type = 'info', ms = 4000) {
             const icons = { success: '✅', error: '❌', info: 'ℹ️' };
-            const toast = document.createElement('div');
-            toast.className = `toast ${type}`;
-            toast.innerHTML = `
-                <span class="toast-icon">${icons[type]}</span>
-                <span class="toast-message">${message}</span>
-            `;
-            elements.toastContainer.appendChild(toast);
-            setTimeout(() => {
-                toast.style.opacity = '0';
-                toast.style.transform = 'translateX(20px)';
-                setTimeout(() => toast.remove(), 300);
-            }, duration);
+            const t = document.createElement('div');
+            t.className = `toast ${type}`;
+            t.innerHTML = `<span>${icons[type]}</span><span>${msg}</span>`;
+            document.getElementById('toastContainer').appendChild(t);
+            setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translateX(20px)'; setTimeout(() => t.remove(), 300); }, ms);
         }
 
-        // ===== Pipeline Animation =====
-        function setStepStatus(stepName, status) {
-            state.stepStatus[stepName] = status;
-            const icon = document.getElementById(`step-${stepName}`);
-            if (!icon) return;
-            icon.className = `pipeline-icon ${status}`;
-
-            // Highlight arrows
-            const arrows = { explore: 1, analyst: 2, architect: 3, executor: 4 };
-            if (arrows[stepName]) {
-                const arrow = document.getElementById(`arrow-${arrows[stepName]}`);
-                if (arrow) arrow.className = status === 'active' || status === 'completed' ? 'pipeline-arrow active' : 'pipeline-arrow';
-            }
+        // ===== Theme =====
+        function loadTheme() {
+            const saved = localStorage.getItem('theme');
+            const theme = saved || 'dark';
+            document.documentElement.setAttribute('data-theme', theme);
+            document.getElementById('themeToggle').textContent = theme === 'dark' ? '☀️' : '🌙';
         }
+        document.getElementById('themeToggle').addEventListener('click', () => {
+            const cur = document.documentElement.getAttribute('data-theme');
+            const next = cur === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', next);
+            document.getElementById('themeToggle').textContent = next === 'dark' ? '☀️' : '🌙';
+            localStorage.setItem('theme', next);
+        });
+        loadTheme();
 
-        function animatePipeline() {
-            const steps = ['explore', 'analyst', 'architect', 'executor', 'verifier'];
-            steps.forEach((step, i) => {
-                const status = state.stepStatus[step] || 'waiting';
-                setStepStatus(step, status);
-            });
-        }
-
-        function resetPipeline() {
-            const steps = ['explore', 'analyst', 'architect', 'executor', 'verifier'];
-            steps.forEach(step => {
-                state.stepStatus[step] = 'waiting';
-                state.stepOutputs[step] = '';
-            });
-            animatePipeline();
-        }
-
-        function advancePipeline(currentStep) {
-            const steps = ['explore', 'analyst', 'architect', 'executor', 'verifier'];
-            const currentIdx = steps.indexOf(currentStep);
-            if (currentIdx >= 0) {
-                state.stepStatus[steps[currentIdx]] = 'completed';
-                if (currentIdx + 1 < steps.length) {
-                    state.stepStatus[steps[currentIdx + 1]] = 'active';
-                }
-            }
-            animatePipeline();
-        }
-
-        // ===== Markdown Rendering =====
-        marked.setOptions({
-            breaks: true,
-            gfm: true
+        // ===== Mobile Nav =====
+        document.getElementById('navHamburger').addEventListener('click', () => {
+            document.getElementById('navLinks').classList.toggle('open');
         });
 
-        function renderMarkdown(text) {
-            if (!text) return '<p style="color: var(--text-muted); font-style: italic;">暂无输出</p>';
-            return marked.parse(text);
+        // ===== Load Models =====
+        async function loadModels() {
+            const grid = document.getElementById('modelsGrid');
+            const cloudModels = [
+                { name: 'DeepSeek', provider: 'DeepSeek', icon: '🟢', badge: '免费', online: true },
+                { name: 'GLM-4', provider: '智谱', icon: '🔵', badge: '免费', online: true },
+                { name: 'Kimi', provider: '月之暗面', icon: '🟣', badge: '低成本', online: true },
+                { name: '通义千问', provider: '阿里云', icon: '🟠', badge: '低成本', online: true },
+                { name: '文心一言', provider: '百度', icon: '🔴', badge: '低成本', online: true },
+                { name: '豆包', provider: '字节跳动', icon: '🟡', badge: '低成本', online: true },
+            ];
+
+            // 尝试加载本地模型
+            let localModels = [];
+            try {
+                const res = await fetch('/api/local-models/status');
+                const data = await res.json();
+                if (data.available && data.models) {
+                    localModels = data.models.map(m => ({
+                        name: m.name, provider: 'Ollama (本地)', icon: '🖥️', badge: '本地', online: true
+                    }));
+                }
+            } catch (e) {}
+
+            const all = [...localModels, ...cloudModels];
+            grid.innerHTML = all.map(m => `
+                <div class="model-item">
+                    <div class="model-item-icon">${m.icon}</div>
+                    <div class="model-item-info">
+                        <div class="model-item-name">${m.name}</div>
+                        <div class="model-item-provider">${m.provider} · <span class="badge badge-${m.badge === '免费' ? 'success' : m.badge === '本地' ? 'primary' : 'warning'}" style="font-size:11px;">${m.badge}</span></div>
+                    </div>
+                    <div class="model-item-status ${m.online ? 'online' : 'offline'}"></div>
+                </div>
+            `).join('');
+        }
+        loadModels();
+
+        // ===== Pipeline =====
+        function setStepStatus(step, status) {
+            state.stepStatus[step] = status;
+            const el = document.getElementById(`step-${step}`);
+            if (el) el.className = `pipeline-icon ${status}`;
+            const arrows = { explore: 1, analyst: 2, architect: 3, executor: 4 };
+            if (arrows[step]) {
+                const a = document.getElementById(`arrow-${arrows[step]}`);
+                if (a) a.className = (status === 'active' || status === 'completed') ? 'pipeline-arrow active' : 'pipeline-arrow';
+            }
+        }
+        function resetPipeline() {
+            ['explore','analyst','architect','executor','verifier'].forEach(s => {
+                state.stepStatus[s] = 'waiting'; state.stepOutputs[s] = ''; setStepStatus(s, 'waiting');
+            });
+        }
+        function advancePipeline(step) {
+            const steps = ['explore','analyst','architect','executor','verifier'];
+            const i = steps.indexOf(step);
+            if (i >= 0) { setStepStatus(steps[i], 'completed'); if (i+1 < steps.length) setStepStatus(steps[i+1], 'active'); }
         }
 
-        // ===== Tab Switching =====
+        // ===== Tabs =====
         document.querySelectorAll('.response-tab').forEach(tab => {
             tab.addEventListener('click', () => {
                 document.querySelectorAll('.response-tab').forEach(t => t.classList.remove('active'));
@@ -670,262 +507,104 @@
             });
         });
 
-        // ===== Example Cards =====
-        document.querySelectorAll('.example-card').forEach(card => {
-            card.addEventListener('click', () => {
-                elements.taskInput.value = card.dataset.task;
-                elements.workflowSelect.value = card.dataset.workflow;
-                elements.taskInput.focus();
-                window.scrollTo({ top: 0, behavior: 'smooth' });
+        // ===== Examples =====
+        document.querySelectorAll('.example-card').forEach(c => {
+            c.addEventListener('click', () => {
+                document.getElementById('taskInput').value = c.dataset.task;
+                document.getElementById('workflowSelect').value = c.dataset.workflow;
+                document.getElementById('taskInput').focus();
             });
         });
 
-        // ===== Theme Toggle =====
-        function toggleTheme() {
-            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-            document.documentElement.setAttribute('data-theme', isDark ? 'light' : 'dark');
-            elements.themeToggle.textContent = isDark ? '🌙' : '☀️';
-            localStorage.setItem('theme', isDark ? 'light' : 'dark');
+        // ===== Markdown =====
+        marked.setOptions({ breaks: true, gfm: true });
+        function md(t) { return t ? marked.parse(t) : '<p style="color:var(--text-muted)">暂无输出</p>'; }
+
+        // ===== SSE =====
+        let es = null;
+        function startSSE(id) {
+            if (es) es.close();
+            es = new EventSource(`/sse/execute/${id}`);
+            es.onmessage = e => { try { handleSSE(JSON.parse(e.data)); } catch(err) {} };
+            es.onerror = () => { es.close(); };
+        }
+        function handleSSE(d) {
+            const { type, step, content, stats } = d;
+            if (type === 'step_active') { setStepStatus(step, 'active'); }
+            else if (type === 'step_completed') { state.stepOutputs[step] = content || ''; advancePipeline(step); }
+            else if (type === 'step_failed') { setStepStatus(step, 'failed'); }
+            else if (type === 'complete') { state.result = d.result || d; renderResult(); }
+            else if (type === 'error') { showToast(`执行失败: ${content}`, 'error'); stopRunning(); }
         }
 
-        function loadTheme() {
-            const saved = localStorage.getItem('theme');
-            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-            const theme = saved || (prefersDark ? 'dark' : 'light');
-            document.documentElement.setAttribute('data-theme', theme);
-            elements.themeToggle.textContent = theme === 'dark' ? '☀️' : '🌙';
-        }
-
-        elements.themeToggle.addEventListener('click', toggleTheme);
-        loadTheme();
-
-        // ===== SSE Connection =====
-        let eventSource = null;
-
-        function startSSE(taskId) {
-            if (eventSource) {
-                eventSource.close();
-            }
-            eventSource = new EventSource(`/sse/execute/${taskId}`);
-
-            eventSource.onmessage = (event) => {
-                try {
-                    const data = JSON.parse(event.data);
-                    handleSSEMessage(data);
-                } catch (e) {
-                    console.error('SSE parse error:', e);
-                }
-            };
-
-            eventSource.onerror = () => {
-                console.error('SSE connection error');
-                eventSource.close();
-            };
-        }
-
-        function handleSSEMessage(data) {
-            const { type, step, content, status, stats } = data;
-
-            if (type === 'step_start') {
-                state.stepStatus[step] = 'active';
-                animatePipeline();
-                showToast(`开始执行: ${step}`, 'info', 2000);
-            } else if (type === 'step_complete') {
-                state.stepOutputs[step] = content || '';
-                advancePipeline(step);
-            } else if (type === 'step_error') {
-                state.stepStatus[step] = 'failed';
-                animatePipeline();
-                showToast(`${step} 执行失败: ${content}`, 'error');
-            } else if (type === 'complete') {
-                state.result = data.result || data;
-                renderFinalResult();
-            } else if (type === 'error') {
-                showToast(`执行失败: ${content}`, 'error');
-                stopRunning();
-            } else if (type === 'stats') {
-                renderStats(stats);
-            }
-        }
-
-        // ===== Render Functions =====
-        function renderFinalResult() {
-            elements.responseSection.style.display = 'block';
+        // ===== Render =====
+        function renderResult() {
+            document.getElementById('responseSection').style.display = 'block';
             stopRunning();
-
-            const result = state.result;
-            const panel = document.getElementById('panel-result');
-            const steps = ['explore', 'analyst', 'architect', 'executor', 'verifier'];
-
-            // Render main result
-            let html = '<div class="markdown-body">';
-            if (result && result.result) {
-                html += renderMarkdown(result.result);
-            } else if (typeof result === 'string') {
-                html += renderMarkdown(result);
-            } else {
-                html += '<p>执行完成，请查看各步骤详情。</p>';
-            }
-            html += '</div>';
-            panel.innerHTML = html;
-
-            // Render step panels
-            steps.forEach(step => {
-                const stepPanel = document.getElementById(`panel-${step}`);
-                if (stepPanel) {
-                    let stepHtml = '';
-                    const output = state.stepOutputs[step];
-                    if (output) {
-                        stepHtml = `<div class="markdown-body">${renderMarkdown(output)}</div>`;
-                    } else if (state.result && state.result.outputs && state.result.outputs[step]) {
-                        const stepResult = state.result.outputs[step];
-                        stepHtml = `<div class="markdown-body">${renderMarkdown(stepResult.result || JSON.stringify(stepResult, null, 2))}</div>`;
-                    } else {
-                        stepHtml = '<p style="color: var(--text-muted); font-style: italic;">暂无输出</p>';
-                    }
-                    stepPanel.innerHTML = stepHtml;
-                }
+            const r = state.result;
+            document.getElementById('panel-result').innerHTML = `<div class="markdown-body">${md(r?.result || r)}</div>`;
+            ['explore','analyst','architect','executor','verifier'].forEach(s => {
+                const p = document.getElementById(`panel-${s}`);
+                if (p) p.innerHTML = `<div class="markdown-body">${md(state.stepOutputs[s] || r?.outputs?.[s]?.result)}</div>`;
             });
-
-            // Render stats
-            renderStats(result && result.stats ? result.stats : null);
-
-            // Switch to result tab
+            renderStats(r?.stats);
             document.querySelector('[data-tab="result"]').click();
-
             showToast('执行完成！🎉', 'success');
-            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
-
         function renderStats(stats) {
-            const panel = document.getElementById('panel-stats');
-            if (!stats) {
-                panel.innerHTML = '<p style="color: var(--text-muted); font-style: italic;">暂无统计信息</p>';
-                return;
-            }
-            panel.innerHTML = `
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-value">${stats.total_tokens || 0}</div>
-                        <div class="stat-label">Total Tokens</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value">${stats.execution_time || 0}s</div>
-                        <div class="stat-label">执行时间</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value">¥${(stats.total_cost || 0).toFixed(4)}</div>
-                        <div class="stat-label">估算成本</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value">${stats.steps_completed ? stats.steps_completed.length : 0}/${stats.steps_total || 5}</div>
-                        <div class="stat-label">完成步骤</div>
-                    </div>
-                </div>
-                <div style="margin-top: 24px;">
-                    <h4 style="margin-bottom: 12px;">📝 步骤详情</h4>
-                    <div style="display: flex; flex-direction: column; gap: 8px;">
-                        ${(stats.steps_completed || []).map(s => `
-                            <div style="display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: rgba(16, 185, 129, 0.08); border-radius: 8px; border: 1px solid rgba(16, 185, 129, 0.2);">
-                                <span style="color: #10b981;">✅</span>
-                                <span style="font-size: 14px;">${s}</span>
-                            </div>
-                        `).join('')}
-                        ${(stats.steps_failed || []).map(s => `
-                            <div style="display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: rgba(239, 68, 68, 0.08); border-radius: 8px; border: 1px solid rgba(239, 68, 68, 0.2);">
-                                <span style="color: #ef4444;">❌</span>
-                                <span style="font-size: 14px;">${s}</span>
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>
-            `;
+            const p = document.getElementById('panel-stats');
+            if (!stats) { p.innerHTML = '<div class="empty-state"><span class="empty-state-icon">📊</span><p>暂无统计信息</p></div>'; return; }
+            p.innerHTML = `
+                <div class="stats-grid" style="margin-bottom:24px;">
+                    <div class="stat-card"><div class="stat-value">${stats.total_tokens||0}</div><div class="stat-label">Tokens</div></div>
+                    <div class="stat-card"><div class="stat-value">${stats.execution_time||0}s</div><div class="stat-label">执行时间</div></div>
+                    <div class="stat-card"><div class="stat-value">¥${(stats.total_cost||0).toFixed(4)}</div><div class="stat-label">估算成本</div></div>
+                    <div class="stat-card"><div class="stat-value">${(stats.steps_completed||[]).length}/${stats.steps_total||5}</div><div class="stat-label">完成步骤</div></div>
+                </div>`;
         }
 
-        // ===== Form Submission =====
+        // ===== Form Submit =====
         async function handleSubmit(e) {
             e.preventDefault();
             if (state.isRunning) return;
-
-            const task = elements.taskInput.value.trim();
-            if (!task) {
-                showToast('请输入任务描述', 'error');
-                return;
-            }
-
-            startRunning();
-            resetPipeline();
-            state.currentTask = task;
-            elements.responseSection.style.display = 'none';
-
-            const payload = {
-                task: task,
-                project_path: elements.projectPath.value.trim() || '.',
-                model: elements.modelSelect.value,
-                workflow: elements.workflowSelect.value
-            };
-
+            const task = document.getElementById('taskInput').value.trim();
+            if (!task) { showToast('请输入任务描述', 'error'); return; }
+            startRunning(); resetPipeline();
+            document.getElementById('responseSection').style.display = 'none';
             try {
-                const response = await fetch('/api/execute', {
+                const res = await fetch('/api/execute', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
+                    body: JSON.stringify({
+                        task,
+                        project_path: document.getElementById('projectPath').value.trim() || '.',
+                        model: document.getElementById('modelSelect').value,
+                        workflow: document.getElementById('workflowSelect').value
+                    })
                 });
-
-                const data = await response.json();
-
-                if (data.status === 'started') {
-                    showToast('任务已启动，等待执行...', 'info', 2000);
-                    // Start SSE connection
-                    startSSE(data.task_id);
-                } else if (data.status === 'success' || data.status === 'completed') {
-                    state.result = data.result || data;
-                    renderFinalResult();
-                } else {
-                    showToast(data.message || '执行失败', 'error');
-                    stopRunning();
-                }
-            } catch (error) {
-                console.error('Submit error:', error);
-                showToast(`网络错误: ${error.message}`, 'error');
-                stopRunning();
-            }
+                const data = await res.json();
+                if (data.status === 'started') { showToast('任务已启动', 'info', 2000); startSSE(data.task_id); }
+                else if (data.status === 'success') { state.result = data.result; renderResult(); }
+                else { showToast(data.message || '执行失败', 'error'); stopRunning(); }
+            } catch (err) { showToast(`网络错误: ${err.message}`, 'error'); stopRunning(); }
         }
-
         function startRunning() {
             state.isRunning = true;
-            elements.submitBtn.classList.add('loading');
-            elements.submitBtn.disabled = true;
-            elements.taskInput.disabled = true;
+            const btn = document.getElementById('submitBtn');
+            btn.classList.add('loading'); btn.disabled = true;
+            document.getElementById('taskInput').disabled = true;
         }
-
         function stopRunning() {
             state.isRunning = false;
-            elements.submitBtn.classList.remove('loading');
-            elements.submitBtn.disabled = false;
-            elements.taskInput.disabled = false;
-            if (eventSource) {
-                eventSource.close();
-                eventSource = null;
-            }
+            const btn = document.getElementById('submitBtn');
+            btn.classList.remove('loading'); btn.disabled = false;
+            document.getElementById('taskInput').disabled = false;
+            if (es) { es.close(); es = null; }
         }
+        document.getElementById('taskForm').addEventListener('submit', handleSubmit);
 
-        elements.form.addEventListener('submit', handleSubmit);
-
-        // ===== Initialize =====
-        document.addEventListener('DOMContentLoaded', () => {
-            // Check health on load
-            fetch('/health')
-                .then(r => r.json())
-                .then(data => {
-                    if (data.status === 'healthy') {
-                        console.log('Backend healthy');
-                    }
-                })
-                .catch(() => {
-                    showToast('后端服务未连接，请确保服务器正在运行', 'error');
-                });
-        });
+        // ===== Health Check =====
+        fetch('/health').catch(() => showToast('后端服务未连接', 'error'));
     </script>
 </body>
 </html>

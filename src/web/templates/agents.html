@@ -1,312 +1,200 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Agent 状态 - Oh My Coder</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --primary: #4A90E2;
-            --success: #52C41A;
-            --error: #F5222D;
-            --warning: #FAAD14;
-            --idle: #8C8C8C;
-            --bg: #f5f7fa;
-            --card: #ffffff;
-            --text: #333333;
-            --text-light: #666666;
-        }
-
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: var(--bg);
-            color: var(--text);
-        }
-
-        .header {
-            background: linear-gradient(135deg, #4A90E2, #357ABD);
-            color: white;
-            padding: 20px 32px;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-
-        .header h1 { font-size: 22px; }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 24px;
-        }
-
-        .channels-grid {
+        .agents-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 20px;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 16px;
         }
-
-        .channel-section h2 {
-            font-size: 16px;
-            color: var(--text-light);
-            margin-bottom: 16px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
         .agent-card {
             background: var(--card);
-            border-radius: 12px;
-            padding: 20px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            transition: transform 0.2s, box-shadow 0.2s;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            transition: var(--transition);
         }
-
-        .agent-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        }
-
-        .agent-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 12px;
-        }
-
-        .agent-name {
-            font-size: 16px;
-            font-weight: 600;
-        }
-
-        .agent-status {
+        .agent-card:hover { border-color: var(--border-hover); transform: translateY(-2px); }
+        .agent-card-top {
             display: flex;
             align-items: center;
-            gap: 6px;
-            padding: 4px 10px;
+            gap: 14px;
+            margin-bottom: 14px;
+        }
+        .agent-avatar {
+            width: 48px; height: 48px;
             border-radius: 12px;
-            font-size: 12px;
-            font-weight: 500;
-        }
-
-        .agent-status.idle { background: #f5f5f5; color: var(--idle); }
-        .agent-status.running { background: #fff7e6; color: var(--warning); }
-        .agent-status.success { background: #e6f7e6; color: var(--success); }
-        .agent-status.error { background: #fff1f0; color: var(--error); }
-
-        .agent-status .dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-        }
-
-        .agent-status.idle .dot { background: var(--idle); }
-        .agent-status.running .dot { background: var(--warning); animation: pulse 1.5s infinite; }
-        .agent-status.success .dot { background: var(--success); }
-        .agent-status.error .dot { background: var(--error); }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-
-        .agent-desc {
-            font-size: 13px;
-            color: var(--text-light);
-            margin-bottom: 12px;
-        }
-
-        .agent-meta {
             display: flex;
-            justify-content: space-between;
-            font-size: 12px;
-            color: var(--text-light);
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            background: var(--primary-light);
         }
-
-        .level-badge {
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-size: 11px;
-            font-weight: 500;
+        .agent-card-name { font-size: 16px; font-weight: 600; color: var(--text); }
+        .agent-card-role { font-size: 12px; color: var(--text-muted); }
+        .agent-card-desc { font-size: 14px; color: var(--text-secondary); line-height: 1.6; margin-bottom: 14px; }
+        .agent-card-footer { display: flex; align-items: center; justify-content: space-between; }
+        .agent-status-dot {
+            width: 8px; height: 8px; border-radius: 50%;
         }
+        .agent-status-dot.idle { background: var(--text-muted); }
+        .agent-status-dot.running { background: var(--success); animation: pulse 1.5s infinite; }
+        .agent-status-dot.error { background: var(--danger); }
+        .agent-status-text { font-size: 12px; color: var(--text-muted); display: flex; align-items: center; gap: 6px; }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
 
-        .level-badge.LOW { background: #e6f7ff; color: #1890ff; }
-        .level-badge.MEDIUM { background: #fff7e6; color: #fa8c16; }
-        .level-badge.HIGH { background: #fff1f0; color: #f5222d; }
-
-        .running-info {
-            margin-top: 12px;
-            padding-top: 12px;
-            border-top: 1px solid #f0f0f0;
+        @media (max-width: 768px) {
+            .agents-grid { grid-template-columns: 1fr; }
         }
-
-        .running-info .task {
-            font-size: 13px;
-            margin-bottom: 4px;
-        }
-
-        .progress-bar {
-            height: 4px;
-            background: #f0f0f0;
-            border-radius: 2px;
-            overflow: hidden;
-        }
-
-        .progress-bar .fill {
-            height: 100%;
-            background: var(--primary);
-            transition: width 0.3s;
-        }
-
-        .connection-status {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            padding: 8px 16px;
-            background: var(--card);
-            border-radius: 20px;
-            font-size: 13px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-
-        .connection-status.connected { color: var(--success); }
-        .connection-status.disconnected { color: var(--error); }
     </style>
 </head>
 <body>
-    <header class="header">
-        <h1>🤖 Agent 状态面板</h1>
-    </header>
+    <!-- Nav -->
+    <nav class="nav">
+        <div class="nav-content">
+            <a href="/" class="nav-brand">
+                <span class="nav-brand-icon">🤖</span>
+                <span class="nav-brand-name">Oh My Coder</span>
+            </a>
+            <div class="nav-links" id="navLinks">
+                <a href="/" class="nav-link">首页</a>
+                <a href="/dashboard" class="nav-link">仪表板</a>
+                <a href="/history" class="nav-link">历史</a>
+                <a href="/docs" class="nav-link">文档</a>
+                <a href="/settings" class="nav-link">设置</a>
+            </div>
+            <div class="nav-actions">
+                <div class="nav-toggle" id="themeToggle" title="切换主题">☀️</div>
+                <button class="nav-hamburger" id="navHamburger">☰</button>
+            </div>
+        </div>
+    </nav>
 
-    <div class="container">
-        <div class="channels-grid" id="agentsGrid"></div>
-    </div>
+    <main class="container">
+        <h1 class="page-title">🤖 Agent 状态</h1>
+        <p class="page-desc">查看所有 Agent 的当前状态和详细信息。</p>
 
-    <div class="connection-status" id="connectionStatus">
-        <span class="connected">● 已连接</span>
-    </div>
+        <div class="agents-grid" id="agentsGrid">
+            <div class="agent-card">
+                <div class="agent-card-top">
+                    <div class="agent-avatar">🔍</div>
+                    <div><div class="agent-card-name">Explorer</div><div class="agent-card-role">探索者</div></div>
+                </div>
+                <div class="agent-card-desc">探索项目结构，理解代码库，收集上下文信息。</div>
+                <div class="agent-card-footer"><div class="agent-status-text"><div class="agent-status-dot idle"></div>空闲</div><span class="badge badge-muted">LOW</span></div>
+            </div>
+            <div class="agent-card">
+                <div class="agent-card-top">
+                    <div class="agent-avatar">🧠</div>
+                    <div><div class="agent-card-name">Analyst</div><div class="agent-card-role">分析师</div></div>
+                </div>
+                <div class="agent-card-desc">分析需求，拆解任务，制定执行计划。</div>
+                <div class="agent-card-footer"><div class="agent-status-text"><div class="agent-status-dot idle"></div>空闲</div><span class="badge badge-primary">MEDIUM</span></div>
+            </div>
+            <div class="agent-card">
+                <div class="agent-card-top">
+                    <div class="agent-avatar">🏗️</div>
+                    <div><div class="agent-card-name">Architect</div><div class="agent-card-role">架构师</div></div>
+                </div>
+                <div class="agent-card-desc">设计架构方案，确定技术选型和代码结构。</div>
+                <div class="agent-card-footer"><div class="agent-status-text"><div class="agent-status-dot idle"></div>空闲</div><span class="badge badge-danger">HIGH</span></div>
+            </div>
+            <div class="agent-card">
+                <div class="agent-card-top">
+                    <div class="agent-avatar">💻</div>
+                    <div><div class="agent-card-name">Executor</div><div class="agent-card-role">执行者</div></div>
+                </div>
+                <div class="agent-card-desc">编写代码，实现功能，修改文件。</div>
+                <div class="agent-card-footer"><div class="agent-status-text"><div class="agent-status-dot idle"></div>空闲</div><span class="badge badge-primary">MEDIUM</span></div>
+            </div>
+            <div class="agent-card">
+                <div class="agent-card-top">
+                    <div class="agent-avatar">✅</div>
+                    <div><div class="agent-card-name">Verifier</div><div class="agent-card-role">验证者</div></div>
+                </div>
+                <div class="agent-card-desc">验证结果，运行测试，确认代码质量。</div>
+                <div class="agent-card-footer"><div class="agent-status-text"><div class="agent-status-dot idle"></div>空闲</div><span class="badge badge-primary">MEDIUM</span></div>
+            </div>
+            <div class="agent-card">
+                <div class="agent-card-top">
+                    <div class="agent-avatar">🐛</div>
+                    <div><div class="agent-card-name">Debugger</div><div class="agent-card-role">调试者</div></div>
+                </div>
+                <div class="agent-card-desc">定位 Bug，分析错误，修复问题。</div>
+                <div class="agent-card-footer"><div class="agent-status-text"><div class="agent-status-dot idle"></div>空闲</div><span class="badge badge-primary">MEDIUM</span></div>
+            </div>
+            <div class="agent-card">
+                <div class="agent-card-top">
+                    <div class="agent-avatar">🔎</div>
+                    <div><div class="agent-card-name">CodeReviewer</div><div class="agent-card-role">代码审查</div></div>
+                </div>
+                <div class="agent-card-desc">代码审查，发现潜在问题，提出改进建议。</div>
+                <div class="agent-card-footer"><div class="agent-status-text"><div class="agent-status-dot idle"></div>空闲</div><span class="badge badge-warning">MEDIUM</span></div>
+            </div>
+            <div class="agent-card">
+                <div class="agent-card-top">
+                    <div class="agent-avatar">🛡️</div>
+                    <div><div class="agent-card-name">Security</div><div class="agent-card-role">安全审计</div></div>
+                </div>
+                <div class="agent-card-desc">安全扫描，检测漏洞，验证合规性。</div>
+                <div class="agent-card-footer"><div class="agent-status-text"><div class="agent-status-dot idle"></div>空闲</div><span class="badge badge-danger">HIGH</span></div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer"><p>Made with ❤️ by Oh My Coder</p></footer>
 
     <script>
-        let agentsData = [];
-        let eventSource = null;
+        // Theme
+        function loadTheme() {
+            const t = localStorage.getItem('theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', t);
+            document.getElementById('themeToggle').textContent = t === 'dark' ? '☀️' : '🌙';
+        }
+        document.getElementById('themeToggle').addEventListener('click', () => {
+            const c = document.documentElement.getAttribute('data-theme');
+            const n = c === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', n);
+            document.getElementById('themeToggle').textContent = n === 'dark' ? '☀️' : '🌙';
+            localStorage.setItem('theme', n);
+        });
+        loadTheme();
 
+        // Mobile nav
+        document.getElementById('navHamburger').addEventListener('click', () => {
+            document.getElementById('navLinks').classList.toggle('open');
+        });
+
+        // Load agent status from API
         async function loadAgents() {
             try {
-                const resp = await fetch('/api/agents');
-                const data = await resp.json();
-                agentsData = data.agents;
-                renderAgents();
-            } catch (e) {
-                console.error('加载 Agent 失败:', e);
-            }
-        }
-
-        function renderAgents() {
-            const channels = {
-                'BUILD': { name: '🔨 构建通道', agents: [] },
-                'REVIEW': { name: '🔍 审查通道', agents: [] },
-                'DEBUG': { name: '🐛 调试通道', agents: [] },
-                'DOMAIN': { name: '🎯 领域通道', agents: [] },
-                'COORDINATION': { name: '⚡ 协调通道', agents: [] }
-            };
-
-            agentsData.forEach(agent => {
-                const ch = agent.channel || 'DOMAIN';
-                if (channels[ch]) {
-                    channels[ch].agents.push(agent);
-                }
-            });
-
-            const grid = document.getElementById('agentsGrid');
-            grid.innerHTML = Object.entries(channels).map(([key, ch]) => `
-                <div class="channel-section">
-                    <h2>${ch.name}</h2>
-                    ${ch.agents.map(a => renderAgentCard(a)).join('')}
-                </div>
-            `).join('');
-        }
-
-        function renderAgentCard(agent) {
-            const statusClass = agent.status || 'idle';
-            const statusText = {
-                'idle': '空闲',
-                'running': '运行中',
-                'success': '成功',
-                'error': '错误'
-            }[statusClass] || '空闲';
-
-            return `
-                <div class="agent-card" data-agent="${agent.name}">
-                    <div class="agent-header">
-                        <div class="agent-name">${agent.name}</div>
-                        <div class="agent-status ${statusClass}">
-                            <span class="dot"></span>
-                            ${statusText}
-                        </div>
-                    </div>
-                    <div class="agent-desc">${agent.description || '-'}</div>
-                    <div class="agent-meta">
-                        <span class="level-badge ${agent.level || 'MEDIUM'}">${agent.level || 'MEDIUM'}</span>
-                        <span>${agent.last_activity ? formatTime(agent.last_activity) : '-'}</span>
-                    </div>
-                    ${agent.status === 'running' ? `
-                        <div class="running-info">
-                            <div class="task">${agent.current_task || '执行中...'}</div>
-                            <div class="progress-bar">
-                                <div class="fill" style="width: ${agent.progress || 50}%"></div>
+                const res = await fetch('/api/agents/status');
+                const data = await res.json();
+                if (data.agents) {
+                    const grid = document.getElementById('agentsGrid');
+                    grid.innerHTML = data.agents.map(a => {
+                        const statusClass = a.status === 'running' ? 'running' : a.status === 'error' ? 'error' : 'idle';
+                        const statusText = a.status === 'running' ? '运行中' : a.status === 'error' ? '错误' : '空闲';
+                        const tierBadge = a.tier === 'HIGH' ? 'badge-danger' : a.tier === 'MEDIUM' ? 'badge-primary' : 'badge-muted';
+                        return `
+                        <div class="agent-card">
+                            <div class="agent-card-top">
+                                <div class="agent-avatar">${a.icon || '🤖'}</div>
+                                <div><div class="agent-card-name">${a.name}</div><div class="agent-card-role">${a.role || ''}</div></div>
                             </div>
-                        </div>
-                    ` : ''}
-                </div>
-            `;
+                            <div class="agent-card-desc">${a.description || ''}</div>
+                            <div class="agent-card-footer"><div class="agent-status-text"><div class="agent-status-dot ${statusClass}"></div>${statusText}</div><span class="badge ${tierBadge}">${a.tier || 'LOW'}</span></div>
+                        </div>`;
+                    }).join('');
+                }
+            } catch (e) {}
         }
-
-        function formatTime(iso) {
-            if (!iso) return '-';
-            const d = new Date(iso);
-            return d.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
-        }
-
-        function connectSSE() {
-            eventSource = new EventSource('/api/agents/sse/status');
-
-            eventSource.onopen = () => {
-                document.getElementById('connectionStatus').innerHTML = '<span class="connected">● 已连接</span>';
-            };
-
-            eventSource.onmessage = (e) => {
-                if (e.data.startsWith(':')) return; // heartbeat
-                try {
-                    const data = JSON.parse(e.data);
-                    if (data.type === 'agent_status') {
-                        updateAgent(data.agent, data.data);
-                    }
-                } catch (e) {}
-            };
-
-            eventSource.onerror = () => {
-                document.getElementById('connectionStatus').innerHTML = '<span class="disconnected">● 已断开</span>';
-                setTimeout(connectSSE, 3000);
-            };
-        }
-
-        function updateAgent(name, data) {
-            const idx = agentsData.findIndex(a => a.name === name);
-            if (idx >= 0) {
-                agentsData[idx] = { ...agentsData[idx], ...data };
-                renderAgents();
-            }
-        }
-
-        // 初始化
         loadAgents();
-        connectSSE();
-
-        // 定期刷新
-        setInterval(loadAgents, 10000);
     </script>
 </body>
 </html>

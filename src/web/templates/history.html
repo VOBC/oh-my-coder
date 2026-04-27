@@ -1,542 +1,187 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>任务历史 - Oh My Coder</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --primary: #4A90E2;
-            --success: #52C41A;
-            --error: #F5222D;
-            --warning: #FAAD14;
-            --bg: #f5f7fa;
-            --card: #ffffff;
-            --text: #333333;
-            --text-light: #666666;
-            --border: #e8e8e8;
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            min-height: 100vh;
-        }
-
-        .header {
-            background: linear-gradient(135deg, #4A90E2, #357ABD);
-            color: white;
-            padding: 24px 32px;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-
-        .header h1 {
-            font-size: 24px;
-            font-weight: 600;
-        }
-
-        .header p {
-            font-size: 14px;
-            opacity: 0.9;
-            margin-top: 4px;
-        }
-
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 24px;
-        }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 16px;
-            margin-bottom: 24px;
-        }
-
-        .stat-card {
-            background: var(--card);
-            border-radius: 12px;
-            padding: 20px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        }
-
-        .stat-card .label {
-            font-size: 13px;
-            color: var(--text-light);
-            margin-bottom: 8px;
-        }
-
-        .stat-card .value {
-            font-size: 28px;
-            font-weight: 600;
-            color: var(--primary);
-        }
-
-        .stat-card.success .value { color: var(--success); }
-        .stat-card.error .value { color: var(--error); }
-
-        .filters {
+        .history-toolbar {
             display: flex;
+            align-items: center;
             gap: 12px;
             margin-bottom: 24px;
-            flex-wrap: wrap;
         }
-
-        .filter-select, .filter-input {
+        .history-search {
+            flex: 1;
             padding: 10px 16px;
+            background: var(--bg-secondary);
             border: 1px solid var(--border);
-            border-radius: 8px;
+            border-radius: var(--radius);
+            color: var(--text);
             font-size: 14px;
-            background: var(--card);
-            min-width: 150px;
+            font-family: inherit;
+            outline: none;
         }
-
-        .history-list {
-            background: var(--card);
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        }
-
+        .history-search:focus { border-color: var(--primary); }
+        .history-list { display: flex; flex-direction: column; gap: 12px; }
         .history-item {
-            padding: 20px;
-            border-bottom: 1px solid var(--border);
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 18px;
+            transition: var(--transition);
             cursor: pointer;
-            transition: background 0.2s;
         }
-
-        .history-item:hover {
-            background: #fafafa;
-        }
-
-        .history-item:last-child {
-            border-bottom: none;
-        }
-
+        .history-item:hover { border-color: var(--border-hover); }
         .history-item-header {
             display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 12px;
-        }
-
-        .history-item-title {
-            font-weight: 500;
-            font-size: 15px;
-            flex: 1;
-            margin-right: 12px;
-        }
-
-        .history-item-status {
-            display: inline-flex;
             align-items: center;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 500;
+            justify-content: space-between;
+            margin-bottom: 8px;
         }
-
-        .history-item-status.completed {
-            background: #e6f7e6;
-            color: var(--success);
+        .history-item-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 70%;
         }
-
-        .history-item-status.failed {
-            background: #fff1f0;
-            color: var(--error);
-        }
-
         .history-item-meta {
             display: flex;
-            gap: 24px;
-            font-size: 13px;
-            color: var(--text-light);
-        }
-
-        .history-item-meta span {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .workflow-badge {
-            display: inline-block;
-            padding: 2px 8px;
-            background: #f0f5ff;
-            color: var(--primary);
-            border-radius: 4px;
+            gap: 16px;
             font-size: 12px;
-            font-weight: 500;
+            color: var(--text-muted);
         }
-
-        .detail-modal {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.5);
-            z-index: 1000;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .detail-modal.active {
-            display: flex;
-        }
-
-        .detail-content {
-            background: var(--card);
-            border-radius: 16px;
-            max-width: 800px;
-            width: 90%;
-            max-height: 80vh;
-            overflow-y: auto;
-            padding: 32px;
-        }
-
-        .detail-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 24px;
-        }
-
-        .detail-header h2 {
-            font-size: 20px;
-        }
-
-        .close-btn {
-            background: none;
-            border: none;
-            font-size: 24px;
-            cursor: pointer;
-            color: var(--text-light);
-        }
-
-        .detail-section {
-            margin-bottom: 24px;
-        }
-
-        .detail-section h3 {
-            font-size: 14px;
-            color: var(--text-light);
-            margin-bottom: 12px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .detail-section pre {
-            background: #f8f9fa;
-            padding: 16px;
-            border-radius: 8px;
+        .history-item-preview {
             font-size: 13px;
-            overflow-x: auto;
+            color: var(--text-secondary);
+            margin-top: 8px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
-
-        .steps-progress {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
-
-        .step-badge {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            padding: 6px 12px;
-            border-radius: 6px;
-            font-size: 13px;
-        }
-
-        .step-badge.completed {
-            background: #e6f7e6;
-            color: var(--success);
-        }
-
-        .step-badge.failed {
-            background: #fff1f0;
-            color: var(--error);
-        }
-
-        .pagination {
-            display: flex;
-            justify-content: center;
-            gap: 8px;
-            margin-top: 24px;
-        }
-
-        .pagination button {
-            padding: 8px 16px;
-            border: 1px solid var(--border);
-            background: var(--card);
-            border-radius: 6px;
-            cursor: pointer;
-        }
-
-        .pagination button.active {
-            background: var(--primary);
-            color: white;
-            border-color: var(--primary);
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 60px 20px;
-            color: var(--text-light);
-        }
-
-        .empty-state .icon {
-            font-size: 48px;
-            margin-bottom: 16px;
-        }
+        .empty-state { padding: 80px 24px; }
 
         @media (max-width: 768px) {
-            .container { padding: 16px; }
-            .stats-grid { grid-template-columns: repeat(2, 1fr); }
-            .history-item-meta { flex-direction: column; gap: 8px; }
+            .history-item-title { max-width: 100%; }
+            .history-item-meta { flex-wrap: wrap; gap: 8px; }
         }
     </style>
 </head>
 <body>
-    <header class="header">
-        <h1>📋 任务历史</h1>
-        <p>查看所有执行记录和统计数据</p>
-    </header>
-
-    <div class="container">
-        <div class="stats-grid" id="statsGrid">
-            <div class="stat-card">
-                <div class="label">总任务数</div>
-                <div class="value" id="totalTasks">-</div>
+    <!-- Nav -->
+    <nav class="nav">
+        <div class="nav-content">
+            <a href="/" class="nav-brand">
+                <span class="nav-brand-icon">🤖</span>
+                <span class="nav-brand-name">Oh My Coder</span>
+            </a>
+            <div class="nav-links" id="navLinks">
+                <a href="/" class="nav-link">首页</a>
+                <a href="/dashboard" class="nav-link">仪表板</a>
+                <a href="/history" class="nav-link active">历史</a>
+                <a href="/docs" class="nav-link">文档</a>
+                <a href="/settings" class="nav-link">设置</a>
             </div>
-            <div class="stat-card success">
-                <div class="label">成功任务</div>
-                <div class="value" id="completedTasks">-</div>
-            </div>
-            <div class="stat-card error">
-                <div class="label">失败任务</div>
-                <div class="value" id="failedTasks">-</div>
-            </div>
-            <div class="stat-card">
-                <div class="label">成功率</div>
-                <div class="value" id="successRate">-</div>
-            </div>
-            <div class="stat-card">
-                <div class="label">总 Token</div>
-                <div class="value" id="totalTokens">-</div>
-            </div>
-            <div class="stat-card">
-                <div class="label">总耗时</div>
-                <div class="value" id="totalDuration">-</div>
+            <div class="nav-actions">
+                <div class="nav-toggle" id="themeToggle" title="切换主题">☀️</div>
+                <button class="nav-hamburger" id="navHamburger">☰</button>
             </div>
         </div>
+    </nav>
 
-        <div class="filters">
-            <select class="filter-select" id="statusFilter">
-                <option value="">全部状态</option>
-                <option value="completed">成功</option>
-                <option value="failed">失败</option>
-            </select>
-            <select class="filter-select" id="workflowFilter">
-                <option value="">全部工作流</option>
-                <option value="build">构建</option>
-                <option value="review">审查</option>
-                <option value="debug">调试</option>
-                <option value="test">测试</option>
-                <option value="explore">探索</option>
-            </select>
-            <input type="text" class="filter-input" id="searchInput" placeholder="搜索任务...">
+    <main class="container">
+        <h1 class="page-title">📋 任务历史</h1>
+        <p class="page-desc">查看所有已执行的任务和结果。</p>
+
+        <div class="history-toolbar">
+            <input type="text" class="history-search" id="searchInput" placeholder="🔍 搜索任务...">
+            <button class="btn btn-ghost btn-sm" onclick="loadHistory()">刷新</button>
         </div>
 
         <div class="history-list" id="historyList">
             <div class="empty-state">
-                <div class="icon">📭</div>
-                <div>暂无历史记录</div>
+                <span class="empty-state-icon">📭</span>
+                <div class="empty-state-title">暂无历史记录</div>
+                <div class="empty-state-desc">执行任务后，历史记录会出现在这里。</div>
             </div>
         </div>
-    </div>
+    </main>
 
-    <div class="detail-modal" id="detailModal">
-        <div class="detail-content">
-            <div class="detail-header">
-                <h2 id="detailTitle">任务详情</h2>
-                <button class="close-btn" onclick="closeDetail()">&times;</button>
-            </div>
-            <div class="detail-section">
-                <h3>基本信息</h3>
-                <div id="detailInfo"></div>
-            </div>
-            <div class="detail-section">
-                <h3>执行步骤</h3>
-                <div class="steps-progress" id="detailSteps"></div>
-            </div>
-            <div class="detail-section">
-                <h3>统计信息</h3>
-                <div id="detailStats"></div>
-            </div>
-            <div class="detail-section">
-                <h3>输出结果</h3>
-                <pre id="detailOutput"></pre>
-            </div>
-        </div>
-    </div>
+    <footer class="footer"><p>Made with ❤️ by Oh My Coder</p></footer>
 
     <script>
-        let currentOffset = 0;
-        const limit = 20;
-
-        async function loadStats() {
-            try {
-                const resp = await fetch('/api/history/stats/summary');
-                const data = await resp.json();
-
-                document.getElementById('totalTasks').textContent = data.total_tasks;
-                document.getElementById('completedTasks').textContent = data.completed_tasks;
-                document.getElementById('failedTasks').textContent = data.failed_tasks;
-                document.getElementById('successRate').textContent = data.success_rate + '%';
-                document.getElementById('totalTokens').textContent = formatNumber(data.total_tokens);
-                document.getElementById('totalDuration').textContent = data.total_duration_hours + 'h';
-            } catch (e) {
-                console.error('加载统计失败:', e);
-            }
+        // Theme
+        function loadTheme() {
+            const t = localStorage.getItem('theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', t);
+            document.getElementById('themeToggle').textContent = t === 'dark' ? '☀️' : '🌙';
         }
+        document.getElementById('themeToggle').addEventListener('click', () => {
+            const c = document.documentElement.getAttribute('data-theme');
+            const n = c === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', n);
+            document.getElementById('themeToggle').textContent = n === 'dark' ? '☀️' : '🌙';
+            localStorage.setItem('theme', n);
+        });
+        loadTheme();
 
+        // Mobile nav
+        document.getElementById('navHamburger').addEventListener('click', () => {
+            document.getElementById('navLinks').classList.toggle('open');
+        });
+
+        // Load history
         async function loadHistory() {
-            const status = document.getElementById('statusFilter').value;
-            const workflow = document.getElementById('workflowFilter').value;
-
+            const list = document.getElementById('historyList');
+            list.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:40px;">加载中...</div>';
             try {
-                const params = new URLSearchParams({
-                    limit: limit,
-                    offset: currentOffset,
-                });
-                if (status) params.append('status', status);
-                if (workflow) params.append('workflow', workflow);
-
-                const resp = await fetch(`/api/history?${params}`);
-                const data = await resp.json();
-
-                renderHistory(data.records);
+                const res = await fetch('/api/history');
+                const data = await res.json();
+                const records = data.records || data.history || [];
+                if (!records.length) {
+                    list.innerHTML = `<div class="empty-state"><span class="empty-state-icon">📭</span><div class="empty-state-title">暂无历史记录</div><div class="empty-state-desc">执行任务后，历史记录会出现在这里。</div></div>`;
+                    return;
+                }
+                list.innerHTML = records.map(r => {
+                    const status = r.status || 'unknown';
+                    const statusBadge = status === 'completed'
+                        ? '<span class="badge badge-success">成功</span>'
+                        : status === 'failed'
+                            ? '<span class="badge badge-danger">失败</span>'
+                            : '<span class="badge badge-muted">' + status + '</span>';
+                    return `
+                        <div class="history-item">
+                            <div class="history-item-header">
+                                <span class="history-item-title">${r.task || r.task_id}</span>
+                                ${statusBadge}
+                            </div>
+                            <div class="history-item-meta">
+                                <span>🕐 ${r.started_at || '-'}</span>
+                                <span>⚡ ${r.workflow || '-'}</span>
+                                <span>🤖 ${r.model || '-'}</span>
+                                ${r.stats ? `<span>🪙 ${(r.stats.total_tokens || 0).toLocaleString()} tokens</span>` : ''}
+                            </div>
+                        </div>`;
+                }).join('');
             } catch (e) {
-                console.error('加载历史失败:', e);
+                list.innerHTML = `<div class="empty-state"><span class="empty-state-icon">⚠️</span><div class="empty-state-title">加载失败</div><div class="empty-state-desc">无法获取历史记录。</div></div>`;
             }
         }
 
-        function renderHistory(records) {
-            const container = document.getElementById('historyList');
+        // Search
+        document.getElementById('searchInput').addEventListener('input', e => {
+            const q = e.target.value.toLowerCase();
+            document.querySelectorAll('.history-item').forEach(item => {
+                const text = item.textContent.toLowerCase();
+                item.style.display = text.includes(q) ? '' : 'none';
+            });
+        });
 
-            if (!records || records.length === 0) {
-                container.innerHTML = `
-                    <div class="empty-state">
-                        <div class="icon">📭</div>
-                        <div>暂无历史记录</div>
-                    </div>
-                `;
-                return;
-            }
-
-            container.innerHTML = records.map(r => `
-                <div class="history-item" onclick="showDetail('${r.task_id}')">
-                    <div class="history-item-header">
-                        <div class="history-item-title">${escapeHtml(r.task || '未命名任务')}</div>
-                        <span class="history-item-status ${r.status}">${r.status === 'completed' ? '✓ 成功' : '✗ 失败'}</span>
-                    </div>
-                    <div class="history-item-meta">
-                        <span class="workflow-badge">${r.workflow || 'default'}</span>
-                        <span>🕐 ${formatTime(r.started_at)}</span>
-                        <span>⏱️ ${r.stats?.execution_time?.toFixed(1) || '-'}s</span>
-                        <span>🔤 ${formatNumber(r.stats?.total_tokens) || 0} tokens</span>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        async function showDetail(taskId) {
-            try {
-                const resp = await fetch(`/api/history/${taskId}`);
-                const data = await resp.json();
-
-                document.getElementById('detailTitle').textContent = data.task || '任务详情';
-                document.getElementById('detailInfo').innerHTML = `
-                    <p><strong>任务 ID:</strong> ${data.task_id}</p>
-                    <p><strong>工作流:</strong> ${data.workflow || 'default'}</p>
-                    <p><strong>模型:</strong> ${data.model || '-'}</p>
-                    <p><strong>状态:</strong> ${data.status}</p>
-                    <p><strong>开始时间:</strong> ${data.started_at || '-'}</p>
-                    <p><strong>完成时间:</strong> ${data.completed_at || '-'}</p>
-                `;
-
-                const steps = data.stats?.steps_completed || [];
-                const failed = data.stats?.steps_failed || [];
-                document.getElementById('detailSteps').innerHTML = [
-                    ...steps.map(s => `<span class="step-badge completed">✓ ${s}</span>`),
-                    ...failed.map(s => `<span class="step-badge failed">✗ ${s}</span>`)
-                ].join('');
-
-                document.getElementById('detailStats').innerHTML = `
-                    <p><strong>执行时间:</strong> ${data.stats?.execution_time?.toFixed(1) || '-'}s</p>
-                    <p><strong>总 Token:</strong> ${formatNumber(data.stats?.total_tokens) || 0}</p>
-                    <p><strong>完成步骤:</strong> ${steps.length}</p>
-                    <p><strong>失败步骤:</strong> ${failed.length}</p>
-                `;
-
-                document.getElementById('detailOutput').textContent = 
-                    JSON.stringify(data.result || data.error || '无输出', null, 2);
-
-                document.getElementById('detailModal').classList.add('active');
-            } catch (e) {
-                console.error('加载详情失败:', e);
-            }
-        }
-
-        function closeDetail() {
-            document.getElementById('detailModal').classList.remove('active');
-        }
-
-        function formatNumber(num) {
-            if (!num) return '0';
-            if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
-            if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
-            return String(num);
-        }
-
-        function formatTime(iso) {
-            if (!iso) return '-';
-            const d = new Date(iso);
-            return d.toLocaleString('zh-CN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-        }
-
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        }
-
-        // 事件监听
-        document.getElementById('statusFilter').addEventListener('change', () => { currentOffset = 0; loadHistory(); });
-        document.getElementById('workflowFilter').addEventListener('change', () => { currentOffset = 0; loadHistory(); });
-        document.getElementById('searchInput').addEventListener('input', debounce(loadHistory, 300));
-
-        function debounce(fn, delay) {
-            let timer;
-            return function(...args) {
-                clearTimeout(timer);
-                timer = setTimeout(() => fn.apply(this, args), delay);
-            };
-        }
-
-        // 初始化
-        loadStats();
         loadHistory();
     </script>
 </body>

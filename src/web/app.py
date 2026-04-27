@@ -32,6 +32,7 @@ try:
     from src.web.dashboard_api import router as dashboard_router
     from src.web.team_api import router as team_router
     from src.web.local_models_api import router as local_models_router
+    from src.web.share_api import router as share_router
 except ImportError as e:
     print(f"导入错误: {e}")
     raise
@@ -56,6 +57,7 @@ app.include_router(agent_router)
 app.include_router(dashboard_router)
 app.include_router(team_router)
 app.include_router(local_models_router)
+app.include_router(share_router)
 
 
 # ========================================
@@ -776,8 +778,9 @@ async def health_check():
 
 # ===== API 文档覆盖 =====
 @app.get("/docs", response_class=HTMLResponse)
-async def docs(request: Request):
-    return templates.TemplateResponse(request, "index.html")
+async def docs_page(request: Request):
+    """使用文档页面"""
+    return templates.TemplateResponse(request, "docs.html")
 
 
 # ========================================
