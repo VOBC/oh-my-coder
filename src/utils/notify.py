@@ -1,3 +1,4 @@
+from __future__ import annotations
 """
 系统通知工具 - 零依赖，使用 macOS 原生 osascript + 钉钉 webhook
 """

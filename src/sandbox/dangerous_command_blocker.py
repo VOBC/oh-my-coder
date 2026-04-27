@@ -1,3 +1,4 @@
+from __future__ import annotations
 """
 危险命令拦截器 - Dangerous Command Blocker
 

@@ -1,3 +1,4 @@
+from __future__ import annotations
 """
 Wiki Generator - Markdown 文档生成器
 

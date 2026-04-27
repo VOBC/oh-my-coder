@@ -1,3 +1,4 @@
+from __future__ import annotations
 """
 仪表板 API
 

@@ -1,3 +1,4 @@
+from __future__ import annotations
 """
 SPEC 生成器
 

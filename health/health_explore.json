@@ -1,10 +1,10 @@
 {
   "agent_name": "explore",
   "status": "stale",
-  "last_heartbeat": "2026-04-27T11:03:42.876247",
+  "last_heartbeat": "2026-04-27T12:13:33.432925",
   "task_id": null,
   "retry_count": 1,
-  "last_error": "'AgentContext' object has no attribute 'get'",
+  "last_error": "Agent explore 执行超时（>300.0s）",
   "workflow_id": null,
   "step_index": -1
 }

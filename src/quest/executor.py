@@ -1,3 +1,4 @@
+from __future__ import annotations
 """
 Quest 执行引擎
 

@@ -1,3 +1,4 @@
+from __future__ import annotations
 """
 讯飞星火 (Spark) 模型适配器
 

@@ -1,3 +1,4 @@
+from __future__ import annotations
 """
 Quest Mode 数据模型
 

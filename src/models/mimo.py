@@ -1,3 +1,4 @@
+from __future__ import annotations
 """
 小米 MiMo 模型适配器
 

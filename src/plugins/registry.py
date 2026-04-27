@@ -1,3 +1,4 @@
+from __future__ import annotations
 """
 插件注册表
 

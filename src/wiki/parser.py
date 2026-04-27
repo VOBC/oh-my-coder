@@ -1,3 +1,4 @@
+from __future__ import annotations
 """
 Wiki Parser - Python AST 解析器
 
@@ -198,9 +199,7 @@ class PythonParser:
             print(f"  ⚠️ 解析失败 {file_path}: {e}")
             return None
 
-    def _visit_import(
-        self, module: ModuleInfo, node: ast.Import | ast.ImportFrom
-    ):
+    def _visit_import(self, module: ModuleInfo, node: ast.Import | ast.ImportFrom):
         """访问导入语句"""
         if isinstance(node, ast.Import):
             for alias in node.names:

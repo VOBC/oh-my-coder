@@ -1,3 +1,4 @@
+from __future__ import annotations
 """
 记忆管理器 - 统一入口
 

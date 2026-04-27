@@ -10,7 +10,6 @@ Git Master Agent - Git 操作智能体
 模型层级：MEDIUM（平衡，对应 sonnet）
 """
 
-
 from ..core.router import TaskType
 from .base import (
     AgentContext,

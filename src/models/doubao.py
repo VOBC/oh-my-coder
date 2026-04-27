@@ -1,3 +1,4 @@
+from __future__ import annotations
 """
 字节豆包 (Doubao) 模型适配器
 

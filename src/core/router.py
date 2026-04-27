@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """
 模型路由器 - 智能选择最优模型
 
@@ -15,6 +17,8 @@
 """
 
 import asyncio
+
+import httpx
 import hashlib
 import logging
 import os
@@ -549,7 +553,7 @@ class ModelRouter:
         # 3. 获取模型实例（变量未使用，仅用于调试）
         # model = self._models[decision.selected_provider][decision.selected_tier]
 
-        # 4. 故障转移：按 fallback 顺序尝试
+        # 4. 故障转移：按 fallback 顺序尝试（仅已初始化的 provider）
         fallback_order = [
             p
             for p in self.config.fallback_order
@@ -560,9 +564,12 @@ class ModelRouter:
             fallback_order.insert(0, decision.selected_provider)
 
         last_error: Exception | None = None
+        rate_limited_providers: list[str] = []
+        attempted_providers: list[str] = []
 
         for provider in fallback_order:
             m = self._models[provider][decision.selected_tier]
+            attempted_providers.append(provider)
             for attempt in range(3):
                 try:
                     start = datetime.now()
@@ -588,6 +595,18 @@ class ModelRouter:
 
                 except Exception as e:
                     last_error = e
+                    # 429 限流：不重试当前 provider，failover 到下一个
+                    if (
+                        isinstance(e, httpx.HTTPStatusError)
+                        and e.response.status_code == 429
+                    ):
+                        logger.warning(
+                            f"429 限流（{provider}/{decision.selected_tier}），"
+                            f"跳过该 provider，尝试下一个"
+                        )
+                        rate_limited_providers.append(provider)
+                        break  # 不重试当前 provider，切换下一个
+
                     logger.warning(
                         f"请求失败（{provider}/{decision.selected_tier}, "
                         f"attempt={attempt + 1}/3）: {e}"
@@ -596,6 +615,16 @@ class ModelRouter:
                         await asyncio.sleep(2 * (attempt + 1))  # 递增等待
 
         # 所有尝试都失败
+        # 只有当所有实际尝试过的 provider 都是 429 时才抛 RateLimitError
+        if rate_limited_providers and set(rate_limited_providers) == set(
+            attempted_providers
+        ):
+            logger.error("所有 provider 均 429 限流")
+            raise RateLimitError(
+                f"所有模型均触发限流（429）：{rate_limited_providers}。"
+                f"建议稍后重试或配置更多 API Key。"
+            ) from last_error
+
         logger.error(f"所有提供商均失败: {last_error}")
         raise NoModelAvailableError(
             f"所有模型均不可用（task={task_type}）: {last_error}"
@@ -641,6 +670,12 @@ class ModelRouter:
 # ============================================================
 # Exception
 # ============================================================
+class RateLimitError(Exception):
+    """429 限流错误，不重试"""
+
+    pass
+
+
 class NoModelAvailableError(Exception):
     """没有可用模型"""
 

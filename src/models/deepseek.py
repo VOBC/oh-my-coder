@@ -1,3 +1,4 @@
+from __future__ import annotations
 """
 DeepSeek 模型适配器
 

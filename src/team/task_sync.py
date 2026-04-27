@@ -1,3 +1,4 @@
+from __future__ import annotations
 """
 任务状态同步模块
 

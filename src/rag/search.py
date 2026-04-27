@@ -1,3 +1,4 @@
+from __future__ import annotations
 """
 语义搜索模块
 
@@ -173,8 +174,10 @@ class SemanticSearch:
         for result in keyword_results:
             if result.element_id in combined:
                 # 合并分数
-                combined[result.element_id].relevance_score += (
-                    result.relevance_score * (1 - self.config.hybrid_alpha)
+                combined[
+                    result.element_id
+                ].relevance_score += result.relevance_score * (
+                    1 - self.config.hybrid_alpha
                 )
             else:
                 result.relevance_score *= 1 - self.config.hybrid_alpha

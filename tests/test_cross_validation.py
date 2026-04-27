@@ -4,6 +4,8 @@
 运行: pytest tests/test_cross_validation.py -v
 """
 
+from __future__ import annotations
+
 import sys
 from unittest.mock import AsyncMock, MagicMock
 

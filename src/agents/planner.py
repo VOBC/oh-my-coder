@@ -1,3 +1,4 @@
+from __future__ import annotations
 """
 Planner Agent - 任务规划智能体（增强版）
 

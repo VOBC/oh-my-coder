@@ -10,7 +10,6 @@ Writer Agent - 文档编写智能体
 模型层级：LOW（快速，对应 haiku）
 """
 
-
 from ..core.router import TaskType
 from .base import (
     AgentContext,

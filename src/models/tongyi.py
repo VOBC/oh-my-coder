@@ -1,3 +1,4 @@
+from __future__ import annotations
 """
 通义千问 (Tongyi) 模型适配器
 

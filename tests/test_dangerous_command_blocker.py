@@ -50,9 +50,9 @@ class TestDangerousCommandBlocker:
 
         for cmd in normal_commands:
             result = blocker.check(cmd)
-            assert result.risk == RiskLevel.ALLOW, (
-                f"Normal command '{cmd}' should be ALLOW, got {result.risk}"
-            )
+            assert (
+                result.risk == RiskLevel.ALLOW
+            ), f"Normal command '{cmd}' should be ALLOW, got {result.risk}"
 
     def test_p0_critical_rm_rf_root(self) -> None:
         """P0 极高危：递归删除根目录"""
@@ -317,9 +317,9 @@ class TestDangerousCommandBlocker:
 
         for cmd in safe_git:
             result = blocker.check(cmd)
-            assert result.risk == RiskLevel.ALLOW, (
-                f"'{cmd}' should be ALLOW, got {result.risk}"
-            )
+            assert (
+                result.risk == RiskLevel.ALLOW
+            ), f"'{cmd}' should be ALLOW, got {result.risk}"
 
     def test_safe_docker_operations(self) -> None:
         """安全的 Docker 操作应该放行"""
@@ -337,9 +337,9 @@ class TestDangerousCommandBlocker:
 
         for cmd in safe_docker:
             result = blocker.check(cmd)
-            assert result.risk == RiskLevel.ALLOW, (
-                f"'{cmd}' should be ALLOW, got {result.risk}"
-            )
+            assert (
+                result.risk == RiskLevel.ALLOW
+            ), f"'{cmd}' should be ALLOW, got {result.risk}"
 
     def test_sudo_normal_commands(self) -> None:
         """带 sudo 的正常命令应该放行"""

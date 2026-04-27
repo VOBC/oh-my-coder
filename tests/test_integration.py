@@ -8,6 +8,8 @@
 4. CLI 入口（通过 subprocess）
 """
 
+from __future__ import annotations
+
 import sys
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock

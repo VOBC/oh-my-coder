@@ -5,3 +5,12 @@
 {"title": "🔄 Agent explore 执行异常，正在重试", "body": "重试 1/3\n错误：Agent explore 执行失败: Network error", "timestamp": "2026-04-25T15:15:19.876617"}
 {"title": "🔄 Agent explore 执行异常，正在重试", "body": "重试 1/3\n错误：Agent explore 执行超时（>300.0s）", "timestamp": "2026-04-25T15:15:19.925048"}
 {"title": "🔄 Agent explore 执行异常，正在重试", "body": "重试 1/3\n错误：'AgentContext' object has no attribute 'get'", "timestamp": "2026-04-27T11:03:42.876255"}
+{"title": "🔄 Agent explore 执行异常，正在重试", "body": "重试 1/3\n错误：'AgentContext' object has no attribute 'get'", "timestamp": "2026-04-27T12:09:44.615174"}
+{"title": "🔄 Agent explore 执行异常，正在重试", "body": "重试 1/3\n错误：Agent explore 执行失败: Network error", "timestamp": "2026-04-27T12:09:57.019660"}
+{"title": "🔄 Agent explore 执行异常，正在重试", "body": "重试 1/3\n错误：'AgentContext' object has no attribute 'get'", "timestamp": "2026-04-27T12:09:57.028375"}
+{"title": "🔄 Agent explore 执行异常，正在重试", "body": "重试 1/3\n错误：Agent explore 执行超时（>300.0s）", "timestamp": "2026-04-27T12:10:09.334769"}
+{"title": "🔄 Agent explore 执行异常，正在重试", "body": "重试 1/3\n错误：Agent explore 执行失败: Network error", "timestamp": "2026-04-27T12:10:09.340801"}
+{"title": "🔄 Agent explore 执行异常，正在重试", "body": "重试 1/3\n错误：Agent explore 执行超时（>300.0s）", "timestamp": "2026-04-27T12:10:21.780009"}
+{"title": "🔄 Agent explore 执行异常，正在重试", "body": "重试 1/3\n错误：'AgentContext' object has no attribute 'get'", "timestamp": "2026-04-27T12:13:09.077679"}
+{"title": "🔄 Agent explore 执行异常，正在重试", "body": "重试 1/3\n错误：Agent explore 执行失败: Network error", "timestamp": "2026-04-27T12:13:21.197823"}
+{"title": "🔄 Agent explore 执行异常，正在重试", "body": "重试 1/3\n错误：Agent explore 执行超时（>300.0s）", "timestamp": "2026-04-27T12:13:33.432931"}

@@ -1,3 +1,4 @@
+from __future__ import annotations
 """
 Ollama 本地模型适配器
 

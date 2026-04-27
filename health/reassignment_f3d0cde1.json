@@ -1,0 +1,9 @@
+{
+  "id": "f3d0cde1",
+  "from_agent": "explore",
+  "to_agent": "<none>",
+  "reason": "no idle agent available",
+  "step": "explore",
+  "workflow_id": "f125ea9f",
+  "timestamp": "2026-04-27T12:13:09.078505"
+}

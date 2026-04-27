@@ -1,3 +1,4 @@
+from __future__ import annotations
 """
 腾讯混元 (Hunyuan) 模型适配器
 

@@ -1,3 +1,4 @@
+from __future__ import annotations
 """
 安全执行器 - Safe Executor
 

@@ -1,3 +1,4 @@
+from __future__ import annotations
 """
 Agent 基类 - 所有智能体的基类
 

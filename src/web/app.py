@@ -1,3 +1,4 @@
+from __future__ import annotations
 """
 Web 界面入口 - FastAPI 应用
 提供可视化界面执行 AI 编程任务
@@ -114,9 +115,7 @@ class TaskManager:
             except Exception:
                 pass  # Queue full, skip
 
-    def complete_task(
-        self, task_id: str, result: Any = None, error: str | None = None
-    ):
+    def complete_task(self, task_id: str, result: Any = None, error: str | None = None):
         if task_id not in self._tasks:
             return
         task = self._tasks[task_id]
@@ -434,9 +433,9 @@ async def run_task(
                     task_manager._tasks[task_id]["stats"]["steps_completed"].append(
                         agent_name
                     )
-                    task_manager._tasks[task_id]["stats"]["total_tokens"] += (
-                        output.usage.get("total_tokens", 0)
-                    )
+                    task_manager._tasks[task_id]["stats"][
+                        "total_tokens"
+                    ] += output.usage.get("total_tokens", 0)
                 else:
                     wf_result.steps_failed.append(agent_name)
                     task_manager.update_step(

@@ -1,3 +1,4 @@
+from __future__ import annotations
 """
 长期记忆 - 项目偏好、常用模式
 

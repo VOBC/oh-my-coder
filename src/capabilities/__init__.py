@@ -1,3 +1,4 @@
+from __future__ import annotations
 """
 能力包 CLI 命令
 

@@ -1,3 +1,4 @@
+from __future__ import annotations
 """
 本地模型 API
 

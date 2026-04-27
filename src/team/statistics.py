@@ -1,3 +1,4 @@
+from __future__ import annotations
 """
 团队统计模块
 

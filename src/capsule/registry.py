@@ -1,9 +1,9 @@
+from __future__ import annotations
 """
 GEPRegistry - 能力注册表
 
 register / discover / resolve / export_event
 """
-
 
 from .capsule import Capsule
 from .gene import Gene

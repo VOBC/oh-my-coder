@@ -1,3 +1,4 @@
+from __future__ import annotations
 """
 任务历史和回放模块
 
