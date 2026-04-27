@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import os
 import re
+import shlex
 import subprocess
 from pathlib import Path
 
@@ -81,17 +82,24 @@ class Command:
         return self.frontmatter.get("usage", f"omc cmd {self.name}")
 
     def render_usage(self, args: list[str]) -> str:
-        """渲染命令脚本，支持变量替换"""
+        """渲染命令脚本，支持变量替换
+
+        用户提供的 args 必须 shlex.quote() 转义，防止命令注入：
+        - $1/$2/... 替换为转义后的位置参数
+        - $@ 替换为所有参数（空格分隔，转义）
+        - $PROJECT/$CWD/$HOME 等系统变量：直接替换，不转义
+        """
         script = self.script
 
-        # $1, $2, ... 位置参数
+        # 位置参数：$1, $2, ... 替换为 shlex.quote() 后的值
         for i, arg in enumerate(args):
-            script = script.replace(f"${i + 1}", arg)
+            script = script.replace(f"${i + 1}", shlex.quote(arg))
 
-        # $@ 所有参数
-        script = script.replace("$@", " ".join(args))
+        # 所有参数：$@ 替换为所有参数空格分隔（各自转义）
+        quoted_args = " ".join(shlex.quote(a) for a in args)
+        script = script.replace("$@", quoted_args)
 
-        # 环境变量
+        # 环境变量（项目可控，非用户输入，直接替换）
         env_vars = {
             "PROJECT": os.environ.get("PROJECT", Path.cwd().name),
             "CWD": os.getcwd(),
@@ -243,9 +251,10 @@ def run(
     console.print(f"[dim]{' '.join(args)}[/dim]\n")
 
     try:
+        # nosec: B602,B602  # rendered 已对用户 args 做 shlex.quote() 转义，shell=True 安全
         result = subprocess.run(
             rendered,
-            shell=True,
+            shell=True,  # nosec B602
             cwd=os.getcwd(),
             capture_output=False,
             text=True,

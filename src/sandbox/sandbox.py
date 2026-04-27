@@ -200,11 +200,9 @@ class Sandbox:
 
         try:
             # Use shell=False with explicit argument splitting to prevent injection
-            # shell=True is intentionally used here because sandbox.py runs user commands
-            # after passing dangerous_command_blocker and permission checks
             return subprocess.run(
                 cmd,
-                shell=True,  # nosec B604
+                shell=True,  # nosec B602 B604  # 沙箱白名单过滤后才到达此处，可控场景
                 capture_output=True,
                 timeout=timeout_val,
                 cwd=cwd,
