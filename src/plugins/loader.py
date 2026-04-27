@@ -91,7 +91,7 @@ class PluginLoader:
                 continue
 
         # 导入后注册表中就有了 @register 装饰的插件
-        # 再扫描注册表，也检查未注册但有 PluginBase 子类的模块
+        # 再扫描模块，查找未注册但有 PluginBase 子类的
         for py_file in sorted(self.plugin_dir.glob("*.py")):
             module_name = py_file.stem
             if module_name in self.SKIP_MODULES:
@@ -116,7 +116,8 @@ class PluginLoader:
                             meta = temp.metadata
                             if not self.registry.get(meta.name):
                                 self.registry.register_plugin(attr)
-                            discovered.append(meta)
+                            if meta not in discovered:
+                                discovered.append(meta)
                         except Exception:
                             continue
             except Exception:
@@ -190,9 +191,7 @@ class PluginLoader:
                     queue.append(dep_name)
 
         if len(sorted_names) != len(plugins):
-            raise PluginLoaderError(
-                "检测到循环依赖，无法确定加载顺序"
-            )
+            raise PluginLoaderError("检测到循环依赖，无法确定加载顺序")
 
         return [name_map[n] for n in sorted_names]
 
@@ -238,20 +237,34 @@ class PluginLoader:
             plugin.error = f"{type(e).__name__}: {e}"
             return None
 
-    def load_all(self) -> Dict[str, Plugin]:
+    def load_all(self) -> List[str]:
         """
         发现所有插件，按依赖顺序加载。
 
+        同时处理已通过 @register 或 register_plugin 手动注册
+        但尚未加载的插件。
+
         Returns:
-            名称 -> Plugin 映射
+            成功加载的插件名列表
         """
         discovered = self.discover()
+
+        # 合并注册表中已注册但未在 discovered 中的插件
+        registered = self.registry.list_plugins()
+        registered_metas = [p.metadata for p in registered]
+        for meta in registered_metas:
+            if meta not in discovered:
+                discovered.append(meta)
+
+        if not discovered:
+            return list(self._loaded)
+
         sorted_plugins = self._topological_sort(discovered)
 
         for meta in sorted_plugins:
             self.load(meta.name)
 
-        return {name: self.registry.get(name) for name in self._loaded}
+        return list(self._loaded)
 
     def enable(self, name: str) -> bool:
         """启用插件"""

@@ -1,221 +1,276 @@
 """
 插件注册表
 
-@register 装饰器 + 全局单例 registry。
+提供插件元信息管理、@register 装饰器和全局注册表。
 """
 
-from __future__ import annotations
-
-import sys
+from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Callable, TYPE_CHECKING
+from typing import Any, Callable, Dict, List, Optional, Type
 
-if TYPE_CHECKING:
-    from src.plugins.loader import PluginLoader
+from pydantic import BaseModel
 
 
-class PluginStatus(Enum):
-    UNLOADED = "unloaded"
-    LOADING = "loading"
-    LOADED = "loaded"
-    FAILED = "failed"
+class PluginStatus(str, Enum):
+    """插件状态"""
+
+    ENABLED = "enabled"
     DISABLED = "disabled"
+    ERROR = "error"
+    LOADING = "loading"
 
 
-@dataclass
-class PluginMetadata:
+class PluginMetadata(BaseModel):
+    """插件元数据"""
+
     name: str
     version: str
     description: str = ""
     author: str = ""
-    dependencies: list[str] = field(default_factory=list)
-    entrypoint: str = "register"  # 入口函数名，默认 register()
+    homepage: str = ""
+    license: str = "MIT"
+    requires: List[str] = []  # 依赖的其他插件名
+    entrypoint: str = ""
+    tags: List[str] = []
 
 
 @dataclass
-class PluginBase:
-    """所有插件的基类"""
+class Plugin:
+    """插件实例"""
 
     metadata: PluginMetadata
+    status: PluginStatus = PluginStatus.DISABLED
+    module: Optional[Any] = None
+    instance: Optional["PluginBase"] = None
+    error: Optional[str] = None
+    config: Dict[str, Any] = field(default_factory=dict)
 
-    def on_load(self, loader: PluginLoader) -> None:
-        """插件加载时调用，可用于初始化"""
+
+class PluginBase(ABC):
+    """
+    插件基类
+
+    所有插件必须继承此类并实现必要方法。
+
+    Example::
+
+        class MyPlugin(PluginBase):
+            @property
+            def metadata(self) -> PluginMetadata:
+                return PluginMetadata(name="my", version="0.1.0")
+
+            def on_load(self) -> None:
+                print("loaded")
+    """
+
+    @property
+    @abstractmethod
+    def metadata(self) -> PluginMetadata:
+        """返回插件元数据"""
+        pass
+
+    @abstractmethod
+    def on_load(self) -> None:
+        """插件加载时调用"""
+        pass
+
+    def on_enable(self) -> None:
+        """插件启用时调用"""
+        pass
+
+    def on_disable(self) -> None:
+        """插件禁用时调用"""
         pass
 
     def on_unload(self) -> None:
         """插件卸载时调用"""
         pass
 
+    def register_agents(self) -> List[Type]:
+        """注册 Agent 类"""
+        return []
 
-class Plugin:
-    """注册表中的插件条目"""
+    def register_skills(self) -> Dict[str, Callable]:
+        """注册技能函数"""
+        return {}
 
-    __slots__ = (
-        "metadata",
-        "instance",
-        "status",
-        "error",
-        "_loaded",
-        "_enabled",
-    )
-
-    def __init__(
-        self,
-        metadata: PluginMetadata,
-        instance: PluginBase | None = None,
-    ) -> None:
-        self.metadata = metadata
-        self.instance = instance
-        self.status: PluginStatus = PluginStatus.UNLOADED
-        self.error: str | None = None
-        self._loaded = False
-        self._enabled = True
-
-    @property
-    def loaded(self) -> bool:
-        return self._loaded
-
-    @loaded.setter
-    def loaded(self, value: bool) -> None:
-        self._loaded = value
-
-    @property
-    def enabled(self) -> bool:
-        return self._enabled
-
-    @enabled.setter
-    def enabled(self, value: bool) -> None:
-        self._enabled = value
+    def register_hooks(self) -> Dict[str, Callable]:
+        """注册钩子函数"""
+        return {}
 
 
 class PluginRegistry:
     """
-    全局插件注册表（单例）。
+    插件注册表
 
-    用法::
-
-        from src.plugins import register, get_registry
-
-        @register(name="my-plugin", version="1.0.0", description="示例插件")
-        class MyPlugin(PluginBase):
-            ...
+    管理已注册插件的元信息和实例。
+    支持通过 @register 装饰器或手动注册。
     """
-
-    _instance: PluginRegistry | None = None
 
     def __init__(self) -> None:
-        self._plugins: dict[str, Plugin] = {}
-        self._sorted: list[str] = []
+        self._plugins: Dict[str, Plugin] = {}
+        self._agents: Dict[str, Type] = {}
+        self._skills: Dict[str, Callable] = {}
+        self._hooks: Dict[str, List[Callable]] = {}
 
-    @classmethod
-    def get_instance(cls) -> PluginRegistry:
-        if cls._instance is None:
-            cls._instance = PluginRegistry()
-        return cls._instance
+    # ---- 注册 ----
 
-    # ---- public API ----
+    def register_plugin(self, plugin_cls: Type[PluginBase]) -> Plugin:
+        """
+        注册一个插件类（不加载，仅记录元信息）。
 
-    def register(self, plugin: Plugin) -> None:
-        name = plugin.metadata.name
-        if name in self._plugins:
-            raise ValueError(f"Plugin '{name}' already registered")
-        self._plugins[name] = plugin
-        self._sorted = []
+        Args:
+            plugin_cls: 插件类（必须继承 PluginBase）
 
-    def unregister(self, name: str) -> None:
-        self._plugins.pop(name, None)
-        self._sorted = []
+        Returns:
+            Plugin 实例
 
-    def get(self, name: str) -> Plugin | None:
+        Raises:
+            TypeError: 如果 plugin_cls 不是 PluginBase 子类
+        """
+        if not (isinstance(plugin_cls, type) and issubclass(plugin_cls, PluginBase)):
+            raise TypeError(f"{plugin_cls} 不是 PluginBase 的子类")
+
+        # 临时实例化获取元信息
+        temp = plugin_cls()
+        meta = temp.metadata
+
+        plugin = Plugin(metadata=meta, instance=temp)
+        self._plugins[meta.name] = plugin
+        return plugin
+
+    def unregister(self, name: str) -> bool:
+        """
+        注销插件。
+
+        Args:
+            name: 插件名称
+
+        Returns:
+            是否成功
+        """
+        if name not in self._plugins:
+            return False
+        del self._plugins[name]
+        return True
+
+    # ---- 查询 ----
+
+    def get(self, name: str) -> Optional[Plugin]:
+        """获取插件"""
         return self._plugins.get(name)
 
-    def list_all(self) -> list[Plugin]:
+    def list_plugins(self) -> List[Plugin]:
+        """列出所有插件"""
         return list(self._plugins.values())
 
-    def sorted_names(self) -> list[str]:
-        """按依赖拓扑排序后的插件名列表"""
-        if self._sorted:
-            return self._sorted
-        self._sorted = self._topo_sort()
-        return self._sorted
+    def list_by_status(self, status: PluginStatus) -> List[Plugin]:
+        """按状态过滤插件"""
+        return [p for p in self._plugins.values() if p.status == status]
 
-    def enable(self, name: str) -> None:
-        p = self._plugins.get(name)
-        if p:
-            p._enabled = True
+    def get_agent(self, name: str) -> Optional[Type]:
+        """获取注册的 Agent 类"""
+        return self._agents.get(name)
 
-    def disable(self, name: str) -> None:
-        p = self._plugins.get(name)
-        if p:
-            p._enabled = False
+    def get_skill(self, name: str) -> Optional[Callable]:
+        """获取注册的技能"""
+        return self._skills.get(name)
 
-    # ---- private ----
+    def execute_hook(self, name: str, *args: Any, **kwargs: Any) -> List[Any]:
+        """
+        执行钩子
 
-    def _topo_sort(self) -> list[str]:
-        """Kahn 算法拓扑排序"""
-        visited: dict[str, int] = {}
-        order: list[str] = []
+        Args:
+            name: 钩子名称
 
-        def dfs(name: str) -> None:
-            if name in visited:
-                return
-            visited[name] = 0  # visiting
-            p = self._plugins.get(name)
-            if p:
-                for dep in p.metadata.dependencies:
-                    if dep in self._plugins:
-                        dfs(dep)
-            visited[name] = 1  # visited
-            order.insert(0, name)
+        Returns:
+            钩子执行结果列表
+        """
+        hooks = self._hooks.get(name, [])
+        results: List[Any] = []
+        for hook in hooks:
+            try:
+                results.append(hook(*args, **kwargs))
+            except Exception:
+                pass
+        return results
 
-        for name in self._plugins:
-            dfs(name)
+    # ---- 资源注册（由 loader 调用）----
 
-        return order
+    def _register_agents(self, agents: List[Type]) -> None:
+        for agent_cls in agents:
+            self._agents[agent_cls.__name__] = agent_cls
 
+    def _register_skills(self, skills: Dict[str, Callable]) -> None:
+        self._skills.update(skills)
 
-# ---- decorator ----
+    def _register_hooks(self, hooks: Dict[str, Callable]) -> None:
+        for hook_name, hook_fn in hooks.items():
+            if hook_name not in self._hooks:
+                self._hooks[hook_name] = []
+            self._hooks[hook_name].append(hook_fn)
 
-def register(
-    name: str,
-    version: str = "0.0.0",
-    description: str = "",
-    author: str = "",
-    dependencies: list[str] | None = None,
-) -> Callable[[type[PluginBase]], type[PluginBase]]:
-    """
-    插件注册装饰器。
+    def _clear_resources(self, name: str) -> None:
+        """清除指定插件的已注册资源"""
+        plugin = self._plugins.get(name)
+        if not plugin or not plugin.instance:
+            return
 
-    用法::
+        # 清除 agents
+        for agent_cls in plugin.instance.register_agents():
+            self._agents.pop(agent_cls.__name__, None)
 
-        @register(name="my-plugin", version="1.0.0", description="My first plugin")
-        class MyPlugin(PluginBase):
-            ...
-    """
-    def decorator(cls: type[PluginBase]) -> type[PluginBase]:
-        metadata = PluginMetadata(
-            name=name,
-            version=version,
-            description=description,
-            author=author,
-            dependencies=dependencies or [],
-        )
-        instance = cls(metadata)
-        plugin = Plugin(metadata, instance)
-        get_instance().register(plugin)
-        return cls
+        # 清除 skills
+        for skill_name in plugin.instance.register_skills():
+            self._skills.pop(skill_name, None)
 
-    return decorator
+        # 清除 hooks
+        for hook_name in plugin.instance.register_hooks():
+            hook_list = self._hooks.get(hook_name, [])
+            self._hooks[hook_name] = [
+                h
+                for h in hook_list
+                if h not in plugin.instance.register_hooks().values()
+            ]
 
 
-# ---- helpers ----
+# ---- 全局注册表 ----
+
+_registry: Optional[PluginRegistry] = None
+
 
 def get_registry() -> PluginRegistry:
-    """获取全局插件注册表单例"""
-    return PluginRegistry.get_instance()
+    """获取全局插件注册表"""
+    global _registry
+    if _registry is None:
+        _registry = PluginRegistry()
+    return _registry
 
 
-def get_instance() -> PluginRegistry:
-    """别名，兼容旧代码"""
-    return get_registry()
+# ---- @register 装饰器 ----
+
+
+def register(cls: Type[PluginBase]) -> Type[PluginBase]:
+    """
+    类装饰器，将插件类注册到全局注册表。
+
+    Example::
+
+        @register
+        class MyPlugin(PluginBase):
+            @property
+            def metadata(self):
+                return PluginMetadata(name="my", version="0.1.0")
+
+            def on_load(self):
+                pass
+
+    Args:
+        cls: 插件类
+
+    Returns:
+        原始类（无修改）
+    """
+    get_registry().register_plugin(cls)
+    return cls

@@ -20,6 +20,8 @@ from src.plugins.registry import (
     register,
     get_registry,
 )
+from typing import List
+
 from src.plugins.loader import PluginLoader, get_loader
 
 __all__ = [
@@ -34,8 +36,9 @@ __all__ = [
     "get_loader",
 ]
 
+
 # 自动发现并加载内置插件（供 main.py 调用）
-def discover_and_load() -> list[str]:
+def discover_and_load() -> List[str]:
     """发现所有内置插件并按依赖顺序加载，返回成功加载的插件名列表"""
     loader = get_loader()
     loader.discover()
