@@ -130,6 +130,7 @@ class CheckpointManager:
         self.index_file = self.checkpoint_root / "index.json"
         self.backup_root = Path.home() / ".omc" / "backup"
         self._index: dict[str, dict[str, Any]] = {}
+        self._seq = 0  # 单调递增序列号，确保 cp_id 唯一
         self._init()
         self._load_index()
 
@@ -179,8 +180,8 @@ class CheckpointManager:
             checkpoint ID
         """
         ts = time.strftime("%Y%m%d-%H%M%S")
-        ts_ms = int(time.time() * 1000) % 1000  # 毫秒级序列号，确保同一秒内唯一
-        cp_id = f"{ts}-{ts_ms:03d}-{task_id}"
+        self._seq += 1
+        cp_id = f"{ts}-{self._seq:04d}-{task_id}"
         cp_dir = self.checkpoint_root / task_id / cp_id
         snapshot_dir = cp_dir / "snapshot"
         snapshot_dir.mkdir(parents=True, exist_ok=True)
@@ -208,8 +209,7 @@ class CheckpointManager:
                 path=rel_path,
                 sha256=sha256,
                 size=len(content),
-                modified_at=time.strftime("%Y-%m-%dT%H:%M:%S")
-                + f".{int(time.time() * 1000) % 1000:03d}",
+                modified_at=time.strftime("%Y-%m-%dT%H:%M:%S") + f".{self._seq:04d}",
             )
             entries.append(entry)
 
@@ -224,7 +224,7 @@ class CheckpointManager:
             entries.sort(key=lambda e: e.modified_at, reverse=True)
             entries = entries[:max_files]
 
-        created_at = time.strftime("%Y-%m-%dT%H:%M:%S") + f".{ts_ms:03d}"
+        created_at = time.strftime("%Y-%m-%dT%H:%M:%S") + f".{self._seq:04d}"
 
         # 写 manifest
         manifest = {
