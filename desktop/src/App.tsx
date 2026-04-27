@@ -441,11 +441,15 @@ export default function App() {
 
   // Fallback models for standalone Vite mode (without Electron preload)
   const FALLBACK_MODELS: Model[] = [
-    { id: 'deepseek-chat', name: 'DeepSeek V3', provider: 'DeepSeek', tier: 'low' },
+    { id: 'deepseek-chat', name: 'DeepSeek V4', provider: 'DeepSeek', tier: 'low' },
     { id: 'deepseek-reasoner', name: 'DeepSeek R1', provider: 'DeepSeek', tier: 'medium' },
     { id: 'glm-4-flash', name: 'GLM-4-Flash', provider: 'Zhipu', tier: 'free' },
-    { id: 'qwen-plus', name: 'Qwen2.5-72B', provider: 'Alibaba', tier: 'low' },
+    { id: 'glm-4v-flash', name: 'GLM-4V-Flash', provider: 'Zhipu', tier: 'free' },
+    { id: 'MiniMax-Text-01', name: 'MiMo V2 Flash', provider: 'MiniMax', tier: 'low' },
+    { id: 'moonshot-v1-128k', name: 'Kimi 128K', provider: 'Moonshot', tier: 'low' },
     { id: 'doubao-pro-32k', name: 'Doubao-Pro-32K', provider: 'Volcengine', tier: 'low' },
+    { id: 'tiangong-3', name: '天工 3.0', provider: 'Volcengine', tier: 'low' },
+    { id: 'Baichuan4', name: '百川 4', provider: 'Baichuan', tier: 'low' },
   ];
 
   // Load
