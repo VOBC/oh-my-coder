@@ -21,7 +21,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional
 
 if TYPE_CHECKING:
     from ..agents.health_check import HealthChecker
@@ -409,7 +409,7 @@ class Orchestrator:
 
         仅当启用自进化且样本数足够时执行。
         """
-        from ..agents.self_improving import SelfImprovingAgent, EvolutionConfig
+        from ..agents.self_improving import EvolutionConfig, SelfImprovingAgent
 
         config = EvolutionConfig()
         if not config.enabled:

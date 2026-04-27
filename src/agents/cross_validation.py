@@ -29,7 +29,7 @@ from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import TYPE_CHECKING, Dict, List, Optional
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from ..core.router import ModelRouter
@@ -75,8 +75,8 @@ class CrossValidationResult:
     workflow_id: str
     workflow_name: str
     status: ValidationStatus
-    agent_outputs: Dict[str, str]  # agent_name → 输出的纯文本摘要
-    issues: List[ValidationIssue] = field(default_factory=list)
+    agent_outputs: dict[str, str]  # agent_name → 输出的纯文本摘要
+    issues: list[ValidationIssue] = field(default_factory=list)
     raw_validation_text: str = ""  # 模型原始输出
     execution_time: float = 0.0
     timestamp: str = field(default_factory=lambda: datetime.now().isoformat())
@@ -200,16 +200,16 @@ PASS / FAIL / NEED_FIX
 
     def __init__(
         self,
-        model_router: "ModelRouter",
-        state_dir: Optional[Path] = None,
+        model_router: ModelRouter,
+        state_dir: Path | None = None,
     ):
         self.model_router = model_router
         self.state_dir = (state_dir or Path(".omc/state")).resolve()
         self._cv_dir = self.state_dir / "cross_validation"
 
-    def _extract_outputs(self, result) -> Dict[str, str]:
+    def _extract_outputs(self, result) -> dict[str, str]:
         """从 WorkflowResult 中提取纯文本摘要"""
-        outputs: Dict[str, str] = {}
+        outputs: dict[str, str] = {}
         for agent_name, output in result.outputs.items():
             if hasattr(output, "result") and output.result:
                 outputs[agent_name] = str(output.result)[:3000]
@@ -220,8 +220,8 @@ PASS / FAIL / NEED_FIX
     def _build_validation_messages(
         self,
         workflow_name: str,
-        agent_outputs: Dict[str, str],
-    ) -> List[Dict[str, str]]:
+        agent_outputs: dict[str, str],
+    ) -> list[dict[str, str]]:
         """构建发送给模型的 prompt"""
         output_blocks = []
         for agent_name, output_text in agent_outputs.items():
@@ -327,20 +327,20 @@ PASS / FAIL / NEED_FIX
     def _build_validation_prompt(
         self,
         workflow_name: str,
-        agent_outputs: Dict[str, str],
-    ) -> List[Dict[str, str]]:
+        agent_outputs: dict[str, str],
+    ) -> list[dict[str, str]]:
         """兼容性别名"""
         return self._build_validation_messages(workflow_name, agent_outputs)
 
-    def _parse_validation_output(self, text: str) -> List[ValidationIssue]:
+    def _parse_validation_output(self, text: str) -> list[ValidationIssue]:
         """从模型输出中解析出结构化问题列表"""
-        issues: List[ValidationIssue] = []
+        issues: list[ValidationIssue] = []
 
         if not text:
             return issues
 
         lines = text.split("\n")
-        current_issue: Optional[ValidationIssue] = None
+        current_issue: ValidationIssue | None = None
 
         for line in lines:
             stripped = line.strip()
@@ -380,13 +380,13 @@ PASS / FAIL / NEED_FIX
             elif current_issue:
                 # 收集问题的详细信息
                 lower = stripped.lower()
-                if lower.startswith("- 位置:") or lower.startswith("位置:"):
+                if lower.startswith(("- 位置:", "位置:")):
                     loc = stripped.split(":", 1)[1].strip()
                     current_issue.location = loc
-                elif lower.startswith("- 证据:") or lower.startswith("证据:"):
+                elif lower.startswith(("- 证据:", "证据:")):
                     ev = stripped.split(":", 1)[1].strip()
                     current_issue.evidence = ev
-                elif lower.startswith("- 建议:") or lower.startswith("建议:"):
+                elif lower.startswith(("- 建议:", "建议:")):
                     sug = stripped.split(":", 1)[1].strip()
                     current_issue.suggestion = sug
 
@@ -406,7 +406,7 @@ PASS / FAIL / NEED_FIX
             return ValidationSeverity.MEDIUM
         return ValidationSeverity.LOW
 
-    def _determine_status(self, issues: List[ValidationIssue]) -> ValidationStatus:
+    def _determine_status(self, issues: list[ValidationIssue]) -> ValidationStatus:
         """根据问题列表确定验证状态"""
         if not issues:
             return ValidationStatus.PASS

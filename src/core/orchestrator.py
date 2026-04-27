@@ -17,11 +17,12 @@ Agent 编排器 - 智能体调度和编排引擎
 
 import asyncio
 import json
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from ..agents.health_check import HealthChecker
@@ -60,11 +61,11 @@ class WorkflowStep:
 
     agent_name: str
     description: str
-    dependencies: List[str] = field(default_factory=list)  # 依赖的前序步骤
-    condition: Optional[Callable[[Dict], bool]] = None  # 执行条件
+    dependencies: list[str] = field(default_factory=list)  # 依赖的前序步骤
+    condition: Callable[[dict], bool] | None = None  # 执行条件
     retry_count: int = 0
     timeout: float = 300.0  # 5分钟默认超时
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -73,15 +74,15 @@ class WorkflowResult:
 
     workflow_id: str
     status: WorkflowStatus
-    steps_completed: List[str]
-    steps_failed: List[str]
-    outputs: Dict[str, Any]  # agent_name -> output
+    steps_completed: list[str]
+    steps_failed: list[str]
+    outputs: dict[str, Any]  # agent_name -> output
     total_tokens: int
     total_cost: float
     execution_time: float
-    error: Optional[str] = None
+    error: str | None = None
     timestamp: str = field(default_factory=lambda: datetime.now().isoformat())
-    agent_names: List[str] = field(
+    agent_names: list[str] = field(
         default_factory=list
     )  # 此工作流涉及的 Agent 名称列表
 
@@ -194,9 +195,9 @@ class Orchestrator:
     def __init__(
         self,
         model_router,
-        state_dir: Optional[Path] = None,
-        skills_dir: Optional[Path] = None,
-        project_path: Optional[Path] = None,
+        state_dir: Path | None = None,
+        skills_dir: Path | None = None,
+        project_path: Path | None = None,
     ):
         """
         Args:
@@ -213,19 +214,19 @@ class Orchestrator:
         from ..memory.skill_manager import SkillManager
 
         self.skills_dir = skills_dir or self.state_dir.parent / "skills"
-        self._skill_manager: Optional[SkillManager] = None
+        self._skill_manager: SkillManager | None = None
 
         # Checkpoint 管理器（懒加载）
         self._checkpoint_manager = None  # type: ignore
 
         # HealthChecker 管理器（懒加载）
-        self._health_checker: Optional["HealthChecker"] = None
+        self._health_checker: HealthChecker | None = None
 
         # Agent 实例缓存
-        self._agents: Dict[str, Any] = {}
+        self._agents: dict[str, Any] = {}
 
         # 工作流状态
-        self._active_workflows: Dict[str, WorkflowResult] = {}
+        self._active_workflows: dict[str, WorkflowResult] = {}
 
         # 分层记忆管理器（懒加载）
         self._memory_manager = None  # type: ignore
@@ -324,7 +325,7 @@ class Orchestrator:
     async def _maybe_learn_from_workflow(
         self,
         workflow_name: str,
-        context: Dict[str, Any],
+        context: dict[str, Any],
         result: WorkflowResult,
     ) -> None:
         """
@@ -409,7 +410,7 @@ class Orchestrator:
 
         仅当启用自进化且样本数足够时执行。
         """
-        from ..agents.self_improving import SelfImprovingAgent, EvolutionConfig
+        from ..agents.self_improving import EvolutionConfig, SelfImprovingAgent
 
         config = EvolutionConfig()
         if not config.enabled:
@@ -444,7 +445,7 @@ class Orchestrator:
     def _build_agent_context(
         self,
         agent_name: str,
-        context: Dict[str, Any],
+        context: dict[str, Any],
     ):
         """构建统一的 AgentContext（含 Skill 注入 + Tier 0 记忆注入）"""
         from ..agents.base import AgentContext
@@ -485,7 +486,7 @@ class Orchestrator:
     async def execute_workflow(
         self,
         workflow_name: str,
-        context: Dict[str, Any],
+        context: dict[str, Any],
         mode: ExecutionMode = ExecutionMode.SEQUENTIAL,
         skip_checkpoint: bool = False,
     ) -> WorkflowResult:
@@ -585,8 +586,8 @@ class Orchestrator:
 
     async def _execute_sequential(
         self,
-        steps: List[WorkflowStep],
-        context: Dict[str, Any],
+        steps: list[WorkflowStep],
+        context: dict[str, Any],
         result: WorkflowResult,
     ):
         """顺序执行步骤（集成健康检查与自动重试）"""
@@ -680,8 +681,8 @@ class Orchestrator:
 
     async def _execute_parallel(
         self,
-        steps: List[WorkflowStep],
-        context: Dict[str, Any],
+        steps: list[WorkflowStep],
+        context: dict[str, Any],
         result: WorkflowResult,
     ):
         """
@@ -696,10 +697,10 @@ class Orchestrator:
         """
 
         # 建立步骤字典
-        step_map: Dict[str, WorkflowStep] = {s.agent_name: s for s in steps}
+        step_map: dict[str, WorkflowStep] = {s.agent_name: s for s in steps}
 
         # 拓扑分层
-        levels: List[List[WorkflowStep]] = []
+        levels: list[list[WorkflowStep]] = []
         remaining = set(step_map.keys())
 
         while remaining:
@@ -752,8 +753,8 @@ class Orchestrator:
 
     async def _execute_conditional(
         self,
-        steps: List[WorkflowStep],
-        context: Dict[str, Any],
+        steps: list[WorkflowStep],
+        context: dict[str, Any],
         result: WorkflowResult,
     ):
         """
@@ -808,7 +809,7 @@ class Orchestrator:
     async def execute_single_agent(
         self,
         agent_name: str,
-        context: Dict[str, Any],
+        context: dict[str, Any],
         session_id: str = "",
     ):
         """
@@ -874,14 +875,14 @@ class Orchestrator:
                 indent=2,
             )
 
-    def load_workflow_result(self, workflow_id: str) -> Optional[WorkflowResult]:
+    def load_workflow_result(self, workflow_id: str) -> WorkflowResult | None:
         """加载工作流结果"""
         result_file = self.state_dir / f"workflow_{workflow_id}.json"
 
         if not result_file.exists():
             return None
 
-        with open(result_file, "r", encoding="utf-8") as f:
+        with open(result_file, encoding="utf-8") as f:
             data = json.load(f)
 
         return WorkflowResult(
@@ -897,15 +898,15 @@ class Orchestrator:
             timestamp=data["timestamp"],
         )
 
-    def list_active_workflows(self) -> List[str]:
+    def list_active_workflows(self) -> list[str]:
         """列出活跃的工作流"""
         return list(self._active_workflows.keys())
 
-    def get_workflow_status(self, workflow_id: str) -> Optional[WorkflowResult]:
+    def get_workflow_status(self, workflow_id: str) -> WorkflowResult | None:
         """获取工作流状态"""
         return self._active_workflows.get(workflow_id)
 
-    def get_current_state(self) -> Dict[str, Any]:
+    def get_current_state(self) -> dict[str, Any]:
         """获取当前所有 Agent 的协作状态"""
         active_agents = []
         completed_agents = []

@@ -13,10 +13,10 @@ Planner Agent - 任务规划智能体（增强版）
 - LangGraph 的状态机编排
 """
 
+import re
 from dataclasses import dataclass
 from enum import Enum
 from typing import Dict, List, Optional, Set, Tuple
-import re
 
 from pydantic import BaseModel, Field
 
@@ -29,7 +29,6 @@ from .base import (
     BaseAgent,
     register_agent,
 )
-
 
 # ============================================================
 # 结构化任务模型

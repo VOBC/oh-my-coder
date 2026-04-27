@@ -4,12 +4,12 @@ Web 界面入口 - FastAPI 应用
 """
 
 import asyncio
+import json as _json
 import sys
 import uuid
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
-import json as _json
+from typing import Any
 
 import uvicorn
 from fastapi import BackgroundTasks, FastAPI, HTTPException, Request
@@ -28,11 +28,11 @@ try:
     from src.agents.base import AgentContext, AgentOutput, AgentStatus, get_agent
     from src.core.orchestrator import WORKFLOW_TEMPLATES, Orchestrator
     from src.core.router import ModelRouter, RouterConfig
-    from src.web.history_api import history_router, agent_router, history_store
     from src.web.dashboard_api import router as dashboard_router
-    from src.web.team_api import router as team_router
+    from src.web.history_api import agent_router, history_router, history_store
     from src.web.local_models_api import router as local_models_router
     from src.web.share_api import router as share_router
+    from src.web.team_api import router as team_router
 except ImportError as e:
     print(f"导入错误: {e}")
     raise
@@ -67,8 +67,8 @@ class TaskManager:
     """管理所有运行中的任务"""
 
     def __init__(self):
-        self._tasks: Dict[str, Dict[str, Any]] = {}
-        self._queues: Dict[str, asyncio.Queue] = {}
+        self._tasks: dict[str, dict[str, Any]] = {}
+        self._queues: dict[str, asyncio.Queue] = {}
 
     def create_task(self) -> str:
         task_id = str(uuid.uuid4())[:8]
@@ -93,10 +93,12 @@ class TaskManager:
         self._queues[task_id] = queue
         return task_id
 
-    def get_queue(self, task_id: str) -> Optional[asyncio.Queue]:
+    def get_queue(self, task_id: str) -> asyncio.Queue | None:
         return self._queues.get(task_id)
 
-    def update_step(self, task_id: str, step: str, status: str, content: str = None):
+    def update_step(
+        self, task_id: str, step: str, status: str, content: str | None = None
+    ):
         if task_id not in self._tasks:
             return
         task = self._tasks[task_id]
@@ -112,7 +114,9 @@ class TaskManager:
             except Exception:
                 pass  # Queue full, skip
 
-    def complete_task(self, task_id: str, result: Any = None, error: str = None):
+    def complete_task(
+        self, task_id: str, result: Any = None, error: str | None = None
+    ):
         if task_id not in self._tasks:
             return
         task = self._tasks[task_id]
@@ -135,10 +139,10 @@ class TaskManager:
             except Exception:
                 pass  # Queue full, skip
 
-    def get_task(self, task_id: str) -> Optional[Dict]:
+    def get_task(self, task_id: str) -> dict | None:
         return self._tasks.get(task_id)
 
-    def list_tasks(self) -> List[Dict]:
+    def list_tasks(self) -> list[dict]:
         return [
             {
                 "task_id": k,
@@ -320,7 +324,7 @@ async def get_task(task_id: str):
 
 
 @app.post("/api/execute")
-async def execute_task(background: BackgroundTasks, payload: dict = None):
+async def execute_task(background: BackgroundTasks, payload: dict | None = None):
     """
     执行任务 API（异步，事件驱动）
 
@@ -430,9 +434,9 @@ async def run_task(
                     task_manager._tasks[task_id]["stats"]["steps_completed"].append(
                         agent_name
                     )
-                    task_manager._tasks[task_id]["stats"][
-                        "total_tokens"
-                    ] += output.usage.get("total_tokens", 0)
+                    task_manager._tasks[task_id]["stats"]["total_tokens"] += (
+                        output.usage.get("total_tokens", 0)
+                    )
                 else:
                     wf_result.steps_failed.append(agent_name)
                     task_manager.update_step(
@@ -588,7 +592,7 @@ async def execute_task_sync(req: ExecuteRequest):
             }
         )
 
-    except Exception:  # noqa: B008
+    except Exception:
         return JSONResponse(
             {
                 "status": "error",
@@ -615,7 +619,7 @@ SETTINGS_DIR = Path.home() / ".omc"
 SETTINGS_FILE = SETTINGS_DIR / "config.json"
 
 
-def _read_settings() -> Dict[str, Any]:
+def _read_settings() -> dict[str, Any]:
     """读取 ~/.omc/config.json，不存在则返回默认值"""
     if not SETTINGS_FILE.exists():
         return {
@@ -731,7 +735,7 @@ async def get_settings():
     # 脱敏 API Key
     # masked = json_dumps(settings, ensure_ascii=False)  # keep original for structure
     # Deep-copy models with masked keys
-    for _name, _m in settings.get("models", {}).items():
+    for _m in settings.get("models", {}).values():
         raw_key = _m.get("api_key", "")
         _m["api_key_masked"] = _mask_key(raw_key)
         _m["has_key"] = bool(raw_key)

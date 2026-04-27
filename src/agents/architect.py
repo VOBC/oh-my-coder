@@ -18,7 +18,6 @@ Architect Agent - 系统架构设计智能体
 """
 
 from dataclasses import dataclass
-from typing import Dict, List
 
 from ..core.router import TaskType
 from .base import (
@@ -132,7 +131,7 @@ project/
 """
 
     async def _run(
-        self, context: AgentContext, prompt: List[Dict[str, str]], **kwargs
+        self, context: AgentContext, prompt: list[dict[str, str]], **kwargs
     ) -> str:
         """
         执行架构设计

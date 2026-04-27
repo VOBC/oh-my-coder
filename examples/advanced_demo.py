@@ -21,13 +21,13 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+from src.core.orchestrator import WORKFLOW_TEMPLATES, Orchestrator
+from src.core.router import ModelRouter, RouterConfig, TaskType
+from src.core.summary import TaskSummary, generate_summary, print_summary
 from src.models.base import ModelConfig, ModelProvider, ModelTier
 from src.models.deepseek import DeepSeekModel
-from src.models.kimi import KimiModel
 from src.models.glm import GLMModel
-from src.core.router import ModelRouter, RouterConfig, TaskType
-from src.core.orchestrator import Orchestrator, WORKFLOW_TEMPLATES
-from src.core.summary import TaskSummary, generate_summary, print_summary
+from src.models.kimi import KimiModel
 
 
 # ============================================================
@@ -262,7 +262,7 @@ def demo_summary_feature():
     print("示例 4: 任务总结功能")
     print("=" * 60)
 
-    from src.core.summary import save_summary, load_summary
+    from src.core.summary import load_summary, save_summary
 
     # 场景：记录一次完整的工作流执行
     completed_steps = [

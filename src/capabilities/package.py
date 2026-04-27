@@ -5,11 +5,11 @@
 用户可以将优化后的 Agent 配置打包导出，社区可以共享这些"能力包"。
 """
 
-from dataclasses import dataclass, asdict, field
-from pathlib import Path
 import json
+from dataclasses import asdict, dataclass, field
 from datetime import datetime
-from typing import Any, Optional
+from pathlib import Path
+from typing import Any
 
 
 @dataclass
@@ -49,7 +49,7 @@ class CapabilityPackage:
     @classmethod
     def load(cls, path: Path) -> "CapabilityPackage":
         """从 JSON 文件加载能力包"""
-        with open(path, "r", encoding="utf-8") as f:
+        with open(path, encoding="utf-8") as f:
             data = json.load(f)
         return cls(**data)
 
@@ -98,7 +98,7 @@ class CapabilityPackageManager:
     负责能力包的存储、加载、列表和应用。
     """
 
-    def __init__(self, packages_dir: Optional[Path] = None):
+    def __init__(self, packages_dir: Path | None = None):
         """
         初始化管理器
 
@@ -134,7 +134,7 @@ class CapabilityPackageManager:
         packages.sort(key=lambda p: p.created_at, reverse=True)
         return packages
 
-    def get_package(self, name: str) -> Optional[CapabilityPackage]:
+    def get_package(self, name: str) -> CapabilityPackage | None:
         """获取指定名称的能力包"""
         path = self._get_package_path(name)
         if not path.exists():
@@ -170,7 +170,7 @@ class CapabilityPackageManager:
         tools: list[str],
         prompts: dict,
         readme: str = "",
-        examples: Optional[list[dict]] = None,
+        examples: list[dict] | None = None,
     ) -> CapabilityPackage:
         """
         从当前配置导出能力包
@@ -245,7 +245,7 @@ class CapabilityPackageManager:
     def apply_package(
         self,
         name: str,
-        target_config: Optional[dict] = None,
+        target_config: dict | None = None,
     ) -> dict:
         """
         应用能力包配置
@@ -283,7 +283,7 @@ class CapabilityPackageManager:
 
 
 # 全局管理器实例
-_default_manager: Optional[CapabilityPackageManager] = None
+_default_manager: CapabilityPackageManager | None = None
 
 
 def get_manager() -> CapabilityPackageManager:

@@ -6,8 +6,8 @@
 
 import typer
 from rich.console import Console
-from rich.table import Table
 from rich.panel import Panel
+from rich.table import Table
 
 console = Console()
 app = typer.Typer(help="本地模型管理 - Ollama 支持")
@@ -21,8 +21,9 @@ def check_status():
     示例:
         omc local status
     """
-    from ..models.ollama import OllamaModel, OLLAMA_DEFAULT_URL
     import os
+
+    from ..models.ollama import OLLAMA_DEFAULT_URL, OllamaModel
 
     base_url = os.getenv("OLLAMA_BASE_URL", OLLAMA_DEFAULT_URL)
 
@@ -83,7 +84,7 @@ def check_status():
             console.print("\n或安装 Ollama：https://ollama.ai/")
         return
     except ImportError:
-        pass  # 回退到基础检测
+        # 回退到基础检测
 
         # 回退：基础检测
         console.print("[green]✓ Ollama 服务运行中[/green]")
@@ -131,8 +132,8 @@ def list_models():
     示例:
         omc local list
     """
-    from ..models.ollama import OllamaModel, OLLAMA_MODELS
     from ..models.base import ModelTier
+    from ..models.ollama import OLLAMA_MODELS, OllamaModel
 
     console.print("[bold]本地模型状态:[/bold]\n")
 

@@ -6,6 +6,7 @@ Oh My Coder Demo Video Generator
 import math
 import textwrap
 from pathlib import Path
+
 from PIL import Image, ImageDraw, ImageFont
 
 # ============================================================

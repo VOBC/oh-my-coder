@@ -23,7 +23,6 @@ import subprocess
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Set
 
 
 @dataclass
@@ -52,7 +51,7 @@ class CleanerStrategy:
 
     # 5. 过时配置文件
     detect_outdated_configs: bool = True
-    outdated_patterns: List[str] = field(
+    outdated_patterns: list[str] = field(
         default_factory=lambda: [
             r"\.env\.example\.bak",
             r"config\.old",
@@ -68,8 +67,8 @@ class CleaningIssue:
 
     file_path: str
     issue_type: str  # unused_import, duplicate, dead_code, empty, outdated
-    line_start: Optional[int] = None
-    line_end: Optional[int] = None
+    line_start: int | None = None
+    line_end: int | None = None
     content: str = ""  # 问题内容摘要
     severity: str = "warning"  # info/warning/error
     auto_fixable: bool = False
@@ -88,18 +87,18 @@ class CleanerReport:
     files_scanned: int = 0
 
     # 按类型统计
-    by_type: Dict[str, int] = field(default_factory=dict)
+    by_type: dict[str, int] = field(default_factory=dict)
 
     # 问题列表
-    issues: List[CleaningIssue] = field(default_factory=list)
+    issues: list[CleaningIssue] = field(default_factory=list)
 
     # 已修复
     fixed_count: int = 0
-    fixed_files: List[str] = field(default_factory=list)
+    fixed_files: list[str] = field(default_factory=list)
 
     # 待确认（需人工审核）
     pending_count: int = 0
-    pending_issues: List[CleaningIssue] = field(default_factory=list)
+    pending_issues: list[CleaningIssue] = field(default_factory=list)
 
     # token 节省估算
     lines_removed: int = 0
@@ -115,16 +114,16 @@ class CodeCleaner:
     def __init__(
         self,
         project_path: Path,
-        strategy: Optional[CleanerStrategy] = None,
+        strategy: CleanerStrategy | None = None,
     ):
         self.project_path = Path(project_path)
         self.strategy = strategy or CleanerStrategy()
 
         # 扫描到的 Python 文件
-        self.python_files: List[Path] = []
+        self.python_files: list[Path] = []
 
         # 分析结果
-        self.issues: List[CleaningIssue] = []
+        self.issues: list[CleaningIssue] = []
 
     def scan(self) -> CleanerReport:
         """扫描项目，返回清理报告"""
@@ -179,7 +178,7 @@ class CodeCleaner:
 
         return report
 
-    def _collect_python_files(self) -> List[Path]:
+    def _collect_python_files(self) -> list[Path]:
         """收集所有 Python 文件（排除测试、虚拟环境等）"""
         files = []
         exclude_dirs = {
@@ -217,7 +216,7 @@ class CodeCleaner:
                     "ruff",
                     "check",
                     "--select",
-                    "F401,F841,F821",  # noqa: E501
+                    "F401,F841,F821",
                     "--output-format",
                     "json",
                     str(self.project_path),
@@ -269,7 +268,7 @@ class CodeCleaner:
         # 简化版：按函数/方法哈希检测
         # 完整实现需要更复杂的 AST 分析
 
-        code_hashes: Dict[str, List[tuple[Path, int]]] = {}
+        code_hashes: dict[str, list[tuple[Path, int]]] = {}
 
         for py_file in self.python_files:
             try:
@@ -313,7 +312,7 @@ class CodeCleaner:
                 continue
 
         # 找出重复的代码块
-        for block_hash, locations in code_hashes.items():
+        for locations in code_hashes.values():
             if len(locations) >= 2:
                 locations_str = ", ".join(
                     f"{p.name}:{line}" for p, line in locations[:3]
@@ -334,8 +333,8 @@ class CodeCleaner:
     def _check_dead_code(self):
         """检测死代码（无引用的函数/类）"""
         # 构建引用图
-        all_names: Set[str] = set()  # 所有定义的名称
-        referenced_names: Set[str] = set()  # 被引用的名称
+        all_names: set[str] = set()  # 所有定义的名称
+        referenced_names: set[str] = set()  # 被引用的名称
 
         for py_file in self.python_files:
             try:
@@ -449,7 +448,7 @@ class CodeCleaner:
                 )
                 return result.returncode == 0
 
-            elif issue.issue_type == "empty_file" and self.strategy.auto_delete_empty:
+            if issue.issue_type == "empty_file" and self.strategy.auto_delete_empty:
                 # 删除空文件
                 Path(issue.file_path).unlink()
                 return True
@@ -472,10 +471,9 @@ class CodeCleaner:
         fixed_files = set()
 
         for issue in self.issues:
-            if issue.auto_fixable:
-                if self.fix(issue):
-                    fixed_files.add(issue.file_path)
-                    report.fixed_count += 1
+            if issue.auto_fixable and self.fix(issue):
+                fixed_files.add(issue.file_path)
+                report.fixed_count += 1
 
         report.fixed_files = list(fixed_files)
         return report
@@ -509,8 +507,7 @@ class CodeCleaner:
 
         if report.fixed_files:
             lines.extend(["## 已自动修复", ""])
-            for f in report.fixed_files:
-                lines.append(f"- {f}")
+            lines.extend([f"- {f}" for f in report.fixed_files])
             lines.append("")
 
         if report.pending_issues:
@@ -551,10 +548,7 @@ def main():
     # 清理
     cleaner = CodeCleaner(Path(args.path), strategy)
 
-    if args.fix:
-        report = cleaner.fix_all_auto()
-    else:
-        report = cleaner.scan()
+    report = cleaner.fix_all_auto() if args.fix else cleaner.scan()
 
     # 输出报告
     report_md = cleaner.generate_report_md(report)

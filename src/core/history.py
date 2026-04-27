@@ -14,7 +14,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 class ReplayStatus(str, Enum):
@@ -45,18 +45,18 @@ class StepExecution:
     agent_name: str
     description: str
     status: StepStatus
-    input_context: Dict[str, Any]
-    output: Optional[Dict[str, Any]] = None
-    error: Optional[str] = None
-    start_time: Optional[str] = None
-    end_time: Optional[str] = None
+    input_context: dict[str, Any]
+    output: dict[str, Any] | None = None
+    error: str | None = None
+    start_time: str | None = None
+    end_time: str | None = None
     duration_seconds: float = 0.0
     tokens_used: int = 0
     cost: float = 0.0
     retry_count: int = 0
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
         return {
             "step_id": self.step_id,
@@ -76,7 +76,7 @@ class StepExecution:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "StepExecution":
+    def from_dict(cls, data: dict[str, Any]) -> "StepExecution":
         """从字典创建"""
         return cls(
             step_id=data["step_id"],
@@ -103,14 +103,14 @@ class TaskHistory:
     history_id: str
     task_description: str
     workflow_name: str
-    steps: List[StepExecution] = field(default_factory=list)
+    steps: list[StepExecution] = field(default_factory=list)
     total_tokens: int = 0
     total_cost: float = 0.0
     total_duration: float = 0.0
     created_at: str = field(default_factory=lambda: datetime.now().isoformat())
     updated_at: str = field(default_factory=lambda: datetime.now().isoformat())
-    tags: List[str] = field(default_factory=list)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    tags: list[str] = field(default_factory=list)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
     def add_step(self, step: StepExecution) -> None:
         """添加步骤"""
@@ -123,7 +123,7 @@ class TaskHistory:
         self.total_cost = sum(s.cost for s in self.steps)
         self.total_duration = sum(s.duration_seconds for s in self.steps)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
         self.update_totals()
         return {
@@ -141,7 +141,7 @@ class TaskHistory:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "TaskHistory":
+    def from_dict(cls, data: dict[str, Any]) -> "TaskHistory":
         """从字典创建"""
         return cls(
             history_id=data["history_id"],
@@ -157,18 +157,18 @@ class TaskHistory:
             metadata=data.get("metadata", {}),
         )
 
-    def get_step(self, step_id: str) -> Optional[StepExecution]:
+    def get_step(self, step_id: str) -> StepExecution | None:
         """获取步骤"""
         for step in self.steps:
             if step.step_id == step_id:
                 return step
         return None
 
-    def get_steps_by_agent(self, agent_name: str) -> List[StepExecution]:
+    def get_steps_by_agent(self, agent_name: str) -> list[StepExecution]:
         """按 Agent 获取步骤"""
         return [s for s in self.steps if s.agent_name == agent_name]
 
-    def get_failed_steps(self) -> List[StepExecution]:
+    def get_failed_steps(self) -> list[StepExecution]:
         """获取失败步骤"""
         return [s for s in self.steps if s.status == StepStatus.FAILED]
 
@@ -194,7 +194,7 @@ class TaskCheckpoint:
                 return i <= self.step_index
         return False
 
-    def get_resume_context(self) -> Dict[str, Any]:
+    def get_resume_context(self) -> dict[str, Any]:
         """获取恢复上下文"""
         completed_steps = self.history.steps[: self.step_index]
         return {
@@ -205,7 +205,7 @@ class TaskCheckpoint:
             "resume_from_index": self.step_index,
         }
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
         return {
             "checkpoint_id": self.checkpoint_id,
@@ -227,7 +227,7 @@ class TaskReplay:
         self.current_step_index = 0
         self.status = ReplayStatus.READY
         self.speed = 1.0  # 回放速度倍数
-        self._callbacks: Dict[str, Any] = {}
+        self._callbacks: dict[str, Any] = {}
 
     def on_step_start(self, callback) -> None:
         """注册步骤开始回调"""
@@ -315,7 +315,7 @@ class TaskReplay:
         """设置回放速度"""
         self.speed = max(0.1, min(10.0, speed))
 
-    def get_progress(self) -> Dict[str, Any]:
+    def get_progress(self) -> dict[str, Any]:
         """获取进度"""
         total = len(self.history.steps)
         current = self.current_step_index
@@ -331,7 +331,7 @@ class TaskReplay:
 class HistoryManager:
     """历史记录管理器"""
 
-    def __init__(self, storage_dir: Optional[Path] = None):
+    def __init__(self, storage_dir: Path | None = None):
         """
         Args:
             storage_dir: 存储目录
@@ -340,14 +340,14 @@ class HistoryManager:
         self.storage_dir.mkdir(parents=True, exist_ok=True)
 
         # 内存缓存
-        self._histories: Dict[str, TaskHistory] = {}
-        self._checkpoints: Dict[str, TaskCheckpoint] = {}
+        self._histories: dict[str, TaskHistory] = {}
+        self._checkpoints: dict[str, TaskCheckpoint] = {}
 
     def create_history(
         self,
         task_description: str,
         workflow_name: str,
-        tags: Optional[List[str]] = None,
+        tags: list[str] | None = None,
     ) -> TaskHistory:
         """创建新的历史记录"""
         history_id = str(uuid.uuid4())[:8]
@@ -371,7 +371,7 @@ class HistoryManager:
 
         return history_file
 
-    def load_history(self, history_id: str) -> Optional[TaskHistory]:
+    def load_history(self, history_id: str) -> TaskHistory | None:
         """加载历史记录"""
         if history_id in self._histories:
             return self._histories[history_id]
@@ -381,7 +381,7 @@ class HistoryManager:
         if not history_file.exists():
             return None
 
-        with open(history_file, "r", encoding="utf-8") as f:
+        with open(history_file, encoding="utf-8") as f:
             data = json.load(f)
 
         history = TaskHistory.from_dict(data)
@@ -391,8 +391,8 @@ class HistoryManager:
     def list_histories(
         self,
         limit: int = 50,
-        tags: Optional[List[str]] = None,
-    ) -> List[TaskHistory]:
+        tags: list[str] | None = None,
+    ) -> list[TaskHistory]:
         """列出历史记录"""
         histories = []
 
@@ -428,7 +428,7 @@ class HistoryManager:
 
         return checkpoint
 
-    def load_checkpoint(self, checkpoint_id: str) -> Optional[TaskCheckpoint]:
+    def load_checkpoint(self, checkpoint_id: str) -> TaskCheckpoint | None:
         """加载检查点"""
         if checkpoint_id in self._checkpoints:
             return self._checkpoints[checkpoint_id]
@@ -438,7 +438,7 @@ class HistoryManager:
         if not checkpoint_file.exists():
             return None
 
-        with open(checkpoint_file, "r", encoding="utf-8") as f:
+        with open(checkpoint_file, encoding="utf-8") as f:
             data = json.load(f)
 
         history = self.load_history(data["history_id"])
@@ -464,7 +464,7 @@ class HistoryManager:
 
         return True
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """获取统计信息"""
         histories = self.list_histories()
 
@@ -489,7 +489,7 @@ class HistoryManager:
 def create_step_execution(
     agent_name: str,
     description: str,
-    input_context: Dict[str, Any],
+    input_context: dict[str, Any],
 ) -> StepExecution:
     """创建步骤执行记录"""
     return StepExecution(
@@ -504,7 +504,7 @@ def create_step_execution(
 
 def complete_step_execution(
     step: StepExecution,
-    output: Dict[str, Any],
+    output: dict[str, Any],
     tokens_used: int = 0,
     cost: float = 0.0,
 ) -> StepExecution:

@@ -10,6 +10,7 @@
 """
 
 import asyncio
+
 import pytest
 
 from src.utils.safe_executor import (

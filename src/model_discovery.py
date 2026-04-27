@@ -222,7 +222,7 @@ class ModelDiscovery:
             return None
 
         try:
-            with open(self.cache_file, "r", encoding="utf-8") as f:
+            with open(self.cache_file, encoding="utf-8") as f:
                 data = json.load(f)
 
             cached_at = data.get("cached_at")
@@ -241,7 +241,7 @@ class ModelDiscovery:
             except (ValueError, TypeError):
                 return None
 
-        except (json.JSONDecodeError, IOError):
+        except (OSError, json.JSONDecodeError):
             return None
 
     def save_cache(self, data: dict) -> None:
@@ -336,7 +336,7 @@ class ModelDiscovery:
             full_id = f"{provider}:{model_id}"
 
             # 如果该厂商有返回数据，但内置模型不在返回列表中
-            if provider in discovered and discovered[provider]:
+            if discovered.get(provider):
                 if full_id not in discovered_ids and model_id not in {
                     mm.get("id", "") for mm in discovered.get(provider, [])
                 }:

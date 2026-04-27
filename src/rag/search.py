@@ -8,10 +8,10 @@
 """
 
 import math
+import re
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Optional
-import re
+from typing import Any
 
 
 @dataclass
@@ -26,9 +26,9 @@ class SearchResult:
     source_code: str
     start_line: int
     end_line: int
-    docstring: Optional[str] = None
-    signature: Optional[str] = None
-    highlights: List[str] = field(default_factory=list)
+    docstring: str | None = None
+    signature: str | None = None
+    highlights: list[str] = field(default_factory=list)
     context: str = ""
 
 
@@ -52,7 +52,7 @@ class SemanticSearch:
     3. 混合搜索（语义 + 关键词）
     """
 
-    def __init__(self, indexer, config: Optional[SearchConfig] = None):
+    def __init__(self, indexer, config: SearchConfig | None = None):
         """
         Args:
             indexer: CodebaseIndexer 实例
@@ -65,8 +65,8 @@ class SemanticSearch:
         self,
         query: str,
         search_type: str = "hybrid",
-        filters: Optional[Dict[str, Any]] = None,
-    ) -> List[SearchResult]:
+        filters: dict[str, Any] | None = None,
+    ) -> list[SearchResult]:
         """
         执行搜索
 
@@ -80,16 +80,15 @@ class SemanticSearch:
         """
         if search_type == "semantic":
             return self._semantic_search(query, filters)
-        elif search_type == "keyword":
+        if search_type == "keyword":
             return self._keyword_search(query, filters)
-        else:
-            return self._hybrid_search(query, filters)
+        return self._hybrid_search(query, filters)
 
     def _semantic_search(
         self,
         query: str,
-        filters: Optional[Dict[str, Any]] = None,
-    ) -> List[SearchResult]:
+        filters: dict[str, Any] | None = None,
+    ) -> list[SearchResult]:
         """语义搜索（向量相似度）"""
         results = []
 
@@ -127,8 +126,8 @@ class SemanticSearch:
     def _keyword_search(
         self,
         query: str,
-        filters: Optional[Dict[str, Any]] = None,
-    ) -> List[SearchResult]:
+        filters: dict[str, Any] | None = None,
+    ) -> list[SearchResult]:
         """关键词搜索（BM25 风格）"""
         results = []
 
@@ -156,8 +155,8 @@ class SemanticSearch:
     def _hybrid_search(
         self,
         query: str,
-        filters: Optional[Dict[str, Any]] = None,
-    ) -> List[SearchResult]:
+        filters: dict[str, Any] | None = None,
+    ) -> list[SearchResult]:
         """混合搜索（语义 + 关键词）"""
         semantic_results = self._semantic_search(query, filters)
         keyword_results = self._keyword_search(query, filters)
@@ -174,10 +173,8 @@ class SemanticSearch:
         for result in keyword_results:
             if result.element_id in combined:
                 # 合并分数
-                combined[
-                    result.element_id
-                ].relevance_score += result.relevance_score * (
-                    1 - self.config.hybrid_alpha
+                combined[result.element_id].relevance_score += (
+                    result.relevance_score * (1 - self.config.hybrid_alpha)
                 )
             else:
                 result.relevance_score *= 1 - self.config.hybrid_alpha
@@ -195,9 +192,9 @@ class SemanticSearch:
     def search_context(
         self,
         query: str,
-        context_elements: List[str],
+        context_elements: list[str],
         max_results: int = 5,
-    ) -> List[SearchResult]:
+    ) -> list[SearchResult]:
         """
         上下文相关搜索
 
@@ -254,15 +251,15 @@ class SemanticSearch:
 
         return [self._element_to_result(e, s) for e, s in results[:max_results]]
 
-    def _get_embedding(self, text: str) -> Optional[List[float]]:
+    def _get_embedding(self, text: str) -> list[float] | None:
         """获取文本嵌入"""
         # TODO: 调用嵌入 API
         return None
 
     def _cosine_similarity(
         self,
-        vec1: List[float],
-        vec2: List[float],
+        vec1: list[float],
+        vec2: list[float],
     ) -> float:
         """计算余弦相似度"""
         if not vec1 or not vec2 or len(vec1) != len(vec2):
@@ -279,8 +276,8 @@ class SemanticSearch:
 
     def _average_embeddings(
         self,
-        embeddings: List[List[float]],
-    ) -> List[float]:
+        embeddings: list[list[float]],
+    ) -> list[float]:
         """计算平均嵌入"""
         if not embeddings:
             return []
@@ -290,17 +287,16 @@ class SemanticSearch:
 
         return [sum(e[i] for e in embeddings) / n for i in range(dim)]
 
-    def _tokenize(self, text: str) -> List[str]:
+    def _tokenize(self, text: str) -> list[str]:
         """分词"""
         # 简单分词：小写化 + 按非字母数字分割
         text = text.lower()
-        tokens = re.findall(r"[a-z0-9_]+", text)
-        return tokens
+        return re.findall(r"[a-z0-9_]+", text)
 
     def _bm25_score(
         self,
         element,
-        query_terms: List[str],
+        query_terms: list[str],
         k1: float = 1.5,
         b: float = 0.75,
     ) -> float:
@@ -342,7 +338,7 @@ class SemanticSearch:
     def _match_filters(
         self,
         element,
-        filters: Dict[str, Any],
+        filters: dict[str, Any],
     ) -> bool:
         """检查元素是否匹配过滤条件"""
         for key, value in filters.items():
@@ -398,7 +394,7 @@ class ContextBuilder:
     def build_context(
         self,
         task: str,
-        relevant_files: Optional[List[str]] = None,
+        relevant_files: list[str] | None = None,
         max_tokens: int = 4000,
     ) -> str:
         """

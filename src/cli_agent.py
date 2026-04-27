@@ -12,15 +12,16 @@ Agent 配置 CLI - 导出/导入/管理 Agent 配置
 
 from __future__ import annotations
 
+import contextlib
 import json
-import httpx
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 
+import httpx
 import typer
 from rich.console import Console
-from rich.table import Table
 from rich.panel import Panel
+from rich.table import Table
 
 app = typer.Typer(help="Agent 配置管理")
 console = Console()
@@ -101,7 +102,7 @@ def show_agent(
 @app.command("export")
 def export_agent(
     name: str = typer.Argument(..., help="Agent 名称"),
-    output: Optional[Path] = typer.Option(None, "--output", "-o", help="输出文件路径"),
+    output: Path | None = typer.Option(None, "--output", "-o", help="输出文件路径"),
     include_evolution: bool = typer.Option(
         False, "--evolution", "-e", help="包含进化历史"
     ),
@@ -147,8 +148,9 @@ def export_agent(
 
     # 可选：包含进化历史
     if include_evolution:
-        from .agents.evolution import EvolutionStore
         from pathlib import Path
+
+        from .agents.evolution import EvolutionStore
 
         state_dir = Path.home() / ".omc" / "state"
         store = EvolutionStore(state_dir)
@@ -165,8 +167,9 @@ def export_agent(
 
     # 可选：包含成功模式库
     if include_patterns:
-        from .agents.evolution import EvolutionStore
         from pathlib import Path
+
+        from .agents.evolution import EvolutionStore
 
         state_dir = Path.home() / ".omc" / "state"
         store = EvolutionStore(state_dir)
@@ -202,7 +205,7 @@ def export_agent(
 @app.command("import")
 def import_agent(
     source: str = typer.Argument(..., help="配置文件路径或 URL"),
-    name: Optional[str] = typer.Option(None, "--name", "-n", help="新 Agent 名称"),
+    name: str | None = typer.Option(None, "--name", "-n", help="新 Agent 名称"),
 ):
     """
     从文件或 URL 导入 Agent 配置
@@ -212,8 +215,8 @@ def import_agent(
     - GitHub raw URL
     - HTTP/HTTPS URL
     """
-    source_path: Optional[Path] = None
-    config_data: Dict[str, Any]
+    source_path: Path | None = None
+    config_data: dict[str, Any]
 
     # 判断是 URL 还是本地文件
     if source.startswith(("http://", "https://")):
@@ -268,7 +271,7 @@ def import_agent(
 
     # 如果包含进化历史，也保存
     if "evolution_history" in config_data:
-        from .agents.evolution import EvolutionStore, EvolutionRecord
+        from .agents.evolution import EvolutionRecord, EvolutionStore
 
         state_dir = Path.home() / ".omc" / "state"
         store = EvolutionStore(state_dir)
@@ -361,7 +364,7 @@ def agent_stats(
 
 @app.command("decisions")
 def list_decisions(
-    category: Optional[str] = typer.Option(
+    category: str | None = typer.Option(
         None,
         "--category",
         "-c",
@@ -494,6 +497,7 @@ def agent_health(
 ):
     """显示所有 Agent 的健康状态（读取 .omc/state/health/ 目录）"""
     from pathlib import Path
+
     from .agents.health_check import format_health_display
 
     state_dir = Path.cwd() / ".omc" / "state" / "health"
@@ -520,10 +524,8 @@ def agent_health(
     status_file = state_dir / "status.json"
     summary: dict = {}
     if status_file.exists():
-        try:
+        with contextlib.suppress(Exception):
             summary = json.loads(status_file.read_text(encoding="utf-8"))
-        except Exception:
-            pass
 
     # 打印摘要
     if summary:

@@ -14,7 +14,6 @@ Oh My Coder CLI - 命令行入口
 """
 
 import asyncio
-import logging
 import os
 from pathlib import Path
 
@@ -24,30 +23,30 @@ from rich.panel import Panel
 from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.table import Table
 
-from .core.orchestrator import Orchestrator
-from .core.router import ModelRouter, RouterConfig
-from .wiki import WikiGenerator
 from .agents.cross_validation import CrossValidationLayer
-from .quest import QuestStatus
-from .cli_context import context_app
 from .capabilities import app as cap_app
-from .cli_config_ext import app as config_ext_app
-from .cli_task import app as task_app
-from .cli_multiagent import app as multiagent_app
-from .cli_security import app as security_app
 from .cli_checkpoint import app as checkpoint_app
+from .cli_commands import app as commands_app
+from .cli_config_ext import app as config_ext_app
+from .cli_context import context_app
+from .cli_lsp import app as lsp_app
 from .cli_mcp import app as mcp_app
 from .cli_memory import app as memory_app
-from .cli_skill import app as skill_app
-from .cli_trace import app as trace_app
 from .cli_migrate import app as migrate_app
-from .cli_tui import app as tui_app
-from .cli_self_config import app as self_config_app
-from .cli_commands import app as commands_app
+from .cli_multiagent import app as multiagent_app
 from .cli_package_manager import app as pkg_app
-from .cli_lsp import app as lsp_app
 from .cli_search import app as search_app
+from .cli_security import app as security_app
+from .cli_self_config import app as self_config_app
 from .cli_server import app as server_app
+from .cli_skill import app as skill_app
+from .cli_task import app as task_app
+from .cli_trace import app as trace_app
+from .cli_tui import app as tui_app
+from .core.orchestrator import Orchestrator
+from .core.router import ModelRouter, RouterConfig
+from .quest import QuestStatus
+from .wiki import WikiGenerator
 
 # 版本信息
 __version__ = "1.0.0"
@@ -90,16 +89,16 @@ try:
     from .cli_clean import app as clean_app
 
     app.add_typer(clean_app, name="clean", help="代码清理 - 检测和清理冗余代码")
-except Exception as e:
-    logging.warning("cli_clean 模块加载失败，跳过 clean 子命令: %s", e)
+except Exception:
+    pass
 
 # 成本优化命令
 try:
     from .cli_cost import app as cost_app
 
     app.add_typer(cost_app, name="cost", help="成本优化 - 根据任务推荐最优模型")
-except Exception as e:
-    logging.warning("cli_cost 模块加载失败，跳过 cost 子命令: %s", e)
+except Exception:
+    pass
 
 # 本地模型命令
 try:
@@ -108,8 +107,8 @@ try:
     app.add_typer(
         local_models_app, name="local", help="本地模型管理 - Ollama 零成本运行"
     )
-except Exception as e:
-    logging.warning("cli_local_models 模块加载失败，跳过 local 子命令: %s", e)
+except Exception:
+    pass
 
 # model 子命令
 from .cli_model import app as model_app  # noqa: E402
@@ -121,24 +120,24 @@ try:
     from .cli_gateway import app as gateway_app  # noqa: E402
 
     app.add_typer(gateway_app, name="gateway", help="多平台网关 - Telegram / Discord")
-except Exception as e:
-    logging.warning("cli_gateway 模块加载失败，跳过 gateway 子命令: %s", e)
+except Exception:
+    pass  # gateway 依赖缺失时跳过
 
 # agent 子命令 - Agent 配置管理与自进化
 try:
     from .cli_agent import app as agent_app  # noqa: E402
 
     app.add_typer(agent_app, name="agent", help="Agent 管理 - 导出/导入/进化")
-except Exception as e:
-    logging.warning("cli_agent 模块加载失败，跳过 agent 子命令: %s", e)
+except Exception:
+    pass
 
 # template 子命令 - 工作流模板
 try:
     from .cli_template import app as template_app  # noqa: E402
 
     app.add_typer(template_app, name="template", help="工作流模板 - 列出/使用模板")
-except Exception as e:
-    logging.warning("cli_template 模块加载失败，跳过 template 子命令: %s", e)
+except Exception:
+    pass
 
 console = Console()
 
@@ -435,8 +434,8 @@ def _detect_project_name(project_path: Path) -> str:
                 data = tomllib.load(f)
             if "project" in data and "name" in data["project"]:
                 return data["project"]["name"]
-        except Exception as e:
-            logging.warning("pyproject.toml 解析失败，使用目录名: %s", e)
+        except Exception:
+            pass
 
     # 尝试从 setup.py 读取
     setup_py = project_path / "setup.py"
@@ -448,8 +447,8 @@ def _detect_project_name(project_path: Path) -> str:
             match = re.search(r'name\s*=\s*["\']([^"\']+)["\']', content)
             if match:
                 return match.group(1)
-        except Exception as e:
-            logging.warning("setup.py 解析失败，使用目录名: %s", e)
+        except Exception:
+            pass
 
     # 默认使用目录名
     return project_path.name
@@ -968,6 +967,7 @@ def quest_wait(
     完成后展示详细验收报告，包括各步骤通过情况、结果摘要。
     """
     import asyncio
+
     from .quest import QuestManager, QuestStatus
 
     project_path = project_path.resolve()
@@ -1039,6 +1039,7 @@ def _show_acceptance_report(quest, console):
     """展示 Quest 验收报告"""
     from rich.panel import Panel
     from rich.table import Table
+
     from .quest import QuestStatus
 
     status_color_map = {
@@ -1131,10 +1132,13 @@ def agents():
     # 导入所有 Agent
     from .agents import (
         AnalystAgent,
+        APIAgent,
         ArchitectAgent,
+        AuthAgent,
         CodeReviewerAgent,
         CodeSimplifierAgent,
         CriticAgent,
+        DataAgent,
         DatabaseAgent,
         DebuggerAgent,
         DesignerAgent,
@@ -1157,9 +1161,6 @@ def agents():
         VerifierAgent,
         VisionAgent,
         WriterAgent,
-        APIAgent,
-        AuthAgent,
-        DataAgent,
     )
 
     agents_list = [
@@ -1434,6 +1435,7 @@ def config(
     """
     import os
     from pathlib import Path
+
     from dotenv import load_dotenv
 
     config_path = Path(".env")

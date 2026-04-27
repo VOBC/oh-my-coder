@@ -16,7 +16,7 @@ import time
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from .base import (
     AgentLane,
@@ -38,16 +38,16 @@ from .evolution import (
 class ExecutionFeedback:
     """执行反馈记录"""
 
-    id: Optional[int] = None
+    id: int | None = None
     timestamp: str = ""
     agent_type: str = ""  # executor, planner, debugger, etc.
     task_description: str = ""
     context_hash: str = ""  # 任务上下文的简单哈希
     success: bool = False
     execution_time: float = 0.0
-    error_type: Optional[str] = None  # syntax_error, logic_error, timeout, etc.
-    error_message: Optional[str] = None
-    user_correction: Optional[str] = None  # 用户提供的修正
+    error_type: str | None = None  # syntax_error, logic_error, timeout, etc.
+    error_message: str | None = None
+    user_correction: str | None = None  # 用户提供的修正
     retry_count: int = 0
     final_success: bool = False  # 重试后是否成功
 
@@ -56,7 +56,7 @@ class ExecutionFeedback:
 class StrategyAdjustment:
     """策略调整记录"""
 
-    id: Optional[int] = None
+    id: int | None = None
     timestamp: str = ""
     agent_type: str = ""
     pattern_detected: str = ""  # 检测到的模式
@@ -175,7 +175,7 @@ class LearningStore:
 
     def get_recent_failures(
         self, agent_type: str, limit: int = 10
-    ) -> List[ExecutionFeedback]:
+    ) -> list[ExecutionFeedback]:
         """获取最近的失败记录"""
         with sqlite3.connect(self.db_path) as conn:
             conn.row_factory = sqlite3.Row
@@ -190,7 +190,7 @@ class LearningStore:
             ).fetchall()
             return [ExecutionFeedback(**dict(row)) for row in rows]
 
-    def get_error_patterns(self, agent_type: str, min_count: int = 3) -> List[Dict]:
+    def get_error_patterns(self, agent_type: str, min_count: int = 3) -> list[dict]:
         """分析错误模式"""
         with sqlite3.connect(self.db_path) as conn:
             rows = conn.execute(
@@ -233,7 +233,7 @@ class LearningStore:
             ).fetchone()
             return row[0] if row and row[0] else 0.0
 
-    def get_adjustments(self, agent_type: str) -> List[StrategyAdjustment]:
+    def get_adjustments(self, agent_type: str) -> list[StrategyAdjustment]:
         """获取策略调整记录"""
         with sqlite3.connect(self.db_path) as conn:
             conn.row_factory = sqlite3.Row
@@ -270,10 +270,10 @@ class SelfImprovingAgent(BaseAgent):
     def __init__(
         self,
         model_router=None,
-        config: Optional[Dict[str, Any]] = None,
-        store: Optional[LearningStore] = None,
-        skill_manager: Optional[Any] = None,
-        evolution_config: Optional[EvolutionConfig] = None,
+        config: dict[str, Any] | None = None,
+        store: LearningStore | None = None,
+        skill_manager: Any | None = None,
+        evolution_config: EvolutionConfig | None = None,
     ):
         super().__init__(model_router, config)
         db_path = Path.home() / ".omc" / "learning.db"
@@ -283,7 +283,7 @@ class SelfImprovingAgent(BaseAgent):
 
         self._memory = LearningsMemory(Path.home() / ".omc")
         # SkillManager 可选注入（测试时注入临时目录）
-        self._skill_manager: Optional[Any] = skill_manager
+        self._skill_manager: Any | None = skill_manager
         # 进化系统
         state_dir = Path.home() / ".omc" / "state"
         self._evolution_store = EvolutionStore(state_dir)
@@ -302,8 +302,8 @@ class SelfImprovingAgent(BaseAgent):
         task_description: str,
         success: bool,
         execution_time: float = 0.0,
-        error: Optional[Exception] = None,
-        user_correction: Optional[str] = None,
+        error: Exception | None = None,
+        user_correction: str | None = None,
         retry_count: int = 0,
     ) -> int:
         """记录执行结果"""
@@ -328,7 +328,7 @@ class SelfImprovingAgent(BaseAgent):
         )
         return self.store.record_feedback(feedback)
 
-    def analyze_and_improve(self, agent_type: str) -> List[StrategyAdjustment]:
+    def analyze_and_improve(self, agent_type: str) -> list[StrategyAdjustment]:
         """分析并生成改进建议"""
         patterns = self.store.get_error_patterns(agent_type, min_count=2)
         adjustments = []
@@ -372,18 +372,17 @@ class SelfImprovingAgent(BaseAgent):
 
         if "syntax" in error_msg or "syntax" in error_type:
             return "syntax_error"
-        elif "timeout" in error_msg or "timeout" in error_type:
+        if "timeout" in error_msg or "timeout" in error_type:
             return "timeout"
-        elif "memory" in error_msg or "memory" in error_type:
+        if "memory" in error_msg or "memory" in error_type:
             return "memory_error"
-        elif "permission" in error_msg or "access" in error_msg:
+        if "permission" in error_msg or "access" in error_msg:
             return "permission_error"
-        elif "network" in error_msg or "connection" in error_msg:
+        if "network" in error_msg or "connection" in error_msg:
             return "network_error"
-        elif "api" in error_msg or "rate limit" in error_msg:
+        if "api" in error_msg or "rate limit" in error_msg:
             return "api_error"
-        else:
-            return f"{error_type}_error"
+        return f"{error_type}_error"
 
     def _hash_context(self, context: str) -> str:
         """简单的上下文哈希（用于缓存，非密码用途）"""
@@ -392,8 +391,8 @@ class SelfImprovingAgent(BaseAgent):
         return hashlib.sha256(context.encode()).hexdigest()[:16]
 
     def _generate_adjustment(
-        self, agent_type: str, pattern: Dict
-    ) -> Optional[StrategyAdjustment]:
+        self, agent_type: str, pattern: dict
+    ) -> StrategyAdjustment | None:
         """根据错误模式生成调整建议"""
         error_type = pattern["error_type"]
 
@@ -434,7 +433,7 @@ class SelfImprovingAgent(BaseAgent):
             effectiveness_score=0.5,  # 初始分数，后续根据效果调整
         )
 
-    def report(self, agent_type: Optional[str] = None) -> Dict:
+    def report(self, agent_type: str | None = None) -> dict:
         """生成学习报告"""
         report = {
             "generated_at": datetime.now().isoformat(),
@@ -454,7 +453,7 @@ class SelfImprovingAgent(BaseAgent):
 
         return report
 
-    def _get_all_agent_types(self) -> List[str]:
+    def _get_all_agent_types(self) -> list[str]:
         """获取所有记录的 agent 类型"""
         with sqlite3.connect(self.store.db_path) as conn:
             rows = conn.execute(
@@ -507,8 +506,8 @@ class SelfImprovingAgent(BaseAgent):
 
     def auto_create_skill(
         self,
-        task_context: Dict[str, Any],
-    ) -> Optional[Dict[str, Any]]:
+        task_context: dict[str, Any],
+    ) -> dict[str, Any] | None:
         """
         自动生成 Skill 文件。
 
@@ -638,8 +637,7 @@ class SelfImprovingAgent(BaseAgent):
         # 重要判断
         if judgments:
             body_lines.append("## 重要判断")
-            for j in judgments:
-                body_lines.append(f"- {j}")
+            body_lines.extend([f"- {j}" for j in judgments])
             body_lines.append("")
 
         # 执行结果
@@ -656,8 +654,7 @@ class SelfImprovingAgent(BaseAgent):
         # 潜在陷阱
         if gotchas:
             body_lines.append("## 潜在陷阱")
-            for g in gotchas:
-                body_lines.append(f"- ⚠️ {g}")
+            body_lines.extend([f"- ⚠️ {g}" for g in gotchas])
             body_lines.append("")
 
         # 适用条件
@@ -710,7 +707,7 @@ class SelfImprovingAgent(BaseAgent):
     def promote_best_practices_to_skills(
         self,
         dry_run: bool = False,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         将 LearningsMemory 中标记为 best-practice 的条目
         自动升级为 .omc/skills/best-practices/*.md Skill 文件。
@@ -761,7 +758,7 @@ class SelfImprovingAgent(BaseAgent):
         self,
         agent_type: str,
         recent_count: int = 10,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         分析任务执行日志，提取经验教训
 
@@ -830,7 +827,7 @@ class SelfImprovingAgent(BaseAgent):
             failed = [r for r in records if not r.get("success")]
             if failed:
                 # 按错误类型分组
-                error_groups: Dict[str, List[Dict]] = {}
+                error_groups: dict[str, list[dict]] = {}
                 for r in failed:
                     et = r.get("error_type") or "unknown"
                     if et not in error_groups:
@@ -872,8 +869,8 @@ class SelfImprovingAgent(BaseAgent):
         return analysis
 
     def _extract_success_characteristics(
-        self, successful_records: List[Dict]
-    ) -> List[str]:
+        self, successful_records: list[dict]
+    ) -> list[str]:
         """从成功记录中提取共同特征"""
         characteristics = []
 
@@ -901,7 +898,7 @@ class SelfImprovingAgent(BaseAgent):
         self,
         agent_type: str,
         pattern_type: str = "all",
-    ) -> List[SuccessPattern]:
+    ) -> list[SuccessPattern]:
         """
         提取成功/失败模式并存储到模式库
 
@@ -931,8 +928,7 @@ class SelfImprovingAgent(BaseAgent):
                         id=f"{agent_type}-strategy-{adj.id}",
                         pattern_type="strategy",
                         description=(
-                            f"{adj.pattern_detected}: "
-                            f"{adj.adjustment_content[:100]}"
+                            f"{adj.pattern_detected}: {adj.adjustment_content[:100]}"
                         ),
                         context=adj.adjustment_type,
                         effectiveness_score=adj.effectiveness_score,
@@ -968,7 +964,7 @@ class SelfImprovingAgent(BaseAgent):
         self,
         agent_type: str,
         base_prompt: str,
-        analysis: Optional[Dict[str, Any]] = None,
+        analysis: dict[str, Any] | None = None,
     ) -> str:
         """
         根据进化分析更新 system prompt
@@ -1046,7 +1042,7 @@ class SelfImprovingAgent(BaseAgent):
         self,
         agent_type: str,
         trigger: str = "manual",
-    ) -> Optional[EvolutionRecord]:
+    ) -> EvolutionRecord | None:
         """
         执行一次自进化
 
@@ -1148,7 +1144,7 @@ class SelfImprovingAgent(BaseAgent):
         self,
         problem_description: str,
         limit: int = 3,
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         检索历史决策，避免重复踩坑
 
@@ -1185,11 +1181,11 @@ class SelfImprovingAgent(BaseAgent):
         chosen_solution: str,
         agent_type: str = "",
         category: str = "solution_choice",
-        rejected_alternatives: Optional[List[str]] = None,
+        rejected_alternatives: list[str] | None = None,
         result: str = "",
         outcome: str = "",
         reusable_for: str = "",
-        related_files: Optional[List[str]] = None,
+        related_files: list[str] | None = None,
     ) -> str:
         """
         记录重要决策
@@ -1228,9 +1224,9 @@ class SelfImprovingAgent(BaseAgent):
 
     def list_decisions(
         self,
-        category: Optional[str] = None,
+        category: str | None = None,
         limit: int = 10,
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """列出决策记录"""
         decisions = self._decision_memory.list_decisions(category=category, limit=limit)
         return [
@@ -1246,11 +1242,11 @@ class SelfImprovingAgent(BaseAgent):
             for d in decisions
         ]
 
-    def get_decision_stats(self) -> Dict[str, Any]:
+    def get_decision_stats(self) -> dict[str, Any]:
         """获取决策记忆统计"""
         return self._decision_memory.get_stats()
 
-    def get_evolution_stats(self, agent_type: str) -> Dict[str, Any]:
+    def get_evolution_stats(self, agent_type: str) -> dict[str, Any]:
         """获取 Agent 的进化统计信息"""
         stats = self._evolution_store.get_evolution_stats(agent_type)
         stats["config"] = {

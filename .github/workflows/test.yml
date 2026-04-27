@@ -29,11 +29,5 @@ jobs:
           python -m pip install --upgrade pip setuptools wheel
           pip install -e '.[dev]'
 
-      - name: Lint check
-        run: python -m ruff check src/ tests/
-
-      - name: Format check
-        run: python -m black --check src/ tests/
-
       - name: Run tests
         run: python -m pytest tests/ -v

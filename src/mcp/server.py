@@ -11,10 +11,10 @@ MCP Server — JSON-RPC 2.0 stdio 协议实现
 import json
 import sys
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 
-from .tools import get_mcp_tools, get_tool_handler
 from .resources import get_mcp_resources
+from .tools import get_mcp_tools, get_tool_handler
 
 
 class McpServer:
@@ -33,7 +33,7 @@ class McpServer:
     VERSION = "1.0.0"
     PROTOCOL_VERSION = "2024-11-05"
 
-    def __init__(self, workspace: Optional[Path] = None):
+    def __init__(self, workspace: Path | None = None):
         self.workspace = workspace or Path.cwd()
         self._initialized = False
         self._tools = get_mcp_tools()
@@ -64,7 +64,7 @@ class McpServer:
         }
         print(json.dumps(msg, ensure_ascii=False), flush=True)
 
-    def _handle_request(self, req: Dict[str, Any]) -> None:
+    def _handle_request(self, req: dict[str, Any]) -> None:
         """处理单个 JSON-RPC 请求"""
         jsonrpc = req.get("jsonrpc")
         if jsonrpc != "2.0":
@@ -99,7 +99,7 @@ class McpServer:
     # 协议方法实现
     # ------------------------------------------------------------------
 
-    def _capabilities(self) -> Dict[str, Any]:
+    def _capabilities(self) -> dict[str, Any]:
         """服务端能力声明"""
         return {
             "protocolVersion": self.PROTOCOL_VERSION,
@@ -113,7 +113,7 @@ class McpServer:
             },
         }
 
-    def _list_tools(self) -> Dict[str, Any]:
+    def _list_tools(self) -> dict[str, Any]:
         """列出所有 MCP tools"""
         tools = []
         for tool in self._tools:
@@ -126,7 +126,7 @@ class McpServer:
             )
         return {"tools": tools}
 
-    def _handle_tool_call(self, req_id: Any, params: Dict[str, Any]) -> None:
+    def _handle_tool_call(self, req_id: Any, params: dict[str, Any]) -> None:
         """调用工具"""
         tool_name = params.get("name", "")
         arguments = params.get("arguments", {})
@@ -167,7 +167,7 @@ class McpServer:
         except Exception as e:
             self._send_error(req_id, -32603, f"Tool execution error: {e}")
 
-    def _list_resources(self) -> Dict[str, Any]:
+    def _list_resources(self) -> dict[str, Any]:
         """列出所有 MCP resources"""
         resources = []
         for res in self._resources:
@@ -181,7 +181,7 @@ class McpServer:
             )
         return {"resources": resources}
 
-    def _handle_resource_read(self, req_id: Any, params: Dict[str, Any]) -> None:
+    def _handle_resource_read(self, req_id: Any, params: dict[str, Any]) -> None:
         """读取资源内容"""
         uri = params.get("uri", "")
 

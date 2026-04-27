@@ -9,8 +9,9 @@ import functools
 import hashlib
 import time
 from collections import OrderedDict
+from collections.abc import Callable
 from threading import Lock
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any
 
 
 class LRUCache:
@@ -37,7 +38,7 @@ class LRUCache:
         self._hits = 0
         self._misses = 0
 
-    def get(self, key: str) -> Optional[Any]:
+    def get(self, key: str) -> Any | None:
         """
         获取缓存值
 
@@ -96,7 +97,7 @@ class LRUCache:
             self._hits = 0
             self._misses = 0
 
-    def stats(self) -> Dict[str, int]:
+    def stats(self) -> dict[str, int]:
         """
         获取缓存统计
 
@@ -132,7 +133,7 @@ class AsyncExecutor:
             max_concurrent: 最大并发数
         """
         self.max_concurrent = max_concurrent
-        self._semaphore: Optional[asyncio.Semaphore] = None
+        self._semaphore: asyncio.Semaphore | None = None
 
     async def run(self, coro: Any) -> Any:
         """
@@ -151,8 +152,8 @@ class AsyncExecutor:
             return await coro
 
     async def run_all(
-        self, coros: List[Any], fail_fast: bool = False
-    ) -> List[Tuple[bool, Any]]:
+        self, coros: list[Any], fail_fast: bool = False
+    ) -> list[tuple[bool, Any]]:
         """
         执行多个协程
 
@@ -196,7 +197,7 @@ def cache_result(ttl_seconds: int = 300):
     """
 
     def decorator(func: Callable) -> Callable:
-        cache: Dict[str, Tuple[float, Any]] = {}
+        cache: dict[str, tuple[float, Any]] = {}
         lock = Lock()
 
         @functools.wraps(func)
@@ -218,7 +219,7 @@ def cache_result(ttl_seconds: int = 300):
                 cache[key] = (current_time, result)
                 return result
 
-        wrapper.cache_clear = lambda: cache.clear()  # type: ignore
+        wrapper.cache_clear = cache.clear  # type: ignore
         return wrapper
 
     return decorator
@@ -260,7 +261,7 @@ class PerformanceMonitor:
 
     def __init__(self):
         """初始化性能监控器"""
-        self._records: Dict[str, List[float]] = {}
+        self._records: dict[str, list[float]] = {}
 
     def record(self, name: str, duration: float) -> None:
         """
@@ -274,7 +275,7 @@ class PerformanceMonitor:
             self._records[name] = []
         self._records[name].append(duration)
 
-    def get_stats(self, name: str) -> Dict[str, float]:
+    def get_stats(self, name: str) -> dict[str, float]:
         """
         获取统计信息
 
@@ -295,7 +296,7 @@ class PerformanceMonitor:
             "count": len(records),
         }
 
-    def get_all_stats(self) -> Dict[str, Dict[str, float]]:
+    def get_all_stats(self) -> dict[str, dict[str, float]]:
         """
         获取所有操作的统计信息
 

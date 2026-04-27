@@ -5,7 +5,6 @@
 import tempfile
 from pathlib import Path
 
-
 from src.core.history import (
     HistoryManager,
     StepExecution,

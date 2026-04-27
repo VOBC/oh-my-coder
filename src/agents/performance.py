@@ -10,8 +10,6 @@ Performance Agent - 性能分析与优化智能体
 模型层级：HIGH（分析类任务）
 """
 
-from typing import Dict, List
-
 from ..core.router import TaskType
 from .base import (
     AgentContext,
@@ -99,7 +97,7 @@ user_map = {u.id: u for u in users}
 """
 
     async def _run(
-        self, context: AgentContext, prompt: List[Dict[str, str]], **kwargs
+        self, context: AgentContext, prompt: list[dict[str, str]], **kwargs
     ) -> str:
         """执行性能分析"""
         if context.previous_outputs.get("explore"):

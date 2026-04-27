@@ -200,7 +200,7 @@ def _check_api_key_works(env_key: str, provider: str) -> bool:
                 timeout=5,
             )
             return resp.status_code in (200, 401)  # 401=key格式对但欠费/额度用完
-        elif provider == "glm":
+        if provider == "glm":
             resp = httpx.get(
                 "https://open.bigmodel.cn/api/paas/v4/balance",
                 headers={"Authorization": f"Bearer {key}"},
@@ -381,23 +381,22 @@ def _step3_run_demo(model_info: dict) -> bool:
             )
         )
         return True
-    else:
-        console.print(
-            Panel.fit(
-                f"[bold red]❌ 验证失败[/bold red]\n\n"
-                f"错误：{result.get('error', '未知错误')}\n\n"
-                "[dim]常见问题：\n"
-                "  1. API Key 错误或已过期\n"
-                "  2. 账户余额不足\n"
-                "  3. 网络无法访问该平台\n\n"
-                "请访问 {model_info['register_url']} 检查[/dim]".format_map(
-                    {"model_info": str(model_info)}
-                ),
-                title="⚠️ 验证未通过",
-                border_style="red",
-            )
+    console.print(
+        Panel.fit(
+            f"[bold red]❌ 验证失败[/bold red]\n\n"
+            f"错误：{result.get('error', '未知错误')}\n\n"
+            "[dim]常见问题：\n"
+            "  1. API Key 错误或已过期\n"
+            "  2. 账户余额不足\n"
+            "  3. 网络无法访问该平台\n\n"
+            "请访问 {model_info['register_url']} 检查[/dim]".format_map(
+                {"model_info": str(model_info)}
+            ),
+            title="⚠️ 验证未通过",
+            border_style="red",
         )
-        return False
+    )
+    return False
 
 
 async def _call_model_demo(model_info: dict) -> dict:
@@ -563,7 +562,7 @@ async def _call_model_demo(model_info: dict) -> dict:
 
     except httpx.TimeoutException:
         return {"success": False, "error": "请求超时，请检查网络连接"}
-    except Exception as e:
+    except Exception:
         return {"success": False, "error": "请求失败"}
 
 
@@ -768,7 +767,6 @@ def main(
         raise typer.Exit(0)
 
     selected_model: dict | None = None
-    model_configured: bool = False
 
     # ---- 步骤 1 ----
     if not completed["model"]:

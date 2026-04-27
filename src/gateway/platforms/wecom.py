@@ -10,11 +10,15 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import logging
 import time
-from typing import Any, Dict, Optional
+from typing import TYPE_CHECKING, Any
 
 from ..base import IncomingMessage, OutgoingMessage, Platform, PlatformHandler
+
+if TYPE_CHECKING:
+    from starlette.requests import Request
 
 logger = logging.getLogger(__name__)
 
@@ -50,8 +54,8 @@ class WeComHandler(PlatformHandler):
         corp_id: str,
         agent_id: str,
         corp_secret: str,
-        token: Optional[str] = None,
-        encoding_aes_key: Optional[str] = None,
+        token: str | None = None,
+        encoding_aes_key: str | None = None,
         webhook_port: int = 8080,
         **kwargs,
     ):
@@ -71,10 +75,10 @@ class WeComHandler(PlatformHandler):
         self.token = token or "oh-my-coder-wecom"
         self.encoding_aes_key = encoding_aes_key
         self.webhook_port = webhook_port
-        self._access_token: Optional[str] = None
+        self._access_token: str | None = None
         self._token_expires_at: float = 0
         self._stop_event = asyncio.Event()
-        self._poll_task: Optional[asyncio.Task[None]] = None
+        self._poll_task: asyncio.Task[None] | None = None
 
     # ---- PlatformHandler 实现 ----
 
@@ -99,10 +103,8 @@ class WeComHandler(PlatformHandler):
         self._stop_event.set()
         if self._poll_task:
             self._poll_task.cancel()
-            try:
+            with contextlib.suppress(asyncio.CancelledError):
                 await self._poll_task
-            except asyncio.CancelledError:
-                pass
         self._started = False
         logger.info("[wecom] Handler stopped")
 
@@ -137,7 +139,7 @@ class WeComHandler(PlatformHandler):
                 self.on_error(Exception(str(data)))
                 return False
         except Exception as e:
-            logger.error(f"[wecom] Send error: {e}")
+            logger.exception(f"[wecom] Send error: {e}")
             self.on_error(e)
             return False
 
@@ -158,7 +160,7 @@ class WeComHandler(PlatformHandler):
             else:
                 logger.error(f"[wecom] Token refresh failed: {data}")
 
-    async def _get_token(self) -> Optional[str]:
+    async def _get_token(self) -> str | None:
         if self._access_token is None or time.time() >= self._token_expires_at:
             await self._refresh_token()
         return self._access_token
@@ -166,14 +168,12 @@ class WeComHandler(PlatformHandler):
     async def _run_webhook_server(self) -> None:
         """运行 Starlette HTTP 服务器接收企业微信回调"""
         try:
+            import uvicorn
             from starlette.applications import Starlette
-            from starlette.requests import Request
             from starlette.responses import PlainTextResponse
             from starlette.routing import Route
-
-            import uvicorn
         except Exception as e:
-            logger.error(f"[wecom] Failed to start webhook server: {e}")
+            logger.exception(f"[wecom] Failed to start webhook server: {e}")
             return
 
         async def verifyGET(request: Request) -> PlainTextResponse:
@@ -247,10 +247,10 @@ class WeComHandler(PlatformHandler):
             except asyncio.CancelledError:
                 break
             except Exception as e:
-                logger.error(f"[wecom] Poll error: {e}")
+                logger.exception(f"[wecom] Poll error: {e}")
                 await asyncio.sleep(10)
 
-    def _decrypt(self, encrypted: str) -> Optional[str]:
+    def _decrypt(self, encrypted: str) -> str | None:
         """AES 解密企业微信消息"""
         if not self.encoding_aes_key or not self.token:
             return None
@@ -305,9 +305,9 @@ class WeComHandler(PlatformHandler):
             )
             self.on_message(incoming)
         except Exception as e:
-            logger.error(f"[wecom] Callback parse error: {e}")
+            logger.exception(f"[wecom] Callback parse error: {e}")
 
-    async def _process_message(self, msg: Dict[str, Any]) -> None:
+    async def _process_message(self, msg: dict[str, Any]) -> None:
         """处理拉取的消息"""
         msg_type = msg.get("MsgType", "")
         if msg_type != "text":
@@ -327,7 +327,7 @@ class WeComHandler(PlatformHandler):
         try:
             self.on_message(incoming)
         except Exception as e:
-            logger.error(f"[wecom] on_message error: {e}")
+            logger.exception(f"[wecom] on_message error: {e}")
             self.on_error(e)
 
 

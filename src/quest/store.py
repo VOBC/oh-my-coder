@@ -5,11 +5,11 @@ Quest 持久化存储
 存储在 <project_path>/.omc/quests/ 目录下。
 """
 
+import builtins
 import json
 import uuid
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Union
 
 from .models import Quest, QuestSpec, QuestStatus
 
@@ -17,11 +17,11 @@ from .models import Quest, QuestSpec, QuestStatus
 class QuestStore:
     """Quest 持久化存储"""
 
-    def __init__(self, project_path: Union[Path, str]):
+    def __init__(self, project_path: Path | str):
         project_path = Path(project_path)
         self.project_path = project_path
         self.quests_dir = project_path / ".omc" / "quests"
-        self._quests_cache: Dict[str, Quest] = {}
+        self._quests_cache: dict[str, Quest] = {}
 
     def _ensure_dir(self) -> None:
         """确保存储目录存在"""
@@ -47,7 +47,7 @@ class QuestStore:
         self._save(quest)
         return quest
 
-    def get(self, quest_id: str) -> Optional[Quest]:
+    def get(self, quest_id: str) -> Quest | None:
         """获取 Quest"""
         if quest_id in self._quests_cache:
             return self._quests_cache[quest_id]
@@ -57,9 +57,9 @@ class QuestStore:
             return None
 
         try:
-            with open(path, "r", encoding="utf-8") as f:
+            with open(path, encoding="utf-8") as f:
                 data = json.load(f)
-        except (json.JSONDecodeError, IOError):
+        except (OSError, json.JSONDecodeError):
             # 文件损坏，返回 None
             return None
 
@@ -84,7 +84,7 @@ class QuestStore:
         self._quests_cache.pop(quest_id, None)
         return True
 
-    def list(self, status_filter: Optional[QuestStatus] = None) -> List[Quest]:
+    def list(self, status_filter: QuestStatus | None = None) -> list[Quest]:
         """列出所有 Quest"""
         self._ensure_dir()
 
@@ -94,7 +94,7 @@ class QuestStore:
         quests = []
         for file in self.quests_dir.glob("*.json"):
             try:
-                with open(file, "r", encoding="utf-8") as f:
+                with open(file, encoding="utf-8") as f:
                     data = json.load(f)
                 quest = Quest(**data)
                 if status_filter is None or quest.status == status_filter:
@@ -106,22 +106,15 @@ class QuestStore:
         quests.sort(key=lambda q: q.created_at, reverse=True)
         return quests
 
-    def get_active(self) -> List[Quest]:
+    def get_active(self) -> builtins.list[Quest]:
         """获取活跃的 Quest（未完成且未取消）"""
-        active_statuses = {
-            QuestStatus.PENDING,
-            QuestStatus.SPEC_GENERATING,
-            QuestStatus.SPEC_READY,
-            QuestStatus.EXECUTING,
-            QuestStatus.PAUSED,
-        }
         return self.list(status_filter=None)
 
     # ============================================================
     # 便捷操作
     # ============================================================
 
-    def update_status(self, quest_id: str, status: QuestStatus) -> Optional[Quest]:
+    def update_status(self, quest_id: str, status: QuestStatus) -> Quest | None:
         """更新 Quest 状态"""
         quest = self.get(quest_id)
         if quest is None:
@@ -136,7 +129,7 @@ class QuestStore:
         self.save(quest)
         return quest
 
-    def set_spec(self, quest_id: str, spec: QuestSpec) -> Optional[Quest]:
+    def set_spec(self, quest_id: str, spec: QuestSpec) -> Quest | None:
         """设置 SPEC"""
         quest = self.get(quest_id)
         if quest is None:

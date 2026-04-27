@@ -10,7 +10,6 @@ Skill CLI - omc skill 命令
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Optional
 
 import typer
 from rich.console import Console
@@ -73,10 +72,10 @@ def skill_info(name: str) -> None:
 @app.command("run")
 def run_skill(
     name: str = typer.Argument(..., help="Skill 名称（不含 /）"),
-    code: Optional[Path] = typer.Option(
+    code: Path | None = typer.Option(
         None, "--code", "-c", help="代码文件路径（留空则从 stdin 读取）"
     ),
-    output_file: Optional[Path] = typer.Option(
+    output_file: Path | None = typer.Option(
         None, "--output", "-o", help="输出结果到文件"
     ),
 ) -> None:

@@ -18,7 +18,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 class Complexity(Enum):
@@ -44,7 +44,7 @@ class ModelRecommendation:
     estimated_cost: float  # 1-10, 10 最贵
 
     # 备选模型
-    alternatives: List[Dict[str, str]]
+    alternatives: list[dict[str, str]]
 
 
 class CostOptimizer:
@@ -175,9 +175,9 @@ class CostOptimizer:
     def analyze_task(
         self,
         task_description: str,
-        file_count: Optional[int] = None,
-        new_files: Optional[List[str]] = None,
-    ) -> Dict[str, Any]:
+        file_count: int | None = None,
+        new_files: list[str] | None = None,
+    ) -> dict[str, Any]:
         """
         分析任务特征
 
@@ -234,8 +234,8 @@ class CostOptimizer:
     def recommend(
         self,
         task_description: str,
-        file_count: Optional[int] = None,
-        new_files: Optional[List[str]] = None,
+        file_count: int | None = None,
+        new_files: list[str] | None = None,
     ) -> ModelRecommendation:
         """
         推荐最优模型
@@ -255,12 +255,11 @@ class CostOptimizer:
         # 根据复杂度和偏好推荐
         if complexity == Complexity.LOW:
             return self._recommend_low(analysis)
-        elif complexity == Complexity.MEDIUM:
+        if complexity == Complexity.MEDIUM:
             return self._recommend_medium(analysis)
-        else:
-            return self._recommend_high(analysis)
+        return self._recommend_high(analysis)
 
-    def _recommend_low(self, analysis: Dict[str, Any]) -> ModelRecommendation:
+    def _recommend_low(self, analysis: dict[str, Any]) -> ModelRecommendation:
         """推荐低复杂度任务的模型"""
         if self.prefer_local:
             model = "ollama/qwen2.5:7b"
@@ -281,7 +280,7 @@ class CostOptimizer:
             ],
         )
 
-    def _recommend_medium(self, analysis: Dict[str, Any]) -> ModelRecommendation:
+    def _recommend_medium(self, analysis: dict[str, Any]) -> ModelRecommendation:
         """推荐中等复杂度任务的模型"""
         if self.prefer_local:
             model = "ollama/qwen2.5:14b"
@@ -302,11 +301,11 @@ class CostOptimizer:
             ],
         )
 
-    def _recommend_high(self, analysis: Dict[str, Any]) -> ModelRecommendation:
+    def _recommend_high(self, analysis: dict[str, Any]) -> ModelRecommendation:
         """推荐高复杂度任务的模型"""
         if self.prefer_local:
             model = "ollama/qwen2.5:14b"
-            reason = "复杂任务，建议先用本地模型快速验证思路，" "如遇瓶颈再切换顶级模型"
+            reason = "复杂任务，建议先用本地模型快速验证思路，如遇瓶颈再切换顶级模型"
             cost = 2
         else:
             model = "gpt-4o"
@@ -326,7 +325,7 @@ class CostOptimizer:
             ],
         )
 
-    def get_all_models(self) -> List[Dict[str, Any]]:
+    def get_all_models(self) -> list[dict[str, Any]]:
         """获取所有可用模型"""
         result = []
         for model, info in self.MODELS.items():

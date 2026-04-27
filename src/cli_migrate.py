@@ -10,7 +10,6 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Optional
 
 import typer
 from rich.console import Console
@@ -45,7 +44,7 @@ def list_sources():
     table.add_column("配置文件", style="yellow")
     table.add_column("描述", style="white")
 
-    for key, info in MIGRATION_SOURCES.items():
+    for info in MIGRATION_SOURCES.values():
         table.add_row(
             info["name"],
             info["config_file"],
@@ -60,7 +59,7 @@ def list_sources():
 
 @app.command("claude")
 def migrate_claude(
-    path: Optional[Path] = typer.Argument(
+    path: Path | None = typer.Argument(
         None,
         help="项目路径（默认当前目录）",
     ),
@@ -91,7 +90,7 @@ def migrate_claude(
         return
 
     # 解析 CLAUDE.md 内容并转换
-    config = _parse_claude_config(content)
+    _parse_claude_config(content)
 
     # 保存到 OMC 记忆目录
     memory_dir = Path.home() / ".omc" / "memory" / "imported"
@@ -113,7 +112,7 @@ def migrate_claude(
 
 @app.command("gemini")
 def migrate_gemini(
-    path: Optional[Path] = typer.Argument(
+    path: Path | None = typer.Argument(
         None,
         help="项目路径（默认当前目录）",
     ),

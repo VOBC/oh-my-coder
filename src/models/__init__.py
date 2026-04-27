@@ -21,17 +21,17 @@ from .base import (
 
 # 导出所有模型适配器
 from .deepseek import DeepSeekAPIError, DeepSeekModel
-from .mimo import MimoAPIError, MimoModel
 from .doubao import DoubaoAPIError, DoubaoModel
 from .glm import GLMAPIError, GLMModel
 from .hunyuan import HunyuanAPIError, HunyuanModel
 from .kimi import KimiAPIError, KimiModel
+from .mimo import MimoAPIError, MimoModel
 from .minimax import MiniMaxAPIError, MiniMaxModel
+from .ollama import OllamaModel, create_ollama_model
 from .spark import SparkAPIError, SparkModel
 from .tiangong import TiangongAPIError, TiangongModel
 from .tongyi import TongyiAPIError, TongyiModel
 from .wenxin import WenxinAPIError, WenxinModel
-from .ollama import OllamaModel, create_ollama_model
 
 __all__ = [
     # 基类

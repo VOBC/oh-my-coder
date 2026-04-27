@@ -59,11 +59,11 @@ jobs:
 
       - name: Run Code Review
         env:
-          DEEPSEEK_API_KEY: \${{ secrets.DEEPSEEK_API_KEY }}
+          DEEPSEEK_API_KEY: \\${{ secrets.DEEPSEEK_API_KEY }}
         run: |
           omc run "审查 PR 中变更的代码" \\
             --workflow review \\
-            --context "\${{ github.event.pull_request.title }}" \\
+            --context "\\${{ github.event.pull_request.title }}" \\
             --output review-report.md
 
       - name: Upload Review Report

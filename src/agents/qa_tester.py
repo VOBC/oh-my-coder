@@ -10,7 +10,6 @@ QA Tester Agent - QA 测试智能体
 模型层级：MEDIUM（平衡，对应 sonnet）
 """
 
-from typing import Dict, List
 
 from ..core.router import TaskType
 from .base import (
@@ -93,7 +92,7 @@ class QATesterAgent(BaseAgent):
 """
 
     async def _run(
-        self, context: AgentContext, prompt: List[Dict[str, str]], **kwargs
+        self, context: AgentContext, prompt: list[dict[str, str]], **kwargs
     ) -> str:
         """执行 QA 测试"""
         # 获取项目信息

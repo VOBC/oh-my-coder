@@ -10,8 +10,6 @@ PromptAgent - Prompt 工程与提示词优化智能体
 模型层级：LOW（文字类任务）
 """
 
-from typing import Dict, List
-
 from ..core.router import TaskType
 from .base import (
     AgentContext,
@@ -130,7 +128,7 @@ class PromptAgent(BaseAgent):
 """
 
     async def _run(
-        self, context: AgentContext, prompt: List[Dict[str, str]], **kwargs
+        self, context: AgentContext, prompt: list[dict[str, str]], **kwargs
     ) -> str:
         """执行 Prompt 优化"""
         target_prompt = context.metadata.get("target_prompt", "")

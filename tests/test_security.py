@@ -3,8 +3,8 @@
 """
 
 from src.security.permissions import (
-    PermissionRule,
     PermissionGuard,
+    PermissionRule,
     check_command,
     needs_approval,
 )

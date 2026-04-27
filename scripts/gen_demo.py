@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Generate demo screenshots for oh-my-coder."""
 
-from PIL import Image, ImageDraw, ImageFont
 import os
+
+from PIL import Image, ImageDraw, ImageFont
 
 WIDTH = 860
 BG = (30, 30, 30)
@@ -251,7 +252,7 @@ def main():
 
     svg_path = os.path.join(out_dir, "demo-flow.svg")
     gen_flowchart_svg(svg_path)
-    print(f"  ✅ demo-flow.svg")
+    print("  ✅ demo-flow.svg")
 
     # Write README
     readme = """# Screenshots
@@ -283,7 +284,7 @@ def main():
     readme_path = os.path.join(out_dir, "README.md")
     with open(readme_path, "w") as f:
         f.write(readme)
-    print(f"  ✅ README.md")
+    print("  ✅ README.md")
 
     print(f"\nAll demos saved to:\n  {out_dir}")
 

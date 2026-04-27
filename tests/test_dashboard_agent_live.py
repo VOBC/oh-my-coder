@@ -11,7 +11,6 @@ P2-3: Web Agent 协作可视化
 import asyncio
 from unittest.mock import AsyncMock, MagicMock
 
-
 # ------------------------------------------------------------------
 # 测试 get_current_state() - orchestrator 核心方法
 # ------------------------------------------------------------------

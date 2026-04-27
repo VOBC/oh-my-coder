@@ -8,9 +8,8 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from src.quest.executor import QuestExecutor
-from src.quest.models import QuestStep, QuestStatus
+from src.quest.models import QuestStatus, QuestStep
 from src.quest.store import QuestStore
-
 
 # =============================================================================
 # QuestExecutor 初始化测试
@@ -146,7 +145,7 @@ class TestQuestExecutorStepGeneration:
 
     def test_generate_steps_with_spec(self, tmp_path):
         """测试有 SPEC 时生成步骤"""
-        from src.quest.models import QuestSpec, AcceptanceCriteria
+        from src.quest.models import AcceptanceCriteria, QuestSpec
 
         store = QuestStore(tmp_path)
         executor = QuestExecutor(tmp_path, store)

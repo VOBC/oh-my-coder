@@ -13,10 +13,9 @@ Planner Agent - 任务规划智能体（增强版）
 - LangGraph 的状态机编排
 """
 
+import re
 from dataclasses import dataclass
 from enum import Enum
-from typing import Dict, List, Optional, Set, Tuple
-import re
 
 from pydantic import BaseModel, Field
 
@@ -29,7 +28,6 @@ from .base import (
     BaseAgent,
     register_agent,
 )
-
 
 # ============================================================
 # 结构化任务模型
@@ -73,15 +71,15 @@ class SubTask(BaseModel):
     agent: str = Field(..., description="推荐的执行 Agent")
     priority: TaskPriority = Field(default=TaskPriority.MEDIUM)
     complexity: TaskComplexity = Field(default=TaskComplexity.MODERATE)
-    dependencies: List[str] = Field(
+    dependencies: list[str] = Field(
         default_factory=list, description="依赖的任务ID列表"
     )
     estimated_time: str = Field(default="5m", description="预估耗时")
-    files_to_modify: List[str] = Field(
+    files_to_modify: list[str] = Field(
         default_factory=list, description="需要修改的文件"
     )
-    acceptance_criteria: List[str] = Field(default_factory=list, description="验收标准")
-    risks: List[str] = Field(default_factory=list, description="潜在风险")
+    acceptance_criteria: list[str] = Field(default_factory=list, description="验收标准")
+    risks: list[str] = Field(default_factory=list, description="潜在风险")
 
 
 class TaskPhase(BaseModel):
@@ -89,7 +87,7 @@ class TaskPhase(BaseModel):
 
     name: str = Field(..., description="阶段名称")
     description: str = Field(..., description="阶段描述")
-    tasks: List[SubTask] = Field(default_factory=list)
+    tasks: list[SubTask] = Field(default_factory=list)
     parallel: bool = Field(default=False, description="是否可并行执行")
 
 
@@ -98,11 +96,11 @@ class ExecutionPlan(BaseModel):
 
     title: str = Field(..., description="计划标题")
     summary: str = Field(..., description="计划摘要")
-    phases: List[TaskPhase] = Field(default_factory=list)
+    phases: list[TaskPhase] = Field(default_factory=list)
     total_tasks: int = Field(default=0)
     estimated_time: str = Field(default="1h")
-    critical_path: List[str] = Field(default_factory=list, description="关键路径")
-    milestones: List[str] = Field(default_factory=list, description="里程碑")
+    critical_path: list[str] = Field(default_factory=list, description="关键路径")
+    milestones: list[str] = Field(default_factory=list, description="里程碑")
 
 
 # ============================================================
@@ -116,24 +114,24 @@ class ReasoningStep:
 
     step: int
     thought: str
-    action: Optional[str] = None
-    observation: Optional[str] = None
-    conclusion: Optional[str] = None
+    action: str | None = None
+    observation: str | None = None
+    conclusion: str | None = None
 
 
 class ChainOfThought:
     """思维链推理"""
 
     def __init__(self):
-        self.steps: List[ReasoningStep] = []
+        self.steps: list[ReasoningStep] = []
         self.current_step = 0
 
     def add_step(
         self,
         thought: str,
-        action: Optional[str] = None,
-        observation: Optional[str] = None,
-        conclusion: Optional[str] = None,
+        action: str | None = None,
+        observation: str | None = None,
+        conclusion: str | None = None,
     ) -> ReasoningStep:
         """添加推理步骤"""
         self.current_step += 1
@@ -172,17 +170,17 @@ class DependencyGraph:
     """依赖图"""
 
     def __init__(self):
-        self.nodes: Set[str] = set()
-        self.edges: Dict[str, Set[str]] = {}  # task_id -> set of dependencies
+        self.nodes: set[str] = set()
+        self.edges: dict[str, set[str]] = {}  # task_id -> set of dependencies
 
-    def add_task(self, task_id: str, dependencies: List[str] = None):
+    def add_task(self, task_id: str, dependencies: list[str] = None):
         """添加任务节点"""
         self.nodes.add(task_id)
         self.edges[task_id] = set(dependencies or [])
 
-    def topological_sort(self) -> Tuple[List[str], bool]:
+    def topological_sort(self) -> tuple[list[str], bool]:
         """拓扑排序，返回 (排序结果, 是否有环)"""
-        in_degree = {node: 0 for node in self.nodes}
+        in_degree = dict.fromkeys(self.nodes, 0)
 
         # 计算入度
         for node in self.nodes:
@@ -208,7 +206,7 @@ class DependencyGraph:
         has_cycle = len(result) != len(self.nodes)
         return result, has_cycle
 
-    def find_critical_path(self) -> List[str]:
+    def find_critical_path(self) -> list[str]:
         """找到关键路径（最长路径）"""
         # 简化实现：返回拓扑排序中优先级最高的路径
         sorted_nodes, _ = self.topological_sort()
@@ -223,7 +221,7 @@ class DependencyGraph:
 
         return sorted_nodes
 
-    def get_ready_tasks(self, completed: Set[str]) -> List[str]:
+    def get_ready_tasks(self, completed: set[str]) -> list[str]:
         """获取就绪任务（依赖已满足）"""
         ready = []
         for node in self.nodes:
@@ -431,7 +429,7 @@ class PlannerAgent(BaseAgent):
         return graph
 
     async def _run(
-        self, context: AgentContext, prompt: List[Dict[str, str]], **kwargs
+        self, context: AgentContext, prompt: list[dict[str, str]], **kwargs
     ) -> str:
         """执行规划"""
         # 构建上下文
@@ -524,9 +522,9 @@ class PlannerAgent(BaseAgent):
     @staticmethod
     def adjust_plan(
         plan: ExecutionPlan,
-        completed_tasks: Set[str],
-        failed_tasks: Set[str],
-        new_requirements: Optional[List[str]] = None,
+        completed_tasks: set[str],
+        failed_tasks: set[str],
+        new_requirements: list[str] | None = None,
     ) -> ExecutionPlan:
         """
         自适应调整计划

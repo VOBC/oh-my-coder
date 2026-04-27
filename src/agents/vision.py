@@ -12,7 +12,6 @@ Vision Agent - 视觉分析与 UI 生成智能体
 """
 
 from pathlib import Path
-from typing import Dict, List, Optional
 
 from ..core.router import TaskType
 from .base import (
@@ -25,7 +24,7 @@ from .base import (
 )
 
 
-def _load_image_meta(image_path: Path) -> Optional[Dict]:
+def _load_image_meta(image_path: Path) -> dict | None:
     """提取图片元信息（宽高、尺寸），无需 Pillow 也可工作。"""
     try:
         import struct
@@ -58,9 +57,8 @@ def _load_image_meta(image_path: Path) -> Optional[Dict]:
                             "height": h,
                             "path": str(image_path),
                         }
-                    else:
-                        length = struct.unpack(">H", f.read(2))[0]
-                        f.read(length - 2)
+                    length = struct.unpack(">H", f.read(2))[0]
+                    f.read(length - 2)
             return {"format": "JPEG", "path": str(image_path)}
 
         # WebP: RIFF....WEBP
@@ -73,7 +71,7 @@ def _load_image_meta(image_path: Path) -> Optional[Dict]:
         return None
 
 
-def _extract_code_blocks(text: str) -> List[Dict[str, str]]:
+def _extract_code_blocks(text: str) -> list[dict[str, str]]:
     """
     从文本中提取代码块。
 
@@ -342,10 +340,10 @@ export const PageLayout: React.FC = () => {
         return base + ui_code_prompt
 
     async def _run(
-        self, context: AgentContext, prompt: List[Dict[str, str]], **kwargs
+        self, context: AgentContext, prompt: list[dict[str, str]], **kwargs
     ) -> str:
         """执行视觉分析或 UI 代码生成"""
-        image_path: Optional[Path] = context.metadata.get("image_path")
+        image_path: Path | None = context.metadata.get("image_path")
         output_format: str = context.metadata.get("output_format", self.MODE_ANALYSIS)
 
         extra_context = ""
@@ -444,7 +442,7 @@ export const PageLayout: React.FC = () => {
             blocks = _extract_code_blocks(response.content)
             if blocks:
                 output_dir = _infer_output_dir(context)
-                saved_files: Dict[str, str] = {}
+                saved_files: dict[str, str] = {}
                 for block in blocks:
                     file_path = output_dir / block["filename"]
                     file_path.parent.mkdir(parents=True, exist_ok=True)
@@ -465,7 +463,7 @@ export const PageLayout: React.FC = () => {
     def _post_process(self, result: str, context: AgentContext) -> AgentOutput:
         """后处理"""
         output_format: str = context.metadata.get("output_format", self.MODE_ANALYSIS)
-        recommendations: List[str]
+        recommendations: list[str]
         if output_format == self.MODE_UI_CODE:
             recommendations = [
                 "在浏览器中打开生成的 HTML 文件预览效果",
@@ -479,7 +477,7 @@ export const PageLayout: React.FC = () => {
             ]
 
         # 提取已保存的文件路径（从结果末尾的列表中）
-        artifacts: Dict[str, str] = {}
+        artifacts: dict[str, str] = {}
         if output_format == self.MODE_UI_CODE:
             blocks = _extract_code_blocks(result)
             for block in blocks:

@@ -9,15 +9,15 @@
 """
 
 import ast
+import asyncio
 import hashlib
 import json
 import re
 from dataclasses import dataclass, field
 from datetime import datetime
-from pathlib import Path
-from typing import Any, Dict, List, Optional
 from enum import Enum
-import asyncio
+from pathlib import Path
+from typing import Any
 
 
 class CodeElementType(str, Enum):
@@ -58,12 +58,12 @@ class CodeElement:
     start_line: int
     end_line: int
     source_code: str
-    docstring: Optional[str] = None
-    signature: Optional[str] = None
-    parent: Optional[str] = None  # 父元素 ID
-    children: List[str] = field(default_factory=list)
-    embedding: Optional[List[float]] = None
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    docstring: str | None = None
+    signature: str | None = None
+    parent: str | None = None  # 父元素 ID
+    children: list[str] = field(default_factory=list)
+    embedding: list[float] | None = None
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -72,13 +72,13 @@ class FileIndex:
 
     file_path: str
     language: ProgrammingLanguage
-    elements: List[CodeElement]
-    imports: List[str]
-    exports: List[str]
-    dependencies: List[str]
+    elements: list[CodeElement]
+    imports: list[str]
+    exports: list[str]
+    dependencies: list[str]
     hash: str
     last_modified: datetime
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -86,7 +86,7 @@ class IndexConfig:
     """索引配置"""
 
     root_path: Path
-    exclude_patterns: List[str] = field(
+    exclude_patterns: list[str] = field(
         default_factory=lambda: [
             "node_modules",
             ".git",
@@ -107,7 +107,7 @@ class IndexConfig:
             ".mypy_cache",
         ]
     )
-    include_patterns: List[str] = field(
+    include_patterns: list[str] = field(
         default_factory=lambda: [
             "*.py",
             "*.js",
@@ -136,7 +136,7 @@ class IndexConfig:
 class PythonParser:
     """Python 代码解析器"""
 
-    def parse(self, source: str, file_path: str) -> List[CodeElement]:
+    def parse(self, source: str, file_path: str) -> list[CodeElement]:
         """解析 Python 源码"""
         elements = []
 
@@ -148,9 +148,7 @@ class PythonParser:
         source_lines = source.split("\n")
 
         for node in ast.walk(tree):
-            if isinstance(node, ast.FunctionDef) or isinstance(
-                node, ast.AsyncFunctionDef
-            ):
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
                 element = self._parse_function(node, source_lines, file_path)
                 if element:
                     elements.append(element)
@@ -163,8 +161,8 @@ class PythonParser:
         return elements
 
     def _parse_function(
-        self, node: ast.FunctionDef, source_lines: List[str], file_path: str
-    ) -> Optional[CodeElement]:
+        self, node: ast.FunctionDef, source_lines: list[str], file_path: str
+    ) -> CodeElement | None:
         """解析函数定义"""
         start_line = node.lineno
         end_line = node.end_lineno or start_line
@@ -200,8 +198,8 @@ class PythonParser:
         )
 
     def _parse_class(
-        self, node: ast.ClassDef, source_lines: List[str], file_path: str
-    ) -> Optional[CodeElement]:
+        self, node: ast.ClassDef, source_lines: list[str], file_path: str
+    ) -> CodeElement | None:
         """解析类定义"""
         start_line = node.lineno
         end_line = node.end_lineno or start_line
@@ -268,8 +266,8 @@ class CodebaseIndexer:
         """
         self.config = config
         self.embedding_client = embedding_client
-        self.file_indices: Dict[str, FileIndex] = {}
-        self.element_index: Dict[str, CodeElement] = {}
+        self.file_indices: dict[str, FileIndex] = {}
+        self.element_index: dict[str, CodeElement] = {}
         self._parsers = {
             ProgrammingLanguage.PYTHON: PythonParser(),
         }
@@ -286,22 +284,18 @@ class CodebaseIndexer:
                 return False
 
         # 检查包含模式
-        for pattern in self.config.include_patterns:
-            if file_path.match(pattern):
-                return True
-
-        return False
+        return any(file_path.match(pattern) for pattern in self.config.include_patterns)
 
     def detect_language(self, file_path: Path) -> ProgrammingLanguage:
         """检测文件语言"""
         ext = file_path.suffix.lower()
         return self.LANGUAGE_EXTENSIONS.get(ext, ProgrammingLanguage.UNKNOWN)
 
-    def index_file(self, file_path: Path) -> Optional[FileIndex]:
+    def index_file(self, file_path: Path) -> FileIndex | None:
         """索引单个文件"""
         try:
             source = file_path.read_text(encoding="utf-8")
-        except (UnicodeDecodeError, IOError):
+        except (OSError, UnicodeDecodeError):
             return None
 
         language = self.detect_language(file_path)
@@ -335,7 +329,7 @@ class CodebaseIndexer:
         self.file_indices[relative_path] = file_index
         return file_index
 
-    def index_directory(self, progress_callback=None) -> Dict[str, FileIndex]:
+    def index_directory(self, progress_callback=None) -> dict[str, FileIndex]:
         """索引整个目录"""
         root = self.config.root_path
 
@@ -399,7 +393,7 @@ class CodebaseIndexer:
 
         return "\n".join(parts)
 
-    async def _batch_embed(self, texts: List[str]) -> List[List[float]]:
+    async def _batch_embed(self, texts: list[str]) -> list[list[float]]:
         """批量生成嵌入"""
         if not self.embedding_client:
             return [[] for _ in texts]
@@ -407,7 +401,7 @@ class CodebaseIndexer:
         # TODO: 调用实际嵌入 API
         return [[] for _ in texts]
 
-    def _extract_imports(self, source: str, language: ProgrammingLanguage) -> List[str]:
+    def _extract_imports(self, source: str, language: ProgrammingLanguage) -> list[str]:
         """提取导入语句"""
         imports = []
 
@@ -419,7 +413,7 @@ class CodebaseIndexer:
 
         return imports
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """获取索引统计"""
         return {
             "files_indexed": len(self.file_indices),
@@ -428,7 +422,7 @@ class CodebaseIndexer:
             "element_types": self._count_by_type(),
         }
 
-    def _count_by_language(self) -> Dict[str, int]:
+    def _count_by_language(self) -> dict[str, int]:
         """按语言统计"""
         counts = {}
         for file_index in self.file_indices.values():
@@ -436,7 +430,7 @@ class CodebaseIndexer:
             counts[lang] = counts.get(lang, 0) + 1
         return counts
 
-    def _count_by_type(self) -> Dict[str, int]:
+    def _count_by_type(self) -> dict[str, int]:
         """按元素类型统计"""
         counts = {}
         for element in self.element_index.values():
@@ -494,10 +488,10 @@ class CodebaseIndexer:
         """加载索引"""
         file_index_path = path / "files.json"
         if file_index_path.exists():
-            with open(file_index_path, "r", encoding="utf-8") as f:
+            with open(file_index_path, encoding="utf-8") as f:
                 json.load(f)  # TODO: 反序列化
 
         element_index_path = path / "elements.json"
         if element_index_path.exists():
-            with open(element_index_path, "r", encoding="utf-8") as f:
+            with open(element_index_path, encoding="utf-8") as f:
                 json.load(f)  # TODO: 反序列化

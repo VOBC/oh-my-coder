@@ -5,20 +5,21 @@
 """
 
 from pathlib import Path
-from typing import Optional, Dict, Any, List
+from typing import Any, Optional
 
 import typer
 from rich.console import Console
 from rich.panel import Panel
+from rich.prompt import Confirm, Prompt
 from rich.table import Table
-from rich.prompt import Prompt, Confirm
 
 from .package import (
     CapabilityPackage as CapabilityPackage,
+)
+from .package import (
     CapabilityPackageManager,
     get_manager,
 )
-
 
 app = typer.Typer(
     name="cap",
@@ -223,10 +224,9 @@ def apply_capability(
         return
 
     # 确认
-    if not force:
-        if not Confirm.ask("\n确认应用此配置？"):
-            console.print("[dim]已取消[/dim]")
-            return
+    if not force and not Confirm.ask("\n确认应用此配置？"):
+        console.print("[dim]已取消[/dim]")
+        return
 
     # 应用配置
     try:
@@ -342,10 +342,9 @@ def delete_capability(
         console.print(f"[red]能力包不存在: {name}[/red]")
         raise typer.Exit(1)
 
-    if not force:
-        if not Confirm.ask(f"确认删除能力包 '{name}'？"):
-            console.print("[dim]已取消[/dim]")
-            return
+    if not force and not Confirm.ask(f"确认删除能力包 '{name}'？"):
+        console.print("[dim]已取消[/dim]")
+        return
 
     if manager.delete_package(name):
         console.print(f"[green]✓ 能力包 '{name}' 已删除[/green]")
@@ -355,8 +354,8 @@ def delete_capability(
 
 
 def _load_current_config(
-    config_path: Optional[Path] = None,
-) -> tuple[Dict[str, Any], Dict[str, Any], List[str], Dict[str, Any]]:
+    config_path: Path | None = None,
+) -> tuple[dict[str, Any], dict[str, Any], list[str], dict[str, Any]]:
     """
     加载当前项目配置
 
@@ -374,7 +373,7 @@ def _load_current_config(
         try:
             import json
 
-            with open(config_path, "r", encoding="utf-8") as f:
+            with open(config_path, encoding="utf-8") as f:
                 config = json.load(f)
             agents = config.get("agents", {})
             model_config = config.get("model_config", {})
@@ -427,7 +426,7 @@ def _load_current_config(
     return agents, model_config, tools, prompts
 
 
-def _load_config_file() -> Optional[Dict[str, Any]]:
+def _load_config_file() -> dict[str, Any] | None:
     """加载项目配置文件"""
     config_paths = [
         Path(".omc/config.json"),
@@ -440,7 +439,7 @@ def _load_config_file() -> Optional[Dict[str, Any]]:
             try:
                 import json
 
-                with open(path, "r", encoding="utf-8") as f:
+                with open(path, encoding="utf-8") as f:
                     return json.load(f)
             except Exception:
                 continue
@@ -448,7 +447,7 @@ def _load_config_file() -> Optional[Dict[str, Any]]:
     return None
 
 
-def _save_config_file(config: Dict[str, Any]) -> None:
+def _save_config_file(config: dict[str, Any]) -> None:
     """保存项目配置文件"""
     config_dir = Path(".omc")
     config_dir.mkdir(exist_ok=True)

@@ -10,7 +10,6 @@ Writer Agent - 文档编写智能体
 模型层级：LOW（快速，对应 haiku）
 """
 
-from typing import Dict, List
 
 from ..core.router import TaskType
 from .base import (
@@ -130,7 +129,7 @@ MIT
 """
 
     async def _run(
-        self, context: AgentContext, prompt: List[Dict[str, str]], **kwargs
+        self, context: AgentContext, prompt: list[dict[str, str]], **kwargs
     ) -> str:
         """执行文档编写"""
         doc_type = context.metadata.get("doc_type", "readme")
@@ -147,7 +146,7 @@ MIT
         # 读取现有文档
         readme = context.project_path / "README.md"
         if readme.exists():
-            with open(readme, "r", encoding="utf-8") as f:
+            with open(readme, encoding="utf-8") as f:
                 prompt.append(
                     {"role": "user", "content": f"## 现有 README\n{f.read()[:2000]}"}
                 )

@@ -12,7 +12,7 @@ Share API - 会话分享 Web 端点
 import json
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
@@ -35,7 +35,7 @@ def _share_path(share_id: str) -> Path:
     return SHARE_DIR / f"share_{share_id}.json"
 
 
-def _sanitize_config(config: Dict[str, Any]) -> Dict[str, Any]:
+def _sanitize_config(config: dict[str, Any]) -> dict[str, Any]:
     """脱敏配置"""
     safe = {}
     for key, value in config.items():
@@ -61,16 +61,16 @@ def _sanitize_config(config: Dict[str, Any]) -> Dict[str, Any]:
 class ShareCreateRequest(BaseModel):
     """创建分享请求"""
 
-    task_id: Optional[str] = Field(None, description="任务 ID，空则最近一次")
+    task_id: str | None = Field(None, description="任务 ID，空则最近一次")
     include_config: bool = Field(True, description="是否包含配置")
-    tags: List[str] = Field(default_factory=list, description="标签")
+    tags: list[str] = Field(default_factory=list, description="标签")
     expires_hours: int = Field(0, description="过期时间（小时），0=永不过期")
 
 
 class ShareImportRequest(BaseModel):
     """导入分享请求"""
 
-    target_dir: Optional[str] = Field(None, description="导入目标目录")
+    target_dir: str | None = Field(None, description="导入目标目录")
 
 
 class ShareResponse(BaseModel):
@@ -78,8 +78,8 @@ class ShareResponse(BaseModel):
 
     share_id: str
     created_at: str
-    expires_at: Optional[str] = None
-    tags: List[str] = []
+    expires_at: str | None = None
+    tags: list[str] = []
     task: str = ""
     steps: int = 0
 
@@ -90,9 +90,9 @@ class ShareDetailResponse(BaseModel):
     share_id: str
     version: int = 1
     created_at: str
-    expires_at: Optional[str] = None
-    tags: List[str] = []
-    session: Dict[str, Any] = {}
+    expires_at: str | None = None
+    tags: list[str] = []
+    session: dict[str, Any] = {}
 
 
 # ========================================
@@ -126,7 +126,7 @@ async def create_share(req: ShareCreateRequest) -> Any:
         target_file = json_files[0]
 
     try:
-        with open(target_file, "r", encoding="utf-8") as f:
+        with open(target_file, encoding="utf-8") as f:
             history_data = json.load(f)
     except (json.JSONDecodeError, OSError) as e:
         raise HTTPException(status_code=500, detail=f"读取失败: {e}")
@@ -158,7 +158,7 @@ async def create_share(req: ShareCreateRequest) -> Any:
         config_path = Path.home() / ".omc" / "config.json"
         if config_path.exists():
             try:
-                with open(config_path, "r", encoding="utf-8") as f:
+                with open(config_path, encoding="utf-8") as f:
                     config = json.load(f)
                 share_record["session"]["config"] = _sanitize_config(config)
             except (json.JSONDecodeError, OSError):
@@ -171,7 +171,7 @@ async def create_share(req: ShareCreateRequest) -> Any:
     return share_record
 
 
-@router.get("", response_model=List[ShareResponse])
+@router.get("", response_model=list[ShareResponse])
 async def list_shares() -> Any:
     """列出所有分享"""
     _ensure_dir()
@@ -179,7 +179,7 @@ async def list_shares() -> Any:
     shares = []
     for f in SHARE_DIR.glob("share_*.json"):
         try:
-            with open(f, "r", encoding="utf-8") as fh:
+            with open(f, encoding="utf-8") as fh:
                 data = json.load(fh)
             history = data.get("session", {}).get("history", {})
             shares.append(
@@ -207,7 +207,7 @@ async def get_share(share_id: str) -> Any:
         raise HTTPException(status_code=404, detail=f"分享不存在: {share_id}")
 
     try:
-        with open(share_file, "r", encoding="utf-8") as f:
+        with open(share_file, encoding="utf-8") as f:
             data = json.load(f)
     except (json.JSONDecodeError, OSError) as e:
         raise HTTPException(status_code=500, detail=f"读取失败: {e}")
@@ -231,7 +231,7 @@ async def import_share(share_id: str, req: ShareImportRequest) -> Any:
         raise HTTPException(status_code=404, detail=f"分享不存在: {share_id}")
 
     try:
-        with open(share_file, "r", encoding="utf-8") as f:
+        with open(share_file, encoding="utf-8") as f:
             share_data = json.load(f)
     except (json.JSONDecodeError, OSError) as e:
         raise HTTPException(status_code=500, detail=f"读取失败: {e}")

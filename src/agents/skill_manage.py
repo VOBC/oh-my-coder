@@ -17,7 +17,7 @@ Skill 自进化 Agent
 """
 
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from ..memory.skill_manager import SkillManager
 from .base import (
@@ -46,9 +46,9 @@ class SkillManageAgent(BaseAgent):
     lane = AgentLane.COORDINATION
     default_tier = "low"  # 纯管理操作，用最低成本模型
     icon = "🧩"
-    tools: List[str] = []  # 不需要外部工具，自身就是工具
+    tools: list[str] = []  # 不需要外部工具，自身就是工具
 
-    def __init__(self, model_router, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, model_router, config: dict[str, Any] | None = None):
         super().__init__(model_router, config)
         # SkillManager 实例，可共享
         skills_dir = None
@@ -130,8 +130,8 @@ updated_at: 2026-04-12
 
     def tool_list(
         self,
-        category: Optional[str] = None,
-        tag: Optional[str] = None,
+        category: str | None = None,
+        tag: str | None = None,
         limit: int = 20,
     ) -> str:
         """工具：列出 Skills"""
@@ -176,9 +176,9 @@ updated_at: 2026-04-12
         name: str,
         body: str,
         category: str = "workflow",
-        description: Optional[str] = None,
-        tags: Optional[List[str]] = None,
-        triggers: Optional[List[str]] = None,
+        description: str | None = None,
+        tags: list[str] | None = None,
+        triggers: list[str] | None = None,
     ) -> str:
         """
         工具：创建新 Skill（自动 patch 优先）
@@ -230,11 +230,11 @@ updated_at: 2026-04-12
     def tool_patch(
         self,
         skill_id: str,
-        body: Optional[str] = None,
-        description: Optional[str] = None,
-        tags: Optional[List[str]] = None,
-        triggers: Optional[List[str]] = None,
-        name: Optional[str] = None,
+        body: str | None = None,
+        description: str | None = None,
+        tags: list[str] | None = None,
+        triggers: list[str] | None = None,
+        name: str | None = None,
         category: str = "workflow",
     ) -> str:
         """工具：增量更新 Skill（优先于 create）"""
@@ -267,8 +267,8 @@ updated_at: 2026-04-12
     def tool_search(
         self,
         query: str,
-        category: Optional[str] = None,
-        tags: Optional[List[str]] = None,
+        category: str | None = None,
+        tags: list[str] | None = None,
         limit: int = 10,
     ) -> str:
         """工具：全文搜索 Skills"""
@@ -296,7 +296,7 @@ updated_at: 2026-04-12
     async def _run(
         self,
         context: AgentContext,
-        prompt: List[Dict[str, str]],
+        prompt: list[dict[str, str]],
         **kwargs,
     ) -> str:
         """
@@ -319,19 +319,18 @@ updated_at: 2026-04-12
         # 执行对应工具
         if action == "list":
             return self.tool_list(**params)
-        elif action == "view":
+        if action == "view":
             return self.tool_view(**params)
-        elif action == "create":
+        if action == "create":
             return self.tool_create(**params)
-        elif action == "patch":
+        if action == "patch":
             return self.tool_patch(**params)
-        elif action == "delete":
+        if action == "delete":
             return self.tool_delete(**params)
-        elif action == "search":
+        if action == "search":
             return self.tool_search(**params)
-        else:
-            # 默认：列出全部 + 搜索建议
-            return self.tool_list() + "\n\n💡 提示：用 search <关键词> 搜索已有 Skill"
+        # 默认：列出全部 + 搜索建议
+        return self.tool_list() + "\n\n💡 提示：用 search <关键词> 搜索已有 Skill"
 
     def _post_process(self, result: str, context: AgentContext) -> AgentOutput:
         return AgentOutput(
@@ -364,9 +363,9 @@ updated_at: 2026-04-12
             return "delete"
         return ""
 
-    def _parse_params(self, text: str) -> Dict[str, Any]:
+    def _parse_params(self, text: str) -> dict[str, Any]:
         """从文本解析参数（简易版）"""
-        params: Dict[str, Any] = {}
+        params: dict[str, Any] = {}
 
         # category
         for cat in SkillManager.CATEGORIES:

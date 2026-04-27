@@ -19,7 +19,7 @@ Explore Agent - 代码库探索智能体
 import os
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 
 from ..core.router import TaskType
 from .base import (
@@ -48,12 +48,12 @@ class ProjectMap:
     """项目地图"""
 
     root_path: str
-    language_distribution: Dict[str, int]  # 语言 -> 文件数
-    key_directories: List[str]
-    entry_points: List[str]  # 入口文件
-    config_files: List[str]
-    test_files: List[str]
-    dependencies: List[str]  # 依赖（从 package.json/requirements.txt 提取）
+    language_distribution: dict[str, int]  # 语言 -> 文件数
+    key_directories: list[str]
+    entry_points: list[str]  # 入口文件
+    config_files: list[str]
+    test_files: list[str]
+    dependencies: list[str]  # 依赖（从 package.json/requirements.txt 提取）
     structure_tree: str  # 目录树
 
 
@@ -109,7 +109,7 @@ class ExploreAgent(BaseAgent):
 """
 
     async def _run(
-        self, context: AgentContext, prompt: List[Dict[str, str]], **kwargs
+        self, context: AgentContext, prompt: list[dict[str, str]], **kwargs
     ) -> str:
         """
         执行代码库探索
@@ -230,7 +230,7 @@ class ExploreAgent(BaseAgent):
         self,
         root_path: Path,
         ignore_dirs: set = None,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """收集文件统计信息"""
         if ignore_dirs is None:
             ignore_dirs = {
@@ -283,7 +283,7 @@ class ExploreAgent(BaseAgent):
                 # 统计行数
                 try:
                     file_path = Path(root) / file
-                    with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
+                    with open(file_path, encoding="utf-8", errors="ignore") as f:
                         lines = sum(1 for _ in f)
                         total_lines += lines
                 except:
@@ -303,7 +303,7 @@ class ExploreAgent(BaseAgent):
     def _extract_dependencies(
         self,
         root_path: Path,
-    ) -> Dict[str, List[str]]:
+    ) -> dict[str, list[str]]:
         """提取项目依赖"""
         dependencies = {
             "python": [],
@@ -315,7 +315,7 @@ class ExploreAgent(BaseAgent):
         req_file = root_path / "requirements.txt"
         if req_file.exists():
             try:
-                with open(req_file, "r") as f:
+                with open(req_file) as f:
                     dependencies["python"] = [
                         line.strip()
                         for line in f
@@ -330,7 +330,7 @@ class ExploreAgent(BaseAgent):
             try:
                 import json
 
-                with open(package_file, "r") as f:
+                with open(package_file) as f:
                     package = json.load(f)
                     dependencies["node"] = list(package.get("dependencies", {}).keys())
             except:
@@ -338,7 +338,7 @@ class ExploreAgent(BaseAgent):
 
         return dependencies
 
-    def _format_file_stats(self, stats: Dict[str, Any]) -> str:
+    def _format_file_stats(self, stats: dict[str, Any]) -> str:
         """格式化文件统计"""
         lines = []
 
@@ -358,7 +358,7 @@ class ExploreAgent(BaseAgent):
 
         return "\n".join(lines)
 
-    def _format_dependencies(self, deps: Dict[str, List[str]]) -> str:
+    def _format_dependencies(self, deps: dict[str, list[str]]) -> str:
         """格式化依赖信息"""
         lines = []
 

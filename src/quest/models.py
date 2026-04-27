@@ -8,7 +8,7 @@ Quest = 异步自主编程任务
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -63,14 +63,14 @@ class QuestSpec(BaseModel):
     title: str = Field(..., description="任务标题")
     overview: str = Field(..., description="任务概述")
     motivation: str = Field(..., description="为什么要做这个任务")
-    scope: List[str] = Field(default_factory=list, description="包含范围")
-    out_of_scope: List[str] = Field(default_factory=list, description="不包含范围")
-    acceptance_criteria: List[AcceptanceCriteria] = Field(
+    scope: list[str] = Field(default_factory=list, description="包含范围")
+    out_of_scope: list[str] = Field(default_factory=list, description="不包含范围")
+    acceptance_criteria: list[AcceptanceCriteria] = Field(
         default_factory=list, description="验收标准"
     )
-    risks: List[str] = Field(default_factory=list, description="风险提示")
+    risks: list[str] = Field(default_factory=list, description="风险提示")
     estimated_time: str = Field(default="1h", description="预估耗时")
-    sections: List[SpecSection] = Field(default_factory=list, description="额外章节")
+    sections: list[SpecSection] = Field(default_factory=list, description="额外章节")
 
     def to_markdown(self) -> str:
         """转换为 Markdown 格式"""
@@ -93,8 +93,12 @@ class QuestSpec(BaseModel):
 
         if self.acceptance_criteria:
             lines.append("## 验收标准")
-            for ac in self.acceptance_criteria:
-                lines.append(f"- [ ] **[{ac.id}]** {ac.description}")
+            lines.extend(
+                [
+                    f"- [ ] **[{ac.id}]** {ac.description}"
+                    for ac in self.acceptance_criteria
+                ]
+            )
             lines.append("")
 
         if self.risks:
@@ -121,10 +125,10 @@ class QuestStep(BaseModel):
     description: str = Field(..., description="步骤描述")
     agent: str = Field(..., description="执行的 Agent")
     status: QuestStatus = Field(default=QuestStatus.PENDING)
-    result: Optional[str] = Field(None, description="步骤结果")
-    error: Optional[str] = Field(None, description="错误信息")
-    started_at: Optional[datetime] = None
-    completed_at: Optional[datetime] = None
+    result: str | None = Field(None, description="步骤结果")
+    error: str | None = Field(None, description="错误信息")
+    started_at: datetime | None = None
+    completed_at: datetime | None = None
 
 
 class Quest(BaseModel):
@@ -136,18 +140,18 @@ class Quest(BaseModel):
     project_path: str = Field(..., description="项目路径")
     status: QuestStatus = Field(default=QuestStatus.PENDING)
     priority: QuestPriority = Field(default=QuestPriority.MEDIUM)
-    spec: Optional[QuestSpec] = Field(None, description="生成的 SPEC")
-    spec_path: Optional[str] = Field(None, description="SPEC 文件路径")
-    steps: List[QuestStep] = Field(default_factory=list, description="执行步骤")
+    spec: QuestSpec | None = Field(None, description="生成的 SPEC")
+    spec_path: str | None = Field(None, description="SPEC 文件路径")
+    steps: list[QuestStep] = Field(default_factory=list, description="执行步骤")
     created_at: datetime = Field(default_factory=datetime.now)
     updated_at: datetime = Field(default_factory=datetime.now)
-    started_at: Optional[datetime] = None
-    completed_at: Optional[datetime] = None
-    error_message: Optional[str] = None
-    result_summary: Optional[str] = None
+    started_at: datetime | None = None
+    completed_at: datetime | None = None
+    error_message: str | None = None
+    result_summary: str | None = None
     output_dir: str = Field(default=".omc/quests", description="输出目录")
 
-    def duration(self) -> Optional[float]:
+    def duration(self) -> float | None:
         """返回执行时长（秒）"""
         if self.started_at and self.completed_at:
             return (self.completed_at - self.started_at).total_seconds()
@@ -228,5 +232,5 @@ class QuestNotification:
     title: str
     event: str  # "started" | "spec_ready" | "step_completed" | "completed" | "failed"
     message: str
-    details: Optional[Dict[str, Any]] = None
+    details: dict[str, Any] | None = None
     timestamp: datetime = field(default_factory=datetime.now)

@@ -10,8 +10,6 @@ omc search status  # 检查 API/CLI 可用性
 
 from __future__ import annotations
 
-from typing import Optional
-
 import typer
 from rich.console import Console
 from rich.panel import Panel
@@ -36,10 +34,10 @@ app = typer.Typer(
 @app.command("search")
 def search_cmd(
     query: str = typer.Argument(..., help="搜索查询，支持 Sourcegraph 搜索语法"),
-    language: Optional[str] = typer.Option(
+    language: str | None = typer.Option(
         None, "--language", "-l", help="语言过滤，如 rust/python/go"
     ),
-    repo: Optional[str] = typer.Option(
+    repo: str | None = typer.Option(
         None, "--repo", "-r", help="仓库过滤，支持 glob 模式"
     ),
     limit: int = typer.Option(20, "--limit", "-n", help="返回结果数量（1-100）"),
@@ -51,10 +49,10 @@ def search_cmd(
     ),
     json_output: bool = typer.Option(False, "--json", help="JSON 输出"),
     code_output: bool = typer.Option(False, "--code", help="AI 友好代码格式输出"),
-    after: Optional[str] = typer.Option(
+    after: str | None = typer.Option(
         None, "--after", help="时间过滤，之后（如 2024-01-01）"
     ),
-    before: Optional[str] = typer.Option(None, "--before", help="时间过滤，之前"),
+    before: str | None = typer.Option(None, "--before", help="时间过滤，之前"),
 ) -> None:
     """搜索 GitHub/GitLab 等公开代码库"""
     result: SearchResult = search(
@@ -98,7 +96,7 @@ def search_cmd(
 
 @app.command("setup")
 def setup_cmd(
-    api_key: Optional[str] = typer.Argument(
+    api_key: str | None = typer.Argument(
         None, help="Sourcegraph API Key（省略则提示输入）"
     ),
     install_cli: bool = typer.Option(False, "--cli", help="同时安装 src CLI"),

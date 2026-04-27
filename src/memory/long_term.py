@@ -17,7 +17,7 @@ import json
 import time
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 @dataclass
@@ -30,18 +30,17 @@ class ProjectPreference:
     framework: str = ""  # django, react, etc.
     default_model: str = "deepseek"
     default_workflow: str = "build"
-    preferred_agents: List[str] = field(default_factory=list)
-    custom_commands: Dict[str, str] = field(default_factory=dict)  # alias -> command
+    preferred_agents: list[str] = field(default_factory=list)
+    custom_commands: dict[str, str] = field(default_factory=dict)  # alias -> command
     notes: str = ""  # 项目笔记
     created_at: float = field(default_factory=time.time)
     updated_at: float = field(default_factory=time.time)
 
-    def to_dict(self) -> Dict[str, Any]:
-        data = asdict(self)
-        return data
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "ProjectPreference":
+    def from_dict(cls, data: dict[str, Any]) -> "ProjectPreference":
         return cls(**data)
 
 
@@ -56,17 +55,16 @@ class UserPreference:
     theme: str = "auto"  # auto, light, dark
     editor: str = "code"  # vscode, vim, nano
     shell: str = "bash"
-    api_keys: Dict[str, str] = field(default_factory=dict)  # 模型 -> key
-    recent_projects: List[str] = field(default_factory=list)
+    api_keys: dict[str, str] = field(default_factory=dict)  # 模型 -> key
+    recent_projects: list[str] = field(default_factory=list)
     created_at: float = field(default_factory=time.time)
     updated_at: float = field(default_factory=time.time)
 
-    def to_dict(self) -> Dict[str, Any]:
-        data = asdict(self)
-        return data
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "UserPreference":
+    def from_dict(cls, data: dict[str, Any]) -> "UserPreference":
         return cls(**data)
 
 
@@ -82,10 +80,10 @@ class LongTermMemory:
         self.storage_dir.mkdir(parents=True, exist_ok=True)
         self.user_prefs_file = self.storage_dir / "user_preferences.json"
         self.projects_file = self.storage_dir / "projects.json"
-        self._user_prefs: Optional[UserPreference] = None
-        self._projects: Dict[str, ProjectPreference] = {}
+        self._user_prefs: UserPreference | None = None
+        self._projects: dict[str, ProjectPreference] = {}
 
-    def _load_projects(self) -> Dict[str, ProjectPreference]:
+    def _load_projects(self) -> dict[str, ProjectPreference]:
         """加载项目偏好"""
         if self._projects:
             return self._projects
@@ -173,7 +171,7 @@ class LongTermMemory:
         prefs.updated_at = time.time()
         self._save_user_prefs()
 
-    def get_recent_projects(self, limit: int = 5) -> List[Path]:
+    def get_recent_projects(self, limit: int = 5) -> list[Path]:
         """获取最近项目"""
         prefs = self.get_user_prefs()
         return [Path(p) for p in prefs.recent_projects[:limit] if Path(p).exists()]

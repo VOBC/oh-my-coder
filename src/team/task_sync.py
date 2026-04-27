@@ -5,10 +5,11 @@
 """
 
 import json
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any
 
 try:
     import redis.asyncio as redis
@@ -46,20 +47,20 @@ class TeamTask:
     title: str
     description: str = ""
     status: TaskStatus = TaskStatus.PENDING
-    assignee_id: Optional[str] = None
+    assignee_id: str | None = None
     workflow: str = "build"
     model: str = "deepseek"
     created_at: datetime = field(default_factory=datetime.now)
     updated_at: datetime = field(default_factory=datetime.now)
-    started_at: Optional[datetime] = None
-    completed_at: Optional[datetime] = None
-    result: Optional[Dict[str, Any]] = None
-    error: Optional[str] = None
+    started_at: datetime | None = None
+    completed_at: datetime | None = None
+    result: dict[str, Any] | None = None
+    error: str | None = None
     tokens_used: int = 0
     cost: float = 0.0
-    subscribers: List[str] = field(default_factory=list)
+    subscribers: list[str] = field(default_factory=list)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
         return {
             "task_id": self.task_id,
@@ -85,7 +86,7 @@ class TeamTask:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "TeamTask":
+    def from_dict(cls, data: dict[str, Any]) -> "TeamTask":
         """从字典创建"""
         return cls(
             task_id=data["task_id"],
@@ -135,10 +136,10 @@ class TaskSync:
             redis_url: Redis 连接地址
         """
         self.redis_url = redis_url
-        self._redis: Optional[redis.Redis] = None
-        self._pubsub: Optional[redis.client.PubSub] = None
-        self._subscribers: Dict[str, List[Callable]] = {}
-        self._tasks_cache: Dict[str, TeamTask] = {}
+        self._redis: redis.Redis | None = None
+        self._pubsub: redis.client.PubSub | None = None
+        self._subscribers: dict[str, list[Callable]] = {}
+        self._tasks_cache: dict[str, TeamTask] = {}
         self._use_memory = not REDIS_AVAILABLE
 
     async def connect(self) -> None:
@@ -226,11 +227,11 @@ class TaskSync:
         self,
         task_id: str,
         status: TaskStatus,
-        result: Optional[Dict[str, Any]] = None,
-        error: Optional[str] = None,
+        result: dict[str, Any] | None = None,
+        error: str | None = None,
         tokens_used: int = 0,
         cost: float = 0.0,
-    ) -> Optional[TeamTask]:
+    ) -> TeamTask | None:
         """
         更新任务状态
 
@@ -274,7 +275,7 @@ class TaskSync:
 
         return task
 
-    async def get_task(self, task_id: str) -> Optional[TeamTask]:
+    async def get_task(self, task_id: str) -> TeamTask | None:
         """
         获取任务
 
@@ -292,7 +293,7 @@ class TaskSync:
             return TeamTask.from_dict(json.loads(data))
         return None
 
-    async def get_team_tasks(self, team_id: str) -> List[TeamTask]:
+    async def get_team_tasks(self, team_id: str) -> list[TeamTask]:
         """
         获取团队所有任务
 
@@ -391,7 +392,7 @@ class TaskSync:
 
         return True
 
-    async def _publish_event(self, event_type: str, data: Dict[str, Any]) -> None:
+    async def _publish_event(self, event_type: str, data: dict[str, Any]) -> None:
         """发布事件"""
         event = {
             "type": event_type,
@@ -402,7 +403,7 @@ class TaskSync:
         if not self._use_memory and self._redis:
             await self._redis.publish("task_updates", json.dumps(event))
 
-    async def listen_updates(self, callback: Callable[[Dict[str, Any]], None]) -> None:
+    async def listen_updates(self, callback: Callable[[dict[str, Any]], None]) -> None:
         """
         监听任务更新
 

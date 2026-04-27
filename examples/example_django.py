@@ -69,11 +69,11 @@ blog/
 # 示例：生成的文章模型
 # ============================================================
 
-from django.db import models
 from django.contrib.auth.models import User
+from django.db import models
 from django.urls import reverse
-from django.utils.text import slugify
 from django.utils import timezone
+from django.utils.text import slugify
 
 
 class Category(models.Model):
@@ -226,19 +226,19 @@ class Comment(models.Model):
 # 示例：生成的 Django 视图
 # ============================================================
 
-from django.views.generic import (
-    ListView,
-    DetailView,
-    CreateView,
-    UpdateView,
-    DeleteView,
-)
-from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib import messages
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.core.cache import cache
+from django.views.generic import (
+    CreateView,
+    DeleteView,
+    DetailView,
+    ListView,
+    UpdateView,
+)
 
-from .models import Article, Category, Tag
 from .forms import ArticleForm, CommentForm
+from .models import Article, Category, Tag
 
 
 class ArticleListView(ListView):
@@ -350,14 +350,14 @@ class ArticleDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
 # 示例：DRF API 视图集
 # ============================================================
 
-from rest_framework import viewsets, filters
-from rest_framework.decorators import action
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import filters, viewsets
+from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from rest_framework.response import Response
 
 from .models import Article, Category, Tag
-from .serializers import ArticleSerializer, ArticleListSerializer
+from .serializers import ArticleListSerializer, ArticleSerializer
 
 
 class ArticleViewSet(viewsets.ModelViewSet):

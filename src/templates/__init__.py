@@ -8,7 +8,7 @@ import json
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 from pydantic import BaseModel
 
@@ -32,11 +32,11 @@ class WorkflowStep:
 
     agent_name: str
     description: str = ""
-    dependencies: List[str] = field(default_factory=list)
-    condition: Optional[str] = None
+    dependencies: list[str] = field(default_factory=list)
+    condition: str | None = None
     timeout: int = 300
     retry: int = 0
-    config: Dict[str, Any] = field(default_factory=dict)
+    config: dict[str, Any] = field(default_factory=dict)
 
 
 class TemplateMetadata(BaseModel):
@@ -48,7 +48,7 @@ class TemplateMetadata(BaseModel):
     category: TemplateCategory
     version: str = "1.0.0"
     author: str = ""
-    tags: List[str] = []
+    tags: list[str] = []
     icon: str = "📦"
     difficulty: str = "beginner"  # beginner, intermediate, advanced
     estimated_time: str = ""
@@ -59,11 +59,11 @@ class WorkflowTemplate:
     """工作流模板"""
 
     metadata: TemplateMetadata
-    steps: List[WorkflowStep]
-    variables: Dict[str, Any] = field(default_factory=dict)
-    hooks: Dict[str, str] = field(default_factory=dict)
+    steps: list[WorkflowStep]
+    variables: dict[str, Any] = field(default_factory=dict)
+    hooks: dict[str, str] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
         return {
             "metadata": self.metadata.model_dump(),
@@ -84,7 +84,7 @@ class WorkflowTemplate:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "WorkflowTemplate":
+    def from_dict(cls, data: dict[str, Any]) -> "WorkflowTemplate":
         """从字典创建"""
         metadata = TemplateMetadata(**data["metadata"])
         steps = [
@@ -108,7 +108,7 @@ class WorkflowTemplate:
 
 
 # 内置模板
-BUILTIN_TEMPLATES: List[WorkflowTemplate] = [
+BUILTIN_TEMPLATES: list[WorkflowTemplate] = [
     # 构建模板
     WorkflowTemplate(
         metadata=TemplateMetadata(
@@ -360,7 +360,7 @@ class TemplateMarket:
         >>> template = market.get_template("build")
     """
 
-    def __init__(self, template_dir: Optional[Path] = None):
+    def __init__(self, template_dir: Path | None = None):
         """
         初始化模板市场
 
@@ -370,7 +370,7 @@ class TemplateMarket:
         self.template_dir = template_dir or Path(".omc/templates")
         self.template_dir.mkdir(parents=True, exist_ok=True)
 
-        self._templates: Dict[str, WorkflowTemplate] = {}
+        self._templates: dict[str, WorkflowTemplate] = {}
         self._load_builtin()
 
     def _load_builtin(self) -> None:
@@ -378,7 +378,7 @@ class TemplateMarket:
         for template in BUILTIN_TEMPLATES:
             self._templates[template.metadata.name] = template
 
-    def get_template(self, name: str) -> Optional[WorkflowTemplate]:
+    def get_template(self, name: str) -> WorkflowTemplate | None:
         """
         获取模板
 
@@ -392,10 +392,10 @@ class TemplateMarket:
 
     def list_templates(
         self,
-        category: Optional[str] = None,
-        tags: Optional[List[str]] = None,
-        difficulty: Optional[str] = None,
-    ) -> List[WorkflowTemplate]:
+        category: str | None = None,
+        tags: list[str] | None = None,
+        difficulty: str | None = None,
+    ) -> list[WorkflowTemplate]:
         """
         列出模板
 
@@ -448,7 +448,7 @@ class TemplateMarket:
 
         return file_path
 
-    def load_template(self, name: str) -> Optional[WorkflowTemplate]:
+    def load_template(self, name: str) -> WorkflowTemplate | None:
         """
         从文件加载模板
 
@@ -463,7 +463,7 @@ class TemplateMarket:
         if not file_path.exists():
             return None
 
-        with open(file_path, "r", encoding="utf-8") as f:
+        with open(file_path, encoding="utf-8") as f:
             data = json.load(f)
 
         template = WorkflowTemplate.from_dict(data)
@@ -478,7 +478,7 @@ class TemplateMarket:
             except Exception as e:
                 print(f"加载模板失败: {file_path}: {e}")
 
-    def get_categories(self) -> List[Dict[str, Any]]:
+    def get_categories(self) -> list[dict[str, Any]]:
         """
         获取所有分类
 
@@ -498,7 +498,7 @@ class TemplateMarket:
 
         return list(categories.values())
 
-    def search(self, query: str) -> List[WorkflowTemplate]:
+    def search(self, query: str) -> list[WorkflowTemplate]:
         """
         搜索模板
 
@@ -525,7 +525,7 @@ class TemplateMarket:
 
 
 # 全局实例
-_template_market: Optional[TemplateMarket] = None
+_template_market: TemplateMarket | None = None
 
 
 def get_template_market() -> TemplateMarket:

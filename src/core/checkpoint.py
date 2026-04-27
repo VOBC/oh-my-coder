@@ -27,8 +27,10 @@ import shutil
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set
+from typing import TYPE_CHECKING, Any
 
+if TYPE_CHECKING:
+    import builtins
 
 # 变更文件上限（超出时自动清理最早的 snapshot）
 MAX_SNAPSHOT_FILES = 100
@@ -55,9 +57,9 @@ class Checkpoint:
     file_count: int  # 快照文件数量
     total_size: int  # 快照总大小（字节）
     working_dir: str  # 工作区根目录
-    entries: List[SnapshotEntry] = field(default_factory=list)
+    entries: list[SnapshotEntry] = field(default_factory=list)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "id": self.id,
             "task_id": self.task_id,
@@ -70,7 +72,7 @@ class Checkpoint:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "Checkpoint":
+    def from_dict(cls, data: dict[str, Any]) -> Checkpoint:
         entries = [SnapshotEntry(**e) for e in data.get("entries", [])]
         return cls(
             id=data["id"],
@@ -96,7 +98,7 @@ class CheckpointManager:
     """
 
     # 不纳入快照的目录/文件模式
-    IGNORE_PATTERNS: Set[str] = {
+    IGNORE_PATTERNS: set[str] = {
         ".git",
         ".omc",
         "__pycache__",
@@ -120,15 +122,14 @@ class CheckpointManager:
         ".coverage",
         "htmlcov",
         "*.whl",
-        ".tox",
     }
 
-    def __init__(self, project_path: Optional[Path] = None):
+    def __init__(self, project_path: Path | None = None):
         self.project_path = project_path or Path.cwd()
         self.checkpoint_root = self.project_path / ".omc" / "checkpoints"
         self.index_file = self.checkpoint_root / "index.json"
         self.backup_root = Path.home() / ".omc" / "backup"
-        self._index: Dict[str, Dict[str, Any]] = {}
+        self._index: dict[str, dict[str, Any]] = {}
         self._init()
         self._load_index()
 
@@ -144,7 +145,7 @@ class CheckpointManager:
         if self.index_file.exists():
             try:
                 self._index = json.loads(self.index_file.read_text(encoding="utf-8"))
-            except (json.JSONDecodeError, IOError):
+            except (OSError, json.JSONDecodeError):
                 self._index = {}
         else:
             self._index = {}
@@ -184,7 +185,7 @@ class CheckpointManager:
         snapshot_dir = cp_dir / "snapshot"
         snapshot_dir.mkdir(parents=True, exist_ok=True)
 
-        entries: List[SnapshotEntry] = []
+        entries: list[SnapshotEntry] = []
         total_size = 0
 
         # 遍历工作区文件
@@ -195,7 +196,7 @@ class CheckpointManager:
 
             try:
                 content = file_path.read_bytes()
-            except (IOError, OSError):
+            except OSError:
                 continue
 
             # 计算 SHA256
@@ -315,7 +316,7 @@ class CheckpointManager:
 
         return str(backup_dir)
 
-    def diff(self, checkpoint_id: str) -> Dict[str, List[str]]:
+    def diff(self, checkpoint_id: str) -> dict[str, builtins.list[str]]:
         """
         对比 checkpoint 与当前工作区的差异
 
@@ -328,9 +329,9 @@ class CheckpointManager:
             raise FileNotFoundError(f"Checkpoint '{checkpoint_id}' 不存在")
 
         manifest = json.loads(manifest_file.read_text(encoding="utf-8"))
-        snapshot_dir = cp_dir / "snapshot"
+        cp_dir / "snapshot"
 
-        result: Dict[str, List[str]] = {
+        result: dict[str, list[str]] = {
             "added": [],
             "removed": [],
             "modified": [],
@@ -338,12 +339,12 @@ class CheckpointManager:
         }
 
         # 从 manifest 构建 path -> sha256 映射
-        snapshot_map: Dict[str, str] = {}
+        snapshot_map: dict[str, str] = {}
         for entry_data in manifest.get("entries", []):
             snapshot_map[entry_data["path"]] = entry_data["sha256"]
 
         # 遍历当前工作区文件
-        current_files: Set[str] = set()
+        current_files: set[str] = set()
         for file_path in self._iter_files():
             if self._is_ignored(file_path):
                 continue
@@ -385,9 +386,9 @@ class CheckpointManager:
 
     def list(
         self,
-        task_id: Optional[str] = None,
+        task_id: str | None = None,
         limit: int = 50,
-    ) -> List[Dict[str, Any]]:
+    ) -> builtins.list[dict[str, Any]]:
         """
         列出 checkpoint
 
@@ -408,7 +409,7 @@ class CheckpointManager:
         results.sort(key=lambda x: x.get("created_at", ""), reverse=True)
         return results[:limit]
 
-    def get_checkpoint(self, checkpoint_id: str) -> Optional[Checkpoint]:
+    def get_checkpoint(self, checkpoint_id: str) -> Checkpoint | None:
         """获取单个 checkpoint 完整信息"""
         if checkpoint_id not in self._index:
             return None
@@ -462,7 +463,7 @@ class CheckpointManager:
     # 统计
     # ------------------------------------------------------------------
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """获取快照统计"""
         total = len(self._index)
         total_size = sum(c.get("total_size", 0) for c in self._index.values())
@@ -473,27 +474,24 @@ class CheckpointManager:
             "total_files": total_files,
         }
 
-    def format_diff(self, diff_result: Dict[str, List[str]]) -> str:
+    def format_diff(self, diff_result: dict[str, builtins.list[str]]) -> str:
         """格式化 diff 结果为可读字符串"""
         lines = []
         if diff_result["added"]:
             lines.append(f"🆕 新增 ({len(diff_result['added'])}):")
-            for f in diff_result["added"][:20]:
-                lines.append(f"  + {f}")
+            lines.extend([f"  + {f}" for f in diff_result["added"][:20]])
             if len(diff_result["added"]) > 20:
                 lines.append(f"  ... 还有 {len(diff_result['added']) - 20} 个")
 
         if diff_result["removed"]:
             lines.append(f"❌ 已删除 ({len(diff_result['removed'])}):")
-            for f in diff_result["removed"][:20]:
-                lines.append(f"  - {f}")
+            lines.extend([f"  - {f}" for f in diff_result["removed"][:20]])
             if len(diff_result["removed"]) > 20:
                 lines.append(f"  ... 还有 {len(diff_result['removed']) - 20} 个")
 
         if diff_result["modified"]:
             lines.append(f"🔄 已修改 ({len(diff_result['modified'])}):")
-            for f in diff_result["modified"][:20]:
-                lines.append(f"  ~ {f}")
+            lines.extend([f"  ~ {f}" for f in diff_result["modified"][:20]])
             if len(diff_result["modified"]) > 20:
                 lines.append(f"  ... 还有 {len(diff_result['modified']) - 20} 个")
 

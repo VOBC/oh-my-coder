@@ -2,20 +2,20 @@
 团队协作模块测试
 """
 
-import pytest
 import uuid
+
+import pytest
 
 from src.team import (
     MemberRole,
+    NotificationPriority,
+    NotificationType,
     TaskStatus,
+    task_sync,
     team_auth,
     team_notifier,
     team_statistics,
-    task_sync,
-    NotificationType,
-    NotificationPriority,
 )
-
 
 # ========================================
 # 团队认证测试

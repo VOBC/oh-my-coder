@@ -6,11 +6,10 @@
 
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from fastapi import APIRouter, Query
 from pydantic import BaseModel
-
 
 router = APIRouter(prefix="/api/dashboard", tags=["dashboard"])
 
@@ -41,7 +40,7 @@ class AgentStatus(BaseModel):
 
     name: str
     status: str  # idle, running, error
-    current_task: Optional[str] = None
+    current_task: str | None = None
     total_executions: int
 
 
@@ -54,13 +53,13 @@ class RecentTask(BaseModel):
     model: str
     status: str
     started_at: str
-    completed_at: Optional[str] = None
-    execution_time: Optional[float] = None
+    completed_at: str | None = None
+    execution_time: float | None = None
 
 
 # 模拟数据存储
-_stats_cache: Dict[str, Any] = {}
-_activity_cache: List[ActivityData] = []
+_stats_cache: dict[str, Any] = {}
+_activity_cache: list[ActivityData] = []
 _stats_cache_time: float = 0.0
 
 
@@ -70,8 +69,8 @@ def _get_real_stats(days: int = 7) -> DashboardStats:
     优先使用缓存（5 分钟有效），减少磁盘 IO。
     """
     global _stats_cache, _stats_cache_time
-    import time
     import json
+    import time
 
     now = time.time()
     cache_key = f"stats_{days}"
@@ -130,11 +129,11 @@ def _get_real_stats(days: int = 7) -> DashboardStats:
     return stats
 
 
-def _get_real_activity(days: int = 7) -> List[ActivityData]:
+def _get_real_activity(days: int = 7) -> list[ActivityData]:
     """从 .omc/state/ 读取最近 days 天的每日工作流活动数据"""
     global _activity_cache, _stats_cache, _stats_cache_time
-    import time
     import json
+    import time
     from collections import defaultdict
 
     now = time.time()
@@ -143,7 +142,7 @@ def _get_real_activity(days: int = 7) -> List[ActivityData]:
         return _activity_cache or _build_mock_activity(days)
 
     state_dir = Path(".omc/state")
-    daily: Dict[str, Dict[str, int]] = defaultdict(lambda: {"tasks": 0, "tokens": 0})
+    daily: dict[str, dict[str, int]] = defaultdict(lambda: {"tasks": 0, "tokens": 0})
 
     if state_dir.exists():
         cutoff = datetime.now().timestamp() - days * 86400
@@ -182,7 +181,7 @@ def _get_real_activity(days: int = 7) -> List[ActivityData]:
     return result
 
 
-def _build_mock_activity(days: int) -> List[ActivityData]:
+def _build_mock_activity(days: int) -> list[ActivityData]:
     """兜底：返回空活动数据"""
     return [
         ActivityData(
@@ -203,12 +202,12 @@ def _get_mock_stats() -> DashboardStats:
     return _get_real_stats(7)
 
 
-def _get_mock_activity() -> List[ActivityData]:
+def _get_mock_activity() -> list[ActivityData]:
     """获取活动数据（现已从真实文件读取，7 天窗口）"""
     return _get_real_activity(7)
 
 
-def _get_mock_agents() -> List[AgentStatus]:
+def _get_mock_agents() -> list[AgentStatus]:
     """获取模拟 Agent 状态"""
     return [
         AgentStatus(name="Planner", status="idle", total_executions=45),
@@ -231,7 +230,7 @@ def _get_mock_agents() -> List[AgentStatus]:
     ]
 
 
-def _get_mock_recent_tasks() -> List[RecentTask]:
+def _get_mock_recent_tasks() -> list[RecentTask]:
     """获取模拟最近任务"""
     return [
         RecentTask(
@@ -292,8 +291,8 @@ async def get_dashboard_stats(
     return _get_real_stats(days)
 
 
-@router.get("/activity", response_model=List[ActivityData])
-async def get_activity_data(days: int = Query(7, ge=1, le=30)) -> List[ActivityData]:
+@router.get("/activity", response_model=list[ActivityData])
+async def get_activity_data(days: int = Query(7, ge=1, le=30)) -> list[ActivityData]:
     """
     获取活动数据
 
@@ -307,8 +306,8 @@ async def get_activity_data(days: int = Query(7, ge=1, le=30)) -> List[ActivityD
     return _get_real_activity(days)
 
 
-@router.get("/agents", response_model=List[AgentStatus])
-async def get_agent_status() -> List[AgentStatus]:
+@router.get("/agents", response_model=list[AgentStatus])
+async def get_agent_status() -> list[AgentStatus]:
     """
     获取所有 Agent 状态
 
@@ -318,8 +317,8 @@ async def get_agent_status() -> List[AgentStatus]:
     return _get_mock_agents()
 
 
-@router.get("/recent-tasks", response_model=List[RecentTask])
-async def get_recent_tasks(limit: int = Query(10, ge=1, le=50)) -> List[RecentTask]:
+@router.get("/recent-tasks", response_model=list[RecentTask])
+async def get_recent_tasks(limit: int = Query(10, ge=1, le=50)) -> list[RecentTask]:
     """
     获取最近任务
 
@@ -333,7 +332,7 @@ async def get_recent_tasks(limit: int = Query(10, ge=1, le=50)) -> List[RecentTa
 
 
 @router.get("/overview")
-async def get_overview() -> Dict[str, Any]:
+async def get_overview() -> dict[str, Any]:
     """
     获取完整仪表板概览
 

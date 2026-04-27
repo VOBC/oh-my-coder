@@ -12,7 +12,8 @@
 
 import asyncio
 import functools
-from typing import Any, Callable, Optional, Tuple, Type
+from collections.abc import Callable
+from typing import Any
 
 import httpx
 from tenacity import (
@@ -23,7 +24,7 @@ from tenacity import (
 )
 
 # 需要重试的异常类型
-RETRYABLE_EXCEPTIONS: Tuple[Type[Exception], ...] = (
+RETRYABLE_EXCEPTIONS: tuple[type[Exception], ...] = (
     httpx.ReadTimeout,
     httpx.ConnectTimeout,
     httpx.PoolTimeout,
@@ -44,7 +45,7 @@ def _default_retry_if(exc: Exception) -> bool:
 
 def safe_execute(
     max_attempts: int = 3,
-    timeout: Optional[float] = 30.0,
+    timeout: float | None = 30.0,
     base_wait: float = 1.0,
     max_wait: float = 10.0,
 ) -> Callable:
@@ -70,7 +71,6 @@ def safe_execute(
         async def wrapper(*args: Any, **kwargs: Any) -> Any:
             # 如果没配置超时，用 tenacity 自带的 wait_exponential
             # 如果有超时，用 asyncio.wait_for 包裹
-            attempt = 0
 
             async for attempt_ctx in AsyncRetrying(
                 stop=stop_after_attempt(max_attempts),
@@ -85,6 +85,7 @@ def safe_execute(
                             timeout=timeout,
                         )
                     return await func(*args, **kwargs)
+            return None
 
         return wrapper
 
@@ -93,7 +94,7 @@ def safe_execute(
 
 def safe_execute_sync(
     max_attempts: int = 3,
-    timeout: Optional[float] = 30.0,
+    timeout: float | None = 30.0,
     base_wait: float = 1.0,
     max_wait: float = 10.0,
 ) -> Callable:
@@ -121,10 +122,11 @@ def safe_execute_sync(
                     if not _default_retry_if(exc):
                         raise
                     if attempt < max_attempts:
-                        wait_time = min(base_wait * (2 ** (attempt - 1)), max_wait)
+                        min(base_wait * (2 ** (attempt - 1)), max_wait)
 
             if last_exc is not None:
                 raise last_exc
+            return None
 
         return wrapper
 

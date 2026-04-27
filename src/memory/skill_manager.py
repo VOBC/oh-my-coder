@@ -44,7 +44,7 @@ import re
 import shutil
 import time
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import yaml
 
@@ -63,14 +63,14 @@ class SkillManager:
     # 合法 categories
     CATEGORIES = ["debugging", "workflow", "corrections", "best-practices"]
 
-    def __init__(self, skills_dir: Optional[Path] = None):
+    def __init__(self, skills_dir: Path | None = None):
         """
         Args:
             skills_dir: Skills 根目录，默认为 .omc/skills
         """
         self.skills_dir = skills_dir or Path(".omc/skills")
         self.index_file = self.skills_dir / "index.json"
-        self._index: Dict[str, Dict[str, Any]] = {}
+        self._index: dict[str, dict[str, Any]] = {}
         self._init()
         self._load_index()
 
@@ -89,7 +89,7 @@ class SkillManager:
         if self.index_file.exists():
             try:
                 self._index = json.loads(self.index_file.read_text(encoding="utf-8"))
-            except (json.JSONDecodeError, IOError):
+            except (OSError, json.JSONDecodeError):
                 self._index = {}
         else:
             self._index = {}
@@ -140,11 +140,11 @@ class SkillManager:
     # ------------------------------------------------------------------
 
     @staticmethod
-    def _parse_frontmatter(skill_md: Path) -> Optional[Dict[str, Any]]:
+    def _parse_frontmatter(skill_md: Path) -> dict[str, Any] | None:
         """从 SKILL.md 解析 YAML frontmatter"""
         try:
             content = skill_md.read_text(encoding="utf-8")
-        except (IOError, OSError):
+        except OSError:
             return None
 
         match = re.match(r"^---\n(.*?)\n---", content, re.DOTALL)
@@ -157,7 +157,7 @@ class SkillManager:
             return None
 
     @staticmethod
-    def _serialize_frontmatter(meta: Dict[str, Any]) -> str:
+    def _serialize_frontmatter(meta: dict[str, Any]) -> str:
         """序列化 frontmatter 为 YAML 字符串"""
         # 只保留 frontmatter 字段
         keys = [
@@ -183,10 +183,10 @@ class SkillManager:
         name: str,
         body: str,
         category: str = "workflow",
-        tags: Optional[List[str]] = None,
-        triggers: Optional[List[str]] = None,
-        description: Optional[str] = None,
-    ) -> Dict[str, Any]:
+        tags: list[str] | None = None,
+        triggers: list[str] | None = None,
+        description: str | None = None,
+    ) -> dict[str, Any]:
         """
         创建新的 Skill
 
@@ -264,13 +264,13 @@ class SkillManager:
     def patch(
         self,
         skill_id: str,
-        body: Optional[str] = None,
-        description: Optional[str] = None,
-        tags: Optional[List[str]] = None,
-        triggers: Optional[List[str]] = None,
-        name: Optional[str] = None,
+        body: str | None = None,
+        description: str | None = None,
+        tags: list[str] | None = None,
+        triggers: list[str] | None = None,
+        name: str | None = None,
         category: str = "workflow",
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         增量更新 Skill（优先于 create）
 
@@ -326,7 +326,7 @@ class SkillManager:
             # 读取原有 body
             content = skill_path.read_text(encoding="utf-8")
             match = re.match(r"^---\n.*?\n---\n(.*)$", content, re.DOTALL)
-            old_body = match.group(1).strip() if match else content.strip()
+            match.group(1).strip() if match else content.strip()
             new_body = body.strip()
 
             full_content = (
@@ -383,10 +383,10 @@ class SkillManager:
 
     def list_skills(
         self,
-        category: Optional[str] = None,
-        tag: Optional[str] = None,
+        category: str | None = None,
+        tag: str | None = None,
         limit: int = 50,
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         列出 Skills
 
@@ -414,7 +414,7 @@ class SkillManager:
         self,
         skill_id: str,
         include_body: bool = False,
-    ) -> Optional[Dict[str, Any]]:
+    ) -> dict[str, Any] | None:
         """
         获取单个 Skill
 
@@ -446,10 +446,10 @@ class SkillManager:
     def search(
         self,
         query: str,
-        category: Optional[str] = None,
-        tags: Optional[List[str]] = None,
+        category: str | None = None,
+        tags: list[str] | None = None,
         limit: int = 20,
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         全文搜索 Skills
 
@@ -486,7 +486,7 @@ class SkillManager:
                 results.append({**info, "skill_id": sid})
 
         # 相关度排序：完全匹配 > 名称包含 > 描述包含
-        def score(x: Dict[str, Any]) -> int:
+        def score(x: dict[str, Any]) -> int:
             s = 0
             full = f"{x.get('name', '')} {x.get('description', '')}".lower()
             for term in query_terms:
@@ -518,7 +518,7 @@ class SkillManager:
             s = s[:48].rstrip("-")
         return s
 
-    def _find_skill_path(self, skill_id: str) -> Optional[Path]:
+    def _find_skill_path(self, skill_id: str) -> Path | None:
         """在所有 category 中查找 skill_id 对应的 SKILL.md 路径"""
         for cat in self.CATEGORIES:
             path = self.skills_dir / cat / skill_id / "SKILL.md"
@@ -646,9 +646,7 @@ class SkillManager:
             return True
         if had_user_correction:
             return True
-        if is_nontrivial_workflow:
-            return True
-        return False
+        return bool(is_nontrivial_workflow)
 
     @staticmethod
     def build_skill_from_execution(
@@ -656,9 +654,9 @@ class SkillManager:
         task_description: str,
         workflow_name: str,
         final_result: str,
-        key_steps: Optional[List[str]] = None,
-        error_context: Optional[str] = None,
-    ) -> Dict[str, Any]:
+        key_steps: list[str] | None = None,
+        error_context: str | None = None,
+    ) -> dict[str, Any]:
         """
         从一次执行构建 Skill 草稿
 
@@ -692,7 +690,7 @@ class SkillManager:
             category = "debugging"
         elif workflow_name in {"build", "refactor", "test"}:
             category = "workflow"
-        elif had_user_correction := bool(error_context):
+        elif bool(error_context):
             category = "corrections"
         else:
             category = "workflow"
@@ -750,7 +748,7 @@ class SkillManager:
             "name": name,
             "body": "\n".join(body_lines),
             "category": category,
-            "tags": [workflow_name, agent_name] + triggers[:3],
+            "tags": [workflow_name, agent_name, *triggers[:3]],
             "triggers": triggers[:5],
             "description": task_description[:120].strip(),
         }

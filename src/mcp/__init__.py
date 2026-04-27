@@ -16,22 +16,23 @@ __version__ = "1.0.0"
 
 # Try importing MCP SDK (Python 3.10+), falls back to native impl
 try:
+    from mcp.types import Resource, TextContent, Tool  # noqa: F401
+
     from mcp.server import Server  # noqa: F401
-    from mcp.types import Tool, Resource, TextContent  # noqa: F401
 
     MCP_SDK_AVAILABLE = True
-except Exception:  # noqa: BLE001
+except Exception:
     MCP_SDK_AVAILABLE = False
 
+from .resources import MCP_RESOURCES, get_mcp_resources
 from .server import McpServer
-from .tools import get_mcp_tools, MCP_TOOLS
-from .resources import get_mcp_resources, MCP_RESOURCES
+from .tools import MCP_TOOLS, get_mcp_tools
 
 __all__ = [
-    "McpServer",
-    "get_mcp_tools",
-    "get_mcp_resources",
-    "MCP_TOOLS",
     "MCP_RESOURCES",
     "MCP_SDK_AVAILABLE",
+    "MCP_TOOLS",
+    "McpServer",
+    "get_mcp_resources",
+    "get_mcp_tools",
 ]

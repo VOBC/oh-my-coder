@@ -11,7 +11,6 @@ Wiki Parser - Python AST 解析器
 import ast
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import List, Optional, Union
 
 
 @dataclass
@@ -19,10 +18,10 @@ class FunctionInfo:
     """函数信息"""
 
     name: str
-    docstring: Optional[str] = None
-    args: List[str] = field(default_factory=list)
-    returns: Optional[str] = None
-    decorators: List[str] = field(default_factory=list)
+    docstring: str | None = None
+    args: list[str] = field(default_factory=list)
+    returns: str | None = None
+    decorators: list[str] = field(default_factory=list)
     lineno: int = 0
 
     @property
@@ -37,10 +36,10 @@ class ClassInfo:
     """类信息"""
 
     name: str
-    docstring: Optional[str] = None
-    base_classes: List[str] = field(default_factory=list)
+    docstring: str | None = None
+    base_classes: list[str] = field(default_factory=list)
     methods: list[FunctionInfo] = field(default_factory=list)
-    attributes: List[str] = field(default_factory=list)
+    attributes: list[str] = field(default_factory=list)
     lineno: int = 0
 
     @property
@@ -59,8 +58,8 @@ class ImportInfo:
     """导入信息"""
 
     module: str
-    names: List[str] = field(default_factory=list)
-    alias: Optional[str] = None
+    names: list[str] = field(default_factory=list)
+    alias: str | None = None
 
 
 @dataclass
@@ -69,7 +68,7 @@ class ModuleInfo:
 
     path: Path
     relative_path: Path
-    docstring: Optional[str] = None
+    docstring: str | None = None
     imports: list[ImportInfo] = field(default_factory=list)
     classes: list[ClassInfo] = field(default_factory=list)
     functions: list[FunctionInfo] = field(default_factory=list)
@@ -87,7 +86,7 @@ class ASTVisitorWithParent(ast.NodeVisitor):
         super().visit(node)
         self.parent_stack.pop()
 
-    def get_parent(self, node: ast.AST) -> Optional[ast.AST]:
+    def get_parent(self, node: ast.AST) -> ast.AST | None:
         """获取父节点"""
         if len(self.parent_stack) > 1:
             return self.parent_stack[-2]
@@ -123,7 +122,7 @@ class PythonParser:
         "conftest.py",
     }
 
-    def __init__(self, root_path: Union[Path, str]):
+    def __init__(self, root_path: Path | str):
         """
         初始化解析器
 
@@ -147,7 +146,7 @@ class PythonParser:
         visitor = ParentAdder()
         visitor.visit(tree)
 
-    def parse_file(self, file_path: Union[Path, str]) -> Optional[ModuleInfo]:
+    def parse_file(self, file_path: Path | str) -> ModuleInfo | None:
         """
         解析单个 Python 文件
 
@@ -200,7 +199,7 @@ class PythonParser:
             return None
 
     def _visit_import(
-        self, module: ModuleInfo, node: Union[ast.Import, ast.ImportFrom]
+        self, module: ModuleInfo, node: ast.Import | ast.ImportFrom
     ):
         """访问导入语句"""
         if isinstance(node, ast.Import):
@@ -221,7 +220,7 @@ class PythonParser:
                 )
             )
 
-    def _visit_class(self, node: ast.ClassDef) -> Optional[ClassInfo]:
+    def _visit_class(self, node: ast.ClassDef) -> ClassInfo | None:
         """访问类定义"""
         # 获取基类
         base_classes = []
@@ -254,12 +253,11 @@ class PythonParser:
             lineno=node.lineno or 0,
         )
 
-    def _visit_function(self, node: ast.FunctionDef) -> Optional[FunctionInfo]:
+    def _visit_function(self, node: ast.FunctionDef) -> FunctionInfo | None:
         """访问函数定义"""
         # 获取参数
         args = []
-        for arg in node.args.args:
-            args.append(arg.arg)
+        args.extend([arg.arg for arg in node.args.args])
 
         # 获取装饰器
         decorators = []
@@ -301,9 +299,9 @@ class PythonParser:
 
     def scan_directory(
         self,
-        directory: Union[Path, str],
+        directory: Path | str,
         pattern: str = "**/*.py",
-    ) -> List[ModuleInfo]:
+    ) -> list[ModuleInfo]:
         """
         扫描目录下的所有 Python 文件
 

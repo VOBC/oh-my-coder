@@ -21,7 +21,6 @@ import os
 import re
 import subprocess
 from pathlib import Path
-from typing import Dict, List, Optional
 
 import typer
 from rich.console import Console
@@ -45,7 +44,7 @@ class Command:
         self.frontmatter = self._parse_frontmatter()
         self.script = self._extract_script()
 
-    def _parse_frontmatter(self) -> Dict[str, str]:
+    def _parse_frontmatter(self) -> dict[str, str]:
         """解析 YAML frontmatter"""
         frontmatter = {}
 
@@ -81,7 +80,7 @@ class Command:
     def usage(self) -> str:
         return self.frontmatter.get("usage", f"omc cmd {self.name}")
 
-    def render_usage(self, args: List[str]) -> str:
+    def render_usage(self, args: list[str]) -> str:
         """渲染命令脚本，支持变量替换"""
         script = self.script
 
@@ -107,7 +106,7 @@ class Command:
         return script
 
 
-def load_commands() -> Dict[str, Command]:
+def load_commands() -> dict[str, Command]:
     """加载所有命令"""
     commands = {}
 
@@ -201,7 +200,7 @@ echo "清理完成!"
 @app.command()
 def run(
     name: str = typer.Argument(..., help="命令名称"),
-    args: Optional[List[str]] = typer.Argument(None, help="命令参数"),
+    args: list[str] | None = typer.Argument(None, help="命令参数"),
     dry_run: bool = typer.Option(False, "--dry-run", help="仅显示将要执行的命令"),
 ):
     if args is None:
@@ -297,7 +296,7 @@ def create_command(
 
     content = f"""---
 name: {name}
-description: {description or '自定义命令'}
+description: {description or "自定义命令"}
 usage: omc cmd run {name} <参数>
 ---
 #!/omc-command

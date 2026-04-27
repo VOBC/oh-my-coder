@@ -25,7 +25,6 @@ from __future__ import annotations
 import time
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import List, Optional
 
 import httpx
 
@@ -34,7 +33,6 @@ from src.core.local_model_discovery import (
     is_ollama_running,
 )
 from src.models.ollama import OLLAMA_DEFAULT_URL
-
 
 # ---------------------------------------------------------------------------
 # Data models
@@ -56,11 +54,11 @@ class OllamaHealthStatus:
     """
 
     running: bool = False
-    version: Optional[str] = None
+    version: str | None = None
     model_count: int = 0
-    available_models: List[str] = field(default_factory=list)
+    available_models: list[str] = field(default_factory=list)
     latency_ms: float = 0.0
-    last_check_time: Optional[datetime] = field(default_factory=None)
+    last_check_time: datetime | None = field(default_factory=None)
 
     def to_dict(self) -> dict:
         """导出为字典，便于序列化或日志记录"""
@@ -138,11 +136,11 @@ class OllamaHealthChecker:
         self.read_timeout = read_timeout
 
         # 缓存
-        self._cached_status: Optional[OllamaHealthStatus] = None
+        self._cached_status: OllamaHealthStatus | None = None
         self._cache_timestamp: float = 0.0
 
         # httpx client 复用
-        self._client: Optional[httpx.Client] = None
+        self._client: httpx.Client | None = None
 
     # -----------------------------------------------------------------------
     # Public API
@@ -242,7 +240,7 @@ class OllamaHealthChecker:
             last_check_time=datetime.now(),
         )
 
-    def _fetch_version(self) -> Optional[str]:
+    def _fetch_version(self) -> str | None:
         """
         获取 Ollama 版本号
 
@@ -280,7 +278,7 @@ class OllamaHealthChecker:
             self._client.close()
             self._client = None
 
-    def __enter__(self) -> "OllamaHealthChecker":
+    def __enter__(self) -> OllamaHealthChecker:
         return self
 
     def __exit__(self, *args: object) -> None:

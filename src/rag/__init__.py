@@ -8,11 +8,11 @@ RAG 模块 - 代码库索引和语义搜索
 """
 
 from .indexer import CodebaseIndexer, IndexConfig
-from .search import SemanticSearch, SearchResult
+from .search import SearchResult, SemanticSearch
 
 __all__ = [
     "CodebaseIndexer",
     "IndexConfig",
-    "SemanticSearch",
     "SearchResult",
+    "SemanticSearch",
 ]

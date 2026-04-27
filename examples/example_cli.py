@@ -48,14 +48,14 @@ pm/
 # 示例：生成的 CLI 命令
 # ============================================================
 
-import typer
-from typing import Optional
-from pathlib import Path
+import json
+from datetime import datetime
 from enum import Enum
+from pathlib import Path
+
+import typer
 from rich.console import Console
 from rich.table import Table
-from datetime import datetime
-import json
 
 app = typer.Typer(
     name="pm",
@@ -361,7 +361,7 @@ class Project:
 
     id: int
     name: str
-    description: Optional[str]
+    description: str | None
     created_at: datetime
     updated_at: datetime
 
@@ -375,9 +375,9 @@ class Task:
     name: str
     status: str  # todo, doing, done
     priority: str  # high, medium, low
-    due_date: Optional[datetime]
+    due_date: datetime | None
     created_at: datetime
-    completed_at: Optional[datetime]
+    completed_at: datetime | None
 
 
 # ============================================================
@@ -385,9 +385,8 @@ class Task:
 # ============================================================
 
 import sqlite3
-from pathlib import Path
-from typing import List, Optional
 from datetime import datetime
+from pathlib import Path
 
 
 class Database:
@@ -443,14 +442,14 @@ class Database:
         self.conn.commit()
         return self.get_project(cursor.lastrowid)
 
-    def get_project(self, project_id: int) -> Optional[dict]:
+    def get_project(self, project_id: int) -> dict | None:
         """获取项目"""
         row = self.conn.execute(
             "SELECT * FROM projects WHERE id = ?", (project_id,)
         ).fetchone()
         return dict(row) if row else None
 
-    def get_all_projects(self) -> List[dict]:
+    def get_all_projects(self) -> list[dict]:
         """获取所有项目"""
         rows = self.conn.execute(
             "SELECT * FROM projects ORDER BY created_at DESC"
@@ -465,7 +464,7 @@ class Database:
         )
         self.conn.commit()
 
-    def get_current_project(self) -> Optional[int]:
+    def get_current_project(self) -> int | None:
         """获取当前项目ID"""
         row = self.conn.execute(
             "SELECT project_id FROM current_project WHERE id = 1"
@@ -488,14 +487,14 @@ class Database:
         self.conn.commit()
         return self.get_task(cursor.lastrowid)
 
-    def get_task(self, task_id: int) -> Optional[dict]:
+    def get_task(self, task_id: int) -> dict | None:
         """获取任务"""
         row = self.conn.execute(
             "SELECT * FROM tasks WHERE id = ?", (task_id,)
         ).fetchone()
         return dict(row) if row else None
 
-    def get_tasks(self, project_id: int, status: str = None) -> List[dict]:
+    def get_tasks(self, project_id: int, status: str = None) -> list[dict]:
         """获取项目任务"""
         if status:
             rows = self.conn.execute(
@@ -509,7 +508,7 @@ class Database:
             ).fetchall()
         return [dict(row) for row in rows]
 
-    def update_task_status(self, task_id: int, status: str) -> Optional[dict]:
+    def update_task_status(self, task_id: int, status: str) -> dict | None:
         """更新任务状态"""
         completed_at = datetime.now() if status == "done" else None
         self.conn.execute(

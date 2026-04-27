@@ -10,7 +10,6 @@ Debugger Agent - 调试智能体
 模型层级：MEDIUM（平衡，对应 sonnet）
 """
 
-from typing import Dict, List
 
 from ..core.router import TaskType
 from .base import (
@@ -91,7 +90,7 @@ class DebuggerAgent(BaseAgent):
 """
 
     async def _run(
-        self, context: AgentContext, prompt: List[Dict[str, str]], **kwargs
+        self, context: AgentContext, prompt: list[dict[str, str]], **kwargs
     ) -> str:
         """执行调试"""
         # 添加错误信息
@@ -106,7 +105,7 @@ class DebuggerAgent(BaseAgent):
             code_parts = []
             for file_path in context.relevant_files[:5]:
                 try:
-                    with open(file_path, "r", encoding="utf-8") as f:
+                    with open(file_path, encoding="utf-8") as f:
                         content = f.read()
                         code_parts.append(
                             f"### {file_path.name}\n```\n{content[:3000]}\n```"

@@ -16,6 +16,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+
 from src.agents.base import AgentContext, AgentOutput, AgentStatus
 from src.core.orchestrator import WORKFLOW_TEMPLATES, Orchestrator
 from src.core.router import _TASK_TIER_MAPPING as TASK_TIER_MAPPING
@@ -28,7 +29,7 @@ from src.core.router import ModelRouter, RouterConfig, TaskType
 class MockModelResponse:
     """模拟模型响应"""
 
-    def __init__(self, content: str, usage: dict = None):
+    def __init__(self, content: str, usage: dict | None = None):
         self.content = content
         self.usage = usage or {
             "total_tokens": 100,
@@ -95,7 +96,7 @@ async def test_orchestrator_build_workflow():
         "verifier": create_mock_agent("verifier", "验证完成"),
     }
 
-    for name, agent in agents.items():
+    for agent in agents.values():
         orch.register_agent(agent)
 
     # 执行 build 工作流
@@ -145,7 +146,7 @@ async def test_orchestrator_workflow_result_persistence(tmp_path):
     result = await orch.execute_workflow("build", context)
 
     # 检查结果文件
-    result_file = state_dir / f"workflow_{result.workflow_id}.json"
+    state_dir / f"workflow_{result.workflow_id}.json"
     # 注：Orchestrator 的 save 方法是 _save_workflow_result，
     # 它在 finally 中调用，但如果执行失败可能不保存
     # 这里只验证 workflow_id 存在

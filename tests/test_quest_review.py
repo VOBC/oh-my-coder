@@ -25,8 +25,7 @@ class TestStepReview:
     @pytest.fixture
     def mock_store(self):
         """Mock QuestStore"""
-        store = MagicMock(spec=QuestStore)
-        return store
+        return MagicMock(spec=QuestStore)
 
     def test_pending_review_status_exists(self):
         """验证 PENDING_REVIEW 状态已定义"""

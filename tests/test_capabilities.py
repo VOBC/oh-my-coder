@@ -165,7 +165,7 @@ class TestCapabilityPackageManager:
                 version=f"1.0.{i}",
                 description=f"Package {i}",
                 author="tester",
-                created_at=f"2024-01-0{i+1}T00:00:00",
+                created_at=f"2024-01-0{i + 1}T00:00:00",
             )
             manager.save_package(package)
 
@@ -347,7 +347,7 @@ class TestCapabilityPackageIntegration:
 
         # 读取 JSON 文件验证格式
         json_path = tmp_path / "caps" / "json-test.json"
-        with open(json_path, "r", encoding="utf-8") as f:
+        with open(json_path, encoding="utf-8") as f:
             data = json.load(f)
 
         assert data["name"] == "json-test"

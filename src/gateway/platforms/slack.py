@@ -10,10 +10,14 @@ Slack 平台处理器
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import logging
-from typing import Any, Dict, Optional
+from typing import TYPE_CHECKING, Any
 
 from ..base import IncomingMessage, OutgoingMessage, Platform, PlatformHandler
+
+if TYPE_CHECKING:
+    from starlette.requests import Request
 
 logger = logging.getLogger(__name__)
 
@@ -51,7 +55,7 @@ class SlackHandler(PlatformHandler):
         self,
         bot_token: str,
         signing_secret: str,
-        app_token: Optional[str] = None,
+        app_token: str | None = None,
         webhook_port: int = 8080,
         **kwargs,
     ):
@@ -67,7 +71,7 @@ class SlackHandler(PlatformHandler):
         self.signing_secret = signing_secret
         self.app_token = app_token
         self.webhook_port = webhook_port
-        self._server_task: Optional[asyncio.Task[None]] = None
+        self._server_task: asyncio.Task[None] | None = None
 
     # ---- PlatformHandler 实现 ----
 
@@ -85,10 +89,8 @@ class SlackHandler(PlatformHandler):
     async def stop(self) -> None:
         if self._server_task:
             self._server_task.cancel()
-            try:
+            with contextlib.suppress(asyncio.CancelledError):
                 await self._server_task
-            except asyncio.CancelledError:
-                pass
         self._started = False
         logger.info("[slack] Handler stopped")
 
@@ -99,7 +101,7 @@ class SlackHandler(PlatformHandler):
             "Authorization": f"Bearer {self.bot_token}",
             "Content-Type": "application/json",
         }
-        payload: Dict[str, Any] = {
+        payload: dict[str, Any] = {
             "channel": message.chat_id,
             "text": message.text[:3000],  # Slack 限制
         }
@@ -120,7 +122,7 @@ class SlackHandler(PlatformHandler):
                 self.on_error(Exception(data.get("error", "unknown")))
                 return False
         except Exception as e:
-            logger.error(f"[slack] Send error: {e}")
+            logger.exception(f"[slack] Send error: {e}")
             self.on_error(e)
             return False
 
@@ -129,14 +131,12 @@ class SlackHandler(PlatformHandler):
     async def _run_webhook_server(self) -> None:
         """运行 HTTP 服务器接收 Slack 事件"""
         try:
+            import uvicorn
             from starlette.applications import Starlette
-            from starlette.requests import Request
             from starlette.responses import JSONResponse, PlainTextResponse
             from starlette.routing import Route
-
-            import uvicorn
         except Exception as e:
-            logger.error(f"[slack] Failed to start webhook server: {e}")
+            logger.exception(f"[slack] Failed to start webhook server: {e}")
             return
 
         async def eventsPOST(request: Request) -> JSONResponse:
@@ -162,7 +162,7 @@ class SlackHandler(PlatformHandler):
         server = uvicorn.Server(config)
         await server.serve()
 
-    async def _handle_event(self, body: Dict[str, Any]) -> None:
+    async def _handle_event(self, body: dict[str, Any]) -> None:
         """处理 Slack 事件"""
         # URL 验证
         if "challenge" in body:
@@ -183,7 +183,7 @@ class SlackHandler(PlatformHandler):
             if evt.get("type") == "message":
                 await self._process_message(evt)
 
-    async def _process_message(self, event: Dict[str, Any]) -> None:
+    async def _process_message(self, event: dict[str, Any]) -> None:
         """处理 Slack 消息事件"""
         # 忽略机器人自己的消息
         if event.get("subtype") == "bot_message":
@@ -216,7 +216,7 @@ class SlackHandler(PlatformHandler):
         try:
             self.on_message(incoming)
         except Exception as e:
-            logger.error(f"[slack] on_message error: {e}")
+            logger.exception(f"[slack] on_message error: {e}")
             self.on_error(e)
 
 

@@ -12,11 +12,11 @@ from __future__ import annotations
 
 import asyncio
 import uuid
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Callable, Optional
-
+from typing import Any
 
 # ─────────────────────────────────────────────────────────────
 # 数据模型
@@ -78,8 +78,8 @@ class TaskResult:
     role: str
     success: bool
     output: Any = None
-    error: Optional[str] = None
-    duration: Optional[float] = None
+    error: str | None = None
+    duration: float | None = None
     timestamp: str = ""
 
     def __post_init__(self) -> None:
@@ -132,7 +132,7 @@ class MultiAgentCoordinator:
     def __init__(self) -> None:
         self.agents: dict[str, SubAgent] = {}
         self.tasks: dict[str, list[str]] = {}  # task_id -> agent_ids
-        self._runner: Optional[AgentRunner] = None
+        self._runner: AgentRunner | None = None
         self._history: list[CoordinationResult] = []
 
     def set_runner(self, runner: AgentRunner) -> None:
@@ -320,7 +320,7 @@ class MultiAgentCoordinator:
             ),
         }
 
-    def get_agent(self, agent_id: str) -> Optional[SubAgent]:
+    def get_agent(self, agent_id: str) -> SubAgent | None:
         """获取指定 Agent"""
         return self.agents.get(agent_id)
 
@@ -362,7 +362,7 @@ class MultiAgentCoordinator:
 # ─────────────────────────────────────────────────────────────
 
 
-_coordinator: Optional[MultiAgentCoordinator] = None
+_coordinator: MultiAgentCoordinator | None = None
 
 
 def get_coordinator() -> MultiAgentCoordinator:

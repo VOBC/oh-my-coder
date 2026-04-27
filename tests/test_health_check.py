@@ -11,7 +11,6 @@ from unittest.mock import MagicMock
 
 import pytest
 
-
 sys.path.insert(0, "/Users/vobc/.qclaw/workspace-agent-bf627e2b/projects/oh-my-coder")
 
 from src.agents.health_check import (
@@ -20,7 +19,6 @@ from src.agents.health_check import (
     HealthChecker,
     format_health_display,
 )
-
 
 # ------------------------------------------------------------------
 # AgentHealth 测试
@@ -306,7 +304,7 @@ class TestHealthCheckerSummary:
 
     def test_get_summary_mixed_status(self):
         hc = HealthChecker()
-        h1 = hc.register_agent("executor-1")
+        hc.register_agent("executor-1")
         h2 = hc.register_agent("executor-2")
         h2.status = AgentStatus.FAILED
         h3 = hc.register_agent("analyst")
@@ -453,7 +451,7 @@ class TestIntegrationTimeoutReassignment:
         mock_step = MagicMock()
         mock_step.agent_name = "agent-1"
 
-        new = hc.reassign_task("agent-1", "wf-test", mock_step)
+        hc.reassign_task("agent-1", "wf-test", mock_step)
 
         log_files = list(tmp_path.glob("reassignment_*.json"))
         assert len(log_files) >= 1

@@ -13,7 +13,6 @@ from src.context import (
 )
 from src.context.browser_context import BrowserAwareness, BrowserContext
 
-
 # =============================================================================
 # WorkspaceScanner 测试
 # =============================================================================
@@ -53,7 +52,7 @@ class TestFileTreeScan:
     def test_scan_returns_root_node(self, tmp_path):
         """测试扫描返回根节点"""
         scanner = WorkspaceScanner(tmp_path)
-        root = scanner.scan(max_depth=3)  # noqa: F841
+        root = scanner.scan(max_depth=3)
         assert root.name == tmp_path.name
         assert root.is_dir
 
@@ -93,7 +92,7 @@ class TestFileTreeScan:
     def test_scan_excludes_git_dir(self, sample_project):
         """测试排除 .git 目录"""
         scanner = WorkspaceScanner(sample_project)
-        root = scanner.scan(max_depth=3)  # noqa: F841
+        root = scanner.scan(max_depth=3)
 
         names = [c.name for c in root.children]
         assert ".git" not in names
@@ -106,7 +105,7 @@ class TestFileTreeScan:
         (sample_project / "normal.txt").write_text("visible")
 
         scanner = WorkspaceScanner(sample_project)
-        root = scanner.scan(max_depth=3)  # noqa: F841
+        root = scanner.scan(max_depth=3)
 
         names = [c.name for c in root.children]
         # 所有隐藏文件都被排除（当前实现行为）
@@ -123,7 +122,7 @@ class TestFileTreeScan:
         (pycache / "module.pyc").write_text("bytecode")
 
         scanner = WorkspaceScanner(tmp_path)
-        root = scanner.scan(max_depth=3)  # noqa: F841
+        root = scanner.scan(max_depth=3)
 
         names = [c.name for c in root.children]
         assert "__pycache__" not in names
@@ -135,7 +134,7 @@ class TestFileTreeScan:
         (nm / "package.json").write_text("{}")
 
         scanner = WorkspaceScanner(tmp_path)
-        root = scanner.scan(max_depth=3)  # noqa: F841
+        root = scanner.scan(max_depth=3)
 
         names = [c.name for c in root.children]
         assert "node_modules" not in names
@@ -147,7 +146,7 @@ class TestFileTreeScan:
         (venv / "activate").write_text("activate script")
 
         scanner = WorkspaceScanner(tmp_path)
-        root = scanner.scan(max_depth=3)  # noqa: F841
+        root = scanner.scan(max_depth=3)
 
         names = [c.name for c in root.children]
         assert "venv" not in names
@@ -160,7 +159,7 @@ class TestFileTreeScan:
         (tmp_path / "code.py").write_text("print('hello')")
 
         scanner = WorkspaceScanner(tmp_path)
-        root = scanner.scan(max_depth=3)  # noqa: F841
+        root = scanner.scan(max_depth=3)
 
         names = [c.name for c in root.children]
         assert "image.png" not in names

@@ -14,11 +14,10 @@ from pathlib import Path
 
 import pytest
 
+from src.memory.learnings import LearningEntry, LearningsMemory
+from src.memory.long_term import LongTermMemory, ProjectPreference, UserPreference
 from src.memory.manager import MemoryConfig, MemoryManager
 from src.memory.short_term import ShortTermMemory
-from src.memory.long_term import LongTermMemory, ProjectPreference, UserPreference
-from src.memory.learnings import LearningEntry, LearningsMemory
-
 
 # ─────────────────────────────────────────────────────────────────
 # Fixtures

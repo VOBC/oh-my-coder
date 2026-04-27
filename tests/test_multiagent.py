@@ -5,10 +5,10 @@
 import pytest
 
 from src.multiagent.coordinator import (
+    MultiAgentCoordinator,
     SubAgent,
     SubAgentStatus,
     TaskResult,
-    MultiAgentCoordinator,
     get_coordinator,
 )
 

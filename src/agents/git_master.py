@@ -10,7 +10,6 @@ Git Master Agent - Git 操作智能体
 模型层级：MEDIUM（平衡，对应 sonnet）
 """
 
-from typing import Dict, List
 
 from ..core.router import TaskType
 from .base import (
@@ -109,7 +108,7 @@ def456 fix: 修复 Bug
 """
 
     async def _run(
-        self, context: AgentContext, prompt: List[Dict[str, str]], **kwargs
+        self, context: AgentContext, prompt: list[dict[str, str]], **kwargs
     ) -> str:
         """执行 Git 操作"""
         import subprocess

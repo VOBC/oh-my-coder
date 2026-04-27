@@ -13,7 +13,6 @@
 import re
 from dataclasses import dataclass
 from enum import Enum
-from typing import List, Optional, Tuple
 
 
 class RiskLevel(Enum):
@@ -30,7 +29,7 @@ class BlockReason:
 
     risk: RiskLevel
     reason: str
-    matched_pattern: Optional[str] = None
+    matched_pattern: str | None = None
 
 
 class BlockedCommandError(Exception):
@@ -49,7 +48,7 @@ class BlockedCommandError(Exception):
 # =============================================================================
 
 # P0 - 极高危：直接删除系统文件、破坏性操作
-CRITICAL_PATTERNS: List[Tuple[str, str]] = [
+CRITICAL_PATTERNS: list[tuple[str, str]] = [
     # 递归删除根目录
     (r"rm\s+-rf\s+/(?:\s|$|&&|;|\|)", "递归删除根目录，会清空整个系统"),
     (r"rm\s+-rf\s+/\*", "递归删除根目录所有文件"),
@@ -89,7 +88,7 @@ CRITICAL_PATTERNS: List[Tuple[str, str]] = [
 ]
 
 # P1 - 高危：可能造成数据丢失但有一定合理性
-HIGH_RISK_PATTERNS: List[Tuple[str, str]] = [
+HIGH_RISK_PATTERNS: list[tuple[str, str]] = [
     # 大范围删除
     (r"rm\s+-rf\s+/tmp", "递归删除 /tmp 目录"),
     (r"rm\s+-rf\s+/var/log", "递归删除日志目录"),
@@ -117,7 +116,7 @@ HIGH_RISK_PATTERNS: List[Tuple[str, str]] = [
 ]
 
 # P2 - 中危：需要确认的操作
-MEDIUM_RISK_PATTERNS: List[Tuple[str, str]] = [
+MEDIUM_RISK_PATTERNS: list[tuple[str, str]] = [
     # 系统配置修改
     (r"systemctl\s+stop", "停止系统服务"),
     (r"service\s+stop", "停止系统服务"),
@@ -134,7 +133,7 @@ MEDIUM_RISK_PATTERNS: List[Tuple[str, str]] = [
 ]
 
 # 需要警告但允许的操作
-WARN_PATTERNS: List[Tuple[str, str]] = [
+WARN_PATTERNS: list[tuple[str, str]] = [
     # 破坏性 Git 操作
     (r"git\s+reset\s+--hard", "硬重置 Git 工作区"),
     (r"git\s+clean\s+-fd", "清理未跟踪文件"),
@@ -254,7 +253,7 @@ class DangerousCommandBlocker:
 # 全局单例
 # =============================================================================
 
-_default_blocker: Optional[DangerousCommandBlocker] = None
+_default_blocker: DangerousCommandBlocker | None = None
 
 
 def get_blocker() -> DangerousCommandBlocker:

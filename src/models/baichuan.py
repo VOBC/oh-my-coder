@@ -13,7 +13,8 @@ API 地址：https://api.baichuan-ai.com
 
 import json
 import time
-from typing import Any, AsyncIterator, Dict, List, Optional
+from collections.abc import AsyncIterator
+from typing import Any
 
 import httpx
 
@@ -63,7 +64,7 @@ class BaichuanModel(BaseModel):
         config.cost_per_1k_completion = model_info["cost_per_1k_completion"]
 
         super().__init__(config, tier)
-        self._client: Optional[httpx.AsyncClient] = None
+        self._client: httpx.AsyncClient | None = None
 
     @property
     def provider(self) -> ModelProvider:
@@ -90,7 +91,7 @@ class BaichuanModel(BaseModel):
             await self._client.aclose()
             self._client = None
 
-    def _format_messages(self, messages: List[Message]) -> List[Dict[str, str]]:
+    def _format_messages(self, messages: list[Message]) -> list[dict[str, str]]:
         formatted = []
         for msg in messages:
             item = {"role": msg.role, "content": msg.content}
@@ -99,10 +100,10 @@ class BaichuanModel(BaseModel):
             formatted.append(item)
         return formatted
 
-    async def generate(self, messages: List[Message], **kwargs) -> ModelResponse:
+    async def generate(self, messages: list[Message], **kwargs) -> ModelResponse:
         client = await self._get_client()
 
-        request_body: Dict[str, Any] = {
+        request_body: dict[str, Any] = {
             "model": self.model_name,
             "messages": self._format_messages(messages),
             "max_tokens": kwargs.get("max_tokens", self.config.max_tokens),
@@ -150,10 +151,10 @@ class BaichuanModel(BaseModel):
         except httpx.RequestError as e:
             raise BaichuanAPIError(f"网络请求失败: {e}")
 
-    async def stream(self, messages: List[Message], **kwargs) -> AsyncIterator[str]:
+    async def stream(self, messages: list[Message], **kwargs) -> AsyncIterator[str]:
         client = await self._get_client()
 
-        request_body: Dict[str, Any] = {
+        request_body: dict[str, Any] = {
             "model": self.model_name,
             "messages": self._format_messages(messages),
             "max_tokens": kwargs.get("max_tokens", self.config.max_tokens),
@@ -190,5 +191,3 @@ class BaichuanModel(BaseModel):
 
 class BaichuanAPIError(Exception):
     """百川智能 API 错误"""
-
-    pass

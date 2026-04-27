@@ -11,7 +11,6 @@ API: https://api.minimax.chat
 """
 
 import time
-from typing import Dict, List, Optional
 
 import httpx
 
@@ -66,7 +65,7 @@ class MiniMaxModel(BaseModel):
         config.cost_per_1k_completion = model_info["cost_per_1k_completion"]
 
         super().__init__(config, tier)
-        self._client: Optional[httpx.AsyncClient] = None
+        self._client: httpx.AsyncClient | None = None
 
     @property
     def provider(self) -> ModelProvider:
@@ -93,16 +92,16 @@ class MiniMaxModel(BaseModel):
             await self._client.aclose()
             self._client = None
 
-    def _format_messages(self, messages: List[Message]) -> List[Dict[str, str]]:
+    def _format_messages(self, messages: list[Message]) -> list[dict[str, str]]:
         formatted = []
         for msg in messages:
-            item: Dict[str, str] = {"role": msg.role, "content": msg.content}
+            item: dict[str, str] = {"role": msg.role, "content": msg.content}
             if msg.name:
                 item["name"] = msg.name
             formatted.append(item)
         return formatted
 
-    async def generate(self, messages: List[Message], **kwargs) -> ModelResponse:
+    async def generate(self, messages: list[Message], **kwargs) -> ModelResponse:
         client = await self._get_client()
 
         request_body = {
@@ -152,5 +151,3 @@ class MiniMaxModel(BaseModel):
 
 class MiniMaxAPIError(Exception):
     """MiniMax API 错误"""
-
-    pass

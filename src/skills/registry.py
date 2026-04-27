@@ -13,10 +13,11 @@ from __future__ import annotations
 import importlib.util
 import logging
 import sys
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any
 
 from rich.console import Console
 from rich.table import Table
@@ -34,9 +35,9 @@ class Skill:
 
     name: str
     description: str
-    func: Callable[[str, Dict[str, Any]], SkillResult]
+    func: Callable[[str, dict[str, Any]], SkillResult]
     source: str = "builtin"  # builtin | custom
-    file_path: Optional[Path] = None
+    file_path: Path | None = None
 
     def __post_init__(self) -> None:
         # 自动从函数 docstring 填充 description
@@ -52,10 +53,10 @@ class SkillResult:
     success: bool
     output: str = ""
     error: str = ""
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
     duration_ms: float = 0.0
 
-    def as_dict(self) -> Dict[str, Any]:
+    def as_dict(self) -> dict[str, Any]:
         return {
             "success": self.success,
             "output": self.output,
@@ -68,14 +69,14 @@ class SkillResult:
 # ─── 内置 Skill 实现 ─────────────────────────────────────────────────────────
 
 
-def _review_skill(code: str, context: Dict[str, Any]) -> SkillResult:
+def _review_skill(code: str, context: dict[str, Any]) -> SkillResult:
     """代码审查 Skill"""
     import time
 
     start = time.perf_counter()
     lines = code.splitlines()
-    issues: List[str] = []
-    suggestions: List[str] = []
+    issues: list[str] = []
+    suggestions: list[str] = []
 
     # 基础代码质量检查
     for i, line in enumerate(lines, 1):
@@ -96,7 +97,7 @@ def _review_skill(code: str, context: Dict[str, Any]) -> SkillResult:
             issues.append(f"L{i}: subprocess shell=True 可能导致命令注入")
 
     # 检测重复代码块（简化版）
-    line_hashes: Dict[str, List[int]] = {}
+    line_hashes: dict[str, list[int]] = {}
     for i, line in enumerate(lines, 1):
         h = hash(line.strip())
         if h in line_hashes:
@@ -105,8 +106,12 @@ def _review_skill(code: str, context: Dict[str, Any]) -> SkillResult:
             line_hashes[h] = [i]
 
     duplicates = {h: idx for h, idx in line_hashes.items() if len(idx) >= 3}
-    for _h, idx_list in duplicates.items():
-        suggestions.append(f"连续相似行 L{idx_list[0]}-{idx_list[-1]}: 考虑提取为函数")
+    suggestions.extend(
+        [
+            f"连续相似行 L{idx_list[0]}-{idx_list[-1]}: 考虑提取为函数"
+            for idx_list in duplicates.values()
+        ]
+    )
 
     suggestions.append(f"代码总行数: {len(lines)}")
     suggestions.append(f"审查时间: {(time.perf_counter() - start) * 1000:.1f}ms")
@@ -119,23 +124,23 @@ def _review_skill(code: str, context: Dict[str, Any]) -> SkillResult:
     )
 
 
-def _test_skill(code: str, context: Dict[str, Any]) -> SkillResult:
+def _test_skill(code: str, context: dict[str, Any]) -> SkillResult:
     """测试生成 Skill"""
     import time
 
     start = time.perf_counter()
-    test_cases: List[str] = []
+    test_cases: list[str] = []
     lines = code.splitlines()
-    functions: List[str] = []
+    functions: list[str] = []
 
     # 检测函数定义
-    for i, line in enumerate(lines, 1):
+    for _i, line in enumerate(lines, 1):
         stripped = line.strip()
-        if stripped.startswith("def test_") or stripped.startswith("async def test_"):
+        if stripped.startswith(("def test_", "async def test_")):
             functions.append(stripped)
-        elif (
-            stripped.startswith("def ") or stripped.startswith("async def ")
-        ) and not stripped.startswith("def __"):
+        elif (stripped.startswith(("def ", "async def "))) and not stripped.startswith(
+            "def __"
+        ):
             # 提取函数名
             import re
 
@@ -173,15 +178,15 @@ def _test_skill(code: str, context: Dict[str, Any]) -> SkillResult:
     )
 
 
-def _doc_skill(code: str, context: Dict[str, Any]) -> SkillResult:
+def _doc_skill(code: str, context: dict[str, Any]) -> SkillResult:
     """文档生成 Skill"""
     import time
 
     start = time.perf_counter()
     lines = code.splitlines()
-    doc_parts: List[str] = []
+    doc_parts: list[str] = []
     in_docstring = False
-    current_doc: List[str] = []
+    current_doc: list[str] = []
     module_name = context.get("module_name", "module")
     file_path = context.get("file_path", "")
 
@@ -191,7 +196,7 @@ def _doc_skill(code: str, context: Dict[str, Any]) -> SkillResult:
     # 收集 docstring
     for i, line in enumerate(lines, 1):
         stripped = line.strip()
-        if stripped.startswith('"""') or stripped.startswith("'''"):
+        if stripped.startswith(('"""', "'''")):
             if not in_docstring:
                 in_docstring = True
                 current_doc = []
@@ -206,12 +211,12 @@ def _doc_skill(code: str, context: Dict[str, Any]) -> SkillResult:
             current_doc.append(f"{i}: {stripped}")
 
     # 收集函数签名
-    funcs: List[str] = []
-    for i, line in enumerate(lines, 1):
+    funcs: list[str] = []
+    for _i, line in enumerate(lines, 1):
         stripped = line.strip()
-        if (
-            stripped.startswith("def ") or stripped.startswith("async def ")
-        ) and not stripped.startswith("def _"):
+        if (stripped.startswith(("def ", "async def "))) and not stripped.startswith(
+            "def _"
+        ):
             import re
 
             m = re.match(r"(async\s+)?def\s+(\w+)\((.*?)\)", stripped)
@@ -244,8 +249,8 @@ class SkillRegistry:
     """Skill 注册和管理中心"""
 
     def __init__(self) -> None:
-        self._skills: Dict[str, Skill] = {}
-        self._custom_skills_dir: Optional[Path] = None
+        self._skills: dict[str, Skill] = {}
+        self._custom_skills_dir: Path | None = None
         self._loaded_custom: bool = False
         self._init_builtins()
 
@@ -285,18 +290,18 @@ class SkillRegistry:
             return True
         return False
 
-    def get(self, name: str) -> Optional[Skill]:
+    def get(self, name: str) -> Skill | None:
         """获取 Skill"""
         return self._skills.get(name)
 
-    def list_all(self) -> List[Skill]:
+    def list_all(self) -> list[Skill]:
         """列出所有 Skill（内置优先）"""
         return list(self._skills.values())
 
-    def list_builtin(self) -> List[Skill]:
+    def list_builtin(self) -> list[Skill]:
         return [s for s in self._skills.values() if s.source == "builtin"]
 
-    def list_custom(self) -> List[Skill]:
+    def list_custom(self) -> list[Skill]:
         return [s for s in self._skills.values() if s.source == "custom"]
 
     # ─── 加载自定义 Skill ────────────────────────────────────────────────────
@@ -368,7 +373,7 @@ class SkillRegistry:
     # ─── 执行 ────────────────────────────────────────────────────────────────
 
     def run(
-        self, name: str, code: str = "", context: Optional[Dict[str, Any]] = None
+        self, name: str, code: str = "", context: dict[str, Any] | None = None
     ) -> SkillResult:
         """执行指定 Skill"""
         # 确保自定义 Skill 已加载
@@ -384,17 +389,16 @@ class SkillRegistry:
 
         ctx = context or {}
         try:
-            result = skill.func(code, ctx)
-            return result
+            return skill.func(code, ctx)
         except Exception as exc:
-            logger.error("Skill %s failed: %s", name, exc)
+            logger.exception("Skill %s failed: %s", name, exc)
             return SkillResult(
                 success=False,
                 error=f"{type(exc).__name__}: {exc}",
             )
 
     def run_interactive(
-        self, skill_name: str, code: str = "", context: Optional[Dict[str, Any]] = None
+        self, skill_name: str, code: str = "", context: dict[str, Any] | None = None
     ) -> SkillResult:
         """交互模式执行 Skill（支持 /name 语法）"""
         # 去掉开头的 /
@@ -421,7 +425,7 @@ class SkillRegistry:
 
 
 # ─── 全局单例 ────────────────────────────────────────────────────────────────
-_default_registry: Optional[SkillRegistry] = None
+_default_registry: SkillRegistry | None = None
 
 
 def get_registry() -> SkillRegistry:

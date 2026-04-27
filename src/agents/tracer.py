@@ -11,7 +11,6 @@ Tracer Agent - 因果追踪智能体
 """
 
 from dataclasses import dataclass
-from typing import Dict, List
 
 from ..core.router import TaskType
 from .base import (
@@ -29,8 +28,8 @@ class Hypothesis:
     """假设"""
 
     description: str
-    evidence_for: List[str]
-    evidence_against: List[str]
+    evidence_for: list[str]
+    evidence_against: list[str]
     confidence: float  # 0-1
 
 
@@ -114,7 +113,7 @@ class TracerAgent(BaseAgent):
 """
 
     async def _run(
-        self, context: AgentContext, prompt: List[Dict[str, str]], **kwargs
+        self, context: AgentContext, prompt: list[dict[str, str]], **kwargs
     ) -> str:
         """执行因果追踪"""
         # 添加错误信息
@@ -129,7 +128,7 @@ class TracerAgent(BaseAgent):
             code_parts = []
             for file_path in context.relevant_files[:5]:
                 try:
-                    with open(file_path, "r", encoding="utf-8") as f:
+                    with open(file_path, encoding="utf-8") as f:
                         content = f.read()
                         code_parts.append(
                             f"### {file_path.name}\n```\n{content[:2000]}\n```"

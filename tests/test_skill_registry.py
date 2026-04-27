@@ -2,10 +2,9 @@
 
 import tempfile
 from pathlib import Path
-from typing import Dict, Any
+from typing import Any
 
-
-from src.skills import SkillRegistry, Skill, SkillResult
+from src.skills import Skill, SkillRegistry, SkillResult
 
 
 class TestSkillResult:
@@ -34,7 +33,7 @@ class TestSkill:
     """Skill 数据结构测试"""
 
     def test_basic_skill(self):
-        def dummy(code: str, ctx: Dict[str, Any]) -> SkillResult:
+        def dummy(code: str, ctx: dict[str, Any]) -> SkillResult:
             return SkillResult(success=True, output="ok")
 
         skill = Skill(name="dummy", description="A test skill", func=dummy)
@@ -44,7 +43,7 @@ class TestSkill:
     def test_auto_description_from_docstring(self):
         """描述为空时，自动从函数 docstring 提取"""
 
-        def my_skill(code: str, ctx: Dict[str, Any]) -> SkillResult:
+        def my_skill(code: str, ctx: dict[str, Any]) -> SkillResult:
             """This is the auto description."""
             return SkillResult(success=True)
 
@@ -85,7 +84,7 @@ class TestSkillRegistryBuiltins:
         assert len(self.registry.list_builtin()) == 2
 
     def test_register_custom_skill(self):
-        def my_func(code: str, ctx: Dict[str, Any]) -> SkillResult:
+        def my_func(code: str, ctx: dict[str, Any]) -> SkillResult:
             return SkillResult(success=True, output="custom")
 
         custom = Skill(

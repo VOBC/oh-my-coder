@@ -13,7 +13,6 @@
 import asyncio
 import os
 from dataclasses import dataclass, field
-from typing import List
 
 
 @dataclass
@@ -27,7 +26,7 @@ class BrowserContext:
     title: str = ""
     url: str = ""
     content: str = ""  # 页面内容摘要
-    links: List[str] = field(default_factory=list)
+    links: list[str] = field(default_factory=list)
     timestamp: str = ""
     available: bool = False  # 浏览器是否可用
 
@@ -107,9 +106,9 @@ class BrowserAwareness:
         try:
             if self._browser_type == "playwright":
                 return await self._get_current_tab_playwright()
-            elif self._browser_type == "selenium":
+            if self._browser_type == "selenium":
                 return await self._get_current_tab_selenium()
-            elif self._browser_type == "openclaw":
+            if self._browser_type == "openclaw":
                 return await self._get_current_tab_openclaw()
         except Exception as e:
             return BrowserContext(

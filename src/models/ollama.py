@@ -21,7 +21,8 @@ Ollama 本地模型适配器
 import json
 import subprocess
 import time
-from typing import Any, AsyncIterator, Dict, List, Optional
+from collections.abc import AsyncIterator
+from typing import Any
 
 import httpx
 
@@ -33,7 +34,6 @@ from .base import (
     ModelTier,
     Usage,
 )
-
 
 # Ollama 默认配置
 OLLAMA_DEFAULT_URL = "http://localhost:11434"
@@ -68,7 +68,7 @@ OLLAMA_MODELS = {
 }
 
 # 模型到层级映射（动态生成）
-_MODEL_TIER_MAP: Dict[str, ModelTier] = {}
+_MODEL_TIER_MAP: dict[str, ModelTier] = {}
 for tier, models in OLLAMA_MODELS.items():
     for m in models:
         _MODEL_TIER_MAP[m["name"]] = tier
@@ -106,7 +106,7 @@ class OllamaModel(BaseModel):
 
         self.model_name = model_name
         self.base_url = config.base_url.rstrip("/")
-        self._client: Optional[httpx.AsyncClient] = None
+        self._client: httpx.AsyncClient | None = None
 
         # 推断 tier
         if model_name in _MODEL_TIER_MAP:
@@ -122,7 +122,7 @@ class OllamaModel(BaseModel):
 
     async def _generate(
         self,
-        messages: List[Message],
+        messages: list[Message],
         stream: bool = False,
         **kwargs,
     ) -> ModelResponse:
@@ -205,7 +205,7 @@ class OllamaModel(BaseModel):
 
     async def _generate_stream(
         self,
-        messages: List[Message],
+        messages: list[Message],
         **kwargs,
     ) -> AsyncIterator[str]:
         """流式生成响应"""
@@ -248,7 +248,7 @@ class OllamaModel(BaseModel):
 
     async def complete(
         self,
-        messages: List[Message],
+        messages: list[Message],
         **kwargs,
     ) -> ModelResponse:
         """完成对话（非流式）"""
@@ -256,7 +256,7 @@ class OllamaModel(BaseModel):
 
     async def stream(
         self,
-        messages: List[Message],
+        messages: list[Message],
         **kwargs,
     ) -> AsyncIterator[str]:
         """流式完成对话"""
@@ -283,7 +283,7 @@ class OllamaModel(BaseModel):
             return False
 
     @staticmethod
-    def list_models(base_url: str = OLLAMA_DEFAULT_URL) -> List[Dict[str, Any]]:
+    def list_models(base_url: str = OLLAMA_DEFAULT_URL) -> list[dict[str, Any]]:
         """
         列出本地可用的 Ollama 模型
 
@@ -342,7 +342,7 @@ OLLAMA_PROVIDER = "ollama"
 def create_ollama_model(
     model_name: str = "qwen2:7b",
     base_url: str = OLLAMA_DEFAULT_URL,
-    tier: Optional[ModelTier] = None,
+    tier: ModelTier | None = None,
 ) -> OllamaModel:
     """
     创建 Ollama 模型实例的便捷函数

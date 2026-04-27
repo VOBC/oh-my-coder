@@ -18,7 +18,6 @@ from __future__ import annotations
 import subprocess
 from enum import Enum
 from pathlib import Path
-from typing import Optional
 
 import typer
 from rich.console import Console
@@ -124,7 +123,7 @@ class TUISession:
 
     def __init__(self):
         self.state = State.MAIN
-        self.selected_workflow: Optional[str] = None
+        self.selected_workflow: str | None = None
         self.selected_model: str = "deepseek"
         self.task_input: str = ""
         self.cursor: int = 0
@@ -134,15 +133,15 @@ class TUISession:
         """渲染当前状态"""
         if self.state == State.MAIN:
             return self._render_main()
-        elif self.state == State.WORKFLOW:
+        if self.state == State.WORKFLOW:
             return self._render_workflow()
-        elif self.state == State.MODEL:
+        if self.state == State.MODEL:
             return self._render_model()
-        elif self.state == State.AGENTS:
+        if self.state == State.AGENTS:
             return self._render_agents()
-        elif self.state == State.TASK:
+        if self.state == State.TASK:
             return self._render_task()
-        elif self.state == State.CONFIRM:
+        if self.state == State.CONFIRM:
             return self._render_confirm()
         return Panel("Unknown state")
 
@@ -155,7 +154,7 @@ class TUISession:
         for i, (key, desc, _) in enumerate(WORKFLOWS):
             marker = "▶ " if i == self.cursor else "  "
             style = "cyan bold" if i == self.cursor else "white"
-            content.append(f"{marker}[{i+1}] {key:<12}", style=style)
+            content.append(f"{marker}[{i + 1}] {key:<12}", style=style)
             content.append(f" {desc}\n", style="dim")
 
         content.append("\n[快捷键] ", style="dim")
@@ -284,15 +283,15 @@ class TUISession:
 
         if self.state == State.MAIN:
             return self._handle_main(key)
-        elif self.state == State.WORKFLOW:
+        if self.state == State.WORKFLOW:
             return self._handle_workflow(key)
-        elif self.state == State.MODEL:
+        if self.state == State.MODEL:
             return self._handle_model(key)
-        elif self.state == State.AGENTS:
+        if self.state == State.AGENTS:
             return self._handle_agents(key)
-        elif self.state == State.TASK:
+        if self.state == State.TASK:
             return self._handle_task(key)
-        elif self.state == State.CONFIRM:
+        if self.state == State.CONFIRM:
             return self._handle_confirm(key)
 
         return True
@@ -450,7 +449,7 @@ class TUISession:
         if key.lower() == "y":
             self._execute_task()
             return False
-        elif key.lower() == "n":
+        if key.lower() == "n":
             self.state = State.TASK
         elif key in ["escape", "ctrl+c"]:
             self.state = State.MAIN
@@ -468,9 +467,9 @@ class TUISession:
 
 @app.command()
 def start(
-    task: Optional[str] = typer.Argument(None, help="任务描述（可选）"),
-    workflow: Optional[str] = typer.Option(None, "--workflow", "-w", help="指定工作流"),
-    model: Optional[str] = typer.Option(None, "--model", "-m", help="指定模型"),
+    task: str | None = typer.Argument(None, help="任务描述（可选）"),
+    workflow: str | None = typer.Option(None, "--workflow", "-w", help="指定工作流"),
+    model: str | None = typer.Option(None, "--model", "-m", help="指定模型"),
 ):
     """启动 TUI 交互界面"""
     session = TUISession()
@@ -492,8 +491,7 @@ def start(
     # 交互式 TUI
     console.print(
         Panel.fit(
-            "[bold cyan]🤖 Oh My Coder TUI[/bold cyan]\n"
-            "[dim]键盘驱动的交互界面[/dim]",
+            "[bold cyan]🤖 Oh My Coder TUI[/bold cyan]\n[dim]键盘驱动的交互界面[/dim]",
             border_style="cyan",
         )
     )
@@ -559,7 +557,7 @@ def list_models():
     table.add_column("模型", style="cyan")
     table.add_column("说明", style="dim")
 
-    for key, name, desc in MODELS:
+    for _key, name, desc in MODELS:
         table.add_row(name, desc)
 
     console.print(table)

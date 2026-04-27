@@ -13,7 +13,8 @@ API: https://open.bigmodel.cn/api/paas/v4
 
 import json
 import time
-from typing import Any, AsyncIterator, Dict, List, Optional
+from collections.abc import AsyncIterator
+from typing import Any
 
 import httpx
 
@@ -68,7 +69,7 @@ class GLMModel(BaseModel):
         config.cost_per_1k_completion = model_info["cost_per_1k_completion"]
 
         super().__init__(config, tier)
-        self._client: Optional[httpx.AsyncClient] = None
+        self._client: httpx.AsyncClient | None = None
 
     @property
     def provider(self) -> ModelProvider:
@@ -95,19 +96,19 @@ class GLMModel(BaseModel):
             await self._client.aclose()
             self._client = None
 
-    def _format_messages(self, messages: List[Message]) -> List[Dict[str, str]]:
+    def _format_messages(self, messages: list[Message]) -> list[dict[str, str]]:
         formatted = []
         for msg in messages:
-            item: Dict[str, str] = {"role": msg.role, "content": msg.content}
+            item: dict[str, str] = {"role": msg.role, "content": msg.content}
             if msg.name:
                 item["name"] = msg.name
             formatted.append(item)
         return formatted
 
-    async def generate(self, messages: List[Message], **kwargs) -> ModelResponse:
+    async def generate(self, messages: list[Message], **kwargs) -> ModelResponse:
         client = await self._get_client()
 
-        request_body: Dict[str, Any] = {
+        request_body: dict[str, Any] = {
             "model": self.model_name,
             "messages": self._format_messages(messages),
             "max_tokens": kwargs.get("max_tokens", self.config.max_tokens),
@@ -133,10 +134,7 @@ class GLMModel(BaseModel):
             delta = choice["message"]
 
             # GLM 可能返回 text 或 function_call
-            if "text" in delta:
-                content = delta["text"]
-            else:
-                content = delta.get("content", "")
+            content = delta["text"] if "text" in delta else delta.get("content", "")
 
             usage_data = data.get("usage", {})
             usage = Usage(
@@ -162,10 +160,10 @@ class GLMModel(BaseModel):
         except httpx.RequestError as e:
             raise GLMAPIError(f"网络请求失败: {e}")
 
-    async def stream(self, messages: List[Message], **kwargs) -> AsyncIterator[str]:
+    async def stream(self, messages: list[Message], **kwargs) -> AsyncIterator[str]:
         client = await self._get_client()
 
-        request_body: Dict[str, Any] = {
+        request_body: dict[str, Any] = {
             "model": self.model_name,
             "messages": self._format_messages(messages),
             "max_tokens": kwargs.get("max_tokens", self.config.max_tokens),
@@ -202,5 +200,3 @@ class GLMModel(BaseModel):
 
 class GLMAPIError(Exception):
     """智谱 GLM API 错误"""
-
-    pass

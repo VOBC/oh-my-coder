@@ -16,7 +16,6 @@ from __future__ import annotations
 import platform
 import subprocess
 from enum import Enum
-from typing import List, Optional
 
 import typer
 from rich.console import Console
@@ -53,15 +52,14 @@ def get_current_platform() -> Platform:
     system = platform.system().lower()
     if system == "darwin":
         return Platform.MACOS
-    elif system == "linux":
+    if system == "linux":
         return Platform.LINUX
-    elif system == "windows":
+    if system == "windows":
         return Platform.WINDOWS
-    else:
-        return Platform.LINUX
+    return Platform.LINUX
 
 
-def get_available_managers() -> List[PackageManager]:
+def get_available_managers() -> list[PackageManager]:
     """获取可用的包管理器"""
     available = []
     system = get_current_platform()
@@ -115,7 +113,7 @@ def _is_command_available(cmd: str) -> bool:
         return False
 
 
-def _run_command(cmd: List[str], capture: bool = True) -> tuple:
+def _run_command(cmd: list[str], capture: bool = True) -> tuple:
     """运行命令"""
     try:
         if capture:
@@ -126,9 +124,8 @@ def _run_command(cmd: List[str], capture: bool = True) -> tuple:
                 timeout=60,
             )
             return result.returncode == 0, result.stdout, result.stderr
-        else:
-            result = subprocess.run(cmd, timeout=60)
-            return result.returncode == 0, "", ""
+        result = subprocess.run(cmd, timeout=60)
+        return result.returncode == 0, "", ""
     except subprocess.TimeoutExpired:
         return False, "", "Command timed out"
     except Exception:
@@ -183,7 +180,7 @@ RECOMMENDED_PACKAGES = {
 @app.command()
 def install(
     package: str = typer.Argument(..., help="包名称"),
-    manager: Optional[str] = typer.Option(None, "--manager", "-m", help="指定包管理器"),
+    manager: str | None = typer.Option(None, "--manager", "-m", help="指定包管理器"),
     sudo: bool = typer.Option(False, "--sudo", "-s", help="使用 sudo 安装"),
 ):
     """
@@ -216,7 +213,7 @@ def install(
     console.print(f"[yellow]执行: {' '.join(cmd)}[/yellow]\n")
 
     # 执行安装
-    success, stdout, stderr = _run_command(cmd, capture=False)
+    success, _stdout, stderr = _run_command(cmd, capture=False)
 
     if success:
         console.print(f"[green]✅ 安装成功: {package}[/green]")
@@ -226,7 +223,7 @@ def install(
             console.print(f"[dim]{stderr}[/dim]")
 
 
-def _select_best_manager(package: str) -> Optional[str]:
+def _select_best_manager(package: str) -> str | None:
     """选择最佳包管理器"""
     available = get_available_managers()
 
@@ -234,41 +231,37 @@ def _select_best_manager(package: str) -> Optional[str]:
     npm_packages = ["node", "npm", "yarn", "pnpm", "typescript", "eslint", "prettier"]
     pip_packages = ["python", "pip", "ansible", "httpie", "tldr"]
 
-    if package.lower() in npm_packages:
-        if PackageManager.NPM in available:
-            return "npm"
+    if package.lower() in npm_packages and PackageManager.NPM in available:
+        return "npm"
 
-    if package.lower() in pip_packages:
-        if PackageManager.PIP in available:
-            return "pip"
+    if package.lower() in pip_packages and PackageManager.PIP in available:
+        return "pip"
 
     # 默认选择
     if PackageManager.HOMEBREW in available:
         return "brew"
-    elif PackageManager.NPM in available:
+    if PackageManager.NPM in available:
         return "npm"
-    elif PackageManager.SCOOP in available:
+    if PackageManager.SCOOP in available:
         return "scoop"
-    elif PackageManager.WINGET in available:
+    if PackageManager.WINGET in available:
         return "winget"
-    elif PackageManager.AUR in available:
+    if PackageManager.AUR in available:
         return "aur"
 
     return None
 
 
-def _build_install_command(
-    manager: str, package: str, sudo: bool
-) -> Optional[List[str]]:
+def _build_install_command(manager: str, package: str, sudo: bool) -> list[str] | None:
     """构建安装命令"""
     cmd_prefix = ["sudo"] if sudo else []
 
     commands = {
-        "brew": cmd_prefix + ["brew", "install", package],
+        "brew": [*cmd_prefix, "brew", "install", package],
         "npm": ["npm", "install", "-g", package],
         "yarn": ["yarn", "global", "add", package],
         "pnpm": ["pnpm", "add", "-g", package],
-        "pip": cmd_prefix + ["pip3", "install", package],
+        "pip": [*cmd_prefix, "pip3", "install", package],
         "scoop": ["scoop", "install", package],
         "winget": ["winget", "install", "--id", package, "--silent"],
         "aur": ["yay", "-S", package],
@@ -280,7 +273,7 @@ def _build_install_command(
 @app.command()
 def search(
     query: str = typer.Argument(..., help="搜索关键词"),
-    manager: Optional[str] = typer.Option(None, "--manager", "-m", help="指定包管理器"),
+    manager: str | None = typer.Option(None, "--manager", "-m", help="指定包管理器"),
 ):
     """
     搜索包
@@ -314,7 +307,7 @@ def _search_with_manager(manager: str, query: str):
         console.print(f"[dim]管理器 {manager} 不支持搜索[/dim]")
         return
 
-    success, stdout, stderr = _run_command(cmd)
+    success, stdout, _stderr = _run_command(cmd)
 
     if success and stdout:
         lines = stdout.strip().splitlines()[:10]  # 只显示前10个
@@ -326,7 +319,7 @@ def _search_with_manager(manager: str, query: str):
 
 @app.command()
 def list_installed(
-    manager: Optional[str] = typer.Option(None, "--manager", "-m", help="指定包管理器"),
+    manager: str | None = typer.Option(None, "--manager", "-m", help="指定包管理器"),
 ):
     """
     列出已安装的包
@@ -360,7 +353,7 @@ def _list_with_manager(manager: str):
         console.print(f"[dim]管理器 {manager} 不支持列出[/dim]")
         return
 
-    success, stdout, stderr = _run_command(cmd)
+    success, stdout, _stderr = _run_command(cmd)
 
     if success and stdout:
         lines = stdout.strip().splitlines()[:20]  # 只显示前20个
@@ -372,8 +365,8 @@ def _list_with_manager(manager: str):
 
 @app.command()
 def update(
-    package: Optional[str] = typer.Argument(None, help="包名称（不指定则更新所有）"),
-    manager: Optional[str] = typer.Option(None, "--manager", "-m", help="指定包管理器"),
+    package: str | None = typer.Argument(None, help="包名称（不指定则更新所有）"),
+    manager: str | None = typer.Option(None, "--manager", "-m", help="指定包管理器"),
 ):
     """
     更新包
@@ -409,7 +402,7 @@ def update(
 
     console.print(f"[yellow]执行: {' '.join(cmd)}[/yellow]\n")
 
-    success, stdout, stderr = _run_command(cmd, capture=False)
+    success, _stdout, stderr = _run_command(cmd, capture=False)
 
     if success:
         console.print("[green]✅ 更新成功[/green]")
@@ -422,7 +415,7 @@ def recommend():
     """显示推荐安装的开发工具"""
     console.print(
         Panel.fit(
-            "[bold cyan]推荐开发工具[/bold cyan]\n" "[dim]快速安装常用命令行工具[/dim]",
+            "[bold cyan]推荐开发工具[/bold cyan]\n[dim]快速安装常用命令行工具[/dim]",
             border_style="cyan",
         )
     )
@@ -470,10 +463,7 @@ def check():
 
     for cmd, name, platforms in all_managers:
         if cmd in available or (cmd == "brew" and system == Platform.MACOS):
-            if cmd in available:
-                status = "✅ 已安装"
-            else:
-                status = "❌ 未安装"
+            status = "✅ 已安装" if cmd in available else "❌ 未安装"
         else:
             if platforms.lower() == system.value.lower() or platforms == "全平台":
                 status = "❌ 未安装"

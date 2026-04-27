@@ -15,14 +15,16 @@ HealthChecker 类：
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import json
 import time
 import uuid
+from collections.abc import Callable
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable, Optional
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from ..core.orchestrator import Orchestrator, WorkflowStep
@@ -49,10 +51,10 @@ class AgentHealth:
     agent_name: str
     status: AgentStatus = AgentStatus.HEALTHY
     last_heartbeat: float = field(default_factory=time.time)
-    task_id: Optional[str] = None
+    task_id: str | None = None
     retry_count: int = 0
-    last_error: Optional[str] = None
-    workflow_id: Optional[str] = None
+    last_error: str | None = None
+    workflow_id: str | None = None
     step_index: int = -1  # 在工作流中的步骤索引
 
     # retry 上限（可配置）
@@ -82,9 +84,8 @@ class AgentHealth:
         if self.retry_count >= self.MAX_RETRIES:
             self.status = AgentStatus.FAILED
             return True  # 已达上限
-        else:
-            self.status = AgentStatus.STALE
-            return False  # 仍可重试
+        self.status = AgentStatus.STALE
+        return False  # 仍可重试
 
     def can_retry(self) -> bool:
         return self.retry_count < self.MAX_RETRIES
@@ -135,12 +136,12 @@ class HealthChecker:
 
     def __init__(
         self,
-        orchestrator: Optional["Orchestrator"] = None,
+        orchestrator: Orchestrator | None = None,
         check_interval: float = 60.0,
         stale_threshold: float = 300.0,
         max_retries: int = 3,
-        state_dir: Optional[Path] = None,
-        on_notification: Optional[Callable[[str, str], None]] = None,
+        state_dir: Path | None = None,
+        on_notification: Callable[[str, str], None] | None = None,
     ):
         """
         Args:
@@ -166,8 +167,8 @@ class HealthChecker:
         self._active_tasks: dict[str, asyncio.Task[Any]] = {}
 
         # 后台检查循环
-        self._check_task: Optional[asyncio.Task[None]] = None
-        self._stop_event: Optional[asyncio.Event] = None
+        self._check_task: asyncio.Task[None] | None = None
+        self._stop_event: asyncio.Event | None = None
 
         # 检查历史
         self._history: list[HealthCheckResult] = []
@@ -182,8 +183,8 @@ class HealthChecker:
     def register_agent(
         self,
         agent_name: str,
-        task_id: Optional[str] = None,
-        workflow_id: Optional[str] = None,
+        task_id: str | None = None,
+        workflow_id: str | None = None,
         step_index: int = -1,
     ) -> AgentHealth:
         """
@@ -237,8 +238,8 @@ class HealthChecker:
         self,
         agent_name: str,
         error: str,
-        workflow_id: Optional[str] = None,
-        step: Optional["WorkflowStep"] = None,
+        workflow_id: str | None = None,
+        step: WorkflowStep | None = None,
     ) -> bool:
         """
         记录 Agent 执行失败。
@@ -271,8 +272,7 @@ class HealthChecker:
             # 触发重分配
             self._notify(
                 f"🔄 Agent {agent_name} 执行异常，正在重试",
-                f"重试 {health.retry_count}/{self.max_retries}\n"
-                f"错误：{error[:100]}",
+                f"重试 {health.retry_count}/{self.max_retries}\n错误：{error[:100]}",
             )
 
         self._save_health_log(health)
@@ -282,8 +282,8 @@ class HealthChecker:
         self,
         agent_name: str,
         workflow_id: str,
-        step: "WorkflowStep",
-    ) -> Optional[str]:
+        step: WorkflowStep,
+    ) -> str | None:
         """
         将任务重新分配给空闲 Agent。
 
@@ -390,7 +390,7 @@ class HealthChecker:
             except Exception:
                 pass  # 静默，不崩溃
 
-    async def _check_all(self) -> Optional[HealthCheckResult]:
+    async def _check_all(self) -> HealthCheckResult | None:
         """
         执行一次全量检查。
 
@@ -420,7 +420,7 @@ class HealthChecker:
 
                 if health.can_retry():
                     # 记录失败，触发重分配
-                    exceeded = health.record_failure(
+                    health.record_failure(
                         f"心跳超时（>{self.stale_threshold}s 无响应）"
                     )
                     reassigned += 1
@@ -511,10 +511,8 @@ class HealthChecker:
     def _notify(self, title: str, body: str) -> None:
         """发送通知"""
         if self.on_notification:
-            try:
+            with contextlib.suppress(Exception):
                 self.on_notification(title, body)
-            except Exception:
-                pass
         # 也可写日志文件
         log_file = self.state_dir / "notifications.jsonl"
         entry = {

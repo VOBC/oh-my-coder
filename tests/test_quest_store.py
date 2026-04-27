@@ -6,10 +6,8 @@ import json
 import tempfile
 from pathlib import Path
 
-
 from src.quest.models import QuestSpec, QuestStatus
 from src.quest.store import QuestStore
-
 
 # =============================================================================
 # QuestStore 初始化测试
@@ -269,7 +267,7 @@ class TestQuestStoreSetSpec:
             overview="Overview",
             motivation="Motivation",
         )
-        updated = updated = store.set_spec(quest.id, spec)
+        updated = store.set_spec(quest.id, spec)
 
         assert updated.spec is not None
         assert updated.spec.title == "Test Spec"
@@ -311,11 +309,11 @@ class TestQuestStoreCache:
         )
 
         # 第一次获取
-        first = store.get(quest.id)
+        store.get(quest.id)
 
         # 修改文件
         quest_file = store._quest_file(quest.id)
-        with open(quest_file, "r") as f:
+        with open(quest_file) as f:
             data = json.load(f)
         data["title"] = "Modified Outside"
         with open(quest_file, "w") as f:

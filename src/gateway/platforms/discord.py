@@ -7,8 +7,9 @@ Discord Bot 平台处理器
 
 from __future__ import annotations
 
+import contextlib
 import logging
-from typing import Any, Optional
+from typing import Any
 
 from ..base import IncomingMessage, OutgoingMessage, Platform, PlatformHandler
 
@@ -54,7 +55,7 @@ class DiscordHandler(PlatformHandler):
     def __init__(
         self,
         bot_token: str,
-        allowed_guild_ids: Optional[list[int]] = None,
+        allowed_guild_ids: list[int] | None = None,
         **kwargs,
     ):
         """
@@ -65,7 +66,7 @@ class DiscordHandler(PlatformHandler):
         super().__init__(**kwargs)
         self.bot_token = bot_token
         self.allowed_guild_ids = set(allowed_guild_ids or [])
-        self._bot: Optional[Any] = None
+        self._bot: Any | None = None
 
     # ---- PlatformHandler 实现 ----
 
@@ -110,7 +111,7 @@ class DiscordHandler(PlatformHandler):
                 try:
                     self.on_message(incoming)
                 except Exception as e:
-                    logger.error(f"[discord] on_message error: {e}")
+                    logger.exception(f"[discord] on_message error: {e}")
                     self.on_error(e)
 
         self._bot = _Bot()
@@ -129,7 +130,6 @@ class DiscordHandler(PlatformHandler):
             return False
 
         try:
-
             channel = self._bot.get_channel(int(message.chat_id))
             if channel is None:
                 logger.error(f"[discord] Channel not found: {message.chat_id}")
@@ -137,15 +137,13 @@ class DiscordHandler(PlatformHandler):
 
             reference = None
             if message.reply_to:
-                try:
+                with contextlib.suppress(Exception):
                     reference = await channel.fetch_message(int(message.reply_to))
-                except Exception:
-                    pass
 
             await channel.send(content=message.text, reference=reference)
             return True
         except Exception as e:
-            logger.error(f"[discord] Send failed: {e}")
+            logger.exception(f"[discord] Send failed: {e}")
             self.on_error(e)
             return False
 

@@ -4,11 +4,10 @@
 提供 Ollama 本地模型的管理和查询功能。
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-
 
 router = APIRouter(prefix="/api/local-models", tags=["local-models"])
 
@@ -17,10 +16,10 @@ class LocalModelInfo(BaseModel):
     """本地模型信息"""
 
     name: str
-    size: Optional[str] = None
-    modified_at: Optional[str] = None
-    tier: Optional[str] = None
-    description: Optional[str] = None
+    size: str | None = None
+    modified_at: str | None = None
+    tier: str | None = None
+    description: str | None = None
     available: bool = True
 
 
@@ -29,8 +28,8 @@ class OllamaStatus(BaseModel):
 
     available: bool
     base_url: str
-    models: List[LocalModelInfo] = []
-    error: Optional[str] = None
+    models: list[LocalModelInfo] = []
+    error: str | None = None
 
 
 @router.get("/status", response_model=OllamaStatus)
@@ -42,7 +41,8 @@ async def get_ollama_status() -> OllamaStatus:
         OllamaStatus: 服务状态和模型列表
     """
     import os
-    from ..models.ollama import OllamaModel, OLLAMA_DEFAULT_URL
+
+    from ..models.ollama import OLLAMA_DEFAULT_URL, OllamaModel
 
     base_url = os.getenv("OLLAMA_BASE_URL", OLLAMA_DEFAULT_URL)
 
@@ -104,8 +104,8 @@ async def get_ollama_status() -> OllamaStatus:
         )
 
 
-@router.get("/models", response_model=List[LocalModelInfo])
-async def list_local_models() -> List[LocalModelInfo]:
+@router.get("/models", response_model=list[LocalModelInfo])
+async def list_local_models() -> list[LocalModelInfo]:
     """
     列出所有本地可用的模型
 
@@ -113,7 +113,8 @@ async def list_local_models() -> List[LocalModelInfo]:
         List[LocalModelInfo]: 模型列表
     """
     import os
-    from ..models.ollama import OllamaModel, OLLAMA_DEFAULT_URL
+
+    from ..models.ollama import OLLAMA_DEFAULT_URL, OllamaModel
 
     base_url = os.getenv("OLLAMA_BASE_URL", OLLAMA_DEFAULT_URL)
 
@@ -146,7 +147,7 @@ async def list_local_models() -> List[LocalModelInfo]:
 
 
 @router.post("/pull/{model_name}")
-async def pull_model(model_name: str) -> Dict[str, Any]:
+async def pull_model(model_name: str) -> dict[str, Any]:
     """
     拉取模型到本地
 
@@ -165,17 +166,16 @@ async def pull_model(model_name: str) -> Dict[str, Any]:
                 "status": "success",
                 "message": f"模型 {model_name} 已成功拉取",
             }
-        else:
-            return {
-                "status": "failed",
-                "message": f"模型 {model_name} 拉取失败",
-            }
+        return {
+            "status": "failed",
+            "message": f"模型 {model_name} 拉取失败",
+        }
     except Exception:
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.get("/recommended")
-async def get_recommended_models() -> List[Dict[str, Any]]:
+async def get_recommended_models() -> list[dict[str, Any]]:
     """
     获取推荐的本地模型列表
 

@@ -3,8 +3,8 @@
 import pytest
 
 from src.memory.auto_compact import AutoCompact, CompactResult
-from src.memory.short_term import SessionContext, Message
-from src.memory.manager import MemoryManager, MemoryConfig
+from src.memory.manager import MemoryConfig, MemoryManager
+from src.memory.short_term import Message, SessionContext
 
 
 class TestAutoCompact:
@@ -52,7 +52,7 @@ class TestAutoCompact:
         # 每个消息约 40 tokens (32 content + 4 overhead + 4 role)
         long_content = "word " * 32  # 约 32 tokens
 
-        for i in range(9):  # 9 * 2 * 40 = ~720 tokens (~72%)
+        for _i in range(9):  # 9 * 2 * 40 = ~720 tokens (~72%)
             session.add_message("user", long_content)
             session.add_message("assistant", long_content)
 
@@ -73,9 +73,7 @@ class TestAutoCompact:
             session.add_message("user", f"Question {i}: {long_content}")
             session.add_message("assistant", f"Answer {i}: {long_content}")
 
-        tokens_before = sum(
-            memory_manager.count_tokens(m.content) + 4 for m in session.messages
-        )
+        sum(memory_manager.count_tokens(m.content) + 4 for m in session.messages)
 
         result = auto_compact.check_and_compact(session)
 

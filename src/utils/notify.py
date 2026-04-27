@@ -6,15 +6,13 @@ import json
 import os
 import subprocess
 import sys
-from typing import Optional
-
 import urllib.request
 
 
 def send_notification(
     title: str,
     message: str,
-    subtitle: Optional[str] = None,
+    subtitle: str | None = None,
     sound: bool = True,
 ) -> bool:
     """
@@ -34,19 +32,18 @@ def send_notification(
 
     try:
         script_parts = [
-            'display notification ""%s""' % message.replace('"', '\\"'),
+            'display notification ""{}""'.format(message.replace('"', '\\"')),
         ]
         if subtitle:
             script_parts[0] = (
-                'display notification "%s" with title "%s" subtitle "%s"'
-                % (
+                'display notification "{}" with title "{}" subtitle "{}"'.format(
                     message.replace('"', '\\"'),
                     title.replace('"', '\\"'),
                     subtitle.replace('"', '\\"'),
                 )
             )
         else:
-            script_parts[0] = 'display notification "%s" with title "%s"' % (
+            script_parts[0] = 'display notification "{}" with title "{}"'.format(
                 message.replace('"', '\\"'),
                 title.replace('"', '\\"'),
             )
@@ -139,7 +136,7 @@ def send_dingtalk_notification(
 
 
 def notify_workflow_complete_dingtalk(
-    webhook_url: Optional[str],
+    webhook_url: str | None,
     workflow: str,
     status: str,
     steps_completed: int,
@@ -172,7 +169,7 @@ def notify_workflow_complete_dingtalk(
 
 
 def notify_quest_update_dingtalk(
-    webhook_url: Optional[str],
+    webhook_url: str | None,
     quest_name: str,
     message: str,
     status: str = "running",

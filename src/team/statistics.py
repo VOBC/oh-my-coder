@@ -8,7 +8,7 @@ import sqlite3
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 @dataclass
@@ -27,7 +27,7 @@ class UsageRecord:
     status: str  # success, failed
     created_at: datetime = field(default_factory=datetime.now)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "record_id": self.record_id,
             "team_id": self.team_id,
@@ -55,11 +55,11 @@ class TeamStats:
     total_tokens: int
     total_cost: float
     avg_execution_time: float
-    top_models: List[Dict[str, Any]]
-    top_users: List[Dict[str, Any]]
-    daily_breakdown: List[Dict[str, Any]]
+    top_models: list[dict[str, Any]]
+    top_users: list[dict[str, Any]]
+    daily_breakdown: list[dict[str, Any]]
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "team_id": self.team_id,
             "period": self.period,
@@ -94,7 +94,7 @@ class UserStats:
     avg_execution_time: float
     favorite_model: str
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "user_id": self.user_id,
             "team_id": self.team_id,
@@ -123,7 +123,7 @@ class TeamStatistics:
     - 数据自动清理（保留30天）
     """
 
-    def __init__(self, db_path: Optional[str] = None):
+    def __init__(self, db_path: str | None = None):
         """
         初始化
 
@@ -464,7 +464,7 @@ class TeamStatistics:
 
         return deleted
 
-    def get_all_teams(self) -> List[str]:
+    def get_all_teams(self) -> list[str]:
         """获取所有团队 ID"""
         conn = sqlite3.connect(str(self.db_path))
         cursor = conn.cursor()

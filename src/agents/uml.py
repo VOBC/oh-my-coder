@@ -10,8 +10,6 @@ UML Agent - 架构图与可视化智能体
 模型层级：LOW（快速）
 """
 
-from typing import Dict, List
-
 from ..core.router import TaskType
 from .base import (
     AgentContext,
@@ -111,7 +109,7 @@ flowchart TD
 """
 
     async def _run(
-        self, context: AgentContext, prompt: List[Dict[str, str]], **kwargs
+        self, context: AgentContext, prompt: list[dict[str, str]], **kwargs
     ) -> str:
         """执行架构图生成"""
         if context.previous_outputs.get("architect"):

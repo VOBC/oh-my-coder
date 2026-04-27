@@ -10,10 +10,10 @@
 
 from __future__ import annotations
 
+import contextlib
 import re
 from dataclasses import dataclass, field
-from typing import Any, Optional
-
+from typing import Any
 
 # ─────────────────────────────────────────────────────────────
 # 数据模型
@@ -59,11 +59,11 @@ class CheckResult:
     """检查结果"""
 
     allowed: bool
-    reason: Optional[str] = None
-    matched_pattern: Optional[str] = None
+    reason: str | None = None
+    matched_pattern: str | None = None
     requires_approval: bool = False
 
-    def to_tuple(self) -> tuple[bool, Optional[str]]:
+    def to_tuple(self) -> tuple[bool, str | None]:
         """兼容旧接口"""
         return (self.allowed, self.reason)
 
@@ -100,10 +100,8 @@ class PermissionGuard:
         def safe_compile(patterns: list[str]) -> list[re.Pattern[str]]:
             compiled: list[re.Pattern[str]] = []
             for p in patterns:
-                try:
+                with contextlib.suppress(re.error):
                     compiled.append(re.compile(p, re.IGNORECASE))
-                except re.error:
-                    pass
             return compiled
 
         self._allowed_re = safe_compile(self.rules.allowed_patterns)
@@ -162,10 +160,7 @@ class PermissionGuard:
 
     def needs_approval(self, command: str) -> bool:
         """检查是否需要审批"""
-        for compiled in self._approval_re:
-            if compiled.search(command):
-                return True
-        return False
+        return any(compiled.search(command) for compiled in self._approval_re)
 
     def validate_rules(self) -> list[str]:
         """验证规则合法性"""

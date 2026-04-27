@@ -29,7 +29,9 @@ class TestExceptionHandling:
             # 查找不安全的 str(e) 使用
             # 排除安全的使用场景
             for match in re.finditer(r'error["\']?\s*[:=]\s*str\(e\)', content):
-                issues.append(f"{py_file}:{content[:match.start()].count(chr(10)) + 1}")
+                issues.append(
+                    f"{py_file}:{content[: match.start()].count(chr(10)) + 1}"
+                )
 
         assert not issues, f"发现不安全的 str(e) 使用: {issues}"
 
@@ -41,7 +43,9 @@ class TestExceptionHandling:
         for py_file in src_dir.rglob("*.py"):
             content = py_file.read_text()
             for match in re.finditer(r"HTTPException.*detail=str\(e\)", content):
-                issues.append(f"{py_file}:{content[:match.start()].count(chr(10)) + 1}")
+                issues.append(
+                    f"{py_file}:{content[: match.start()].count(chr(10)) + 1}"
+                )
 
         assert not issues, f"发现 HTTPException(detail=str(e)): {issues}"
 

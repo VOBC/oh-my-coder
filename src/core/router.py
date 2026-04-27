@@ -20,9 +20,7 @@ import logging
 import os
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Dict, List, Optional
-
-import httpx
+from typing import Any
 
 from ..models.base import (
     BaseModel,
@@ -59,7 +57,7 @@ class TaskType:
     PLANNING = "planning"
 
     @classmethod
-    def all(cls) -> List[str]:
+    def all(cls) -> list[str]:
         return [
             cls.EXPLORE,
             cls.SIMPLE_QA,
@@ -78,7 +76,7 @@ class TaskType:
 # ============================================================
 # 任务类型到模型层级的映射
 # ============================================================
-_TASK_TIER_MAPPING: Dict[str, str] = {
+_TASK_TIER_MAPPING: dict[str, str] = {
     # LOW tier - 快速便宜
     TaskType.EXPLORE: "low",
     TaskType.SIMPLE_QA: "low",
@@ -104,26 +102,25 @@ class RouterConfig:
     """路由器配置"""
 
     # API Keys（从环境变量读取）
-    deepseek_api_key: Optional[str] = None
-    wenxin_api_key: Optional[str] = None
-    tongyi_api_key: Optional[str] = None
-    glm_api_key: Optional[str] = None
-    minimax_api_key: Optional[str] = None
-    kimi_api_key: Optional[str] = None
-    hunyuan_api_key: Optional[str] = None
-    doubao_api_key: Optional[str] = None
+    deepseek_api_key: str | None = None
+    wenxin_api_key: str | None = None
+    tongyi_api_key: str | None = None
+    glm_api_key: str | None = None
+    minimax_api_key: str | None = None
+    kimi_api_key: str | None = None
+    hunyuan_api_key: str | None = None
+    doubao_api_key: str | None = None
 
     # Ollama 本地模型配置
-    ollama_base_url: Optional[str] = None
-    ollama_model: Optional[str] = None  # 如 qwen2:7b
-    prefer_local: bool = False  # 默认不优先本地模型，避免未装 ollama 时超时
-    auto_detect_local: bool = True  # 自动检测本地模型可用性，关闭后跳过检测
+    ollama_base_url: str | None = None
+    ollama_model: str | None = None  # 如 qwen2:7b
+    prefer_local: bool = True  # 优先使用本地模型
 
     # 成本预算（元）
     daily_budget: float = 10.0
 
     # 故障转移顺序
-    fallback_order: List[str] = field(default_factory=list)
+    fallback_order: list[str] = field(default_factory=list)
 
     # 缓存配置
     cache_enabled: bool = True
@@ -146,12 +143,7 @@ class RouterConfig:
             "OLLAMA_BASE_URL", "http://localhost:11434"
         )
         self.ollama_model = self.ollama_model or os.getenv("OLLAMA_MODEL", "qwen2:7b")
-        self.prefer_local = os.getenv("PREFER_LOCAL_MODEL", "false").lower() in (
-            "true",
-            "1",
-            "yes",
-        )
-        self.auto_detect_local = os.getenv("AUTO_DETECT_LOCAL", "true").lower() in (
+        self.prefer_local = os.getenv("PREFER_LOCAL_MODEL", "true").lower() in (
             "true",
             "1",
             "yes",
@@ -214,17 +206,17 @@ class ResponseCache:
     """
 
     def __init__(self, max_entries: int = 100, ttl_seconds: int = 300):
-        self._cache: Dict[str, Dict[str, Any]] = {}
-        self._order: List[str] = []  # 简单 FIFO（非真实 LRU，但够用）
+        self._cache: dict[str, dict[str, Any]] = {}
+        self._order: list[str] = []  # 简单 FIFO（非真实 LRU，但够用）
         self._max_entries = max_entries
         self._ttl = ttl_seconds
 
-    def _make_key(self, messages: List[Message]) -> str:
+    def _make_key(self, messages: list[Message]) -> str:
         """根据消息内容生成缓存 key"""
         content = "".join(m.content for m in messages)
         return hashlib.sha256(content.encode()).hexdigest()[:16]
 
-    def get(self, messages: List[Message]) -> Optional[ModelResponse]:
+    def get(self, messages: list[Message]) -> ModelResponse | None:
         """获取缓存的响应"""
         key = self._make_key(messages)
         entry = self._cache.get(key)
@@ -242,7 +234,7 @@ class ResponseCache:
         logger.debug(f"Cache hit: {key[:8]}... (age={age:.1f}s)")
         return entry["response"]
 
-    def set(self, messages: List[Message], response: ModelResponse) -> None:
+    def set(self, messages: list[Message], response: ModelResponse) -> None:
         """缓存响应"""
         key = self._make_key(messages)
 
@@ -263,7 +255,7 @@ class ResponseCache:
         self._cache.clear()
         self._order.clear()
 
-    def stats(self) -> Dict[str, int]:
+    def stats(self) -> dict[str, int]:
         """缓存统计"""
         total = len(self._cache)
         expired = sum(
@@ -292,10 +284,10 @@ class ModelRouter:
     - get_stats():    获取路由统计
     """
 
-    def __init__(self, config: Optional[RouterConfig] = None):
+    def __init__(self, config: RouterConfig | None = None):
         self.config = config or RouterConfig()
-        self._models: Dict[str, Dict[str, BaseModel]] = {}
-        self._decision_history: List[RoutingDecision] = []
+        self._models: dict[str, dict[str, BaseModel]] = {}
+        self._decision_history: list[RoutingDecision] = []
         self._total_cost = 0.0
         self._cache = (
             ResponseCache(
@@ -310,38 +302,12 @@ class ModelRouter:
 
     def _initialize_models(self) -> None:
         """初始化所有可用模型（惰性初始化）"""
-        # Ollama 本地模型（智能检测）
+        # Ollama 本地模型（优先检测）
         try:
-            from ..models.ollama import OllamaModel, OLLAMA_DEFAULT_URL
+            from ..models.ollama import OLLAMA_DEFAULT_URL, OllamaModel
 
             base_url = self.config.ollama_base_url or OLLAMA_DEFAULT_URL
-            ollama_available = False
-
-            # 使用健康检查模块（如果启用自动检测）
-            if self.config.auto_detect_local:
-                try:
-                    from .ollama_health import OllamaHealthChecker
-
-                    health = OllamaHealthChecker(base_url=base_url)
-                    status = health.check_ollama()
-                    ollama_available = status.running
-                    if ollama_available:
-                        logger.info(
-                            f"Ollama 健康检查通过: {status.model_count} 个模型, "
-                            f"延迟 {status.latency_ms:.0f}ms"
-                        )
-                    else:
-                        logger.info(
-                            "Ollama 未运行，跳过本地模型（自动 failover 到云端）"
-                        )
-                except ImportError:
-                    logger.debug("ollama_health 模块未找到，使用基础检测")
-                    ollama_available = OllamaModel.is_available(base_url)
-            else:
-                ollama_available = OllamaModel.is_available(base_url)
-                logger.debug("auto_detect_local 已关闭，使用基础检测")
-
-            if ollama_available:
+            if OllamaModel.is_available(base_url):
                 model_name = self.config.ollama_model or "qwen2:7b"
                 for tier in ["low", "medium", "high"]:
                     cfg = ModelConfig(api_key="", base_url=base_url)
@@ -350,28 +316,10 @@ class ModelRouter:
                     )
                 logger.info(f"Ollama 本地模型已初始化 ({model_name})")
 
-                # 列出可用模型（使用发现模块）
-                if self.config.auto_detect_local:
-                    try:
-                        from .local_model_discovery import discover_ollama_models
-
-                        discovered = discover_ollama_models(base_url)
-                        if discovered:
-                            logger.info(
-                                f"本地可用模型: {[m.model_name for m in discovered[:5]]}"
-                            )
-                    except ImportError:
-                        available = OllamaModel.list_models(base_url)
-                        if available:
-                            logger.info(
-                                f"本地可用模型: {[m['name'] for m in available[:5]]}"
-                            )
-                else:
-                    available = OllamaModel.list_models(base_url)
-                    if available:
-                        logger.info(
-                            f"本地可用模型: {[m['name'] for m in available[:5]]}"
-                        )
+                # 列出可用模型
+                available = OllamaModel.list_models(base_url)
+                if available:
+                    logger.info(f"本地可用模型: {[m['name'] for m in available[:5]]}")
             else:
                 logger.debug(f"Ollama 服务不可用 ({base_url})")
         except Exception as e:
@@ -497,7 +445,7 @@ class ModelRouter:
         self,
         task_type: str,
         complexity: str = "medium",
-        budget_remaining: Optional[float] = None,
+        budget_remaining: float | None = None,
     ) -> RoutingDecision:
         """
         选择最优模型
@@ -575,7 +523,7 @@ class ModelRouter:
     async def route_and_call(
         self,
         task_type: str,
-        messages: List[Message],
+        messages: list[Message],
         complexity: str = "medium",
         use_cache: bool = True,
         **kwargs,
@@ -611,7 +559,7 @@ class ModelRouter:
         if decision.selected_provider not in fallback_order:
             fallback_order.insert(0, decision.selected_provider)
 
-        last_error: Optional[Exception] = None
+        last_error: Exception | None = None
 
         for provider in fallback_order:
             m = self._models[provider][decision.selected_tier]
@@ -638,23 +586,6 @@ class ModelRouter:
 
                     return response
 
-                except httpx.HTTPStatusError as e:
-                    # 429 限流：不重试，直接切换到下一个 provider
-                    if e.response.status_code == 429:
-                        last_error = e
-                        logger.warning(
-                            f"{provider} 触发限流 (429)，切换到下一个 provider"
-                        )
-                        break  # 跳出 attempt 循环，进入下一个 provider
-                    # 其他 HTTP 错误：原有重试逻辑
-                    last_error = e
-                    logger.warning(
-                        f"请求失败（{provider}/{decision.selected_tier}, "
-                        f"attempt={attempt + 1}/3）: HTTP {e.response.status_code}"
-                    )
-                    if attempt < 2:
-                        await asyncio.sleep(2 * (attempt + 1))  # 递增等待
-
                 except Exception as e:
                     last_error = e
                     logger.warning(
@@ -666,18 +597,6 @@ class ModelRouter:
 
         # 所有尝试都失败
         logger.error(f"所有提供商均失败: {last_error}")
-
-        # 检查是否是 429 限流导致
-        if (
-            isinstance(last_error, httpx.HTTPStatusError)
-            and last_error.response.status_code == 429
-        ):
-            raise RateLimitError(
-                "所有模型均触发限流。建议：\n"
-                "1. 等待几分钟后重试\n"
-                '2. 配置多个 API Key 以自动切换：omc config set -k DEEPSEEK_API_KEY -v "your-key"'
-            ) from last_error
-
         raise NoModelAvailableError(
             f"所有模型均不可用（task={task_type}）: {last_error}"
         ) from last_error
@@ -686,11 +605,11 @@ class ModelRouter:
         self,
         provider: str,
         tier: str,
-    ) -> Optional[BaseModel]:
+    ) -> BaseModel | None:
         """直接获取指定模型"""
         return self._models.get(provider, {}).get(tier)
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """获取路由统计"""
         return {
             "total_requests": len(self._decision_history),
@@ -700,8 +619,8 @@ class ModelRouter:
             "cache": self._cache.stats() if self._cache else None,
         }
 
-    def _count_by(self, field: str) -> Dict[str, int]:
-        counts: Dict[str, int] = {}
+    def _count_by(self, field: str) -> dict[str, int]:
+        counts: dict[str, int] = {}
         for d in self._decision_history:
             key = getattr(d, field)
             counts[key] = counts.get(key, 0) + 1
@@ -724,11 +643,5 @@ class ModelRouter:
 # ============================================================
 class NoModelAvailableError(Exception):
     """没有可用模型"""
-
-    pass
-
-
-class RateLimitError(Exception):
-    """API 限流错误 (429)"""
 
     pass

@@ -252,7 +252,7 @@ def _sg_api_search(query: str, **kwargs: Any) -> SearchResult | None:
             file_path = file_info.get("path", "")
 
             for lm in item.get("lineMatches", []):
-                symbols = [
+                [
                     (
                         f"{s['containerName']}.{s['name']}"
                         if s.get("containerName")

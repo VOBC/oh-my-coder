@@ -6,19 +6,28 @@ Agents 模块
 """
 
 from .analyst import AnalystAgent
+from .api_agent import APIAgent
 from .architect import ArchitectAgent
+from .auth_agent import AuthAgent
 from .base import BaseAgent, get_agent, list_agents, register_agent
 from .code_reviewer import CodeReviewerAgent
 from .code_simplifier import CodeSimplifierAgent
 from .critic import CriticAgent
+from .data_agent import DataAgent
+
+# ---- 新增 Agent（2026-04-12）----
+from .database import DatabaseAgent
 from .debugger import DebuggerAgent
 from .designer import DesignerAgent
+from .devops import DevOpsAgent
 from .document import DocumentAgent
 from .executor import ExecutorAgent
 from .explore import ExploreAgent
 from .git_master import GitMasterAgent
-from .planner import PlannerAgent
+from .migration import MigrationAgent
 from .performance import PerformanceAgent
+from .planner import PlannerAgent
+from .prompt_agent import PromptAgent
 from .qa_tester import QATesterAgent
 from .scientist import ScientistAgent
 from .security import SecurityReviewerAgent
@@ -26,19 +35,10 @@ from .self_improving import LearningStore, SelfImprovingAgent
 from .skill_manage import SkillManageAgent
 from .test_engineer import TestEngineerAgent
 from .tracer import TracerAgent
+from .uml import UMLAgent
 from .verifier import VerifierAgent
 from .vision import VisionAgent
 from .writer import WriterAgent
-
-# ---- 新增 Agent（2026-04-12）----
-from .database import DatabaseAgent
-from .api_agent import APIAgent
-from .devops import DevOpsAgent
-from .uml import UMLAgent
-from .migration import MigrationAgent
-from .auth_agent import AuthAgent
-from .data_agent import DataAgent
-from .prompt_agent import PromptAgent
 
 # 导出所有 Agent（分组严格对齐 docs/guide/agents.md）
 __all__ = [

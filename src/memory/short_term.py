@@ -16,7 +16,7 @@ import time
 import uuid
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 @dataclass
@@ -26,7 +26,7 @@ class Message:
     role: str  # "user" | "assistant" | "system"
     content: str
     timestamp: float = field(default_factory=time.time)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -34,25 +34,25 @@ class SessionContext:
     """会话上下文"""
 
     session_id: str
-    project_path: Optional[Path] = None
-    task: Optional[str] = None
-    messages: List[Message] = field(default_factory=list)
-    variables: Dict[str, Any] = field(default_factory=dict)
+    project_path: Path | None = None
+    task: str | None = None
+    messages: list[Message] = field(default_factory=list)
+    variables: dict[str, Any] = field(default_factory=dict)
     created_at: float = field(default_factory=time.time)
     last_active: float = field(default_factory=time.time)
 
-    def add_message(self, role: str, content: str, metadata: Optional[Dict] = None):
+    def add_message(self, role: str, content: str, metadata: dict | None = None):
         """添加消息"""
         self.messages.append(
             Message(role=role, content=content, metadata=metadata or {})
         )
         self.last_active = time.time()
 
-    def get_recent_messages(self, limit: int = 20) -> List[Message]:
+    def get_recent_messages(self, limit: int = 20) -> list[Message]:
         """获取最近 N 条消息"""
         return self.messages[-limit:]
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """序列化"""
         return {
             "session_id": self.session_id,
@@ -65,7 +65,7 @@ class SessionContext:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "SessionContext":
+    def from_dict(cls, data: dict[str, Any]) -> "SessionContext":
         """反序列化"""
         messages = [Message(**m) for m in data.get("messages", [])]
         return cls(
@@ -93,10 +93,10 @@ class ShortTermMemory:
         self.storage_dir = storage_dir / "short-term"
         self.storage_dir.mkdir(parents=True, exist_ok=True)
         self.max_messages = max_messages
-        self._current_session: Optional[SessionContext] = None
+        self._current_session: SessionContext | None = None
 
     def create_session(
-        self, project_path: Optional[Path] = None, task: Optional[str] = None
+        self, project_path: Path | None = None, task: str | None = None
     ) -> SessionContext:
         """创建新会话"""
         session = SessionContext(
@@ -107,7 +107,7 @@ class ShortTermMemory:
         self._current_session = session
         return session
 
-    def get_current_session(self) -> Optional[SessionContext]:
+    def get_current_session(self) -> SessionContext | None:
         """获取当前会话"""
         return self._current_session
 
@@ -115,7 +115,7 @@ class ShortTermMemory:
         """设置当前会话"""
         self._current_session = session
 
-    def load_session(self, session_id: str) -> Optional[SessionContext]:
+    def load_session(self, session_id: str) -> SessionContext | None:
         """加载已有会话"""
         session_file = self.storage_dir / f"{session_id}.json"
         if session_file.exists():
@@ -130,7 +130,7 @@ class ShortTermMemory:
             json.dumps(session.to_dict(), ensure_ascii=False, indent=2)
         )
 
-    def compress_if_needed(self, session: SessionContext) -> List[Message]:
+    def compress_if_needed(self, session: SessionContext) -> list[Message]:
         """当消息过多时压缩，返回保留的消息
 
         .. deprecated::
@@ -151,7 +151,7 @@ class ShortTermMemory:
             content=f"[记忆压缩] 省略了 {len(session.messages) - len(keep)} 条早期消息",
         )
 
-        session.messages = system_msgs + [summary] + keep
+        session.messages = [*system_msgs, summary, *keep]
         return session.messages
 
     def clear_expired(self, max_age_hours: int = 24):

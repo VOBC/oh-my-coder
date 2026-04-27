@@ -8,12 +8,9 @@ Telegram Bot 平台处理器
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Any, Optional
+from typing import Any
 
 from ..base import IncomingMessage, OutgoingMessage, Platform, PlatformHandler
-
-if TYPE_CHECKING:
-    pass
 
 logger = logging.getLogger(__name__)
 
@@ -45,7 +42,7 @@ class TelegramHandler(PlatformHandler):
     def __init__(
         self,
         bot_token: str,
-        allowed_user_ids: Optional[list[str]] = None,
+        allowed_user_ids: list[str] | None = None,
         **kwargs,
     ):
         """
@@ -102,14 +99,14 @@ class TelegramHandler(PlatformHandler):
             )
             return True
         except Exception as e:
-            logger.error(f"[telegram] Send failed: {e}")
+            logger.exception(f"[telegram] Send failed: {e}")
             self.on_error(e)
             return False
 
     # ---- 内部处理器 ----
 
     async def _handle_start(
-        self, update: "Update", context: "ContextTypes.DEFAULT_TYPE"
+        self, update: Update, context: ContextTypes.DEFAULT_TYPE
     ) -> None:
         """处理 /start 命令"""
         await update.message.reply_text(
@@ -119,7 +116,7 @@ class TelegramHandler(PlatformHandler):
         )
 
     async def _handle_text(
-        self, update: "Update", context: "ContextTypes.DEFAULT_TYPE"
+        self, update: Update, context: ContextTypes.DEFAULT_TYPE
     ) -> None:
         """处理文本消息"""
         user_id = str(update.effective_user.id)
@@ -151,7 +148,7 @@ class TelegramHandler(PlatformHandler):
         try:
             self.on_message(incoming)
         except Exception as e:
-            logger.error(f"[telegram] on_message error: {e}")
+            logger.exception(f"[telegram] on_message error: {e}")
             self.on_error(e)
             await update.message.reply_text("⚠️ 处理消息时出错，请稍后重试。")
 

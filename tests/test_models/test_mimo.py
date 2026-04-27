@@ -49,7 +49,7 @@ class TestMimoModelInit:
 
     def test_provider(self):
         config = ModelConfig(api_key="test_key")
-        model = MimoModel(config)  # noqa: F841
+        model = MimoModel(config)
         assert model.provider == ModelProvider.MIMO
 
 
@@ -242,5 +242,5 @@ class TestMimoError:
             mock_get_client.return_value = mock_client
 
             messages = [Message(role="user", content="Hi")]
-            with pytest.raises(Exception):
+            with pytest.raises(Exception):  # noqa: B017
                 await model.generate(messages)

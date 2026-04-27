@@ -9,10 +9,11 @@ omc self-config 命令 - 自配置 Skill
 
 from __future__ import annotations
 
+import contextlib
 import json
 import re
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 
 import typer
 from rich.console import Console
@@ -21,8 +22,8 @@ from rich.prompt import Prompt
 from rich.table import Table
 
 try:
-    from ..core.router import ModelRouter  # noqa: F401
     from ..core.config_manager import ConfigManager  # noqa: F401
+    from ..core.router import ModelRouter  # noqa: F401
 
     HAS_CORE = True
 except ImportError:
@@ -122,7 +123,7 @@ MODEL_PROVIDERS = {
 }
 
 
-def parse_config_intent(text: str) -> Optional[Dict[str, Any]]:
+def parse_config_intent(text: str) -> dict[str, Any] | None:
     """解析配置意图"""
     text_lower = text.lower()
 
@@ -148,7 +149,7 @@ def parse_config_intent(text: str) -> Optional[Dict[str, Any]]:
     return None
 
 
-def detect_api_key_in_text(text: str) -> Optional[str]:
+def detect_api_key_in_text(text: str) -> str | None:
     """从文本中提取 API Key"""
     # 常见的 API Key 格式
     patterns = [
@@ -168,24 +169,23 @@ def detect_api_key_in_text(text: str) -> Optional[str]:
     return None
 
 
-async def execute_config(config: Dict[str, Any], api_key: Optional[str] = None) -> bool:
+async def execute_config(config: dict[str, Any], api_key: str | None = None) -> bool:
     """执行配置"""
     action = config.get("action")
 
     if action == "set_api_key":
         return await _set_api_key(config, api_key)
-    elif action == "set_default_model":
+    if action == "set_default_model":
         return await _set_default_model(config)
-    elif action == "set_proxy":
+    if action == "set_proxy":
         return await _set_proxy(config)
-    elif action == "set_temperature":
+    if action == "set_temperature":
         return await _set_temperature(config)
-    else:
-        console.print(f"[yellow]未知配置动作: {action}[/yellow]")
-        return False
+    console.print(f"[yellow]未知配置动作: {action}[/yellow]")
+    return False
 
 
-async def _set_api_key(config: Dict[str, Any], api_key: Optional[str] = None) -> bool:
+async def _set_api_key(config: dict[str, Any], api_key: str | None = None) -> bool:
     """设置 API Key"""
     provider = config.get("provider")
     raw_text = config.get("raw_text", "")
@@ -244,7 +244,7 @@ async def _set_api_key(config: Dict[str, Any], api_key: Optional[str] = None) ->
     return True
 
 
-async def _set_default_model(config: Dict[str, Any]) -> bool:
+async def _set_default_model(config: dict[str, Any]) -> bool:
     """设置默认模型"""
     console.print("\n[cyan]设置默认模型[/cyan]\n")
 
@@ -271,10 +271,8 @@ async def _set_default_model(config: Dict[str, Any]) -> bool:
 
     config_data = {}
     if config_file.exists():
-        try:
+        with contextlib.suppress(Exception):
             config_data = json.loads(config_file.read_text())
-        except Exception:
-            pass
 
     config_data["default_model"] = model_id
 
@@ -287,7 +285,7 @@ async def _set_default_model(config: Dict[str, Any]) -> bool:
     return True
 
 
-async def _set_proxy(config: Dict[str, Any]) -> bool:
+async def _set_proxy(config: dict[str, Any]) -> bool:
     """设置代理"""
     console.print("\n[cyan]配置 HTTP 代理[/cyan]")
 
@@ -318,7 +316,7 @@ async def _set_proxy(config: Dict[str, Any]) -> bool:
     return True
 
 
-async def _set_temperature(config: Dict[str, Any]) -> bool:
+async def _set_temperature(config: dict[str, Any]) -> bool:
     """设置温度参数"""
     console.print("\n[cyan]设置模型温度[/cyan]")
 
@@ -338,10 +336,8 @@ async def _set_temperature(config: Dict[str, Any]) -> bool:
 
     config_data = {}
     if config_file.exists():
-        try:
+        with contextlib.suppress(Exception):
             config_data = json.loads(config_file.read_text())
-        except Exception:
-            pass
 
     config_data["temperature"] = temp_float
 
@@ -357,8 +353,8 @@ def config(
     intent: str = typer.Argument(
         None, help="配置意图，如'配置 GLM API KEY'或'切换到 DeepSeek 模型'"
     ),
-    key: Optional[str] = typer.Option(None, "--key", "-k", help="直接提供 API Key"),
-    provider: Optional[str] = typer.Option(
+    key: str | None = typer.Option(None, "--key", "-k", help="直接提供 API Key"),
+    provider: str | None = typer.Option(
         None, "--provider", "-p", help="指定模型提供商"
     ),
     non_interactive: bool = typer.Option(

@@ -35,7 +35,6 @@ import json
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
 
 
 # ============================================================
@@ -119,8 +118,8 @@ def generate_summary(
     workflow: str,
     completed_steps: list[dict],
     project_path: str = "",
-    start_time: Optional[datetime] = None,
-    end_time: Optional[datetime] = None,
+    start_time: datetime | None = None,
+    end_time: datetime | None = None,
 ) -> TaskSummary:
     """
     根据已完成步骤生成任务总结
@@ -188,7 +187,7 @@ def generate_summary(
     # 推断使用的模型（简化版：从 Agent 名推断）
     models_used = _infer_models(workflow, len(agents_used))
 
-    summary = TaskSummary(
+    return TaskSummary(
         task=task,
         workflow=workflow,
         start_time=start.isoformat(),
@@ -203,8 +202,6 @@ def generate_summary(
         errors=errors,
         recommendations=recommendations,
     )
-
-    return summary
 
 
 def _generate_recommendations(
@@ -246,11 +243,11 @@ def _infer_models(workflow: str, agent_count: int) -> list[str]:
     """推断使用的模型"""
     if workflow == "build":
         return ["deepseek-chat", "deepseek-chat", "deepseek-reasoner"]
-    elif workflow == "review":
+    if workflow == "review":
         return ["deepseek-chat"]
-    elif workflow == "debug":
+    if workflow == "debug":
         return ["deepseek-reasoner"]
-    elif workflow == "test":
+    if workflow == "test":
         return ["deepseek-chat", "deepseek-chat"]
     return ["deepseek-chat"]
 
@@ -311,9 +308,9 @@ def print_summary_compact(summary: TaskSummary) -> None:
 # ============================================================
 def save_summary(
     summary: TaskSummary,
-    output_dir: Optional[Path] = None,
+    output_dir: Path | None = None,
     format: str = "json",
-    filename: Optional[str] = None,
+    filename: str | None = None,
 ) -> Path:
     """
     保存总结到文件
@@ -427,11 +424,10 @@ def load_summary(filepath: Path) -> TaskSummary:
     """从文件加载总结"""
     filepath = Path(filepath)
     if filepath.suffix == ".json":
-        with open(filepath, "r", encoding="utf-8") as f:
+        with open(filepath, encoding="utf-8") as f:
             data = json.load(f)
         return TaskSummary.from_dict(data)
-    else:
-        raise ValueError(f"不支持的文件格式: {filepath.suffix}")
+    raise ValueError(f"不支持的文件格式: {filepath.suffix}")
 
 
 # ============================================================

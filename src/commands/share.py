@@ -14,7 +14,7 @@ import json
 import uuid
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import typer
 from rich.console import Console
@@ -57,12 +57,12 @@ def _share_path(share_id: str) -> Path:
 
 
 def export_session(
-    task_id: Optional[str] = None,
-    history_dir: Optional[Path] = None,
+    task_id: str | None = None,
+    history_dir: Path | None = None,
     include_config: bool = True,
-    tags: Optional[List[str]] = None,
+    tags: list[str] | None = None,
     expires_hours: int = 0,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     导出会话为分享记录。
 
@@ -105,7 +105,7 @@ def export_session(
 
     # 读取历史数据
     try:
-        with open(target_file, "r", encoding="utf-8") as f:
+        with open(target_file, encoding="utf-8") as f:
             history_data = json.load(f)
     except (json.JSONDecodeError, OSError) as e:
         console.print(f"[red]❌ 读取失败: {e}[/red]")
@@ -137,7 +137,7 @@ def export_session(
         config_path = Path.home() / ".omc" / "config.json"
         if config_path.exists():
             try:
-                with open(config_path, "r", encoding="utf-8") as f:
+                with open(config_path, encoding="utf-8") as f:
                     config = json.load(f)
                 # 脱敏：移除 API Key
                 safe_config = _sanitize_config(config)
@@ -157,7 +157,7 @@ def export_session(
     return share_record
 
 
-def _sanitize_config(config: Dict[str, Any]) -> Dict[str, Any]:
+def _sanitize_config(config: dict[str, Any]) -> dict[str, Any]:
     """脱敏配置，移除 API Key"""
     safe = {}
     for key, value in config.items():
@@ -176,7 +176,7 @@ def _sanitize_config(config: Dict[str, Any]) -> Dict[str, Any]:
     return safe
 
 
-def import_session(share_id: str, target_dir: Optional[Path] = None) -> Dict[str, Any]:
+def import_session(share_id: str, target_dir: Path | None = None) -> dict[str, Any]:
     """
     通过分享 ID 导入会话。
 
@@ -195,7 +195,7 @@ def import_session(share_id: str, target_dir: Optional[Path] = None) -> Dict[str
         return {}
 
     try:
-        with open(share_file, "r", encoding="utf-8") as f:
+        with open(share_file, encoding="utf-8") as f:
             share_data = json.load(f)
     except (json.JSONDecodeError, OSError) as e:
         console.print(f"[red]❌ 读取分享失败: {e}[/red]")
@@ -240,14 +240,14 @@ def import_session(share_id: str, target_dir: Optional[Path] = None) -> Dict[str
     return history_data
 
 
-def list_shares() -> List[Dict[str, Any]]:
+def list_shares() -> list[dict[str, Any]]:
     """列出所有分享"""
     _ensure_dir()
 
     shares = []
     for f in SHARE_DIR.glob("share_*.json"):
         try:
-            with open(f, "r", encoding="utf-8") as fh:
+            with open(f, encoding="utf-8") as fh:
                 data = json.load(fh)
             # 只返回摘要
             shares.append(
@@ -283,14 +283,14 @@ def delete_share(share_id: str) -> bool:
     return True
 
 
-def get_share(share_id: str) -> Optional[Dict[str, Any]]:
+def get_share(share_id: str) -> dict[str, Any] | None:
     """获取分享详情"""
     share_file = _share_path(share_id)
     if not share_file.exists():
         return None
 
     try:
-        with open(share_file, "r", encoding="utf-8") as f:
+        with open(share_file, encoding="utf-8") as f:
             return json.load(f)
     except (json.JSONDecodeError, OSError):
         return None
@@ -303,10 +303,10 @@ def get_share(share_id: str) -> Optional[Dict[str, Any]]:
 
 @app.command("create")
 def share_create(
-    task_id: Optional[str] = typer.Option(
+    task_id: str | None = typer.Option(
         None, "--task", "-t", help="指定任务 ID（空则导出最近一次）"
     ),
-    tags: Optional[str] = typer.Option(None, "--tags", help="标签，逗号分隔"),
+    tags: str | None = typer.Option(None, "--tags", help="标签，逗号分隔"),
     no_config: bool = typer.Option(False, "--no-config", help="不包含配置信息"),
     expires: int = typer.Option(
         0, "--expires", "-e", help="过期时间（小时），0=永不过期"

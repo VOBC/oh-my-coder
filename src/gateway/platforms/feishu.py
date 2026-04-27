@@ -10,9 +10,10 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import logging
 import time
-from typing import Any, Dict, Optional
+from typing import Any
 
 from ..base import IncomingMessage, OutgoingMessage, Platform, PlatformHandler
 
@@ -47,8 +48,8 @@ class FeishuHandler(PlatformHandler):
         self,
         app_id: str,
         app_secret: str,
-        encrypt_key: Optional[str] = None,
-        verify_token: Optional[str] = None,
+        encrypt_key: str | None = None,
+        verify_token: str | None = None,
         **kwargs,
     ):
         """
@@ -63,10 +64,10 @@ class FeishuHandler(PlatformHandler):
         self.app_secret = app_secret
         self.encrypt_key = encrypt_key
         self.verify_token = verify_token
-        self._tenant_access_token: Optional[str] = None
+        self._tenant_access_token: str | None = None
         self._token_expires_at: float = 0
         self._stop_event = asyncio.Event()
-        self._poll_task: Optional[asyncio.Task[None]] = None
+        self._poll_task: asyncio.Task[None] | None = None
 
     # ---- PlatformHandler 实现 ----
 
@@ -85,10 +86,8 @@ class FeishuHandler(PlatformHandler):
         self._stop_event.set()
         if self._poll_task:
             self._poll_task.cancel()
-            try:
+            with contextlib.suppress(asyncio.CancelledError):
                 await self._poll_task
-            except asyncio.CancelledError:
-                pass
         self._started = False
         logger.info("[feishu] Handler stopped")
 
@@ -139,7 +138,7 @@ class FeishuHandler(PlatformHandler):
                 self.on_error(Exception(str(data)))
                 return False
         except Exception as e:
-            logger.error(f"[feishu] Send error: {e}")
+            logger.exception(f"[feishu] Send error: {e}")
             self.on_error(e)
             return False
 
@@ -161,7 +160,7 @@ class FeishuHandler(PlatformHandler):
             else:
                 logger.error(f"[feishu] Token refresh failed: {data}")
 
-    async def _get_token(self) -> Optional[str]:
+    async def _get_token(self) -> str | None:
         """获取有效 token（自动刷新）"""
         if self._tenant_access_token is None or time.time() >= self._token_expires_at:
             await self._refresh_token()
@@ -211,10 +210,10 @@ class FeishuHandler(PlatformHandler):
             except asyncio.CancelledError:
                 break
             except Exception as e:
-                logger.error(f"[feishu] Poll error: {e}")
+                logger.exception(f"[feishu] Poll error: {e}")
                 await asyncio.sleep(10)
 
-    async def _process_message(self, msg: Dict[str, Any]) -> None:
+    async def _process_message(self, msg: dict[str, Any]) -> None:
         """处理飞书消息"""
         msg_type = msg.get("msg_type", "")
         if msg_type != "text":
@@ -260,7 +259,7 @@ class FeishuHandler(PlatformHandler):
         try:
             self.on_message(incoming)
         except Exception as e:
-            logger.error(f"[feishu] on_message error: {e}")
+            logger.exception(f"[feishu] on_message error: {e}")
             self.on_error(e)
 
     @staticmethod

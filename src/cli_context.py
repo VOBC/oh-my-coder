@@ -13,7 +13,7 @@ from pathlib import Path
 
 import typer
 
-from .context import WorkspaceScanner, BrowserAwareness, FileNode
+from .context import BrowserAwareness, FileNode, WorkspaceScanner
 
 context_app = typer.Typer(
     name="context",
@@ -292,7 +292,7 @@ def tree(
     scanner = WorkspaceScanner(project_path.resolve())
     tree_node = scanner.scan(max_depth=depth)
 
-    def build_rich_tree(node: "FileNode", filter_ext: str = None) -> Tree:
+    def build_rich_tree(node: "FileNode", filter_ext: str | None = None) -> Tree:
         """构建 rich Tree"""
         label = f"[cyan]{node.name}[/cyan]"
         if node.language:
@@ -339,15 +339,14 @@ def stats(
         omc context stats -p /path/to/project
     """
     from rich.console import Console
-    from rich.table import Table
     from rich.panel import Panel
+    from rich.table import Table
 
     console = Console()
     scanner = WorkspaceScanner(project_path.resolve())
 
     # 扫描两次（一次深度大，一次深度小）
     tree = scanner.scan(max_depth=10)
-    stats = scanner._scan_stats
 
     # 统计各语言文件数和行数
     lang_stats: dict = {}
@@ -366,7 +365,7 @@ def stats(
 
             # 统计行数
             try:
-                with open(node.path, "r", encoding="utf-8", errors="replace") as f:
+                with open(node.path, encoding="utf-8", errors="replace") as f:
                     lang_stats[lang]["lines"] += sum(1 for _ in f if _.strip())
             except Exception:
                 pass

@@ -15,7 +15,6 @@ import json
 import os
 import subprocess
 from pathlib import Path
-from typing import List
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -45,7 +44,7 @@ class ChatRequest(BaseModel):
     message: str
     model: str = "glm-4-flash"
     apiKey: str = ""
-    sessionHistory: List[ChatMessage] = []
+    sessionHistory: list[ChatMessage] = []
 
 
 @app.get("/api/models")

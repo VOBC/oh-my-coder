@@ -75,13 +75,3 @@ desktop/node_modules/
 desktop/dist/
 desktop/.parcel-cache/
 
-
-# Web UI
-web-ui/node_modules/
-web-ui/.next/
-web-ui/out/
-
-# Backend
-backend/__pycache__/
-backend/*.pyc
-

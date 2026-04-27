@@ -8,8 +8,6 @@
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Optional, List
-
 
 # 排除的目录和文件（与 .gitignore 类似逻辑）
 EXCLUDE_DIRS = {
@@ -25,7 +23,6 @@ EXCLUDE_DIRS = {
     "venv",
     "env",
     ".env",
-    ".venv",
     "node_modules",
     "dist",
     "build",
@@ -91,9 +88,9 @@ class FileNode:
     is_dir: bool
     size: int = 0
     modified: str = ""
-    language: Optional[str] = None  # 代码语言
-    summary: Optional[str] = None  # 文件摘要
-    children: List["FileNode"] = field(default_factory=list)
+    language: str | None = None  # 代码语言
+    summary: str | None = None  # 文件摘要
+    children: list["FileNode"] = field(default_factory=list)
 
     def to_dict(self) -> dict:
         """转换为字典（用于 JSON 序列化）"""
@@ -317,7 +314,7 @@ class WorkspaceScanner:
 
         return node
 
-    def _detect_language(self, path: Path) -> Optional[str]:
+    def _detect_language(self, path: Path) -> str | None:
         """检测文件语言"""
         name = path.name.lower()
         ext = path.suffix.lower()
@@ -368,7 +365,7 @@ class WorkspaceScanner:
 
         # 构建摘要
         language = self._detect_language(path)
-        first_line = lines[0] if lines else ""
+        lines[0] if lines else ""
 
         # 检测文件类型并提取关键信息
         summary_parts = []
@@ -403,10 +400,10 @@ class WorkspaceScanner:
 --- 内容摘要 ---
 {body}"""
 
-    def _read_file_lines(self, path: Path, max_lines: int) -> List[str]:
+    def _read_file_lines(self, path: Path, max_lines: int) -> list[str]:
         """安全读取文件行"""
         try:
-            with open(path, "r", encoding="utf-8", errors="replace") as f:
+            with open(path, encoding="utf-8", errors="replace") as f:
                 lines = []
                 for i, line in enumerate(f):
                     if i >= max_lines:
@@ -416,7 +413,7 @@ class WorkspaceScanner:
         except OSError:
             return []
 
-    def _summarize_python(self, lines: List[str], path: Path) -> List[str]:
+    def _summarize_python(self, lines: list[str], path: Path) -> list[str]:
         """Python 文件摘要：提取导入、类、函数定义"""
         result = []
         imports = []
@@ -425,7 +422,7 @@ class WorkspaceScanner:
 
         for line in lines:
             stripped = line.strip()
-            if stripped.startswith("import ") or stripped.startswith("from "):
+            if stripped.startswith(("import ", "from ")):
                 if len(imports) < 10:
                     imports.append(stripped)
             elif stripped.startswith("class "):
@@ -458,7 +455,7 @@ class WorkspaceScanner:
 
         return result
 
-    def _summarize_js_ts(self, lines: List[str], path: Path) -> List[str]:
+    def _summarize_js_ts(self, lines: list[str], path: Path) -> list[str]:
         """JS/TS 文件摘要：提取导入、导出、函数"""
         result = []
         imports = []
@@ -500,27 +497,26 @@ class WorkspaceScanner:
 
         return result
 
-    def _summarize_json(self, path: Path) -> List[str]:
+    def _summarize_json(self, path: Path) -> list[str]:
         """JSON 文件摘要"""
         try:
             import json
 
-            with open(path, "r", encoding="utf-8") as f:
+            with open(path, encoding="utf-8") as f:
                 data = json.load(f)
 
             if isinstance(data, dict):
                 keys = list(data.keys())[:20]
                 return [f"键: {', '.join(keys)}" + (" ..." if len(data) > 20 else "")]
-            elif isinstance(data, list):
+            if isinstance(data, list):
                 return [
                     f"数组: {len(data)} 项，示例: {str(data[0])[:100] if data else '[]'}"
                 ]
-            else:
-                return [str(data)[:200]]
+            return [str(data)[:200]]
         except Exception:
             return ["[JSON 解析失败]"]
 
-    def _summarize_config(self, lines: List[str], path: Path) -> List[str]:
+    def _summarize_config(self, lines: list[str], path: Path) -> list[str]:
         """YAML/TOML 配置摘要"""
         result = []
         for line in lines[:30]:
@@ -534,14 +530,14 @@ class WorkspaceScanner:
                         result.append(f"  {key}")
         return result[:20]
 
-    def _summarize_doc(self, lines: List[str], path: Path) -> List[str]:
+    def _summarize_doc(self, lines: list[str], path: Path) -> list[str]:
         """Markdown/RST 文档摘要"""
         result = []
         for line in lines:
             stripped = line.strip()
             if stripped.startswith("#"):
                 result.append(stripped)
-            elif stripped.startswith("===") or stripped.startswith("---"):
+            elif stripped.startswith(("===", "---")):
                 continue
             elif result and len(result) < 10:
                 result.append(stripped[:100])
@@ -550,17 +546,12 @@ class WorkspaceScanner:
             return result[:15]
         return lines[:10]
 
-    def _summarize_dockerfile(self, lines: List[str], path: Path) -> List[str]:
+    def _summarize_dockerfile(self, lines: list[str], path: Path) -> list[str]:
         """Dockerfile 摘要"""
         result = ["FROM / 指令:"]
         for line in lines:
             stripped = line.strip()
-            if (
-                stripped.startswith("FROM ")
-                or stripped.startswith("RUN ")
-                or stripped.startswith("COPY ")
-                or stripped.startswith("WORKDIR ")
-            ):
+            if stripped.startswith(("FROM ", "RUN ", "COPY ", "WORKDIR ")):
                 result.append(f"  {stripped}")
         return result[:15]
 
@@ -568,12 +559,11 @@ class WorkspaceScanner:
         """格式化文件大小"""
         if size < 1024:
             return f"{size}B"
-        elif size < 1024 * 1024:
+        if size < 1024 * 1024:
             return f"{size / 1024:.1f}KB"
-        elif size < 1024 * 1024 * 1024:
+        if size < 1024 * 1024 * 1024:
             return f"{size / (1024 * 1024):.1f}MB"
-        else:
-            return f"{size / (1024 * 1024 * 1024):.1f}GB"
+        return f"{size / (1024 * 1024 * 1024):.1f}GB"
 
     def to_context_string(self, max_depth: int = 3) -> str:
         """
@@ -603,7 +593,7 @@ class WorkspaceScanner:
 
         return "\n".join(lines)
 
-    def _render_tree(self, node: FileNode, prefix: str, is_last: bool) -> List[str]:
+    def _render_tree(self, node: FileNode, prefix: str, is_last: bool) -> list[str]:
         """渲染文件树"""
         lines = []
 

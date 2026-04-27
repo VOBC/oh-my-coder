@@ -5,10 +5,11 @@
 """
 
 import asyncio
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any
 
 try:
     from fastapi import WebSocket
@@ -48,15 +49,15 @@ class Notification:
     type: NotificationType
     title: str
     message: str
-    team_id: Optional[str] = None
-    user_id: Optional[str] = None
-    task_id: Optional[str] = None
+    team_id: str | None = None
+    user_id: str | None = None
+    task_id: str | None = None
     priority: NotificationPriority = NotificationPriority.NORMAL
-    data: Dict[str, Any] = field(default_factory=dict)
+    data: dict[str, Any] = field(default_factory=dict)
     created_at: datetime = field(default_factory=datetime.now)
     read: bool = False
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "notification_id": self.notification_id,
             "type": self.type.value,
@@ -76,8 +77,8 @@ class ConnectionManager:
     """WebSocket 连接管理器"""
 
     def __init__(self):
-        self._connections: Dict[str, List[Any]] = {}
-        self._user_connections: Dict[str, Any] = {}
+        self._connections: dict[str, list[Any]] = {}
+        self._user_connections: dict[str, Any] = {}
 
     async def connect(self, websocket: Any, user_id: str, team_id: str) -> None:
         """建立连接"""
@@ -99,7 +100,7 @@ class ConnectionManager:
         if user_id in self._user_connections:
             del self._user_connections[user_id]
 
-    async def send_to_user(self, user_id: str, message: Dict[str, Any]) -> bool:
+    async def send_to_user(self, user_id: str, message: dict[str, Any]) -> bool:
         """发送消息给用户"""
         if user_id in self._user_connections:
             try:
@@ -109,7 +110,7 @@ class ConnectionManager:
                 self._user_connections.pop(user_id, None)
         return False
 
-    async def broadcast_to_team(self, team_id: str, message: Dict[str, Any]) -> int:
+    async def broadcast_to_team(self, team_id: str, message: dict[str, Any]) -> int:
         """广播给团队"""
         count = 0
         for key, connections in list(self._connections.items()):
@@ -135,8 +136,8 @@ class TeamNotifier:
 
     def __init__(self):
         self.manager = ConnectionManager()
-        self._notification_history: Dict[str, List[Notification]] = {}
-        self._handlers: Dict[NotificationType, List[Callable]] = {}
+        self._notification_history: dict[str, list[Notification]] = {}
+        self._handlers: dict[NotificationType, list[Callable]] = {}
 
     def register_handler(
         self,
@@ -209,7 +210,7 @@ class TeamNotifier:
         task_id: str,
         team_id: str,
         title: str,
-        result: Dict[str, Any],
+        result: dict[str, Any],
     ) -> Notification:
         """
         通知任务完成
@@ -393,7 +394,7 @@ class TeamNotifier:
 
     def get_team_notifications(
         self, team_id: str, unread_only: bool = False
-    ) -> List[Notification]:
+    ) -> list[Notification]:
         """获取团队通知"""
         notifications = self._notification_history.get(team_id, [])
         if unread_only:
@@ -402,7 +403,7 @@ class TeamNotifier:
 
     def get_user_notifications(
         self, user_id: str, team_id: str, unread_only: bool = False
-    ) -> List[Notification]:
+    ) -> list[Notification]:
         """获取用户通知"""
         notifications = self._notification_history.get(team_id, [])
         user_notifs = [

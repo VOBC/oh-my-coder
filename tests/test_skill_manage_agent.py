@@ -7,19 +7,18 @@ from pathlib import Path
 
 import pytest
 
-from src.agents.skill_manage import SkillManageAgent
 from src.agents.base import AgentLane
+from src.agents.skill_manage import SkillManageAgent
 
 
 @pytest.fixture
 def tmp_sm():
     """独立临时 SkillManager"""
     td = Path(tempfile.mkdtemp())
-    agent = SkillManageAgent(
+    return SkillManageAgent(
         model_router=None,
         config={"skills_dir": td / ".omc" / "skills"},
     )
-    return agent
 
 
 class TestSkillManageAgentMetadata:

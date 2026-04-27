@@ -7,9 +7,8 @@
 import json
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List
 
-from .short_term import SessionContext, Message
+from .short_term import Message, SessionContext
 
 
 @dataclass
@@ -154,8 +153,8 @@ class AutoCompact:
         original_count = len(session.messages)
 
         # 分离 system 消息和非 system 消息
-        system_msgs: List[Message] = [m for m in session.messages if m.role == "system"]
-        non_system_msgs: List[Message] = [
+        system_msgs: list[Message] = [m for m in session.messages if m.role == "system"]
+        non_system_msgs: list[Message] = [
             m for m in session.messages if m.role != "system"
         ]
 
@@ -194,7 +193,7 @@ class AutoCompact:
         )
 
         # 重建消息列表
-        session.messages = system_msgs + [summary_msg] + recent_msgs
+        session.messages = [*system_msgs, summary_msg, *recent_msgs]
 
         tokens_after = self._count_session_tokens(session)
         messages_removed = original_count - len(session.messages)
@@ -207,7 +206,7 @@ class AutoCompact:
             warning_level="compacted",
         )
 
-    def _generate_summary(self, messages: List[Message]) -> str:
+    def _generate_summary(self, messages: list[Message]) -> str:
         """生成消息摘要（简单实现）
 
         实际生产环境可以调用 LLM 生成更智能的摘要。

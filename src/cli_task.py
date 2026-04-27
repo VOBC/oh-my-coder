@@ -18,11 +18,11 @@ from rich.table import Table
 
 from .state.task_state import (
     TaskStatus,
+    delete_task,
     get_task,
     list_tasks,
     pause_task,
     resume_task,
-    delete_task,
 )
 
 app = typer.Typer(
@@ -115,7 +115,7 @@ def task_list(
     console.print(table)
 
     # 统计
-    total = len(states)
+    len(states)
     counts = {s: sum(1 for s_ in states if s_.status == s) for s in TaskStatus}
     stats = " ".join(f"{_status_emoji(s)} {v}" for s, v in counts.items() if v > 0)
     console.print(f"\n[dim]{stats}[/dim]")

@@ -9,6 +9,7 @@ from pathlib import Path
 
 import pytest
 
+from src.plugins.loader import PluginLoader, PluginLoaderError
 from src.plugins.registry import (
     PluginBase,
     PluginMetadata,
@@ -17,8 +18,6 @@ from src.plugins.registry import (
     get_registry,
     register,
 )
-from src.plugins.loader import PluginLoader, PluginLoaderError
-
 
 # ---- Fixtures ----
 

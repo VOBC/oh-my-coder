@@ -8,7 +8,6 @@ import importlib
 import importlib.util
 import sys
 from pathlib import Path
-from typing import Dict, List, Optional
 
 from src.plugins.registry import (
     Plugin,
@@ -22,8 +21,6 @@ from src.plugins.registry import (
 
 class PluginLoaderError(Exception):
     """插件加载异常"""
-
-    pass
 
 
 class PluginLoader:
@@ -45,8 +42,8 @@ class PluginLoader:
 
     def __init__(
         self,
-        registry: Optional[PluginRegistry] = None,
-        plugin_dir: Optional[Path] = None,
+        registry: PluginRegistry | None = None,
+        plugin_dir: Path | None = None,
     ) -> None:
         """
         Args:
@@ -55,7 +52,7 @@ class PluginLoader:
         """
         self.registry = registry or get_registry()
         self.plugin_dir = plugin_dir or self._default_plugin_dir()
-        self._loaded: List[str] = []
+        self._loaded: list[str] = []
 
     @staticmethod
     def _default_plugin_dir() -> Path:
@@ -64,7 +61,7 @@ class PluginLoader:
 
     # ---- 发现 ----
 
-    def discover(self) -> List[PluginMetadata]:
+    def discover(self) -> list[PluginMetadata]:
         """
         扫描 plugin_dir 下所有 .py 文件，发现可用插件。
 
@@ -75,7 +72,7 @@ class PluginLoader:
         Returns:
             发现的插件元信息列表
         """
-        discovered: List[PluginMetadata] = []
+        discovered: list[PluginMetadata] = []
 
         if not self.plugin_dir.exists():
             return discovered
@@ -149,7 +146,7 @@ class PluginLoader:
 
     # ---- 依赖排序 ----
 
-    def _topological_sort(self, plugins: List[PluginMetadata]) -> List[PluginMetadata]:
+    def _topological_sort(self, plugins: list[PluginMetadata]) -> list[PluginMetadata]:
         """
         按依赖拓扑排序，被依赖的插件先加载。
 
@@ -162,12 +159,12 @@ class PluginLoader:
         Raises:
             PluginLoaderError: 检测到循环依赖
         """
-        name_map: Dict[str, PluginMetadata] = {p.name: p for p in plugins}
+        name_map: dict[str, PluginMetadata] = {p.name: p for p in plugins}
         plugin_names = set(name_map.keys())
 
         # 构建邻接表：name -> 依赖它的插件（反向边）
-        dependents: Dict[str, List[str]] = {n: [] for n in plugin_names}
-        in_degree: Dict[str, int] = {n: 0 for n in plugin_names}
+        dependents: dict[str, list[str]] = {n: [] for n in plugin_names}
+        in_degree: dict[str, int] = dict.fromkeys(plugin_names, 0)
 
         for p in plugins:
             for req in p.requires:
@@ -177,8 +174,8 @@ class PluginLoader:
                 # 外部依赖跳过（不阻塞加载，由运行时校验）
 
         # Kahn 算法
-        queue: List[str] = [n for n in plugin_names if in_degree[n] == 0]
-        sorted_names: List[str] = []
+        queue: list[str] = [n for n in plugin_names if in_degree[n] == 0]
+        sorted_names: list[str] = []
 
         while queue:
             # 字母序稳定排序
@@ -197,7 +194,7 @@ class PluginLoader:
 
     # ---- 加载 ----
 
-    def load(self, name: str) -> Optional[Plugin]:
+    def load(self, name: str) -> Plugin | None:
         """
         加载单个插件。
 
@@ -237,7 +234,7 @@ class PluginLoader:
             plugin.error = f"{type(e).__name__}: {e}"
             return None
 
-    def load_all(self) -> List[str]:
+    def load_all(self) -> list[str]:
         """
         发现所有插件，按依赖顺序加载。
 
@@ -325,7 +322,7 @@ class PluginLoader:
 
 # ---- 全局加载器 ----
 
-_loader: Optional[PluginLoader] = None
+_loader: PluginLoader | None = None
 
 
 def get_loader() -> PluginLoader:

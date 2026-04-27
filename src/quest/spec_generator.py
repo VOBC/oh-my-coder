@@ -6,12 +6,10 @@ SPEC 生成器
 
 import re
 from pathlib import Path
-from typing import List, Optional
 
 from ..core.router import TaskType
 from ..models.base import Message
 from .models import AcceptanceCriteria, Quest, QuestSpec, SpecSection
-
 
 SYSTEM_PROMPT = """你是一个资深的技术架构师，擅长将需求转化为详细的规格文档。
 
@@ -68,7 +66,7 @@ class SpecGenerator:
     def __init__(
         self,
         model_router,  # ModelRouter instance
-        project_path: Optional[Path] = None,
+        project_path: Path | None = None,
     ):
         self.model_router = model_router
         self.project_path = project_path or Path(".")
@@ -163,16 +161,16 @@ class SpecGenerator:
                 break
 
         # 提取章节
-        sections: List[SpecSection] = []
+        sections: list[SpecSection] = []
         current_title = "概述"
-        current_content: List[str] = []
+        current_content: list[str] = []
         in_acceptance = False
-        acceptance_criteria: List[AcceptanceCriteria] = []
-        scope: List[str] = []
-        out_of_scope: List[str] = []
+        acceptance_criteria: list[AcceptanceCriteria] = []
+        scope: list[str] = []
+        out_of_scope: list[str] = []
         motivation = ""
         overview = ""
-        risks: List[str] = []
+        risks: list[str] = []
         estimated_time = "1h"
 
         for line in lines:
@@ -200,11 +198,7 @@ class SpecGenerator:
                     in_acceptance = False
                 elif "验收标准" in title:
                     in_acceptance = True
-                elif "动机" in title:
-                    in_acceptance = False
-                elif "包含范围" in title:
-                    in_acceptance = False
-                elif "风险" in title:
+                elif "动机" in title or "包含范围" in title or "风险" in title:
                     in_acceptance = False
                 continue
 
@@ -212,7 +206,7 @@ class SpecGenerator:
             if in_acceptance:
                 # 解析验收标准
                 match = re.search(r"\[AC?\d+\]", stripped, re.IGNORECASE)
-                if match or stripped.startswith("- [ ]") or stripped.startswith("-[**"):
+                if match or stripped.startswith(("- [ ]", "-[**")):
                     # 提取标准描述
                     desc = re.sub(r"^\[[ x]\]\s*", "", stripped).strip()
                     desc = re.sub(r"\[\*\*[AC?\d+\]\*\*]\s*", "", desc).strip()

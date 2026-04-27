@@ -16,9 +16,9 @@ from rich.panel import Panel
 from rich.table import Table
 
 from .config.agent_config import (
+    list_configs_in_dir,
     load_config_file,
     validate_config_file,
-    list_configs_in_dir,
 )
 
 app = typer.Typer(

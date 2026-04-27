@@ -10,8 +10,6 @@ API Agent - REST API 设计与实现智能体
 模型层级：MEDIUM（平衡）
 """
 
-from typing import Dict, List
-
 from ..core.router import TaskType
 from .base import (
     AgentContext,
@@ -106,7 +104,7 @@ async def create_user(user: UserCreate):
 """
 
     async def _run(
-        self, context: AgentContext, prompt: List[Dict[str, str]], **kwargs
+        self, context: AgentContext, prompt: list[dict[str, str]], **kwargs
     ) -> str:
         """执行 API 设计"""
         if context.previous_outputs.get("architect"):

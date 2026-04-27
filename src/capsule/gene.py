@@ -5,7 +5,7 @@ GEP 协议中的基本单元，描述一个能力的身份和属性。
 """
 
 from dataclasses import asdict, dataclass, field
-from typing import Any, Dict, List, Optional
+from typing import Any
 from uuid import uuid4
 
 
@@ -19,13 +19,13 @@ class Gene:
 
     name: str  # 能力名称
     category: str  # coding / review / debug / docs / test
-    tags: List[str] = field(default_factory=list)  # [python, pytest, bug-fix]
+    tags: list[str] = field(default_factory=list)  # [python, pytest, bug-fix]
     description: str = ""  # 一句话描述
-    capabilities: List[str] = field(default_factory=list)  # 具体能力列表
+    capabilities: list[str] = field(default_factory=list)  # 具体能力列表
     version: str = "1.0.0"  # 版本号
     author: str = "anonymous"  # 作者
     created_at: str = ""  # ISO 格式时间
-    signature: Optional[str] = None  # 未来对接 zCloak
+    signature: str | None = None  # 未来对接 zCloak
     id: str = ""  # UUID
 
     def __post_init__(self) -> None:
@@ -38,7 +38,7 @@ class Gene:
 
     # --- 序列化 ---
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return asdict(self)
 
     def to_json(self) -> str:
@@ -47,7 +47,7 @@ class Gene:
         return json.dumps(self.to_dict(), ensure_ascii=False)
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "Gene":
+    def from_dict(cls, data: dict[str, Any]) -> "Gene":
         # 只取 Gene 自身字段，忽略多余 key
         valid = {
             k: v
@@ -58,8 +58,8 @@ class Gene:
 
     # --- 校验 ---
 
-    def validate(self) -> List[str]:
-        errors: List[str] = []
+    def validate(self) -> list[str]:
+        errors: list[str] = []
         valid_categories = {"coding", "review", "debug", "docs", "test"}
         if self.category and self.category not in valid_categories:
             errors.append(

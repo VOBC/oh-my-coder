@@ -13,10 +13,10 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
+from .sandbox.sandbox import Sandbox
 from .security.permissions import (
     PermissionGuard,
 )
-from .sandbox.sandbox import Sandbox
 
 app = typer.Typer(
     name="security",

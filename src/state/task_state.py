@@ -15,8 +15,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Optional
-
+from typing import Any
 
 # ─────────────────────────────────────────────────────────────
 # 状态枚举
@@ -43,9 +42,9 @@ class StepRecord:
     """步骤记录"""
 
     step: str
-    result: Optional[str] = None
+    result: str | None = None
     timestamp: str = ""
-    duration: Optional[float] = None
+    duration: float | None = None
 
     def __post_init__(self) -> None:
         if not self.timestamp:
@@ -81,7 +80,7 @@ class TaskState:
     current_step: str = ""
     steps: list[StepRecord] = field(default_factory=list)
     artifacts: dict[str, Any] = field(default_factory=dict)
-    error: Optional[str] = None
+    error: str | None = None
     metadata: dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
@@ -171,7 +170,7 @@ class TaskState:
 class TaskStore:
     """任务状态持久化存储"""
 
-    _instance: Optional[TaskStore] = None
+    _instance: TaskStore | None = None
 
     def __init__(self, base_dir: Path | None = None) -> None:
         if base_dir is None:
@@ -198,7 +197,7 @@ class TaskStore:
         tmp.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
         tmp.rename(path)
 
-    def load(self, task_id: str) -> Optional[TaskState]:
+    def load(self, task_id: str) -> TaskState | None:
         """加载任务状态"""
         path = self._task_path(task_id)
         if not path.exists():
@@ -251,7 +250,7 @@ def create_task(task_id: str, metadata: dict[str, Any] | None = None) -> TaskSta
     return state
 
 
-def get_task(task_id: str) -> Optional[TaskState]:
+def get_task(task_id: str) -> TaskState | None:
     """获取任务状态"""
     return TaskStore.get_instance().load(task_id)
 

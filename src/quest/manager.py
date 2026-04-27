@@ -4,8 +4,8 @@ Quest 管理器
 统一管理 Quest 的创建、SPEC 生成、执行、查询。
 """
 
+from collections.abc import Awaitable, Callable
 from pathlib import Path
-from typing import Awaitable, Callable, List, Optional
 
 from ..core.router import ModelRouter, RouterConfig
 from .executor import QuestExecutor
@@ -29,8 +29,8 @@ class QuestManager:
     def __init__(
         self,
         project_path: Path,
-        notify_callback: Optional[Callable[[QuestNotification], None]] = None,
-        review_callback: Optional[Callable[[str, str, str], Awaitable[str]]] = None,
+        notify_callback: Callable[[QuestNotification], None] | None = None,
+        review_callback: Callable[[str, str, str], Awaitable[str]] | None = None,
     ):
         self.project_path = Path(project_path)
         self.store = QuestStore(self.project_path)
@@ -38,8 +38,8 @@ class QuestManager:
         self.review_callback = review_callback
 
         # 延迟初始化 ModelRouter
-        self._router: Optional[ModelRouter] = None
-        self._executor: Optional[QuestExecutor] = None
+        self._router: ModelRouter | None = None
+        self._executor: QuestExecutor | None = None
 
     @property
     def router(self) -> ModelRouter:
@@ -65,16 +65,15 @@ class QuestManager:
     async def create_quest(
         self,
         description: str,
-        title: Optional[str] = None,
+        title: str | None = None,
         priority: str = "medium",
     ) -> Quest:
         """创建新 Quest"""
-        quest = self.store.create(
+        return self.store.create(
             title=title or self._extract_title(description),
             description=description,
             project_path=str(self.project_path),
         )
-        return quest
 
     async def generate_spec(self, quest: Quest) -> Quest:
         """
@@ -133,18 +132,18 @@ class QuestManager:
     # 查询操作
     # ============================================================
 
-    def get_quest(self, quest_id: str) -> Optional[Quest]:
+    def get_quest(self, quest_id: str) -> Quest | None:
         """获取单个 Quest"""
         return self.store.get(quest_id)
 
     def list_quests(
         self,
-        status_filter: Optional[QuestStatus] = None,
-    ) -> List[Quest]:
+        status_filter: QuestStatus | None = None,
+    ) -> list[Quest]:
         """列出 Quest"""
         return self.store.list(status_filter=status_filter)
 
-    def get_active_quests(self) -> List[Quest]:
+    def get_active_quests(self) -> list[Quest]:
         """获取活跃的 Quest"""
         quests = self.store.list()
         active_statuses = {
@@ -172,7 +171,7 @@ class QuestManager:
         """暂停"""
         return self.executor.pause(quest_id)
 
-    def resume(self, quest_id: str) -> Optional[Quest]:
+    def resume(self, quest_id: str) -> Quest | None:
         """恢复"""
         return self.executor.resume(quest_id)
 

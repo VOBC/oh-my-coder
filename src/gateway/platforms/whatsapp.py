@@ -10,11 +10,15 @@ WhatsApp Business Cloud API 平台处理器
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import logging
 import os
-from typing import Any, Dict, Optional
+from typing import TYPE_CHECKING, Any
 
 from ..base import IncomingMessage, OutgoingMessage, Platform, PlatformHandler
+
+if TYPE_CHECKING:
+    from starlette.requests import Request
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +32,6 @@ except ImportError:
 
 try:
     from starlette.applications import Starlette
-    from starlette.requests import Request
     from starlette.responses import JSONResponse, PlainTextResponse
     from starlette.routing import Route
 
@@ -68,7 +71,7 @@ class WhatsAppHandler(PlatformHandler):
         phone_number_id: str,
         access_token: str,
         webhook_url: str,
-        verify_token: Optional[str] = None,
+        verify_token: str | None = None,
         webhook_port: int = 8080,
         **kwargs,
     ):
@@ -89,7 +92,7 @@ class WhatsAppHandler(PlatformHandler):
         )
         self.webhook_port = webhook_port
         self._app: Any = None
-        self._server_task: Optional[asyncio.Task[None]] = None
+        self._server_task: asyncio.Task[None] | None = None
 
     # ---- PlatformHandler 实现 ----
 
@@ -152,10 +155,8 @@ class WhatsAppHandler(PlatformHandler):
     async def stop(self) -> None:
         if self._server_task:
             self._server_task.cancel()
-            try:
+            with contextlib.suppress(asyncio.CancelledError):
                 await self._server_task
-            except asyncio.CancelledError:
-                pass
         self._started = False
         logger.info("[whatsapp] Handler stopped")
 
@@ -187,13 +188,13 @@ class WhatsAppHandler(PlatformHandler):
                 self.on_error(Exception(f"HTTP {resp.status_code}"))
                 return False
         except Exception as e:
-            logger.error(f"[whatsapp] Send error: {e}")
+            logger.exception(f"[whatsapp] Send error: {e}")
             self.on_error(e)
             return False
 
     # ---- 内部处理 ----
 
-    async def _handle_webhook_event(self, body: Dict[str, Any]) -> None:
+    async def _handle_webhook_event(self, body: dict[str, Any]) -> None:
         """处理 WhatsApp Webhook 事件"""
         try:
             entries = body.get("entry", [])
@@ -207,11 +208,11 @@ class WhatsAppHandler(PlatformHandler):
                         await self._process_message(msg, value)
 
         except Exception as e:
-            logger.error(f"[whatsapp] Webhook parse error: {e}")
+            logger.exception(f"[whatsapp] Webhook parse error: {e}")
             self.on_error(e)
 
     async def _process_message(
-        self, msg: Dict[str, Any], value: Dict[str, Any]
+        self, msg: dict[str, Any], value: dict[str, Any]
     ) -> None:
         """处理单条消息"""
         msg_type = msg.get("type")
@@ -247,7 +248,7 @@ class WhatsAppHandler(PlatformHandler):
         try:
             self.on_message(incoming)
         except Exception as e:
-            logger.error(f"[whatsapp] on_message error: {e}")
+            logger.exception(f"[whatsapp] on_message error: {e}")
             self.on_error(e)
 
 

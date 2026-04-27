@@ -232,7 +232,7 @@ class TestIndexPersistence:
 
         # 重新初始化
         sm2 = SkillManager(skills_dir=tmp_skill_dir)
-        skill = sm2.get_skill(list(sm2._index.keys())[0])
+        skill = sm2.get_skill(next(iter(sm2._index.keys())))
         assert skill is not None
         assert skill["name"] == "Persist Test"
 

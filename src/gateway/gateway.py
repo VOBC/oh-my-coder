@@ -35,7 +35,7 @@ from __future__ import annotations
 import asyncio
 import logging
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from .base import (
     IncomingMessage,
@@ -62,28 +62,28 @@ class Gateway:
     def __init__(
         self,
         orchestrator: Any = None,
-        telegram_token: Optional[str] = None,
-        discord_token: Optional[str] = None,
-        whatsapp_phone_number_id: Optional[str] = None,
-        whatsapp_access_token: Optional[str] = None,
-        whatsapp_webhook_url: Optional[str] = None,
-        whatsapp_verify_token: Optional[str] = None,
-        feishu_app_id: Optional[str] = None,
-        feishu_app_secret: Optional[str] = None,
-        feishu_encrypt_key: Optional[str] = None,
-        wecom_corp_id: Optional[str] = None,
-        wecom_agent_id: Optional[str] = None,
-        wecom_corp_secret: Optional[str] = None,
-        wecom_token: Optional[str] = None,
-        wecom_encoding_aes_key: Optional[str] = None,
-        dingtalk_app_key: Optional[str] = None,
-        dingtalk_app_secret: Optional[str] = None,
-        dingtalk_token: Optional[str] = None,
-        dingtalk_aes_key: Optional[str] = None,
-        slack_bot_token: Optional[str] = None,
-        slack_signing_secret: Optional[str] = None,
-        allowed_user_ids: Optional[Dict[Platform, List[str]]] = None,
-        plugins_dir: Optional[Path] = None,
+        telegram_token: str | None = None,
+        discord_token: str | None = None,
+        whatsapp_phone_number_id: str | None = None,
+        whatsapp_access_token: str | None = None,
+        whatsapp_webhook_url: str | None = None,
+        whatsapp_verify_token: str | None = None,
+        feishu_app_id: str | None = None,
+        feishu_app_secret: str | None = None,
+        feishu_encrypt_key: str | None = None,
+        wecom_corp_id: str | None = None,
+        wecom_agent_id: str | None = None,
+        wecom_corp_secret: str | None = None,
+        wecom_token: str | None = None,
+        wecom_encoding_aes_key: str | None = None,
+        dingtalk_app_key: str | None = None,
+        dingtalk_app_secret: str | None = None,
+        dingtalk_token: str | None = None,
+        dingtalk_aes_key: str | None = None,
+        slack_bot_token: str | None = None,
+        slack_signing_secret: str | None = None,
+        allowed_user_ids: dict[Platform, list[str]] | None = None,
+        plugins_dir: Path | None = None,
     ):
         """
         Args:
@@ -94,8 +94,8 @@ class Gateway:
             plugins_dir: 插件目录（预留）
         """
         self.orchestrator = orchestrator
-        self._handlers: Dict[Platform, PlatformHandler] = {}
-        self._started_platforms: List[str] = []
+        self._handlers: dict[Platform, PlatformHandler] = {}
+        self._started_platforms: list[str] = []
         self._lock = asyncio.Lock()
         self._stop_event = asyncio.Event()
 
@@ -179,7 +179,7 @@ class Gateway:
 
     # ---- 平台注册 ----
 
-    def _register_telegram(self, token: str, allowed_user_ids: List[str]) -> None:
+    def _register_telegram(self, token: str, allowed_user_ids: list[str]) -> None:
         from .platforms.telegram import TelegramHandler, check_telegram_dependencies
 
         if not check_telegram_dependencies():
@@ -194,7 +194,7 @@ class Gateway:
         )
         logger.info("[gateway] Telegram handler registered")
 
-    def _register_discord(self, token: str, allowed_guild_ids: List[int]) -> None:
+    def _register_discord(self, token: str, allowed_guild_ids: list[int]) -> None:
         from .platforms.discord import DiscordHandler, check_discord_dependencies
 
         if not check_discord_dependencies():
@@ -214,7 +214,7 @@ class Gateway:
         phone_number_id: str,
         access_token: str,
         webhook_url: str,
-        verify_token: Optional[str],
+        verify_token: str | None,
     ) -> None:
         from .platforms.whatsapp import WhatsAppHandler, check_whatsapp_dependencies
 
@@ -233,7 +233,7 @@ class Gateway:
         logger.info("[gateway] WhatsApp handler registered")
 
     def _register_feishu(
-        self, app_id: str, app_secret: str, encrypt_key: Optional[str]
+        self, app_id: str, app_secret: str, encrypt_key: str | None
     ) -> None:
         from .platforms.feishu import FeishuHandler, check_feishu_dependencies
 
@@ -255,8 +255,8 @@ class Gateway:
         corp_id: str,
         agent_id: str,
         corp_secret: str,
-        token: Optional[str],
-        encoding_aes_key: Optional[str],
+        token: str | None,
+        encoding_aes_key: str | None,
     ) -> None:
         from .platforms.wecom import WeComHandler, check_wecom_dependencies
 
@@ -279,8 +279,8 @@ class Gateway:
         self,
         app_key: str,
         app_secret: str,
-        token: Optional[str],
-        aes_key: Optional[str],
+        token: str | None,
+        aes_key: str | None,
     ) -> None:
         from .platforms.dingtalk import DingTalkHandler, check_dingtalk_dependencies
 
@@ -326,7 +326,7 @@ class Gateway:
             message: 统一格式的收件消息
         """
         logger.info(
-            f"[gateway] [{message.platform.value}] {message.user_id}: {message.text[:80]}"  # noqa: E501
+            f"[gateway] [{message.platform.value}] {message.user_id}: {message.text[:80]}"
         )
 
         if self.orchestrator is None:
@@ -372,7 +372,7 @@ class Gateway:
                 await handler.send(reply)
 
         except Exception as e:
-            logger.error(f"[gateway] _process_message error: {e}")
+            logger.exception(f"[gateway] _process_message error: {e}")
             # 尝试发错误回复
             try:
                 error_reply = OutgoingMessage(
@@ -428,7 +428,7 @@ class Gateway:
             await handler.start()
             self._started_platforms.append(platform.value)
         except Exception as e:
-            logger.error(f"[gateway] Failed to start {platform.value}: {e}")
+            logger.exception(f"[gateway] Failed to start {platform.value}: {e}")
 
     async def stop_all(self) -> None:
         """停止所有平台"""
@@ -452,11 +452,11 @@ class Gateway:
             if platform.value in self._started_platforms:
                 self._started_platforms.remove(platform.value)
         except Exception as e:
-            logger.error(f"[gateway] Error stopping {platform.value}: {e}")
+            logger.exception(f"[gateway] Error stopping {platform.value}: {e}")
 
     # ---- 状态查询 ----
 
-    def status(self) -> Dict[str, Any]:
+    def status(self) -> dict[str, Any]:
         """返回网关状态"""
         handlers_info = {
             platform.value: {
@@ -471,16 +471,15 @@ class Gateway:
             "handlers": handlers_info,
         }
 
-    def get_handler(self, platform: Platform) -> Optional[PlatformHandler]:
+    def get_handler(self, platform: Platform) -> PlatformHandler | None:
         return self._handlers.get(platform)
 
     def _noop_handler(self, message: IncomingMessage) -> None:
         """NoopHandler 的 on_message 回调"""
-        pass
 
     # ---- Webhook 支持（供 FastAPI 集成）----
 
-    async def handle_telegram_update(self, update: Dict[str, Any]) -> None:
+    async def handle_telegram_update(self, update: dict[str, Any]) -> None:
         """
         处理 Telegram Webhook 更新。
 

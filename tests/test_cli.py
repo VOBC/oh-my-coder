@@ -10,7 +10,7 @@ from unittest.mock import patch
 import pytest
 from typer.testing import CliRunner
 
-from src.cli import app, __version__
+from src.cli import __version__, app
 
 runner = CliRunner()
 

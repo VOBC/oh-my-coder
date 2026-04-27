@@ -21,9 +21,9 @@ from typing import Any
 import typer
 import yaml
 from rich.console import Console
-from rich.table import Table
 from rich.panel import Panel
-from rich.prompt import Prompt, Confirm
+from rich.prompt import Confirm, Prompt
+from rich.table import Table
 
 # 导入模型发现模块
 try:
@@ -85,7 +85,7 @@ def _load_config() -> dict:
     """加载配置文件"""
     if CONFIG_FILE.exists():
         try:
-            with open(CONFIG_FILE, "r", encoding="utf-8") as f:
+            with open(CONFIG_FILE, encoding="utf-8") as f:
                 return json.load(f)
         except Exception:
             pass
@@ -151,7 +151,7 @@ def _list_yaml_configs() -> list[dict[str, Any]]:
             continue
         for yaml_file in sorted(models_dir.glob("*.yaml")):
             try:
-                with open(yaml_file, "r", encoding="utf-8") as f:
+                with open(yaml_file, encoding="utf-8") as f:
                     data = yaml.safe_load(f)
                 if data and isinstance(data, dict):
                     data["_source"] = (
@@ -444,7 +444,7 @@ def list_models(
         enrich_with_status,
         filter_by_status,
         get_model_status,
-    )  # noqa: E402
+    )
 
     # Resolve effective status filter
     if all or status == "all":
@@ -544,7 +544,7 @@ def list_models(
             out_p = pricing.get("output", "-")
             price_str = f"{in_p}/{out_p}" if in_p != "-" else "-"
 
-            features = ", ".join(cfg.get("features", [])[:3])
+            ", ".join(cfg.get("features", [])[:3])
             tier_label = cfg.get("tier", "medium")
             source_label = cfg.get("_source", "builtin")
 
@@ -604,9 +604,8 @@ def list_models(
             if beta:
                 if status_raw != "beta" and status_raw != "deprecated":
                     continue
-            elif not all:
-                if status_raw != "production":
-                    continue
+            elif not all and status_raw != "production":
+                continue
             table.add_row(
                 model_id,
                 info["name"],
@@ -805,7 +804,7 @@ def import_model(
     console.print(f"[dim]正在获取配置: {url}[/dim]")
 
     # 获取 YAML 内容
-    if url.startswith("http://") or url.startswith("https://"):
+    if url.startswith(("http://", "https://")):
         try:
             req = urllib.request.Request(
                 url,

@@ -12,7 +12,8 @@ API 地址：https://spark-api.xf-yun.com
 """
 
 import time
-from typing import Any, AsyncIterator, Dict, List, Optional
+from collections.abc import AsyncIterator
+from typing import Any
 
 import httpx
 
@@ -55,8 +56,8 @@ class SparkModel(BaseModel):
         self,
         config: ModelConfig,
         tier: ModelTier = ModelTier.MEDIUM,
-        app_id: Optional[str] = None,
-        secret_key: Optional[str] = None,
+        app_id: str | None = None,
+        secret_key: str | None = None,
     ):
         if config.base_url is None:
             config.base_url = f"{SPARK_API_BASE}/v3.1/chat"
@@ -66,7 +67,7 @@ class SparkModel(BaseModel):
         super().__init__(config, tier)
         self.app_id = app_id
         self.secret_key = secret_key
-        self._client: Optional[httpx.AsyncClient] = None
+        self._client: httpx.AsyncClient | None = None
 
     @property
     def provider(self) -> ModelProvider:
@@ -86,7 +87,7 @@ class SparkModel(BaseModel):
             await self._client.aclose()
             self._client = None
 
-    def _format_messages(self, messages: List[Message]) -> List[Dict[str, Any]]:
+    def _format_messages(self, messages: list[Message]) -> list[dict[str, Any]]:
         formatted = []
         for msg in messages:
             if msg.role == "system":
@@ -95,7 +96,7 @@ class SparkModel(BaseModel):
                 formatted.append({"role": msg.role, "content": msg.content})
         return formatted
 
-    async def generate(self, messages: List[Message], **kwargs) -> ModelResponse:
+    async def generate(self, messages: list[Message], **kwargs) -> ModelResponse:
         client = await self._get_client()
         request_body = {
             "header": {"app_id": self.app_id},
@@ -142,7 +143,7 @@ class SparkModel(BaseModel):
         except httpx.RequestError as e:
             raise SparkAPIError(f"网络请求失败: {e}")
 
-    async def stream(self, messages: List[Message], **kwargs) -> AsyncIterator[str]:
+    async def stream(self, messages: list[Message], **kwargs) -> AsyncIterator[str]:
         result = await self.generate(messages, **kwargs)
         for char in result.content:
             yield char
@@ -150,5 +151,3 @@ class SparkModel(BaseModel):
 
 class SparkAPIError(Exception):
     """讯飞星火 API 错误"""
-
-    pass

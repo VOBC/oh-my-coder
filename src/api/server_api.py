@@ -14,15 +14,16 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import hashlib
 import uuid
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
-from fastapi import FastAPI, HTTPException, Header, Depends
+from fastapi import Depends, FastAPI, Header, HTTPException
 from pydantic import BaseModel
 
 # =============================================================================
@@ -43,10 +44,10 @@ class TaskRecord:
     prompt: str
     status: TaskStatus
     created_at: str
-    started_at: Optional[str] = None
-    completed_at: Optional[str] = None
-    result: Optional[dict[str, Any]] = None
-    error: Optional[str] = None
+    started_at: str | None = None
+    completed_at: str | None = None
+    result: dict[str, Any] | None = None
+    error: str | None = None
     execution_time: float = 0.0
     metadata: dict[str, Any] = field(default_factory=dict)
 
@@ -152,10 +153,8 @@ class TaskStore:
             if task_id not in self._store:
                 return False
             del self._store[task_id]
-            try:
+            with contextlib.suppress(Exception):
                 (self._storage_dir / f"{task_id}.json").unlink(missing_ok=True)
-            except Exception:
-                pass
             return True
 
 
@@ -213,8 +212,8 @@ async def run_agent_task(prompt: str, task_id: str, store: TaskStore) -> None:
 
         # 尝试使用 Orchestrator
         try:
-            from src.core.orchestrator import Orchestrator
             from src.agents.base import AgentContext
+            from src.core.orchestrator import Orchestrator
 
             ctx = AgentContext(prompt=prompt, workspace=Path.cwd())
             orch = Orchestrator(max_agents=1)
@@ -305,7 +304,7 @@ def create_app(
     async def run_task(req: RunRequest) -> TaskResponse:
         """提交新任务，返回 task_id"""
         store: TaskStore = _app_state["store"]
-        auth: AuthContext = _app_state["auth"]
+        _app_state["auth"]
 
         record = await store.create(req.prompt, req.metadata)
         # 启动后台执行（不等待）

@@ -14,7 +14,6 @@ import hashlib
 import hmac
 import json
 import time
-from typing import Dict, List, Optional
 
 import httpx
 
@@ -60,8 +59,8 @@ class HunyuanModel(BaseModel):
         self,
         config: ModelConfig,
         tier: ModelTier = ModelTier.MEDIUM,
-        secret_id: Optional[str] = None,
-        secret_key: Optional[str] = None,
+        secret_id: str | None = None,
+        secret_key: str | None = None,
     ):
         if config.base_url is None:
             config.base_url = "https://api.hunyuan.cn"
@@ -72,7 +71,7 @@ class HunyuanModel(BaseModel):
         config.cost_per_1k_completion = model_info["cost_per_1k_completion"]
 
         super().__init__(config, tier)
-        self._client: Optional[httpx.AsyncClient] = None
+        self._client: httpx.AsyncClient | None = None
         self._secret_id = secret_id
         self._secret_key = secret_key
 
@@ -138,24 +137,23 @@ class HunyuanModel(BaseModel):
         ).hexdigest()
 
         # 步骤 4: 拼接 Authorization
-        authorization = (
+        return (
             f"{algorithm} "
             f"Credential={self._secret_id}/{credential_scope}, "
             f"SignedHeaders=content-type;host, "
             f"Signature={signature}"
         )
-        return authorization
 
-    def _format_messages(self, messages: List[Message]) -> List[Dict[str, str]]:
+    def _format_messages(self, messages: list[Message]) -> list[dict[str, str]]:
         formatted = []
         for msg in messages:
-            item: Dict[str, str] = {"role": msg.role, "content": msg.content}
+            item: dict[str, str] = {"role": msg.role, "content": msg.content}
             if msg.name:
                 item["name"] = msg.name
             formatted.append(item)
         return formatted
 
-    async def generate(self, messages: List[Message], **kwargs) -> ModelResponse:
+    async def generate(self, messages: list[Message], **kwargs) -> ModelResponse:
         client = await self._get_client()
 
         payload = json.dumps(
@@ -222,5 +220,3 @@ class HunyuanModel(BaseModel):
 
 class HunyuanAPIError(Exception):
     """腾讯混元 API 错误"""
-
-    pass

@@ -10,7 +10,6 @@ Security Reviewer Agent - 安全审查智能体
 模型层级：HIGH（深度推理，对应 opus）
 """
 
-from typing import Dict, List
 
 from ..core.router import TaskType
 from .base import (
@@ -104,7 +103,7 @@ class SecurityReviewerAgent(BaseAgent):
 """
 
     async def _run(
-        self, context: AgentContext, prompt: List[Dict[str, str]], **kwargs
+        self, context: AgentContext, prompt: list[dict[str, str]], **kwargs
     ) -> str:
         """执行安全审查"""
         # 读取代码文件
@@ -112,7 +111,7 @@ class SecurityReviewerAgent(BaseAgent):
             code_parts = []
             for file_path in context.relevant_files[:10]:
                 try:
-                    with open(file_path, "r", encoding="utf-8") as f:
+                    with open(file_path, encoding="utf-8") as f:
                         content = f.read()
                         code_parts.append(
                             f"### {file_path.relative_to(context.project_path)}\n```\n{content}\n```"

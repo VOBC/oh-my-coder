@@ -1,21 +1,21 @@
 """多 Agent 协作模块"""
 
 from .coordinator import (
-    SubAgent,
-    SubAgentStatus,
     AgentRole,
-    TaskResult,
     CoordinationResult,
     MultiAgentCoordinator,
+    SubAgent,
+    SubAgentStatus,
+    TaskResult,
     get_coordinator,
 )
 
 __all__ = [
-    "SubAgent",
-    "SubAgentStatus",
     "AgentRole",
-    "TaskResult",
     "CoordinationResult",
     "MultiAgentCoordinator",
+    "SubAgent",
+    "SubAgentStatus",
+    "TaskResult",
     "get_coordinator",
 ]

@@ -4,19 +4,18 @@
 提供团队创建、加入、任务同步和统计等 API。
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 
 from src.team import (
     TaskStatus,
+    task_sync,
     team_auth,
     team_notifier,
     team_statistics,
-    task_sync,
 )
-
 
 router = APIRouter(prefix="/api/team", tags=["team"])
 
@@ -58,8 +57,8 @@ class UpdateTaskRequest(BaseModel):
     """更新任务请求"""
 
     status: str
-    result: Optional[Dict[str, Any]] = None
-    error: Optional[str] = None
+    result: dict[str, Any] | None = None
+    error: str | None = None
     tokens_used: int = 0
     cost: float = 0.0
 
@@ -93,7 +92,7 @@ class BroadcastRequest(BaseModel):
 
 
 @router.post("/create")
-async def create_team(request: CreateTeamRequest) -> Dict[str, Any]:
+async def create_team(request: CreateTeamRequest) -> dict[str, Any]:
     """
     创建团队
 
@@ -112,7 +111,7 @@ async def create_team(request: CreateTeamRequest) -> Dict[str, Any]:
 
 
 @router.post("/join")
-async def join_team(request: JoinTeamRequest) -> Dict[str, Any]:
+async def join_team(request: JoinTeamRequest) -> dict[str, Any]:
     """
     加入团队
 
@@ -134,7 +133,7 @@ async def join_team(request: JoinTeamRequest) -> Dict[str, Any]:
 
 
 @router.post("/leave")
-async def leave_team(user_id: str, team_id: str) -> Dict[str, bool]:
+async def leave_team(user_id: str, team_id: str) -> dict[str, bool]:
     """
     离开团队
 
@@ -152,7 +151,7 @@ async def leave_team(user_id: str, team_id: str) -> Dict[str, bool]:
 
 
 @router.post("/delete")
-async def delete_team(team_id: str, requester_id: str) -> Dict[str, bool]:
+async def delete_team(team_id: str, requester_id: str) -> dict[str, bool]:
     """
     删除团队
 
@@ -170,7 +169,7 @@ async def delete_team(team_id: str, requester_id: str) -> Dict[str, bool]:
 
 
 @router.get("/{team_id}")
-async def get_team(team_id: str) -> Dict[str, Any]:
+async def get_team(team_id: str) -> dict[str, Any]:
     """
     获取团队信息
 
@@ -187,7 +186,7 @@ async def get_team(team_id: str) -> Dict[str, Any]:
 
 
 @router.get("/user/{user_id}")
-async def get_user_team(user_id: str) -> Dict[str, Any]:
+async def get_user_team(user_id: str) -> dict[str, Any]:
     """
     获取用户所在团队
 
@@ -204,7 +203,7 @@ async def get_user_team(user_id: str) -> Dict[str, Any]:
 
 
 @router.post("/{team_id}/regenerate-invite")
-async def regenerate_invite(team_id: str, requester_id: str) -> Dict[str, str]:
+async def regenerate_invite(team_id: str, requester_id: str) -> dict[str, str]:
     """
     重新生成邀请码
 
@@ -227,7 +226,7 @@ async def regenerate_invite(team_id: str, requester_id: str) -> Dict[str, str]:
 
 
 @router.post("/task/create")
-async def create_task(request: CreateTaskRequest) -> Dict[str, Any]:
+async def create_task(request: CreateTaskRequest) -> dict[str, Any]:
     """
     创建团队任务
 
@@ -265,7 +264,7 @@ async def create_task(request: CreateTaskRequest) -> Dict[str, Any]:
 @router.put("/task/{task_id}/status")
 async def update_task_status(
     task_id: str, request: UpdateTaskRequest
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     更新任务状态
 
@@ -308,7 +307,7 @@ async def update_task_status(
 
 
 @router.get("/task/{task_id}")
-async def get_task(task_id: str) -> Dict[str, Any]:
+async def get_task(task_id: str) -> dict[str, Any]:
     """
     获取任务详情
 
@@ -325,7 +324,7 @@ async def get_task(task_id: str) -> Dict[str, Any]:
 
 
 @router.get("/{team_id}/tasks")
-async def get_team_tasks(team_id: str) -> List[Dict[str, Any]]:
+async def get_team_tasks(team_id: str) -> list[dict[str, Any]]:
     """
     获取团队任务列表
 
@@ -340,7 +339,7 @@ async def get_team_tasks(team_id: str) -> List[Dict[str, Any]]:
 
 
 @router.post("/task/{task_id}/subscribe")
-async def subscribe_task(task_id: str, user_id: str) -> Dict[str, bool]:
+async def subscribe_task(task_id: str, user_id: str) -> dict[str, bool]:
     """
     订阅任务更新
 
@@ -358,7 +357,7 @@ async def subscribe_task(task_id: str, user_id: str) -> Dict[str, bool]:
 
 
 @router.delete("/task/{task_id}")
-async def delete_task(task_id: str) -> Dict[str, bool]:
+async def delete_task(task_id: str) -> dict[str, bool]:
     """
     删除任务
 
@@ -380,7 +379,7 @@ async def delete_task(task_id: str) -> Dict[str, bool]:
 
 
 @router.post("/usage/record")
-async def record_usage(request: RecordUsageRequest) -> Dict[str, Any]:
+async def record_usage(request: RecordUsageRequest) -> dict[str, Any]:
     """
     记录使用数据
 
@@ -413,7 +412,7 @@ async def record_usage(request: RecordUsageRequest) -> Dict[str, Any]:
 @router.get("/{team_id}/stats")
 async def get_team_stats(
     team_id: str, period: str = Query("week", pattern="^(day|week|month)$")
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     获取团队统计
 
@@ -433,7 +432,7 @@ async def get_user_stats(
     team_id: str,
     user_id: str,
     period: str = Query("week", pattern="^(day|week|month)$"),
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     获取用户统计
 
@@ -455,7 +454,7 @@ async def get_user_stats(
 
 
 @router.post("/broadcast")
-async def broadcast_message(request: BroadcastRequest) -> Dict[str, Any]:
+async def broadcast_message(request: BroadcastRequest) -> dict[str, Any]:
     """
     广播消息给团队
 
@@ -482,7 +481,7 @@ async def broadcast_message(request: BroadcastRequest) -> Dict[str, Any]:
 @router.get("/{team_id}/notifications")
 async def get_team_notifications(
     team_id: str, unread_only: bool = False
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """
     获取团队通知
 
@@ -500,7 +499,7 @@ async def get_team_notifications(
 @router.get("/{team_id}/user/{user_id}/notifications")
 async def get_user_notifications(
     team_id: str, user_id: str, unread_only: bool = False
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """
     获取用户通知
 
@@ -517,7 +516,7 @@ async def get_user_notifications(
 
 
 @router.post("/notification/{notification_id}/read")
-async def mark_notification_read(notification_id: str) -> Dict[str, bool]:
+async def mark_notification_read(notification_id: str) -> dict[str, bool]:
     """
     标记通知为已读
 

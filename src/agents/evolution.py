@@ -22,7 +22,7 @@ import time
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 @dataclass
@@ -34,10 +34,10 @@ class EvolutionRecord:
     agent_type: str = ""
     generation: int = 1  # 进化代数
     trigger: str = ""  # 触发原因：success_rate_low, user_correction, error_pattern
-    before_state: Dict[str, Any] = field(default_factory=dict)  # 进化前状态
-    after_state: Dict[str, Any] = field(default_factory=dict)  # 进化后状态
-    changes: List[str] = field(default_factory=list)  # 变更列表
-    effectiveness: Optional[float] = None  # 效果评分（后续验证）
+    before_state: dict[str, Any] = field(default_factory=dict)  # 进化前状态
+    after_state: dict[str, Any] = field(default_factory=dict)  # 进化后状态
+    changes: list[str] = field(default_factory=list)  # 变更列表
+    effectiveness: float | None = None  # 效果评分（后续验证）
 
 
 @dataclass
@@ -51,7 +51,7 @@ class SuccessPattern:
     effectiveness_score: float = 0.0
     occurrences: int = 0  # 出现次数
     last_seen: str = ""
-    examples: List[str] = field(default_factory=list)  # 成功案例
+    examples: list[str] = field(default_factory=list)  # 成功案例
 
 
 @dataclass
@@ -89,7 +89,7 @@ class EvolutionStore:
 
     def load_evolution_history(
         self, agent_name: str, limit: int = 50
-    ) -> List[EvolutionRecord]:
+    ) -> list[EvolutionRecord]:
         """加载进化历史"""
         history_file = self._agent_dir(agent_name) / "evolution_history.json"
         if not history_file.exists():
@@ -153,7 +153,7 @@ class EvolutionStore:
     # 成功模式库
     # ------------------------------------------------------------------
 
-    def load_success_patterns(self, agent_name: str) -> List[SuccessPattern]:
+    def load_success_patterns(self, agent_name: str) -> list[SuccessPattern]:
         """加载成功模式库"""
         patterns_file = self._agent_dir(agent_name) / "success_patterns.json"
         if not patterns_file.exists():
@@ -257,7 +257,7 @@ class EvolutionStore:
     # 优化 Prompt
     # ------------------------------------------------------------------
 
-    def load_optimized_prompt(self, agent_name: str) -> Optional[str]:
+    def load_optimized_prompt(self, agent_name: str) -> str | None:
         """加载优化后的 system prompt"""
         prompt_file = self._agent_dir(agent_name) / "optimized_prompt.md"
         if not prompt_file.exists():
@@ -288,7 +288,7 @@ class EvolutionStore:
     # 统计信息
     # ------------------------------------------------------------------
 
-    def get_evolution_stats(self, agent_name: str) -> Dict[str, Any]:
+    def get_evolution_stats(self, agent_name: str) -> dict[str, Any]:
         """获取进化统计信息"""
         history = self.load_evolution_history(agent_name)
         patterns = self.load_success_patterns(agent_name)
@@ -331,7 +331,7 @@ class DecisionRecord:
 
     # 决策内容
     chosen_solution: str = ""  # 选择的方案
-    rejected_alternatives: List[str] = field(default_factory=list)  # 放弃的方案及原因
+    rejected_alternatives: list[str] = field(default_factory=list)  # 放弃的方案及原因
 
     # 结果
     result: str = ""  # 成功/失败
@@ -339,10 +339,10 @@ class DecisionRecord:
 
     # 可复用性
     reusable_for: str = ""  # 类似场景描述
-    keywords: List[str] = field(default_factory=list)  # 检索关键词
+    keywords: list[str] = field(default_factory=list)  # 检索关键词
 
     # 元数据
-    related_files: List[str] = field(default_factory=list)  # 相关文件
+    related_files: list[str] = field(default_factory=list)  # 相关文件
     version_tag: str = ""  # 版本标签（如 v1.2.3）
 
 
@@ -392,12 +392,12 @@ class DecisionMemory:
         chosen_solution: str,
         agent_type: str = "",
         category: str = "solution_choice",
-        rejected_alternatives: Optional[List[str]] = None,
+        rejected_alternatives: list[str] | None = None,
         result: str = "",
         outcome: str = "",
         reusable_for: str = "",
-        keywords: Optional[List[str]] = None,
-        related_files: Optional[List[str]] = None,
+        keywords: list[str] | None = None,
+        related_files: list[str] | None = None,
         version_tag: str = "",
     ) -> str:
         """
@@ -451,7 +451,7 @@ class DecisionMemory:
 
         return decision_id
 
-    def _extract_keywords(self, problem: str, solution: str) -> List[str]:
+    def _extract_keywords(self, problem: str, solution: str) -> list[str]:
         """从问题和方案中自动提取关键词"""
         text = f"{problem} {solution}".lower()
         # 提取技术术语（简化版）
@@ -555,12 +555,12 @@ class DecisionMemory:
         chosen_solution: str,
         agent_type: str,
         category: str,
-        rejected_alternatives: List[str],
+        rejected_alternatives: list[str],
         result: str,
         outcome: str,
         reusable_for: str,
-        keywords: List[str],
-        related_files: List[str],
+        keywords: list[str],
+        related_files: list[str],
         version_tag: str,
     ) -> str:
         """构建决策记录的 Markdown 内容"""
@@ -590,8 +590,7 @@ class DecisionMemory:
                     "## 放弃的方案",
                 ]
             )
-            for alt in rejected_alternatives:
-                lines.append(f"- {alt}")
+            lines.extend([f"- {alt}" for alt in rejected_alternatives])
 
         if outcome:
             lines.extend(
@@ -637,7 +636,7 @@ class DecisionMemory:
         self,
         query: str,
         limit: int = 5,
-    ) -> List[DecisionRecord]:
+    ) -> list[DecisionRecord]:
         """
         检索历史决策
 
@@ -651,7 +650,7 @@ class DecisionMemory:
             匹配的决策记录列表
         """
         query_terms = set(query.lower().split())
-        results: List[tuple[int, DecisionRecord]] = []
+        results: list[tuple[int, DecisionRecord]] = []
 
         # 遍历所有决策文件
         for decision_file in self.decisions_dir.glob("*.md"):
@@ -674,7 +673,7 @@ class DecisionMemory:
 
     def _parse_decision_file(
         self, file_path: Path, content: str
-    ) -> Optional[DecisionRecord]:
+    ) -> DecisionRecord | None:
         """解析决策文件为 DecisionRecord"""
         # 从文件名提取 ID
         decision_id = file_path.stem
@@ -773,9 +772,9 @@ class DecisionMemory:
 
     def list_decisions(
         self,
-        category: Optional[str] = None,
+        category: str | None = None,
         limit: int = 20,
-    ) -> List[DecisionRecord]:
+    ) -> list[DecisionRecord]:
         """
         列出决策记录
 
@@ -809,12 +808,12 @@ class DecisionMemory:
 
         return results
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """获取决策记忆统计"""
         decisions = self.list_decisions(limit=1000)
 
         # 按类别统计
-        category_counts: Dict[str, int] = {}
+        category_counts: dict[str, int] = {}
         for d in decisions:
             category_counts[d.category] = category_counts.get(d.category, 0) + 1
 

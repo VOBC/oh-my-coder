@@ -9,14 +9,14 @@ MCP SDK 可用时（Python 3.10+）返回 Tool 对象，
 """
 
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 # ------------------------------------------------------------------
 # MCP Tool 注册表
 # ------------------------------------------------------------------
 
 # 工作区根目录（运行时由 MCPServer 注入）
-_WORKSPACE: Optional[Path] = None
+_WORKSPACE: Path | None = None
 
 
 def set_workspace(workspace: Path) -> None:
@@ -30,7 +30,7 @@ def get_workspace() -> Path:
     return _WORKSPACE or Path.cwd()
 
 
-def _resolve_path(path: Optional[str]) -> str:
+def _resolve_path(path: str | None) -> str:
     """解析路径：相对路径 → 工作区绝对路径"""
     if path is None:
         return str(get_workspace())
@@ -45,11 +45,11 @@ def _resolve_path(path: Optional[str]) -> str:
 # ------------------------------------------------------------------
 
 
-def _code_review_handler(args: Dict[str, Any]) -> Dict[str, Any]:
+def _code_review_handler(args: dict[str, Any]) -> dict[str, Any]:
     """omc_code_review — 执行代码审查"""
     path = _resolve_path(args.get("path"))
-    from ..agents.code_reviewer import CodeReviewerAgent
     from ..agents.base import AgentContext
+    from ..agents.code_reviewer import CodeReviewerAgent
 
     try:
         agent = CodeReviewerAgent(model_router=None)
@@ -71,12 +71,12 @@ def _code_review_handler(args: Dict[str, Any]) -> Dict[str, Any]:
         return {"error": type(e).__name__}
 
 
-def _debug_handler(args: Dict[str, Any]) -> Dict[str, Any]:
+def _debug_handler(args: dict[str, Any]) -> dict[str, Any]:
     """omc_debug — 自动定位并修复 Bug"""
     path = _resolve_path(args.get("path"))
     error = args.get("error", "")
-    from ..agents.debugger import DebuggerAgent
     from ..agents.base import AgentContext
+    from ..agents.debugger import DebuggerAgent
 
     try:
         agent = DebuggerAgent(model_router=None)
@@ -97,11 +97,11 @@ def _debug_handler(args: Dict[str, Any]) -> Dict[str, Any]:
         return {"error": type(e).__name__}
 
 
-def _test_handler(args: Dict[str, Any]) -> Dict[str, Any]:
+def _test_handler(args: dict[str, Any]) -> dict[str, Any]:
     """omc_test — 为代码生成测试用例"""
     path = _resolve_path(args.get("path"))
-    from ..agents.test_engineer import TestEngineerAgent
     from ..agents.base import AgentContext
+    from ..agents.test_engineer import TestEngineerAgent
 
     try:
         agent = TestEngineerAgent(model_router=None)
@@ -122,7 +122,7 @@ def _test_handler(args: Dict[str, Any]) -> Dict[str, Any]:
         return {"error": type(e).__name__}
 
 
-def _refactor_handler(args: Dict[str, Any]) -> Dict[str, Any]:
+def _refactor_handler(args: dict[str, Any]) -> dict[str, Any]:
     """omc_refactor — 重构代码改善结构和性能"""
     path = _resolve_path(args.get("path"))
     goal = args.get("goal", "改善代码结构和性能")
@@ -148,11 +148,11 @@ def _refactor_handler(args: Dict[str, Any]) -> Dict[str, Any]:
         return {"error": type(e).__name__}
 
 
-def _security_handler(args: Dict[str, Any]) -> Dict[str, Any]:
+def _security_handler(args: dict[str, Any]) -> dict[str, Any]:
     """omc_security_review — 安全审查"""
     path = _resolve_path(args.get("path"))
-    from ..agents.security import SecurityReviewerAgent
     from ..agents.base import AgentContext
+    from ..agents.security import SecurityReviewerAgent
 
     try:
         agent = SecurityReviewerAgent(model_router=None)
@@ -173,14 +173,14 @@ def _security_handler(args: Dict[str, Any]) -> Dict[str, Any]:
         return {"error": type(e).__name__}
 
 
-def _vision_handler(args: Dict[str, Any]) -> Dict[str, Any]:
+def _vision_handler(args: dict[str, Any]) -> dict[str, Any]:
     """omc_vision — 视觉分析（截图 / UI 代码生成）"""
     image_path = args.get("image_path", "")
     mode = args.get("mode", "analysis")
     if image_path:
         image_path = _resolve_path(image_path)
-    from ..agents.vision import VisionAgent
     from ..agents.base import AgentContext
+    from ..agents.vision import VisionAgent
 
     try:
         agent = VisionAgent(model_router=None)
@@ -201,10 +201,10 @@ def _vision_handler(args: Dict[str, Any]) -> Dict[str, Any]:
         return {"error": type(e).__name__}
 
 
-def _explore_handler(args: Dict[str, Any]) -> Dict[str, Any]:
+def _explore_handler(args: dict[str, Any]) -> dict[str, Any]:
     """omc_explore — 项目探索"""
-    from ..agents.explore import ExploreAgent
     from ..agents.base import AgentContext
+    from ..agents.explore import ExploreAgent
 
     try:
         agent = ExploreAgent(model_router=None)
@@ -225,11 +225,11 @@ def _explore_handler(args: Dict[str, Any]) -> Dict[str, Any]:
         return {"error": type(e).__name__}
 
 
-def _plan_handler(args: Dict[str, Any]) -> Dict[str, Any]:
+def _plan_handler(args: dict[str, Any]) -> dict[str, Any]:
     """omc_plan — 任务规划和拆分"""
     task = args.get("task", "")
-    from ..agents.planner import PlannerAgent
     from ..agents.base import AgentContext
+    from ..agents.planner import PlannerAgent
 
     try:
         agent = PlannerAgent(model_router=None)
@@ -254,7 +254,7 @@ def _plan_handler(args: Dict[str, Any]) -> Dict[str, Any]:
 # MCP Tool 定义（dict 格式，兼容 Python 3.9 原生实现）
 # ------------------------------------------------------------------
 
-MCP_TOOLS: List[Dict[str, Any]] = [
+MCP_TOOLS: list[dict[str, Any]] = [
     {
         "name": "omc_code_review",
         "description": "执行代码审查，分析代码质量、潜在问题和改进建议",
@@ -393,7 +393,7 @@ MCP_TOOLS: List[Dict[str, Any]] = [
 ]
 
 
-def get_mcp_tools() -> List[Dict[str, Any]]:
+def get_mcp_tools() -> list[dict[str, Any]]:
     """获取所有 MCP tools（dict 格式，兼容 Python 3.9）"""
     return MCP_TOOLS
 

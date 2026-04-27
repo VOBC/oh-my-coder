@@ -15,16 +15,17 @@ import asyncio
 import os
 from pathlib import Path
 
+from src.agents import (  # Agent 列表
+    AnalystAgent,  # 分析 Agent
+    ExecutorAgent,  # 执行 Agent
+    ExploreAgent,  # 探索 Agent
+)
+from src.agents.base import AgentContext  # Agent 上下文
+
 # ============================================================
 # 步骤 1: 导入 Oh My Coder 核心模块
 # ============================================================
 from src.core.router import ModelRouter, RouterConfig  # 模型路由器
-from src.agents.base import AgentContext             # Agent 上下文
-from src.agents import (                            # Agent 列表
-    ExploreAgent,    # 探索 Agent
-    AnalystAgent,    # 分析 Agent
-    ExecutorAgent,   # 执行 Agent
-)
 
 
 # ============================================================

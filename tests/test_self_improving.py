@@ -33,7 +33,7 @@ class TestLearningStore:
 
     def test_init_creates_tables(self, temp_db):
         """测试初始化创建表"""
-        store = LearningStore(temp_db)
+        LearningStore(temp_db)
         import sqlite3
 
         with sqlite3.connect(temp_db) as conn:

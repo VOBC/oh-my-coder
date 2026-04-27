@@ -16,7 +16,6 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-
 # ─────────────────────────────────────────────────────────────
 # 数据模型
 # ─────────────────────────────────────────────────────────────
@@ -69,8 +68,7 @@ class AgentConfig:
 
     def get_prompt_template(self, key: str) -> str:
         """获取指定 key 的 prompt 模板，支持 {{变量}} 替换"""
-        template = self.prompts.get(key, "")
-        return template
+        return self.prompts.get(key, "")
 
     def render_template(self, key: str, **kwargs: Any) -> str:
         """渲染 prompt 模板，替换 {{变量}}"""
@@ -227,8 +225,7 @@ def list_configs_in_dir(dir_path: str | Path) -> list[str]:
 
     result: list[str] = []
     for ext in ("*.yaml", "*.yml", "*.json"):
-        for fp in p.glob(ext):
-            result.append(str(fp.resolve()))
+        result.extend([str(fp.resolve()) for fp in p.glob(ext)])
 
     return sorted(result)
 

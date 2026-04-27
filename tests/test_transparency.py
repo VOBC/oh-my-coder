@@ -18,7 +18,6 @@ from src.agents.transparency import (
     set_trace_context,
 )
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
@@ -27,8 +26,7 @@ from src.agents.transparency import (
 @pytest.fixture
 def temp_trace_dir(tmp_path):
     """创建临时 trace 目录"""
-    store = TraceStore(base_dir=tmp_path / "traces")
-    return store
+    return TraceStore(base_dir=tmp_path / "traces")
 
 
 @pytest.fixture

@@ -4,7 +4,6 @@ GEPRegistry - 能力注册表
 register / discover / resolve / export_event
 """
 
-from typing import Dict, List, Optional
 
 from .capsule import Capsule
 from .gene import Gene
@@ -18,7 +17,7 @@ class GEPRegistry:
     """
 
     def __init__(self) -> None:
-        self._store: Dict[str, Capsule] = {}  # gene_id -> Capsule
+        self._store: dict[str, Capsule] = {}  # gene_id -> Capsule
 
     # --- 核心 API ---
 
@@ -32,7 +31,7 @@ class GEPRegistry:
         self._store[gene_id] = capsule
         return gene_id
 
-    def discover(self, query: str) -> List[Gene]:
+    def discover(self, query: str) -> list[Gene]:
         """
         按关键词发现能力。
 
@@ -43,7 +42,7 @@ class GEPRegistry:
         if not keywords:
             return []
 
-        results: List[Gene] = []
+        results: list[Gene] = []
         for capsule in self._store.values():
             gene = capsule.gene
             searchable = " ".join(
@@ -61,11 +60,11 @@ class GEPRegistry:
 
         return results
 
-    def resolve(self, gene_id: str) -> Optional[Capsule]:
+    def resolve(self, gene_id: str) -> Capsule | None:
         """根据 Gene ID 获取 Capsule，不存在返回 None"""
         return self._store.get(gene_id)
 
-    def export_event(self, gene_id: str) -> Optional[Dict]:
+    def export_event(self, gene_id: str) -> dict | None:
         """
         导出 GEP Event 格式。
 
@@ -87,7 +86,7 @@ class GEPRegistry:
 
     # --- 辅助 ---
 
-    def list_all(self) -> List[Gene]:
+    def list_all(self) -> list[Gene]:
         """列出所有已注册的 Gene"""
         return [c.gene for c in self._store.values()]
 

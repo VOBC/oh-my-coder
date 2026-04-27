@@ -9,7 +9,6 @@ import asyncio
 import json
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional
 
 from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import JSONResponse
@@ -26,12 +25,12 @@ agent_router = APIRouter(prefix="/api/agents", tags=["agents"])
 class HistoryStore:
     """历史记录存储"""
 
-    def __init__(self, storage_dir: Optional[Path] = None):
+    def __init__(self, storage_dir: Path | None = None):
         self.storage_dir = storage_dir or Path(".omc/history")
         self.storage_dir.mkdir(parents=True, exist_ok=True)
-        self._cache: Dict[str, Dict] = {}
+        self._cache: dict[str, dict] = {}
 
-    def save(self, task_id: str, record: Dict) -> None:
+    def save(self, task_id: str, record: dict) -> None:
         """保存历史记录"""
         record["saved_at"] = datetime.now().isoformat()
         self._cache[task_id] = record
@@ -41,7 +40,7 @@ class HistoryStore:
         with open(file_path, "w", encoding="utf-8") as f:
             json.dump(record, f, ensure_ascii=False, indent=2)
 
-    def load(self, task_id: str) -> Optional[Dict]:
+    def load(self, task_id: str) -> dict | None:
         """加载历史记录"""
         if task_id in self._cache:
             return self._cache[task_id]
@@ -50,7 +49,7 @@ class HistoryStore:
         if not file_path.exists():
             return None
 
-        with open(file_path, "r", encoding="utf-8") as f:
+        with open(file_path, encoding="utf-8") as f:
             record = json.load(f)
             self._cache[task_id] = record
             return record
@@ -59,9 +58,9 @@ class HistoryStore:
         self,
         limit: int = 50,
         offset: int = 0,
-        status: Optional[str] = None,
-        workflow: Optional[str] = None,
-    ) -> List[Dict]:
+        status: str | None = None,
+        workflow: str | None = None,
+    ) -> list[dict]:
         """列出所有历史记录"""
         records = []
 
@@ -91,7 +90,7 @@ class HistoryStore:
             del self._cache[task_id]
         return True
 
-    def get_stats(self) -> Dict:
+    def get_stats(self) -> dict:
         """获取统计信息"""
         all_records = self.list_all(limit=1000)
 
@@ -126,8 +125,8 @@ history_store = HistoryStore()
 # 历史记录 API
 # ========================================
 class HistoryFilter(BaseModel):
-    status: Optional[str] = None
-    workflow: Optional[str] = None
+    status: str | None = None
+    workflow: str | None = None
     limit: int = Query(default=50, ge=1, le=200)
     offset: int = Query(default=0, ge=0)
 
@@ -136,8 +135,8 @@ class HistoryFilter(BaseModel):
 async def list_history(
     limit: int = Query(default=50, ge=1, le=200),
     offset: int = Query(default=0, ge=0),
-    status: Optional[str] = Query(default=None),
-    workflow: Optional[str] = Query(default=None),
+    status: str | None = Query(default=None),
+    workflow: str | None = Query(default=None),
 ):
     """获取历史记录列表"""
     records = history_store.list_all(
@@ -206,10 +205,10 @@ class AgentStatusManager:
     """Agent 状态管理器"""
 
     def __init__(self):
-        self._agents: Dict[str, Dict] = {}
-        self._status_subscribers: List[asyncio.Queue] = []
+        self._agents: dict[str, dict] = {}
+        self._status_subscribers: list[asyncio.Queue] = []
 
-    def register_agent(self, name: str, info: Dict) -> None:
+    def register_agent(self, name: str, info: dict) -> None:
         """注册 Agent"""
         self._agents[name] = {
             "name": name,
@@ -223,8 +222,8 @@ class AgentStatusManager:
         self,
         name: str,
         status: str,
-        task: Optional[str] = None,
-        progress: Optional[float] = None,
+        task: str | None = None,
+        progress: float | None = None,
     ) -> None:
         """更新 Agent 状态"""
         if name in self._agents:
@@ -237,11 +236,11 @@ class AgentStatusManager:
             # 通知订阅者
             self._notify_subscribers(name)
 
-    def get_agent(self, name: str) -> Optional[Dict]:
+    def get_agent(self, name: str) -> dict | None:
         """获取 Agent 状态"""
         return self._agents.get(name)
 
-    def get_all(self) -> List[Dict]:
+    def get_all(self) -> list[dict]:
         """获取所有 Agent 状态"""
         return list(self._agents.values())
 

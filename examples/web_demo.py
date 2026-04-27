@@ -7,11 +7,11 @@ Web 界面使用示例
 运行方式：
     python examples/web_demo.py
 """
-import httpx
 import asyncio
 import json
 import time
 
+import httpx
 
 BASE_URL = "http://localhost:8000"
 

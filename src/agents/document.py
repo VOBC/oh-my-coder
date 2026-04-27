@@ -10,8 +10,6 @@ Document Agent - 长篇技术文档撰写智能体
 模型层级：LOW（快速，对应 haiku），但长文档用 MEDIUM 路由
 """
 
-from typing import Dict, List
-
 from ..core.router import TaskType
 from .base import (
     AgentContext,
@@ -167,7 +165,7 @@ A: xxx
 """
 
     async def _run(
-        self, context: AgentContext, prompt: List[Dict[str, str]], **kwargs
+        self, context: AgentContext, prompt: list[dict[str, str]], **kwargs
     ) -> str:
         """执行长篇文档编写"""
         doc_type = context.metadata.get("doc_type", "technical")

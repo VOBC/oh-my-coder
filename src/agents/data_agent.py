@@ -10,8 +10,6 @@ DataAgent - 数据处理与 ETL 智能体
 模型层级：MEDIUM（平衡）
 """
 
-from typing import Dict, List
-
 from ..core.router import TaskType
 from .base import (
     AgentContext,
@@ -85,7 +83,7 @@ def etl_pipeline():
 """
 
     async def _run(
-        self, context: AgentContext, prompt: List[Dict[str, str]], **kwargs
+        self, context: AgentContext, prompt: list[dict[str, str]], **kwargs
     ) -> str:
         """执行数据处理"""
         data_hint = """

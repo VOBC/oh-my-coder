@@ -11,6 +11,7 @@ import pytest
 
 sys.path.insert(0, "/Users/vobc/.qclaw/workspace-agent-bf627e2b/projects/oh-my-coder")
 
+
 from src.agents.cross_validation import (
     CrossValidationLayer,
     CrossValidationResult,
@@ -18,7 +19,6 @@ from src.agents.cross_validation import (
     ValidationSeverity,
     ValidationStatus,
 )
-
 
 # ------------------------------------------------------------------
 # Mock 对象
@@ -40,8 +40,8 @@ class MockWorkflowResult:
         self,
         workflow_id: str = "abc123",
         status: str = "completed",
-        steps_completed: list = None,
-        outputs: dict = None,
+        steps_completed: list | None = None,
+        outputs: dict | None = None,
         error: str = "",
     ):
         self.workflow_id = workflow_id

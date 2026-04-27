@@ -12,7 +12,6 @@ from src.agents.planner import (
     TaskPriority,
 )
 
-
 # ─────────────────────────────────────────────────────────────────
 # DependencyGraph
 # ─────────────────────────────────────────────────────────────────
@@ -60,7 +59,7 @@ class TestDependencyGraph:
         graph.add_task("T1", ["T3"])
         graph.add_task("T2", ["T1"])
         graph.add_task("T3", ["T2"])
-        result, has_cycle = graph.topological_sort()
+        _result, has_cycle = graph.topological_sort()
         assert has_cycle is True
 
     def test_get_ready_tasks_empty(self):

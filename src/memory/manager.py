@@ -14,12 +14,12 @@
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
-from .short_term import ShortTermMemory, SessionContext
-from .long_term import LongTermMemory, UserPreference, ProjectPreference
-from .learnings import LearningsMemory, LearningEntry
 from .auto_compact import AutoCompact, CompactResult
+from .learnings import LearningEntry, LearningsMemory
+from .long_term import LongTermMemory, ProjectPreference, UserPreference
+from .short_term import SessionContext, ShortTermMemory
 
 # 可选：tiktoken 用于精确 token 计算
 try:
@@ -64,7 +64,7 @@ class MemoryManager:
         )
 
     @staticmethod
-    def _get_encoder():
+    def _get_encoder() -> str | None:
         """获取 tokenizer，失败返回 None"""
         if not _HAS_TIKTOKEN:
             return None
@@ -112,12 +112,12 @@ class MemoryManager:
     # ========== Short Term ==========
 
     def create_session(
-        self, project_path: Optional[Path] = None, task: Optional[str] = None
+        self, project_path: Path | None = None, task: str | None = None
     ) -> SessionContext:
         """创建新会话"""
         return self.short_term.create_session(project_path, task)
 
-    def get_current_session(self) -> Optional[SessionContext]:
+    def get_current_session(self) -> SessionContext | None:
         """获取当前会话"""
         return self.short_term.get_current_session()
 
@@ -149,7 +149,7 @@ class MemoryManager:
         """添加最近项目"""
         self.long_term.add_recent_project(project_path)
 
-    def get_recent_projects(self, limit: int = 5) -> List[Path]:
+    def get_recent_projects(self, limit: int = 5) -> list[Path]:
         """获取最近项目"""
         return self.long_term.get_recent_projects(limit)
 
@@ -160,29 +160,29 @@ class MemoryManager:
         title: str,
         content: str,
         category: str = "note",
-        tags: Optional[List[str]] = None,
+        tags: list[str] | None = None,
         context: str = "",
     ) -> LearningEntry:
         """添加学习条目"""
         return self.learnings.add(title, content, category, tags, context)
 
     def search_learnings(
-        self, query: str, category: Optional[str] = None
-    ) -> List[LearningEntry]:
+        self, query: str, category: str | None = None
+    ) -> list[LearningEntry]:
         """搜索学习记录"""
         return self.learnings.search(query, category)
 
-    def get_learnings_by_category(self, category: str) -> List[LearningEntry]:
+    def get_learnings_by_category(self, category: str) -> list[LearningEntry]:
         """按类别获取学习记录"""
         return self.learnings.get_by_category(category)
 
-    def get_recent_learnings(self, limit: int = 10) -> List[LearningEntry]:
+    def get_recent_learnings(self, limit: int = 10) -> list[LearningEntry]:
         """获取最近学习记录"""
         return self.learnings.get_recent(limit)
 
     # ========== 综合 ==========
 
-    def recall(self, query: str) -> Dict[str, Any]:
+    def recall(self, query: str) -> dict[str, Any]:
         """综合召回：搜索所有记忆层"""
         results = {
             "short_term": [],
@@ -232,8 +232,7 @@ class MemoryManager:
         recent = self.learnings.get_recent(limit=3)
         if recent:
             lines.append("\n## 最近经验")
-            for entry in recent:
-                lines.append(f"- {entry.title}: {entry.content[:80]}")
+            lines.extend([f"- {entry.title}: {entry.content[:80]}" for entry in recent])
 
         # 拼接并截断
         summary = "\n".join(lines)
@@ -241,10 +240,9 @@ class MemoryManager:
         if tokens > self.config.tier0_max_tokens:
             # 截断到 token 限制
             if self._enc:
-                truncated = self._enc.decode(
+                return self._enc.decode(
                     self._enc.encode(summary)[: self.config.tier0_max_tokens]
                 )
-                return truncated
             return summary[: self.config.tier0_max_tokens * 4]
         return summary
 
@@ -280,8 +278,7 @@ class MemoryManager:
         tokens = self.count_tokens(summary)
         if tokens > max_tokens:
             if self._enc:
-                truncated = self._enc.decode(self._enc.encode(summary)[:max_tokens])
-                return truncated
+                return self._enc.decode(self._enc.encode(summary)[:max_tokens])
             return summary[: max_tokens * 4]
         return summary
 
@@ -335,7 +332,7 @@ class MemoryManager:
 
         return "\n".join(lines)
 
-    def get_memory_stats(self) -> Dict[str, Any]:
+    def get_memory_stats(self) -> dict[str, Any]:
         """获取记忆统计信息"""
         projects = self.long_term.get_recent_projects(limit=100)
         all_learnings = self.learnings.get_recent(limit=1000)

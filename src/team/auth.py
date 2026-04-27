@@ -8,7 +8,7 @@ import hashlib
 import secrets
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from .task_sync import MemberRole
 
@@ -22,12 +22,12 @@ class TeamMember:
     role: MemberRole = MemberRole.MEMBER
     display_name: str = ""
     email: str = ""
-    avatar_url: Optional[str] = None
+    avatar_url: str | None = None
     joined_at: datetime = field(default_factory=datetime.now)
     last_active: datetime = field(default_factory=datetime.now)
-    settings: Dict[str, Any] = field(default_factory=dict)
+    settings: dict[str, Any] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "user_id": self.user_id,
             "team_id": self.team_id,
@@ -50,11 +50,11 @@ class Team:
     owner_id: str
     description: str = ""
     invite_code: str = ""
-    settings: Dict[str, Any] = field(default_factory=dict)
+    settings: dict[str, Any] = field(default_factory=dict)
     created_at: datetime = field(default_factory=datetime.now)
-    members: List[TeamMember] = field(default_factory=list)
+    members: list[TeamMember] = field(default_factory=list)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "team_id": self.team_id,
             "name": self.name,
@@ -76,13 +76,13 @@ class UserSession:
     user_id: str
     team_id: str
     created_at: datetime = field(default_factory=datetime.now)
-    expires_at: datetime = field(default_factory=lambda: datetime.now())
+    expires_at: datetime = field(default_factory=datetime.now)
     is_active: bool = True
 
     def is_valid(self) -> bool:
         return self.is_active and datetime.now() < self.expires_at
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "session_id": self.session_id,
             "user_id": self.user_id,
@@ -105,10 +105,10 @@ class TeamAuth:
     """
 
     def __init__(self):
-        self._teams: Dict[str, Team] = {}
-        self._user_teams: Dict[str, str] = {}  # user_id -> team_id
-        self._sessions: Dict[str, UserSession] = {}
-        self._invite_codes: Dict[str, str] = {}  # invite_code -> team_id
+        self._teams: dict[str, Team] = {}
+        self._user_teams: dict[str, str] = {}  # user_id -> team_id
+        self._sessions: dict[str, UserSession] = {}
+        self._invite_codes: dict[str, str] = {}  # invite_code -> team_id
 
     def _generate_id(self) -> str:
         """生成唯一 ID"""
@@ -175,7 +175,7 @@ class TeamAuth:
         user_id: str,
         display_name: str = "",
         email: str = "",
-    ) -> Optional[Team]:
+    ) -> Team | None:
         """
         加入团队
 
@@ -268,11 +268,11 @@ class TeamAuth:
 
         return True
 
-    async def get_team(self, team_id: str) -> Optional[Team]:
+    async def get_team(self, team_id: str) -> Team | None:
         """获取团队"""
         return self._teams.get(team_id)
 
-    async def get_user_team(self, user_id: str) -> Optional[Team]:
+    async def get_user_team(self, user_id: str) -> Team | None:
         """获取用户所在团队"""
         team_id = self._user_teams.get(user_id)
         if team_id:
@@ -376,7 +376,7 @@ class TeamAuth:
         self._sessions[session_id] = session
         return session
 
-    async def validate_session(self, session_id: str) -> Optional[UserSession]:
+    async def validate_session(self, session_id: str) -> UserSession | None:
         """验证会话"""
         session = self._sessions.get(session_id)
         if session and session.is_valid():
@@ -392,7 +392,7 @@ class TeamAuth:
 
     async def regenerate_invite_code(
         self, team_id: str, requester_id: str
-    ) -> Optional[str]:
+    ) -> str | None:
         """
         重新生成邀请码
 

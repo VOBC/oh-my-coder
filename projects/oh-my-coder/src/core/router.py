@@ -304,7 +304,7 @@ class ModelRouter:
         """初始化所有可用模型（惰性初始化）"""
         # Ollama 本地模型（优先检测）
         try:
-            from ..models.ollama import OllamaModel, OLLAMA_DEFAULT_URL
+            from ..models.ollama import OLLAMA_DEFAULT_URL, OllamaModel
 
             base_url = self.config.ollama_base_url or OLLAMA_DEFAULT_URL
             if OllamaModel.is_available(base_url):

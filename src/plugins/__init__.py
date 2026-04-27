@@ -11,34 +11,32 @@
 - example_plugin: 示例插件
 """
 
+from src.plugins.loader import PluginLoader, get_loader
 from src.plugins.registry import (
+    Plugin,
     PluginBase,
     PluginMetadata,
-    PluginStatus,
-    Plugin,
     PluginRegistry,
-    register,
+    PluginStatus,
     get_registry,
+    register,
 )
-from typing import List
-
-from src.plugins.loader import PluginLoader, get_loader
 
 __all__ = [
-    "PluginBase",
-    "PluginMetadata",
-    "PluginStatus",
     "Plugin",
-    "PluginRegistry",
-    "register",
-    "get_registry",
+    "PluginBase",
     "PluginLoader",
+    "PluginMetadata",
+    "PluginRegistry",
+    "PluginStatus",
     "get_loader",
+    "get_registry",
+    "register",
 ]
 
 
 # 自动发现并加载内置插件（供 main.py 调用）
-def discover_and_load() -> List[str]:
+def discover_and_load() -> list[str]:
     """发现所有内置插件并按依赖顺序加载，返回成功加载的插件名列表"""
     loader = get_loader()
     loader.discover()

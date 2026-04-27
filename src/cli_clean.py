@@ -13,7 +13,6 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Optional
 
 import typer
 from rich.console import Console
@@ -31,7 +30,7 @@ def clean(
     strategy: str = typer.Option(
         "safe", "--strategy", "-s", help="策略: safe/aggressive"
     ),
-    output: Optional[str] = typer.Option(None, "--output", "-o", help="报告输出文件"),
+    output: str | None = typer.Option(None, "--output", "-o", help="报告输出文件"),
     verbose: bool = typer.Option(False, "--verbose", "-v", help="显示详细信息"),
 ):
     """
@@ -68,10 +67,7 @@ def clean(
 
     # 执行清理
     with console.status("[bold green]扫描中..."):
-        if fix:
-            report = cleaner.fix_all_auto()
-        else:
-            report = cleaner.scan()
+        report = cleaner.fix_all_auto() if fix else cleaner.scan()
 
     # 显示报告
     _display_report(report, verbose)

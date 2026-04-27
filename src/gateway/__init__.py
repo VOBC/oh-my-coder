@@ -8,9 +8,11 @@ Gateway - 多平台消息网关
 - gateway: 主 Gateway 类
 """
 
-from .base import IncomingMessage  # noqa: F401
-from .base import NoopHandler  # noqa: F401
-from .base import OutgoingMessage  # noqa: F401
-from .base import Platform  # noqa: F401
-from .base import PlatformHandler  # noqa: F401
+from .base import (
+    IncomingMessage,  # noqa: F401
+    NoopHandler,  # noqa: F401
+    OutgoingMessage,  # noqa: F401
+    Platform,  # noqa: F401
+    PlatformHandler,  # noqa: F401
+)
 from .gateway import Gateway  # noqa: F401

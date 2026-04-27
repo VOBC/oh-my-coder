@@ -62,24 +62,24 @@ project/
 # 示例：生成的商品路由代码
 # ============================================================
 
+
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
-from typing import List, Optional
 
 from ..database import get_db
-from ..schemas.product import ProductCreate, ProductUpdate, ProductResponse
+from ..schemas.product import ProductCreate, ProductResponse, ProductUpdate
 from ..services.product_service import ProductService
 
 router = APIRouter(prefix="/products", tags=["products"])
 
 
-@router.get("/", response_model=List[ProductResponse])
+@router.get("/", response_model=list[ProductResponse])
 async def list_products(
     skip: int = Query(0, ge=0),
     limit: int = Query(10, ge=1, le=100),
-    category_id: Optional[int] = None,
-    min_price: Optional[float] = None,
-    max_price: Optional[float] = None,
+    category_id: int | None = None,
+    min_price: float | None = None,
+    max_price: float | None = None,
     db: Session = Depends(get_db),
 ):
     """获取商品列表，支持分页和筛选"""
@@ -146,9 +146,10 @@ async def delete_product(
 # 示例：生成的商品模型
 # ============================================================
 
-from sqlalchemy import Column, Integer, String, Float, Text, DateTime, ForeignKey
-from sqlalchemy.orm import relationship
 from datetime import datetime
+
+from sqlalchemy import Column, DateTime, Float, ForeignKey, Integer, String, Text
+from sqlalchemy.orm import relationship
 
 from ..database import Base
 
@@ -179,20 +180,20 @@ class Product(Base):
 # 示例：生成的 Pydantic Schema
 # ============================================================
 
-from pydantic import BaseModel, Field
-from typing import Optional
 from datetime import datetime
+
+from pydantic import BaseModel, Field
 
 
 class ProductBase(BaseModel):
     """商品基础 Schema"""
 
     name: str = Field(..., min_length=1, max_length=100)
-    description: Optional[str] = None
+    description: str | None = None
     price: float = Field(..., gt=0)
-    original_price: Optional[float] = Field(None, gt=0)
-    category_id: Optional[int] = None
-    image_url: Optional[str] = None
+    original_price: float | None = Field(None, gt=0)
+    category_id: int | None = None
+    image_url: str | None = None
 
 
 class ProductCreate(ProductBase):
@@ -204,14 +205,14 @@ class ProductCreate(ProductBase):
 class ProductUpdate(BaseModel):
     """更新商品 Schema"""
 
-    name: Optional[str] = Field(None, min_length=1, max_length=100)
-    description: Optional[str] = None
-    price: Optional[float] = Field(None, gt=0)
-    original_price: Optional[float] = Field(None, gt=0)
-    category_id: Optional[int] = None
-    image_url: Optional[str] = None
-    stock: Optional[int] = Field(None, ge=0)
-    is_active: Optional[int] = Field(None, ge=0, le=1)
+    name: str | None = Field(None, min_length=1, max_length=100)
+    description: str | None = None
+    price: float | None = Field(None, gt=0)
+    original_price: float | None = Field(None, gt=0)
+    category_id: int | None = None
+    image_url: str | None = None
+    stock: int | None = Field(None, ge=0)
+    is_active: int | None = Field(None, ge=0, le=1)
 
 
 class ProductResponse(ProductBase):

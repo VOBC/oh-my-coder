@@ -10,7 +10,7 @@ import json
 import os
 import subprocess
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import typer
 from rich.console import Console
@@ -37,7 +37,7 @@ SEVERITY_NAMES = {
 }
 
 
-def find_lsp_diagnostics(file_path: Optional[str] = None) -> List[Dict[str, Any]]:
+def find_lsp_diagnostics(file_path: str | None = None) -> list[dict[str, Any]]:
     """
     查找 LSP 诊断信息
 
@@ -155,7 +155,7 @@ def find_lsp_diagnostics(file_path: Optional[str] = None) -> List[Dict[str, Any]
     return diagnostics
 
 
-def format_diagnostics_for_ai(diagnostics: List[Dict[str, Any]]) -> str:
+def format_diagnostics_for_ai(diagnostics: list[dict[str, Any]]) -> str:
     """格式化诊断信息为 AI 可读的格式"""
     if not diagnostics:
         return "✅ 未发现代码问题"
@@ -163,7 +163,7 @@ def format_diagnostics_for_ai(diagnostics: List[Dict[str, Any]]) -> str:
     lines = ["## 代码诊断报告\n"]
 
     # 按文件分组
-    by_file: Dict[str, List[Dict]] = {}
+    by_file: dict[str, list[dict]] = {}
     for d in diagnostics:
         file_name = os.path.basename(d.get("file", "unknown"))
         if file_name not in by_file:
@@ -200,8 +200,8 @@ def format_diagnostics_for_ai(diagnostics: List[Dict[str, Any]]) -> str:
 
 @app.command()
 def check(
-    file: Optional[str] = typer.Option(None, "--file", "-f", help="指定文件"),
-    source: Optional[str] = typer.Option(
+    file: str | None = typer.Option(None, "--file", "-f", help="指定文件"),
+    source: str | None = typer.Option(
         None, "--source", "-s", help="指定诊断来源 (ruff/mypy/eslint)"
     ),
     format: str = typer.Option(
@@ -276,7 +276,7 @@ def fix(
     dry_run: bool = typer.Option(
         True, "--dry-run/--no-dry-run", help="是否仅显示修复建议"
     ),
-    source: Optional[str] = typer.Option(None, "--source", "-s", help="指定修复工具"),
+    source: str | None = typer.Option(None, "--source", "-s", help="指定修复工具"),
 ):
     """
     自动修复代码问题

@@ -5,7 +5,6 @@ Wiki Generator - Markdown 文档生成器
 """
 
 from pathlib import Path
-from typing import Optional, Union
 
 from .parser import ClassInfo, FunctionInfo, ModuleInfo, PythonParser
 
@@ -16,8 +15,8 @@ class WikiGenerator:
     def __init__(
         self,
         project_name: str,
-        project_path: Union[Path, str],
-        parser: Optional[PythonParser] = None,
+        project_path: Path | str,
+        parser: PythonParser | None = None,
     ):
         """
         初始化生成器
@@ -31,7 +30,7 @@ class WikiGenerator:
         self.project_path = Path(project_path)
         self.parser = parser or PythonParser(project_path)
 
-    def generate(self, output_path: Optional[Union[Path, str]] = None) -> str:
+    def generate(self, output_path: Path | str | None = None) -> str:
         """
         生成 Wiki 文档
 

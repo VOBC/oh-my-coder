@@ -21,7 +21,6 @@ from .dangerous_command_blocker import (
     check_command,
 )
 
-
 # ─────────────────────────────────────────────────────────────
 # 配置
 # ─────────────────────────────────────────────────────────────
@@ -205,7 +204,7 @@ class Sandbox:
             # after passing dangerous_command_blocker and permission checks
             return subprocess.run(
                 cmd,
-                shell=True,  # nosec B604  # noqa: S602
+                shell=True,  # nosec B604
                 capture_output=True,
                 timeout=timeout_val,
                 cwd=cwd,

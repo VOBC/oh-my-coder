@@ -13,7 +13,7 @@ MiMo API 文档：https://platform.xiaomimimo.com
 import json
 import os
 import time
-from typing import AsyncIterator, Dict, List, Optional
+from collections.abc import AsyncIterator
 
 import httpx
 
@@ -79,7 +79,7 @@ class MimoModel(BaseModel):
         super().__init__(config, tier)
 
         # HTTP 客户端（延迟初始化）
-        self._client: Optional[httpx.AsyncClient] = None
+        self._client: httpx.AsyncClient | None = None
 
     @property
     def provider(self) -> ModelProvider:
@@ -110,7 +110,7 @@ class MimoModel(BaseModel):
             await self._client.aclose()
             self._client = None
 
-    def _format_messages(self, messages: List[Message]) -> List[Dict[str, str]]:
+    def _format_messages(self, messages: list[Message]) -> list[dict[str, str]]:
         """将统一消息格式转换为 MiMo API 格式"""
         formatted = []
         for msg in messages:
@@ -120,7 +120,7 @@ class MimoModel(BaseModel):
             formatted.append(item)
         return formatted
 
-    async def generate(self, messages: List[Message], **kwargs) -> ModelResponse:
+    async def generate(self, messages: list[Message], **kwargs) -> ModelResponse:
         """
         非流式生成
 
@@ -214,7 +214,7 @@ class MimoModel(BaseModel):
         except httpx.RequestError as e:
             raise MimoAPIError(f"网络请求失败: {type(e).__name__}")
 
-    async def stream(self, messages: List[Message], **kwargs) -> AsyncIterator[str]:
+    async def stream(self, messages: list[Message], **kwargs) -> AsyncIterator[str]:
         """
         流式生成
 
@@ -289,5 +289,3 @@ class MimoModel(BaseModel):
 
 class MimoAPIError(Exception):
     """MiMo API 错误"""
-
-    pass

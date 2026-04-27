@@ -15,7 +15,7 @@ from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 # ---------------------------------------------------------------------------
 # Data structures
@@ -45,10 +45,10 @@ class TraceEvent:
     step: int
     duration_ms: float = 0.0
     description: str = ""
-    details: Dict[str, Any] = field(default_factory=dict)
+    details: dict[str, Any] = field(default_factory=dict)
     output_preview: str = ""  # 输出摘要（前 200 字符）
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return asdict(self)
 
 
@@ -63,11 +63,11 @@ class AgentTrace:
     started_at: str = ""
     ended_at: str = ""
     status: str = "running"  # running | completed | failed
-    events: List[TraceEvent] = field(default_factory=list)
+    events: list[TraceEvent] = field(default_factory=list)
     total_duration_ms: float = 0.0
-    error: Optional[str] = None
+    error: str | None = None
     output_summary: str = ""  # 最终输出摘要
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
     def _now(self) -> str:
         return datetime.now().isoformat()
@@ -88,7 +88,7 @@ class AgentTrace:
         self,
         status: str = "completed",
         output_summary: str = "",
-        error: Optional[str] = None,
+        error: str | None = None,
     ) -> None:
         """结束追踪"""
         self.ended_at = self._now()
@@ -114,7 +114,7 @@ class AgentTrace:
         self,
         event_type: TraceEventType,
         description: str,
-        details: Optional[Dict[str, Any]] = None,
+        details: dict[str, Any] | None = None,
         output_preview: str = "",
     ) -> None:
         """记录任意事件"""
@@ -181,7 +181,7 @@ class AgentTrace:
             details={"error": error_msg},
         )
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "trace_id": self.trace_id,
             "agent_name": self.agent_name,
@@ -215,7 +215,7 @@ class TraceStore:
     _instance: Optional["TraceStore"] = None
     _lock = threading.Lock()
 
-    def __init__(self, base_dir: Optional[Path] = None) -> None:
+    def __init__(self, base_dir: Path | None = None) -> None:
         if base_dir is None:
             base_dir = Path.home() / ".omc" / "traces"
         self.base_dir = Path(base_dir)
@@ -243,7 +243,7 @@ class TraceStore:
             f.write(trace.to_jsonl_line() + "\n")
         return file_path
 
-    def list_sessions(self) -> List[str]:
+    def list_sessions(self) -> list[str]:
         """列出所有 session"""
         if not self.base_dir.exists():
             return []
@@ -251,7 +251,7 @@ class TraceStore:
             [d.name for d in self.base_dir.iterdir() if d.is_dir()], reverse=True
         )
 
-    def list_traces(self, session_id: str) -> List[Dict[str, Any]]:
+    def list_traces(self, session_id: str) -> list[dict[str, Any]]:
         """列出某个 session 下的所有 trace"""
         session_dir = self._session_dir(session_id)
         if not session_dir.exists():
@@ -271,7 +271,7 @@ class TraceStore:
                     pass
         return traces
 
-    def get_trace(self, session_id: str, agent_name: str) -> Optional[Dict[str, Any]]:
+    def get_trace(self, session_id: str, agent_name: str) -> dict[str, Any] | None:
         """获取指定 agent 的最新 trace"""
         session_dir = self._session_dir(session_id)
         safe_name = agent_name.replace("/", "_").replace("\\", "_")
@@ -287,12 +287,12 @@ class TraceStore:
             pass
         return None
 
-    def get_latest_session(self) -> Optional[str]:
+    def get_latest_session(self) -> str | None:
         """获取最新 session ID"""
         sessions = self.list_sessions()
         return sessions[0] if sessions else None
 
-    def get_all_agents_in_session(self, session_id: str) -> List[str]:
+    def get_all_agents_in_session(self, session_id: str) -> list[str]:
         """获取某个 session 下所有 agent 名"""
         session_dir = self._session_dir(session_id)
         if not session_dir.exists():
@@ -315,13 +315,13 @@ class TraceContext:
     def __init__(
         self,
         agent_name: str,
-        session_id: Optional[str] = None,
+        session_id: str | None = None,
         workflow_id: str = "",
     ) -> None:
         self.agent_name = agent_name
         self.session_id = session_id or str(uuid.uuid4())[:8]
         self.workflow_id = workflow_id
-        self._trace: Optional[AgentTrace] = None
+        self._trace: AgentTrace | None = None
         self._store = TraceStore.get_instance()
 
     def start(self) -> AgentTrace:
@@ -339,7 +339,7 @@ class TraceContext:
         self,
         status: str = "completed",
         output_summary: str = "",
-        error: Optional[str] = None,
+        error: str | None = None,
     ) -> None:
         if self._trace is not None:
             self._trace.end(status=status, output_summary=output_summary, error=error)
@@ -349,7 +349,7 @@ class TraceContext:
         self,
         event_type: TraceEventType,
         description: str,
-        details: Optional[Dict[str, Any]] = None,
+        details: dict[str, Any] | None = None,
     ) -> None:
         if self._trace is not None:
             self._trace.log(event_type, description, details)
@@ -376,10 +376,10 @@ class TraceContext:
 
 
 # Global trace context for current agent execution
-_current_trace: Dict[str, TraceContext] = {}
+_current_trace: dict[str, TraceContext] = {}
 
 
-def get_trace_context(agent_name: str) -> Optional[TraceContext]:
+def get_trace_context(agent_name: str) -> TraceContext | None:
     return _current_trace.get(agent_name)
 
 

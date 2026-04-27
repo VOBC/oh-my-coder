@@ -12,12 +12,12 @@
 - 手动触发记忆召回（搜索）
 """
 
-from .manager import MemoryManager, MemoryConfig
+from .manager import MemoryConfig, MemoryManager
 
 __all__ = [
-    "MemoryManager",
-    "MemoryConfig",
-    "ShortTermMemory",
-    "LongTermMemory",
     "LearningsMemory",
+    "LongTermMemory",
+    "MemoryConfig",
+    "MemoryManager",
+    "ShortTermMemory",
 ]

@@ -14,7 +14,7 @@ import subprocess
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 @dataclass
@@ -27,10 +27,10 @@ class GitDiff:
     timestamp: str = ""
 
     # 改动文件列表
-    changed_files: List[str] = field(default_factory=list)
+    changed_files: list[str] = field(default_factory=list)
 
     # 改动详情：file -> [(行号, 行内容, + / -)]
-    diff_details: Dict[str, List[Dict]] = field(default_factory=dict)
+    diff_details: dict[str, list[dict]] = field(default_factory=dict)
 
     # 统计
     files_added: int = 0
@@ -63,10 +63,10 @@ class TestReport:
     project_path: str = ""
 
     # 改动范围
-    diff: Optional[GitDiff] = None
+    diff: GitDiff | None = None
 
     # 新增测试
-    new_tests: List[TestCase] = field(default_factory=list)
+    new_tests: list[TestCase] = field(default_factory=list)
     new_tests_passed: int = 0
 
     # 回归测试
@@ -75,11 +75,11 @@ class TestReport:
     regression_tests_failed: int = 0
 
     # 覆盖率
-    coverage_before: Optional[float] = None
-    coverage_after: Optional[float] = None
+    coverage_before: float | None = None
+    coverage_after: float | None = None
 
     # 失败信息
-    failures: List[str] = field(default_factory=list)
+    failures: list[str] = field(default_factory=list)
 
 
 class SmartTestEnhancer:
@@ -95,7 +95,7 @@ class SmartTestEnhancer:
     def __init__(self, project_path: Path):
         self.project_path = Path(project_path)
 
-    def get_git_diff(self, count: int = 1) -> Optional[GitDiff]:
+    def get_git_diff(self, count: int = 1) -> GitDiff | None:
         """
         获取最近 N 次 commit 的 git diff
 
@@ -210,7 +210,7 @@ class SmartTestEnhancer:
         if current_file and current_changes:
             diff.diff_details[current_file] = current_changes
 
-    def analyze_impact(self, diff: GitDiff) -> Dict[str, Any]:
+    def analyze_impact(self, diff: GitDiff) -> dict[str, Any]:
         """
         分析改动影响范围
 
@@ -249,7 +249,7 @@ class SmartTestEnhancer:
                     if level == "high":
                         risk_level = "high"
                         break
-                    elif level == "medium" and risk_level != "high":
+                    if level == "medium" and risk_level != "high":
                         risk_level = "medium"
 
         return {
@@ -263,7 +263,7 @@ class SmartTestEnhancer:
         self,
         diff: GitDiff,
         test_framework: str = "pytest",
-    ) -> List[TestCase]:
+    ) -> list[TestCase]:
         """
         针对改动模块生成测试用例
 
@@ -310,7 +310,7 @@ class SmartTestEnhancer:
 
         return test_cases
 
-    def _extract_target_class(self, changes: List[Dict]) -> Optional[str]:
+    def _extract_target_class(self, changes: list[dict]) -> str | None:
         """从改动中提取目标类/函数"""
         for change in changes:
             line = change.get("line", "")
@@ -366,7 +366,7 @@ class Test{target}:
 '''
         return ""
 
-    def run_regression_tests(self) -> Dict[str, Any]:
+    def run_regression_tests(self) -> dict[str, Any]:
         """运行回归测试"""
         result = {
             "tests_run": 0,
@@ -425,11 +425,11 @@ class Test{target}:
     def generate_report(
         self,
         diff: GitDiff,
-        new_tests: List[TestCase],
-        regression_result: Dict[str, Any],
+        new_tests: list[TestCase],
+        regression_result: dict[str, Any],
     ) -> TestReport:
         """生成测试报告"""
-        report = TestReport(
+        return TestReport(
             timestamp=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             project_path=str(self.project_path),
             diff=diff,
@@ -440,8 +440,6 @@ class Test{target}:
             regression_tests_failed=regression_result.get("tests_failed", 0),
             failures=regression_result.get("failures", []),
         )
-
-        return report
 
     def generate_report_md(self, report: TestReport) -> str:
         """生成 Markdown 格式的测试报告"""
@@ -472,8 +470,7 @@ class Test{target}:
                     "",
                 ]
             )
-            for f in report.diff.changed_files[:20]:
-                lines.append(f"- {f}")
+            lines.extend([f"- {f}" for f in report.diff.changed_files[:20]])
             if len(report.diff.changed_files) > 20:
                 lines.append(f"- ... 还有 {len(report.diff.changed_files) - 20} 个")
             lines.append("")
@@ -516,8 +513,7 @@ class Test{target}:
         # 失败详情
         if report.failures:
             lines.extend(["### 失败详情", ""])
-            for failure in report.failures:
-                lines.append(f"- {failure}")
+            lines.extend([f"- {failure}" for failure in report.failures])
             lines.append("")
 
         return "\n".join(lines)

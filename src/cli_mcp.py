@@ -7,6 +7,7 @@ omc mcp --list               # 列出可用工具
 omc mcp --status             # 查看 MCP 连接状态
 """
 
+import contextlib
 import json
 import sys
 from pathlib import Path
@@ -14,9 +15,9 @@ from pathlib import Path
 import typer
 from rich.console import Console
 
+from src.mcp.resources import get_mcp_resources
 from src.mcp.server import McpServer
 from src.mcp.tools import get_mcp_tools
-from src.mcp.resources import get_mcp_resources
 
 app = typer.Typer(
     name="mcp",
@@ -33,10 +34,8 @@ def start(
     console.print("[dim]启动 oh-my-coder MCP Server...[/dim]")
     console.print("[dim]按 Ctrl+C 退出[/dim]")
     server = McpServer(workspace=workspace.resolve())
-    try:
+    with contextlib.suppress(KeyboardInterrupt):
         server.run()
-    except KeyboardInterrupt:
-        pass
 
 
 @app.command()

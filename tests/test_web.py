@@ -11,8 +11,8 @@ from unittest.mock import MagicMock
 import pytest
 from fastapi.testclient import TestClient
 
-from src.web.app import app
 from src.core.orchestrator import Orchestrator
+from src.web.app import app
 
 
 class TestWebAPI:
@@ -162,6 +162,7 @@ class TestAgentLiveStream:
     async def test_agent_live_stream_returns_streaming_response(self):
         """测试 agent_live_stream 端点返回 StreamingResponse"""
         from fastapi.responses import StreamingResponse
+
         from src.web.app import agent_live_stream
 
         response = await agent_live_stream()
@@ -224,7 +225,7 @@ class TestAgentLiveStream:
                     state = mock_orch.get_current_state()
                     yield "data: " + json_dumps(state) + "\n\n"
                     await asyncio.sleep(2)
-                except ValueError as e:
+                except ValueError:
                     error_state = {
                         "error": "ValueError",
                         "timestamp": "2026-04-12T08:00:00Z",

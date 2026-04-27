@@ -154,18 +154,16 @@ class TestGatewayTelegramConfigured:
     @pytest.fixture
     def gateway_with_telegram(self, monkeypatch):
         """模拟已配置 Telegram token"""
-        from src.gateway.gateway import Gateway
-
         # 模拟依赖检查通过但无真实 bot
         import src.gateway.platforms.telegram as tg_mod
+        from src.gateway.gateway import Gateway
 
         monkeypatch.setattr(tg_mod, "_HAS_TELEGRAM", True)
 
-        gateway = Gateway(
+        return Gateway(
             orchestrator=None,
             telegram_token="mock_token_for_test",
         )
-        return gateway
 
     def test_status_telegram_configured(self, gateway_with_telegram):
         status = gateway_with_telegram.status()
@@ -207,7 +205,7 @@ class TestGatewayStatusTable:
         assert "started_platforms" in status
         assert isinstance(status["started_platforms"], list)
 
-        for platform_name, info in status["handlers"].items():
+        for info in status["handlers"].values():
             assert "configured" in info
             assert "started" in info
             assert "type" in info

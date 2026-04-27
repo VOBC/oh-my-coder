@@ -4,10 +4,12 @@
 提供插件元信息管理、@register 装饰器和全局注册表。
 """
 
+import contextlib
 from abc import ABC, abstractmethod
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Type
+from typing import Any, Optional
 
 from pydantic import BaseModel
 
@@ -30,9 +32,9 @@ class PluginMetadata(BaseModel):
     author: str = ""
     homepage: str = ""
     license: str = "MIT"
-    requires: List[str] = []  # 依赖的其他插件名
+    requires: list[str] = []  # 依赖的其他插件名
     entrypoint: str = ""
-    tags: List[str] = []
+    tags: list[str] = []
 
 
 @dataclass
@@ -41,10 +43,10 @@ class Plugin:
 
     metadata: PluginMetadata
     status: PluginStatus = PluginStatus.DISABLED
-    module: Optional[Any] = None
+    module: Any | None = None
     instance: Optional["PluginBase"] = None
-    error: Optional[str] = None
-    config: Dict[str, Any] = field(default_factory=dict)
+    error: str | None = None
+    config: dict[str, Any] = field(default_factory=dict)
 
 
 class PluginBase(ABC):
@@ -68,34 +70,29 @@ class PluginBase(ABC):
     @abstractmethod
     def metadata(self) -> PluginMetadata:
         """返回插件元数据"""
-        pass
 
     @abstractmethod
     def on_load(self) -> None:
         """插件加载时调用"""
-        pass
 
     def on_enable(self) -> None:
         """插件启用时调用"""
-        pass
 
     def on_disable(self) -> None:
         """插件禁用时调用"""
-        pass
 
     def on_unload(self) -> None:
         """插件卸载时调用"""
-        pass
 
-    def register_agents(self) -> List[Type]:
+    def register_agents(self) -> list[type]:
         """注册 Agent 类"""
         return []
 
-    def register_skills(self) -> Dict[str, Callable]:
+    def register_skills(self) -> dict[str, Callable]:
         """注册技能函数"""
         return {}
 
-    def register_hooks(self) -> Dict[str, Callable]:
+    def register_hooks(self) -> dict[str, Callable]:
         """注册钩子函数"""
         return {}
 
@@ -109,14 +106,14 @@ class PluginRegistry:
     """
 
     def __init__(self) -> None:
-        self._plugins: Dict[str, Plugin] = {}
-        self._agents: Dict[str, Type] = {}
-        self._skills: Dict[str, Callable] = {}
-        self._hooks: Dict[str, List[Callable]] = {}
+        self._plugins: dict[str, Plugin] = {}
+        self._agents: dict[str, type] = {}
+        self._skills: dict[str, Callable] = {}
+        self._hooks: dict[str, list[Callable]] = {}
 
     # ---- 注册 ----
 
-    def register_plugin(self, plugin_cls: Type[PluginBase]) -> Plugin:
+    def register_plugin(self, plugin_cls: type[PluginBase]) -> Plugin:
         """
         注册一个插件类（不加载，仅记录元信息）。
 
@@ -157,27 +154,27 @@ class PluginRegistry:
 
     # ---- 查询 ----
 
-    def get(self, name: str) -> Optional[Plugin]:
+    def get(self, name: str) -> Plugin | None:
         """获取插件"""
         return self._plugins.get(name)
 
-    def list_plugins(self) -> List[Plugin]:
+    def list_plugins(self) -> list[Plugin]:
         """列出所有插件"""
         return list(self._plugins.values())
 
-    def list_by_status(self, status: PluginStatus) -> List[Plugin]:
+    def list_by_status(self, status: PluginStatus) -> list[Plugin]:
         """按状态过滤插件"""
         return [p for p in self._plugins.values() if p.status == status]
 
-    def get_agent(self, name: str) -> Optional[Type]:
+    def get_agent(self, name: str) -> type | None:
         """获取注册的 Agent 类"""
         return self._agents.get(name)
 
-    def get_skill(self, name: str) -> Optional[Callable]:
+    def get_skill(self, name: str) -> Callable | None:
         """获取注册的技能"""
         return self._skills.get(name)
 
-    def execute_hook(self, name: str, *args: Any, **kwargs: Any) -> List[Any]:
+    def execute_hook(self, name: str, *args: Any, **kwargs: Any) -> list[Any]:
         """
         执行钩子
 
@@ -188,24 +185,22 @@ class PluginRegistry:
             钩子执行结果列表
         """
         hooks = self._hooks.get(name, [])
-        results: List[Any] = []
+        results: list[Any] = []
         for hook in hooks:
-            try:
+            with contextlib.suppress(Exception):
                 results.append(hook(*args, **kwargs))
-            except Exception:
-                pass
         return results
 
     # ---- 资源注册（由 loader 调用）----
 
-    def _register_agents(self, agents: List[Type]) -> None:
+    def _register_agents(self, agents: list[type]) -> None:
         for agent_cls in agents:
             self._agents[agent_cls.__name__] = agent_cls
 
-    def _register_skills(self, skills: Dict[str, Callable]) -> None:
+    def _register_skills(self, skills: dict[str, Callable]) -> None:
         self._skills.update(skills)
 
-    def _register_hooks(self, hooks: Dict[str, Callable]) -> None:
+    def _register_hooks(self, hooks: dict[str, Callable]) -> None:
         for hook_name, hook_fn in hooks.items():
             if hook_name not in self._hooks:
                 self._hooks[hook_name] = []
@@ -237,7 +232,7 @@ class PluginRegistry:
 
 # ---- 全局注册表 ----
 
-_registry: Optional[PluginRegistry] = None
+_registry: PluginRegistry | None = None
 
 
 def get_registry() -> PluginRegistry:
@@ -251,7 +246,7 @@ def get_registry() -> PluginRegistry:
 # ---- @register 装饰器 ----
 
 
-def register(cls: Type[PluginBase]) -> Type[PluginBase]:
+def register(cls: type[PluginBase]) -> type[PluginBase]:
     """
     类装饰器，将插件类注册到全局注册表。
 

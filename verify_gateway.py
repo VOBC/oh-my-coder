@@ -13,7 +13,12 @@ import sys
 # 1. 测试基本导入
 print("1. 测试 Gateway 模块导入...")
 try:
-    from src.gateway import Gateway, Platform, IncomingMessage, OutgoingMessage, PlatformHandler
+    from src.gateway import (
+        Gateway,
+        IncomingMessage,
+        OutgoingMessage,
+        Platform,
+    )
     print("   ✅ 模块导入成功")
 except Exception as e:
     print(f"   ❌ 模块导入失败: {e}")
@@ -91,8 +96,8 @@ except Exception as e:
 # 6. 测试依赖检查函数
 print("\n6. 测试依赖检查函数...")
 try:
-    from src.gateway.platforms.telegram import check_telegram_dependencies
     from src.gateway.platforms.discord import check_discord_dependencies
+    from src.gateway.platforms.telegram import check_telegram_dependencies
 
     tg_available = check_telegram_dependencies()
     dc_available = check_discord_dependencies()

@@ -10,8 +10,8 @@ omc trace 命令 - 查看 Agent 执行记录
 
 import typer
 from rich.console import Console
-from rich.table import Table
 from rich.panel import Panel
+from rich.table import Table
 
 from .agents.transparency import TraceStore
 
@@ -29,10 +29,7 @@ def trace_list(
     limit: int = typer.Option(20, "--limit", "-n", help="显示条数"),
 ) -> None:
     """列出最近执行记录"""
-    if session:
-        sessions = [session]
-    else:
-        sessions = _get_store().list_sessions()[:limit]
+    sessions = [session] if session else _get_store().list_sessions()[:limit]
 
     if not sessions:
         console.print("[dim]暂无执行记录[/dim]")
@@ -117,12 +114,12 @@ def trace_show(
         console.print("[dim]无事件记录[/dim]")
         return
 
-    for i, ev in enumerate(events):
+    for _i, ev in enumerate(events):
         etype = ev.get("type", "")
         ts = ev.get("timestamp", "")[11:23]  # HH:MM:SS.mmm
         desc = ev.get("description", "")
         dur_ms = ev.get("duration_ms", 0)
-        dur_str = f"[dim]@{dur_ms/1000:.3f}s[/dim]"
+        dur_str = f"[dim]@{dur_ms / 1000:.3f}s[/dim]"
 
         # 类型标签颜色
         color_map = {
@@ -147,7 +144,9 @@ def trace_show(
             elif "command" in details:
                 extra = f"  → {details['command'][:60]}"
             elif "model" in details:
-                extra = f"  → model={details['model']} tokens={details.get('tokens',0)}"
+                extra = (
+                    f"  → model={details['model']} tokens={details.get('tokens', 0)}"
+                )
 
         console.print(f"  {ts} {dur_str} {label} {desc}{extra}")
 

@@ -10,7 +10,6 @@ Code Simplifier Agent - 代码简化智能体
 模型层级：HIGH（深度推理，对应 opus）
 """
 
-from typing import Dict, List
 
 from ..core.router import TaskType
 from .base import (
@@ -95,7 +94,7 @@ class CodeSimplifierAgent(BaseAgent):
 """
 
     async def _run(
-        self, context: AgentContext, prompt: List[Dict[str, str]], **kwargs
+        self, context: AgentContext, prompt: list[dict[str, str]], **kwargs
     ) -> str:
         """执行代码简化分析"""
         # 读取要分析的代码
@@ -103,7 +102,7 @@ class CodeSimplifierAgent(BaseAgent):
             code_parts = []
             for file_path in context.relevant_files[:5]:
                 try:
-                    with open(file_path, "r", encoding="utf-8") as f:
+                    with open(file_path, encoding="utf-8") as f:
                         content = f.read()
                         lines = len(content.split("\n"))
                         code_parts.append(

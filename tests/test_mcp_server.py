@@ -4,10 +4,9 @@ MCP Server 单元测试
 
 from pathlib import Path
 
-
+from src.mcp.resources import MCP_RESOURCES, get_mcp_resources
 from src.mcp.server import McpServer
-from src.mcp.tools import get_mcp_tools, get_tool_handler, MCP_TOOLS
-from src.mcp.resources import get_mcp_resources, MCP_RESOURCES
+from src.mcp.tools import MCP_TOOLS, get_mcp_tools, get_tool_handler
 
 
 class TestMcpServerMetadata:

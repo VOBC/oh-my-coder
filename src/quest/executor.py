@@ -8,9 +8,9 @@ Quest 执行引擎
 import asyncio
 import os
 import sys
+from collections.abc import Awaitable, Callable
 from datetime import datetime
 from pathlib import Path
-from typing import Awaitable, Callable, List, Optional
 
 from .models import Quest, QuestNotification, QuestStatus, QuestStep
 from .store import QuestStore
@@ -23,9 +23,9 @@ class QuestExecutor:
         self,
         project_path: Path,
         store: QuestStore,
-        notify_callback: Optional[Callable[[QuestNotification], None]] = None,
-        replan_callback: Optional[Callable[[str, str], None]] = None,
-        review_callback: Optional[Callable[[str, str, str], Awaitable[str]]] = None,
+        notify_callback: Callable[[QuestNotification], None] | None = None,
+        replan_callback: Callable[[str, str], None] | None = None,
+        review_callback: Callable[[str, str, str], Awaitable[str]] | None = None,
     ):
         self.project_path = Path(project_path)
         self.store = store
@@ -40,7 +40,7 @@ class QuestExecutor:
         self._breakpoint: dict[str, int] = {}
 
     def _notify(
-        self, quest: Optional[Quest], event: str, message: str, details=None
+        self, quest: Quest | None, event: str, message: str, details=None
     ) -> None:
         """发送通知"""
         if self.notify_callback:
@@ -140,7 +140,7 @@ class QuestExecutor:
                         self.store.save(fresh)
                         i -= 1  # 回退索引重试
                         continue
-                    elif review_result == "skip":
+                    if review_result == "skip":
                         # 跳过（标记为警告）
                         step.status = QuestStatus.COMPLETED
                         step.completed_at = datetime.now()
@@ -252,12 +252,12 @@ class QuestExecutor:
         # 没有回调时默认通过
         return "pass"
 
-    def _generate_steps(self, quest: Quest) -> List[QuestStep]:
+    def _generate_steps(self, quest: Quest) -> list[QuestStep]:
         """从 SPEC 生成执行步骤"""
-        steps: List[QuestStep] = []
+        steps: list[QuestStep] = []
 
         if not quest.spec or not quest.spec.acceptance_criteria:
-            steps = [
+            return [
                 QuestStep(
                     step_id="S1",
                     title="分析需求",
@@ -283,7 +283,6 @@ class QuestExecutor:
                     agent="verifier",
                 ),
             ]
-            return steps
 
         # 基于 acceptance_criteria 生成步骤
         ac_chunks = [
@@ -386,7 +385,7 @@ class QuestExecutor:
         self._breakpoint[quest_id] = running_idx
         return bool(self.store.update_status(quest_id, QuestStatus.PAUSED))
 
-    def resume(self, quest_id: str) -> Optional[Quest]:
+    def resume(self, quest_id: str) -> Quest | None:
         """恢复暂停的 Quest，从断点继续"""
         quest = self.store.get(quest_id)
         if quest is None or quest.status != QuestStatus.PAUSED:
@@ -404,6 +403,6 @@ class QuestExecutor:
         """检查 Quest 是否在运行"""
         return quest_id in self._running_quests
 
-    def get_breakpoint(self, quest_id: str) -> Optional[int]:
+    def get_breakpoint(self, quest_id: str) -> int | None:
         """获取暂停时的断点位置"""
         return self._breakpoint.get(quest_id)

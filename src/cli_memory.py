@@ -95,7 +95,7 @@ def memory_summary(
         Panel(
             archive[:5000]
             + (
-                "\n\n[dim]... （截断显示，共 {} tokens）[/dim]".format(tokens)
+                f"\n\n[dim]... （截断显示，共 {tokens} tokens）[/dim]"
                 if len(archive) > 5000
                 else ""
             ),

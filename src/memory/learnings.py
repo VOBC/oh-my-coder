@@ -17,7 +17,7 @@ import re
 import time
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 @dataclass
@@ -28,16 +28,16 @@ class LearningEntry:
     category: str  # "error", "solution", "best-practice", "note"
     title: str
     content: str
-    tags: List[str] = field(default_factory=list)
+    tags: list[str] = field(default_factory=list)
     context: str = ""  # 触发场景
     created_at: float = field(default_factory=time.time)
     updated_at: float = field(default_factory=time.time)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return asdict(self)
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "LearningEntry":
+    def from_dict(cls, data: dict[str, Any]) -> "LearningEntry":
         return cls(**data)
 
 
@@ -59,7 +59,7 @@ class LearningsMemory:
             (self.storage_dir / cat).mkdir(exist_ok=True)
 
         self.index_file = self.storage_dir / "index.json"
-        self._index: Dict[str, LearningEntry] = {}
+        self._index: dict[str, LearningEntry] = {}
         self._load_index()
 
     def _load_index(self):
@@ -68,7 +68,7 @@ class LearningsMemory:
             data = self._parse_markdown_index()
             self._index = {k: LearningEntry.from_dict(v) for k, v in data.items()}
 
-    def _parse_markdown_index(self) -> Dict[str, Dict]:
+    def _parse_markdown_index(self) -> dict[str, dict]:
         """从 Markdown 文件解析索引"""
         index = {}
         for cat in self.CATEGORIES:
@@ -81,7 +81,7 @@ class LearningsMemory:
                     index[entry.id] = entry.to_dict()
         return index
 
-    def _parse_learning_file(self, path: Path) -> Optional[LearningEntry]:
+    def _parse_learning_file(self, path: Path) -> LearningEntry | None:
         """解析单个 Markdown 文件"""
         try:
             content = path.read_text()
@@ -125,7 +125,7 @@ class LearningsMemory:
         title: str,
         content: str,
         category: str = "note",
-        tags: Optional[List[str]] = None,
+        tags: list[str] | None = None,
         context: str = "",
     ) -> LearningEntry:
         """添加学习条目"""
@@ -156,7 +156,7 @@ class LearningsMemory:
 
         self.index_file.write_text(json.dumps(data, ensure_ascii=False, indent=2))
 
-    def search(self, query: str, category: Optional[str] = None) -> List[LearningEntry]:
+    def search(self, query: str, category: str | None = None) -> list[LearningEntry]:
         """搜索学习条目"""
         results = []
         query_lower = query.lower()
@@ -175,11 +175,11 @@ class LearningsMemory:
 
         return results
 
-    def get_by_category(self, category: str) -> List[LearningEntry]:
+    def get_by_category(self, category: str) -> list[LearningEntry]:
         """按类别获取"""
         return [e for e in self._index.values() if e.category == category]
 
-    def get_recent(self, limit: int = 10) -> List[LearningEntry]:
+    def get_recent(self, limit: int = 10) -> list[LearningEntry]:
         """获取最近添加的"""
         sorted_entries = sorted(
             self._index.values(), key=lambda e: e.created_at, reverse=True

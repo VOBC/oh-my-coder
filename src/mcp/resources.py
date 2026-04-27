@@ -9,11 +9,12 @@ resource URI 格式：
 - omc://skill/list             — 所有 Skill 列表
 """
 
+import contextlib
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 # 工作区根目录
-_WORKSPACE: Optional[Path] = None
+_WORKSPACE: Path | None = None
 
 
 def set_workspace(workspace: Path) -> None:
@@ -160,7 +161,7 @@ def _generate_files(workspace: Path) -> str:
     return "\n".join(lines)
 
 
-def _project_stats(workspace: Path) -> Dict[str, Any]:
+def _project_stats(workspace: Path) -> dict[str, Any]:
     """统计项目信息"""
     extensions = {
         ".py": "Python",
@@ -191,7 +192,7 @@ def _project_stats(workspace: Path) -> Dict[str, Any]:
         ".tox",
     }
 
-    file_counts: Dict[str, int] = {}
+    file_counts: dict[str, int] = {}
     code_lines = 0
     total_files = 0
 
@@ -204,12 +205,10 @@ def _project_stats(workspace: Path) -> Dict[str, Any]:
             if ext in extensions:
                 total_files += 1
                 file_counts[extensions[ext]] = file_counts.get(extensions[ext], 0) + 1
-                try:
+                with contextlib.suppress(Exception):
                     code_lines += len(
                         item.read_text(encoding="utf-8", errors="ignore").splitlines()
                     )
-                except Exception:
-                    pass
 
     return {
         "total_files": total_files,
@@ -222,7 +221,7 @@ def _project_stats(workspace: Path) -> Dict[str, Any]:
 # MCP Resource 定义
 # ------------------------------------------------------------------
 
-MCP_RESOURCES: List[Dict[str, Any]] = [
+MCP_RESOURCES: list[dict[str, Any]] = [
     {
         "uri": "omc://workspace/summary",
         "name": "workspace_summary",
@@ -247,6 +246,6 @@ MCP_RESOURCES: List[Dict[str, Any]] = [
 ]
 
 
-def get_mcp_resources() -> List[Dict[str, Any]]:
+def get_mcp_resources() -> list[dict[str, Any]]:
     """获取所有 MCP resources（dict 格式）"""
     return MCP_RESOURCES

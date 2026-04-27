@@ -8,7 +8,7 @@ import hashlib
 import json
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 
 from .gene import Gene
 
@@ -26,8 +26,8 @@ class Capsule:
     """
 
     gene: Gene  # 元数据
-    manifest: Dict[str, Any] = field(default_factory=dict)  # tools/agents/prompts 配置
-    dependencies: List[str] = field(default_factory=list)  # 依赖的其他 Capsule ID
+    manifest: dict[str, Any] = field(default_factory=dict)  # tools/agents/prompts 配置
+    dependencies: list[str] = field(default_factory=list)  # 依赖的其他 Capsule ID
     checksum: str = ""  # SHA256 校验
 
     def __post_init__(self) -> None:
@@ -54,7 +54,7 @@ class Capsule:
 
     # --- 序列化 ---
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "gene": self.gene.to_dict(),
             "manifest": self.manifest,
@@ -66,7 +66,7 @@ class Capsule:
         return json.dumps(self.to_dict(), ensure_ascii=False, indent=2)
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "Capsule":
+    def from_dict(cls, data: dict[str, Any]) -> "Capsule":
         gene = Gene.from_dict(data["gene"])
         return cls(
             gene=gene,
@@ -82,7 +82,7 @@ class Capsule:
     # --- 向后兼容 .omcp ---
 
     @classmethod
-    def from_omcp(cls, data: Dict[str, Any], file_name: str = "") -> "Capsule":
+    def from_omcp(cls, data: dict[str, Any], file_name: str = "") -> "Capsule":
         """
         从旧 .omcp 格式升级为 Capsule。
 
@@ -121,7 +121,7 @@ class Capsule:
         return cls.from_json(path.read_text(encoding="utf-8"))
 
 
-def _infer_category(data: Dict[str, Any]) -> str:
+def _infer_category(data: dict[str, Any]) -> str:
     """从 .omcp 内容推断能力分类"""
     name = data.get("name", "").lower()
     desc = data.get("description", "").lower()
