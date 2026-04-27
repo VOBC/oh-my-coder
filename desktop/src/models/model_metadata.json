@@ -1,6 +1,6 @@
 {
   "production": [
-    { "id": "deepseek-chat", "provider": "DeepSeek", "name": "DeepSeek V3" },
+    { "id": "deepseek-chat", "provider": "DeepSeek", "name": "DeepSeek V4" },
     { "id": "deepseek-reasoner", "provider": "DeepSeek", "name": "DeepSeek R1" },
     { "id": "glm-4-flash", "provider": "Zhipu", "name": "GLM-4-Flash" },
     { "id": "glm-4v-flash", "provider": "Zhipu", "name": "GLM-4V-Flash" },
