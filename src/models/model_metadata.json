@@ -19,7 +19,7 @@
 
   "deepseek-chat": {
     "status": "production",
-    "name": "DeepSeek V3",
+    "name": "DeepSeek V4",
     "provider": "DeepSeek",
     "tier": "low",
     "context": 64000,
