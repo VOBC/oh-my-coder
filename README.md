@@ -4,6 +4,7 @@
 
 🎯 **GLM-4.7-Flash 开源免费 · 12 家国产大模型 · 31 个专业 Agent · 多 Agent 协作 · 完全开源**
 
+[![CI](https://github.com/VOBC/oh-my-coder/actions/workflows/test.yml/badge.svg)](https://github.com/VOBC/oh-my-coder/actions)
 [![Python](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Stars](https://img.shields.io/github/stars/VOBC/oh-my-coder?style=flat-square&logo=github)](https://github.com/VOBC/oh-my-coder/stargazers)
@@ -207,14 +208,38 @@ omc config set -k MIMOX_API_KEY -v "your_key"
 
 > 📖 [完整安装与配置指南](docs/guide/quickstart-detailed.md)（安装依赖、API Key 配置、模型特定配置、运行方式）
 
-**最简三步**：
+### 三步上手
+
+**第一步：安装**（Python 3.10+，pip）
 ```bash
-git clone https://github.com/VOBC/oh-my-coder.git && cd oh-my-coder
 pip install -e .
-export DEEPSEEK_API_KEY=your_key && python -m src.web.app
+# 或开发模式（可改源码）：pip install -e ".[dev]"
 ```
 
-> 要求：Python 3.10+，pip>=21.3
+**第二步：配置 API Key**（任选其一，免费额度先用）
+```bash
+# 方式 A：智谱 GLM（推荐，首次注册送大量免费额度）
+omc config set -k GLM_API_KEY -v "your_key"
+# 注册地址：https://open.bigmodel.cn/
+
+# 方式 B：DeepSeek（新用户赠送余额，128K 上下文）
+omc config set -k DEEPSEEK_API_KEY -v "your_key"
+# 注册地址：https://platform.deepseek.com/
+
+# 方式 C：通义千问
+omc config set -k QWEN_API_KEY -v "your_key"
+```
+
+**第三步：启动**
+```bash
+# Web 界面（浏览器访问 http://localhost:8000）
+omc web
+
+# 或 CLI 交互
+omc run "你好，介绍一下你自己"
+```
+
+> 要求：Python 3.9+（生产环境 3.10+），无需翻墙，无需信用卡
 
 ## 👀 快速示例
 
@@ -557,11 +582,52 @@ python -m src.cli context browser
 ---
 ## 💡 支持的模型
 
-共 **12 个**模型提供商，系统自动按性价比选择：✅ 7 个生产就绪，⚠️ 5 个 Beta/待完善。
+共 **13 个**模型，系统自动按性价比选择：✅ 7 个生产就绪，⚠️ 6 个 Beta。
 
 > 📖 [完整模型配置指南（环境变量、默认模型、状态说明）](docs/guide/model-config.md)
 
-**推荐**：只需配置 `DEEPSEEK_API_KEY` 即可开始使用。
+### 生产就绪（推荐优先使用）
+
+| 模型 ID | 名称 | 提供商 | 上下文 | 状态 |
+|---------|------|--------|--------|------|
+| `deepseek-chat` | DeepSeek V3 | DeepSeek | 128K | ✅ production |
+| `deepseek-reasoner` | DeepSeek R1 | DeepSeek | 128K | ✅ production |
+| `glm-4-flash` | GLM-4-Flash | 智谱 | 200K | ✅ production |
+| `glm-4v-flash` | GLM-4V-Flash（视觉） | 智谱 | 4K 图 | ✅ production |
+| `qwen-plus` | Qwen2.5-72B | 阿里 | 128K | ✅ production |
+| `qwen-vl-plus` | Qwen2.5-VL-72B（视觉） | 阿里 | 128K | ✅ production |
+| `doubao-pro-32k` | Doubao-Pro-32K | 字节 | 32K | ✅ production |
+
+### Beta / 预览
+
+| 模型 ID | 名称 | 提供商 | 上下文 | 状态 |
+|---------|------|--------|--------|------|
+| `moonshot-v1-128k` | Kimi-V3-Pro | Moonshot | 128K | ⚠️ beta |
+| `MiniMax-Text-01` | MiMo-Text-01 | MiniMax | 1M | ⚠️ beta |
+| `tiangong-3` | 天工AI 3.0 | 天工 | 128K | ⚠️ beta |
+| `Baichuan4` | Baichuan4-Turbo | 百川 | 128K | ⚠️ beta |
+| `ernie-4.0-8k-latest` | 文心一言 4.0 | 百度 | 8K | ⚠️ beta |
+| `hunyuan-turbo` | 腾讯混元 Turbo | 腾讯 | 32K | ⚠️ beta |
+| `generalv4.0` | Spark-4.0-Ultra | 讯飞 | 32K | ⚠️ beta |
+
+### 环境变量一览
+
+| 变量名 | 必填 | 说明 |
+|--------|------|------|
+| `DEEPSEEK_API_KEY` | 推荐 | [DeepSeek 平台](https://platform.deepseek.com/)，新用户赠送余额 |
+| `GLM_API_KEY` | 推荐 | [智谱平台](https://open.bigmodel.cn/)，GLM-4-Flash 完全免费 |
+| `QWEN_API_KEY` | 可选 | [阿里云百炼](https://dashscope.console.aliyun.com/) |
+| `KIMI_API_KEY` | 可选 | [Moonshot](https://platform.moonshot.cn/) |
+| `DOUBAO_API_KEY` | 可选 | [火山引擎](https://console.volcengine.com/) |
+| `BAIDU_API_KEY` / `ERNIE_API_KEY` | 可选 | [文心一言](https://console.bce.baidu.com/) |
+| `MINIMAX_API_KEY` | 可选 | [MiniMax](https://api.minimax.chat/) |
+| `MIMOX_API_KEY` | 可选 | [小米 MiMo](https://mimo.ai.utrain.cloud/) |
+| `OMC_DEFAULT_MODEL` | 可选 | 覆盖默认模型，如 `deepseek-chat` |
+| `REQUEST_TIMEOUT` | 可选 | 请求超时（秒），默认 60 |
+| `TELEGRAM_BOT_TOKEN` | 可选 | Telegram Bot Token（Gateway 消息推送） |
+| `DISCORD_BOT_TOKEN` | 可选 | Discord Bot Token（Gateway 消息推送） |
+| `DINGTALK_ACCESS_TOKEN` | 可选 | 钉钉机器人 Access Token（通知） |
+| `WECOM_WEBHOOK_URL` | 可选 | 企业微信机器人 Webhook（通知） |
 
 ---
 
@@ -784,6 +850,32 @@ A: 支持。提供三种方式：
 ## 🤝 贡献
 
 欢迎提交 Issue 和 PR！详见 [CONTRIBUTING.md](CONTRIBUTING.md)。
+
+### 开发环境搭建
+
+```bash
+git clone https://github.com/VOBC/oh-my-coder.git
+cd oh-my-coder
+python3 -m venv venv && source venv/bin/activate
+pip install -e ".[dev]"
+
+# 运行测试
+python3 -m pytest tests/ -q
+
+# 代码检查
+python3 -m ruff check src/ tests/
+python3 -m black src/ tests/
+
+# 提交前完整检查
+./scripts/pre-commit.sh
+```
+
+### 代码规范
+
+- **ruff** 检查：`python3 -m ruff check src/ tests/`
+- **black** 格式化：`python3 -m black src/ tests/`
+- **pytest** 测试：`python3 -m pytest tests/ -q`
+- 所有 PR 必须通过 CI（ruff + black + pytest）
 
 ### 快速贡献
 

@@ -200,19 +200,53 @@ git commit -m "docs: 更新 README
 
 ---
 
+## 🔍 代码质量检查
+
+提交前必须运行以下检查：
+
+```bash
+# 1. ruff lint（自动修复可修复的问题）
+python3 -m ruff check --fix src/ tests/
+
+# 2. black 格式化（全量格式化，不要只修 CI 点名的文件）
+python3 -m black src/ tests/
+
+# 3. pytest 测试
+python3 -m pytest tests/ -q
+
+# 或一键执行
+./scripts/pre-commit.sh
+```
+
+**CI 门禁**：PR 必须通过 GitHub Actions CI（ruff + black + pytest），本地务必先跑通。
+
+> ⚠️ 注意：black 全量格式化后 git diff 会很大，CI 会检查所有文件，不是只检查你改动的文件。
+
+### 常见 CI 失败原因
+
+| 问题 | 原因 | 解决 |
+|------|------|------|
+| ruff F401 未使用导入 | 导入后未使用 | `ruff check --fix` 或手动删除 |
+| black 需格式化 | 没运行 black | `python3 -m black src/ tests/` |
+| pytest 失败 | 测试用例有 bug | 修复测试或被测代码 |
+| GitHub 443 超时 | 网络问题 | 加代理 `git -c http.proxy=... push` |
+
 ## 🧪 测试
 
 ### 运行测试
 
 ```bash
 # 运行所有测试
-python -m pytest tests/
+python3 -m pytest tests/ -q
 
 # 运行特定测试
-python -m pytest tests/test_router.py
+python3 -m pytest tests/test_router.py -v
 
 # 查看覆盖率
-python -m pytest tests/ --cov=src
+python3 -m pytest tests/ --cov=src --cov-report=term-missing
+
+# 带详细输出（调试用）
+python3 -m pytest tests/ -v -s
 ```
 
 ### 编写测试
