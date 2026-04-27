@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 """
 语义搜索模块
 

@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 """
 任务总结模块 - 自动化任务完成后生成结构化总结
 

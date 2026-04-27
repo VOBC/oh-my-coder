@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 """
 工作目录扫描器 - Workspace Scanner
 

@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 """
 文心一言 (Wenxin) 模型适配器
 

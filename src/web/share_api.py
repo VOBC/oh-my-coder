@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 """
 Share API - 会话分享 Web 端点
 

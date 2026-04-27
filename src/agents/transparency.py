@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 """
 Agent 执行透明性 - 完整执行过程记录
 

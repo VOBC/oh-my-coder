@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 """
 Wiki Parser - Python AST 解析器
 

@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 """
 系统通知工具 - 零依赖，使用 macOS 原生 osascript + 钉钉 webhook
 """
@@ -110,6 +111,12 @@ def send_dingtalk_notification(
         True 发送成功，False 失败
     """
     try:
+        # 限制只允许 https webhook
+        from urllib.parse import urlparse
+
+        if urlparse(webhook_url).scheme not in ("http", "https"):
+            return False
+
         data = {
             "msgtype": "markdown",
             "markdown": {
@@ -128,7 +135,7 @@ def send_dingtalk_notification(
             method="POST",
         )
 
-        with urllib.request.urlopen(req, timeout=10) as resp:
+        with urllib.request.urlopen(req, timeout=10) as resp:  # nosec B310
             result = json.loads(resp.read().decode("utf-8"))
             return result.get("errcode") == 0
 

@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 """
 Web UI 增强模块
 - 任务历史界面

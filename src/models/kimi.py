@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 """
 Kimi模型适配器
 

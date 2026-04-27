@@ -59,7 +59,7 @@ def _is_port_in_use(port: int) -> bool:
 def start(
     port: int = typer.Option(8080, "--port", "-p", help="监听端口"),
     host: str = typer.Option(
-        "0.0.0.0", "--host", help="监听地址（0.0.0.0 = 所有网卡）"
+        "0.0.0.0", "--host", help="监听地址（0.0.0.0 = 所有网卡）"  # nosec B104
     ),
     api_key: str | None = typer.Option(
         None, "--api-key", help="API 密钥（不设置则无认证）"

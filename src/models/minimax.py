@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 """
 MiniMax 模型适配器
 

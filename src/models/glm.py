@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 """
 智谱 GLM (ChatGLM) 模型适配器
 

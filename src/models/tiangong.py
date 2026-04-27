@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 """
 天工AI (Tiangong) 模型适配器
 

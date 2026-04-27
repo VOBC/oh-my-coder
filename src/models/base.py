@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 """
 模型基类 - 定义所有 LLM 提供商的统一接口
 

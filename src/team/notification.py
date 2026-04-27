@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 """
 消息通知模块
 

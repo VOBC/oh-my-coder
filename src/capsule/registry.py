@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 """
 GEPRegistry - 能力注册表
 

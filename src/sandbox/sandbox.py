@@ -35,7 +35,7 @@ class SandboxConfig:
             str(Path.home() / ".omc"),
             str(Path.home() / ".qclaw" / "workspace"),
             str(Path.home()),
-            "/tmp",
+            "/tmp",  # nosec B108 - sandbox 设计：/tmp 为沙箱允许的受控临时目录
         ]
     )
     denied_paths: list[str] = field(default_factory=list)
@@ -70,7 +70,7 @@ class Sandbox:
     DEFAULT_ALLOWED_DIRS = [
         "~/.omc",
         "~/.qclaw/workspace",
-        "/tmp",
+        "/tmp",  # nosec B108 - sandbox 设计
     ]
 
     def __init__(self, config: SandboxConfig | None = None) -> None:
@@ -101,8 +101,10 @@ class Sandbox:
             return False
 
         for allowed in self._resolved_dirs:
-            if allowed == Path("/tmp") or str(allowed).startswith("/tmp"):
-                if str(p).startswith("/tmp") or str(p).startswith("/private/tmp"):
+            if allowed == Path("/tmp") or str(allowed).startswith("/tmp"):  # nosec B108
+                if str(p).startswith("/tmp") or str(p).startswith(  # nosec B108
+                    "/private/tmp"
+                ):  # nosec B108
                     return True
             try:
                 p.relative_to(allowed)

@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 """
 百川智能 (Baichuan) 模型适配器
 

@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 """
 MCP Server — JSON-RPC 2.0 stdio 协议实现
 

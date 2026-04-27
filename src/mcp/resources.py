@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 """
 MCP Resources — 把 .omc/ 工作区暴露为 MCP resources
 

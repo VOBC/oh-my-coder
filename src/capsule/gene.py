@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 """
 Gene - 能力元数据结构
 

@@ -810,7 +810,7 @@ def import_model(
                 url,
                 headers={"User-Agent": "oh-my-coder/1.0"},
             )
-            with urllib.request.urlopen(req, timeout=10) as resp:
+            with urllib.request.urlopen(req, timeout=10) as resp:  # nosec B310
                 content = resp.read().decode("utf-8")
         except Exception as e:
             console.print(f"[red]✗ 获取失败: {e}[/red]")

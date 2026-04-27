@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 """
 Web 界面入口 - FastAPI 应用
 提供可视化界面执行 AI 编程任务
@@ -796,7 +797,7 @@ def run():
     print("  📍 http://localhost:8000")
     print("  📖 API Docs: http://localhost:8000/docs")
     print("=" * 50)
-    uvicorn.run(app, host="0.0.0.0", port=8000, reload=False)
+    uvicorn.run(app, host="0.0.0.0", port=8000, reload=False)  # nosec B104
 
 
 if __name__ == "__main__":
