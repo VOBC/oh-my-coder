@@ -81,10 +81,28 @@ ignore_missing_imports = true
 
 [tool.ruff]
 line-length = 88
+target-version = "py310"
 
 [tool.ruff.lint]
-# 暂时放宽规则，让 CI 通过。代码质量后续单独处理
-ignore = ["E203", "E722", "E402", "F841"]
+select = ["E", "F", "W", "I"]
+ignore = [
+    "E501",  # 行太长
+    "E402",  # import 位置（examples 目录）
+    "E722",  # 裸 except
+    "E701",  # 一行多语句
+    "W293",  # 空白行空格
+    "B008",  # 函数默认参数里的函数调用（FastAPI/typer 常用）
+    "B904",  # raise ... from err
+    "B905",  # zip() strict
+    "N802",  # 函数名大写
+    "N805",  # 参数名大写
+    "N806",  # 变量名大写
+    "N815",  # 类变量大写
+    "F841",  # 未使用变量
+    "I",     # import 排序（isort）
+    "UP",    # pyupgrade（`X | None` vs Optional）
+    "W292",  # 文件末尾无换行
+]
 
 [tool.pytest.ini_options]
 minversion = "8.0"
