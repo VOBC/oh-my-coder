@@ -9,9 +9,10 @@
 """
 
 from abc import ABC, abstractmethod
+from collections.abc import AsyncIterator
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, AsyncIterator, Dict, List, Optional
+from typing import Any
 
 
 class ModelTier(Enum):
@@ -48,7 +49,7 @@ class Message:
 
     role: str  # system, user, assistant
     content: str
-    name: Optional[str] = None  # 用于多轮对话中的角色标识
+    name: str | None = None  # 用于多轮对话中的角色标识
 
 
 @dataclass
@@ -78,16 +79,16 @@ class ModelResponse:
     usage: Usage = field(default_factory=Usage)
     finish_reason: str = "stop"
     latency_ms: float = 0.0
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
 class ModelConfig:
     """模型配置"""
 
-    api_key: Optional[str] = None
-    base_url: Optional[str] = None
-    model_name: Optional[str] = None
+    api_key: str | None = None
+    base_url: str | None = None
+    model_name: str | None = None
     max_tokens: int = 4096
     temperature: float = 0.7
     timeout: float = 60.0
@@ -130,7 +131,7 @@ class BaseModel(ABC):
         pass
 
     @abstractmethod
-    async def generate(self, messages: List[Message], **kwargs) -> ModelResponse:
+    async def generate(self, messages: list[Message], **kwargs) -> ModelResponse:
         """
         非流式生成
 
@@ -144,7 +145,7 @@ class BaseModel(ABC):
         pass
 
     @abstractmethod
-    async def stream(self, messages: List[Message], **kwargs) -> AsyncIterator[str]:
+    async def stream(self, messages: list[Message], **kwargs) -> AsyncIterator[str]:
         """
         流式生成
 
@@ -188,7 +189,7 @@ class BaseModel(ABC):
         """重置使用统计"""
         self._total_usage = Usage()
 
-    def _build_system_prompt(self, system: Optional[str] = None) -> Optional[Message]:
+    def _build_system_prompt(self, system: str | None = None) -> Message | None:
         """构建系统提示词"""
         if system:
             return Message(role="system", content=system)

@@ -18,7 +18,6 @@ Analyst Agent - 需求分析智能体
 """
 
 from dataclasses import dataclass
-from typing import Dict, List
 
 from ..core.router import TaskType
 from .base import (
@@ -39,8 +38,8 @@ class Requirement:
     description: str
     priority: str  # high, medium, low
     category: str  # functional, non-functional, constraint
-    dependencies: List[str]
-    acceptance_criteria: List[str]
+    dependencies: list[str]
+    acceptance_criteria: list[str]
 
 
 @dataclass
@@ -48,10 +47,10 @@ class AnalysisResult:
     """分析结果"""
 
     summary: str
-    requirements: List[Requirement]
-    questions: List[str]  # 需要澄清的问题
-    constraints: List[str]  # 发现的约束
-    risks: List[str]  # 潜在风险
+    requirements: list[Requirement]
+    questions: list[str]  # 需要澄清的问题
+    constraints: list[str]  # 发现的约束
+    risks: list[str]  # 潜在风险
 
 
 @register_agent
@@ -124,7 +123,7 @@ class AnalystAgent(BaseAgent):
 """
 
     async def _run(
-        self, context: AgentContext, prompt: List[Dict[str, str]], **kwargs
+        self, context: AgentContext, prompt: list[dict[str, str]], **kwargs
     ) -> str:
         """
         执行需求分析

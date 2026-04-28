@@ -21,7 +21,7 @@ Executor Agent - 代码实现智能体
 import re
 import subprocess
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 from ..core.router import TaskType
 from .base import (
@@ -140,7 +140,7 @@ def test_add():
     async def _run(
         self,
         context: AgentContext,
-        prompt: List[Dict[str, str]],
+        prompt: list[dict[str, str]],
         **kwargs,
     ) -> str:
         """执行代码实现"""
@@ -172,7 +172,7 @@ def test_add():
         return response.content
 
     def _inject_previous_outputs(
-        self, context: AgentContext, prompt: List[Dict[str, str]]
+        self, context: AgentContext, prompt: list[dict[str, str]]
     ) -> None:
         """注入前序 Agent 的输出"""
         outputs = context.previous_outputs
@@ -188,7 +188,7 @@ def test_add():
             prompt.append({"role": "user", "content": "\n\n".join(parts)})
 
     def _inject_relevant_files(
-        self, context: AgentContext, prompt: List[Dict[str, str]]
+        self, context: AgentContext, prompt: list[dict[str, str]]
     ) -> None:
         """注入相关文件内容"""
         files = context.relevant_files or []
@@ -204,7 +204,7 @@ def test_add():
         parts = ["## 相关文件\n"]
         for file_path in files[:8]:  # 最多 8 个文件
             try:
-                with open(file_path, "r", encoding="utf-8") as f:
+                with open(file_path, encoding="utf-8") as f:
                     content = f.read(3000)  # 限制每个文件 3000 字符
                     rel_path = file_path.relative_to(context.project_path)
                     parts.append(f"\n### {rel_path}\n```\n{content}\n```")
@@ -216,7 +216,7 @@ def test_add():
 
     def _find_relevant_files(
         self, project_path: Path, task_description: str
-    ) -> List[Path]:
+    ) -> list[Path]:
         """根据任务描述智能查找相关文件"""
         relevant = []
         keywords = task_description.lower()
@@ -279,9 +279,9 @@ def test_add():
         context: AgentContext,
     ) -> AgentOutput:
         """后处理 - 提取代码并保存到文件"""
-        artifacts: Dict[str, Any] = {}
-        saved_files: List[str] = []
-        errors: List[str] = []
+        artifacts: dict[str, Any] = {}
+        saved_files: list[str] = []
+        errors: list[str] = []
 
         # 1. 提取代码文件
         code_blocks = self._extract_code_blocks(result)
@@ -342,7 +342,7 @@ def test_add():
             next_agent="verifier",
         )
 
-    def _extract_code_blocks(self, content: str) -> List[Tuple[str, str]]:
+    def _extract_code_blocks(self, content: str) -> list[tuple[str, str]]:
         """
         从 LLM 输出中提取代码块
 
@@ -352,7 +352,7 @@ def test_add():
         - ```python
           # path/to/file.py
         """
-        blocks: List[Tuple[str, str]] = []
+        blocks: list[tuple[str, str]] = []
         lines = content.splitlines()
         i = 0
 
@@ -412,8 +412,8 @@ def test_add():
         return blocks
 
     def _try_format_code(
-        self, project_path: Path, saved_files: List[str]
-    ) -> Dict[str, Any]:
+        self, project_path: Path, saved_files: list[str]
+    ) -> dict[str, Any]:
         """尝试格式化代码"""
         result = {"formatted": [], "errors": []}
 
@@ -423,7 +423,7 @@ def test_add():
                 continue
 
             ext = full_path.suffix
-            formatter: Optional[List[str]] = None
+            formatter: list[str] | None = None
 
             if ext == ".py":
                 formatter = ["black", "--quiet", str(full_path)]
@@ -447,8 +447,8 @@ def test_add():
         return result
 
     def _try_run_tests(
-        self, project_path: Path, saved_files: List[str]
-    ) -> Dict[str, Any]:
+        self, project_path: Path, saved_files: list[str]
+    ) -> dict[str, Any]:
         """尝试运行测试"""
         result = {
             "ran": False,

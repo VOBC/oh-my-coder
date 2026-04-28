@@ -133,7 +133,7 @@ class TracerAgent(BaseAgent):
                         code_parts.append(
                             f"### {file_path.name}\n```\n{content[:2000]}\n```"
                         )
-                except:
+                except Exception:
                     pass
 
             if code_parts:

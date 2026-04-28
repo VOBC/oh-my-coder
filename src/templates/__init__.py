@@ -10,7 +10,7 @@ import json
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from pydantic import BaseModel
 
@@ -86,7 +86,7 @@ class WorkflowTemplate:
         }
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "WorkflowTemplate":
+    def from_dict(cls, data: dict[str, Any]) -> WorkflowTemplate:
         """从字典创建"""
         metadata = TemplateMetadata(**data["metadata"])
         steps = [

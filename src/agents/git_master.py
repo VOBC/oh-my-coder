@@ -121,7 +121,7 @@ def456 fix: 修复 Bug
                 text=True,
             )
             status = status_result.stdout
-        except:
+        except Exception:
             status = "无法获取 Git 状态"
 
         # 获取最近的提交
@@ -133,7 +133,7 @@ def456 fix: 修复 Bug
                 text=True,
             )
             recent_commits = log_result.stdout
-        except:
+        except Exception:
             recent_commits = "无法获取提交历史"
 
         prompt.append(

@@ -107,7 +107,7 @@ class CodeSimplifierAgent(BaseAgent):
                         code_parts.append(
                             f"### {file_path.name} ({lines} 行)\n```\n{content}\n```"
                         )
-                except:
+                except Exception:
                     pass
 
             if code_parts:

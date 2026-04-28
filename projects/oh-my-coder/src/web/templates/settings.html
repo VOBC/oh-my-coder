@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>设置 - Oh My Coder</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        .settings-layout {
+            display: grid;
+            grid-template-columns: 200px 1fr;
+            gap: 32px;
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 32px 24px;
+        }
+        .settings-sidebar {
+            position: sticky;
+            top: 80px;
+        }
+        .settings-nav-item {
+            display: block;
+            padding: 10px 14px;
+            font-size: 14px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            border-radius: 8px;
+            transition: var(--transition);
+            margin-bottom: 2px;
+            cursor: pointer;
+            background: none;
+            border: none;
+            width: 100%;
+            text-align: left;
+            font-family: inherit;
+        }
+        .settings-nav-item:hover {
+            background: var(--primary-light);
+            color: var(--primary);
+        }
+        .settings-nav-item.active {
+            background: var(--primary-light);
+            color: var(--primary);
+            font-weight: 600;
+        }
+        .settings-content { min-width: 0; }
+        .settings-panel { display: none; }
+        .settings-panel.active { display: block; }
+
+        .key-row {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 12px;
+            align-items: end;
+            margin-bottom: 16px;
+        }
+        .key-status {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            color: var(--text-muted);
+            padding-bottom: 14px;
+        }
+        .key-dot {
+            width: 6px; height: 6px;
+            border-radius: 50%;
+        }
+        .key-dot.set { background: var(--success); }
+        .key-dot.unset { background: var(--text-muted); }
+
+        .model-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 12px;
+        }
+        .model-card {
+            background: var(--card);
+            border: 2px solid var(--border);
+            border-radius: var(--radius);
+            padding: 18px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        .model-card:hover { border-color: var(--border-hover); }
+        .model-card.selected { border-color: var(--primary); background: var(--primary-light); }
+        .model-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        .model-card-name { font-weight: 600; font-size: 15px; }
+        .model-card-desc { font-size: 13px; color: var(--text-muted); margin-bottom: 8px; }
+        .model-card-meta {
+            display: flex;
+            gap: 12px;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .ollama-status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 14px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+        .status-dot {
+            width: 10px; height: 10px; border-radius: 50%;
+        }
+        .status-dot.online { background: var(--success); }
+        .status-dot.offline { background: var(--danger); }
+
+        @media (max-width: 768px) {
+            .settings-layout { grid-template-columns: 1fr; padding: 20px 16px; }
+            .settings-sidebar { position: static; display: flex; gap: 4px; overflow-x: auto; padding-bottom: 12px; border-bottom: 1px solid var(--border); margin-bottom: 16px; }
+            .settings-nav-item { white-space: nowrap; padding: 8px 12px; font-size: 13px; }
+            .key-row { grid-template-columns: 1fr; }
+            .key-status { padding-bottom: 0; }
+            .model-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Nav -->
+    <nav class="nav">
+        <div class="nav-content">
+            <a href="/" class="nav-brand">
+                <span class="nav-brand-icon">🤖</span>
+                <span class="nav-brand-name">Oh My Coder</span>
+            </a>
+            <div class="nav-links" id="navLinks">
+                <a href="/" class="nav-link">首页</a>
+                <a href="/dashboard" class="nav-link">仪表板</a>
+                <a href="/history" class="nav-link">历史</a>
+                <a href="/docs" class="nav-link">文档</a>
+                <a href="/settings" class="nav-link active">设置</a>
+            </div>
+            <div class="nav-actions">
+                <div class="nav-toggle" id="themeToggle" title="切换主题">☀️</div>
+                <button class="nav-hamburger" id="navHamburger">☰</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="settings-layout">
+        <!-- Sidebar -->
+        <aside class="settings-sidebar">
+            <button class="settings-nav-item active" data-panel="models">🖥️ 模型选择</button>
+            <button class="settings-nav-item" data-panel="apikeys">🔑 API Keys</button>
+            <button class="settings-nav-item" data-panel="preferences">⚙️ 偏好设置</button>
+        </aside>
+
+        <!-- Content -->
+        <main class="settings-content">
+            <!-- Models Panel -->
+            <div class="settings-panel active" id="panel-models">
+                <h1 class="page-title">模型选择</h1>
+                <p class="page-desc">选择适合你的模型，本地模型零成本且保护隐私。</p>
+
+                <div class="ollama-status" id="ollamaStatus">
+                    <div class="status-dot offline"></div>
+                    <span>检测中...</span>
+                </div>
+
+                <div class="card" style="margin-bottom:24px;">
+                    <div class="card-header">
+                        <div class="card-title">🖥️ 本地模型 (Ollama)</div>
+                    </div>
+                    <div class="model-grid" id="localModels">
+                        <div style="color:var(--text-muted);font-size:14px;">检测中...</div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">☁️ 云端模型</div>
+                    </div>
+                    <div class="model-grid" id="cloudModels">
+                        <div class="model-card" data-model="deepseek">
+                            <div class="model-card-header">
+                                <span class="model-card-name">DeepSeek</span>
+                                <span class="badge badge-success">免费</span>
+                            </div>
+                            <div class="model-card-desc">性价比最高，每天 4000 万 token 免费额度</div>
+                            <div class="model-card-meta"><span>🇨🇳 国内直连</span></div>
+                        </div>
+                        <div class="model-card" data-model="glm">
+                            <div class="model-card-header">
+                                <span class="model-card-name">智谱 GLM</span>
+                                <span class="badge badge-success">免费</span>
+                            </div>
+                            <div class="model-card-desc">GLM-4.7-Flash 完全免费，国产大模型</div>
+                            <div class="model-card-meta"><span>🇨🇳 国内直连</span></div>
+                        </div>
+                        <div class="model-card" data-model="kimi">
+                            <div class="model-card-header">
+                                <span class="model-card-name">Kimi</span>
+                                <span class="badge badge-warning">低成本</span>
+                            </div>
+                            <div class="model-card-desc">支持超长上下文（20万字）</div>
+                            <div class="model-card-meta"><span>🇨🇳 国内直连</span></div>
+                        </div>
+                        <div class="model-card" data-model="tongyi">
+                            <div class="model-card-header">
+                                <span class="model-card-name">通义千问</span>
+                                <span class="badge badge-warning">低成本</span>
+                            </div>
+                            <div class="model-card-desc">阿里云大模型，多模态支持</div>
+                            <div class="model-card-meta"><span>🇨🇳 国内直连</span></div>
+                        </div>
+                        <div class="model-card" data-model="wenxin">
+                            <div class="model-card-header">
+                                <span class="model-card-name">文心一言</span>
+                                <span class="badge badge-warning">低成本</span>
+                            </div>
+                            <div class="model-card-desc">百度大模型，中文能力强</div>
+                            <div class="model-card-meta"><span>🇨🇳 国内直连</span></div>
+                        </div>
+                        <div class="model-card" data-model="doubao">
+                            <div class="model-card-header">
+                                <span class="model-card-name">豆包</span>
+                                <span class="badge badge-warning">低成本</span>
+                            </div>
+                            <div class="model-card-desc">字节跳动大模型，性价比高</div>
+                            <div class="model-card-meta"><span>🇨🇳 国内直连</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- API Keys Panel -->
+            <div class="settings-panel" id="panel-apikeys">
+                <h1 class="page-title">API Keys</h1>
+                <p class="page-desc">配置各模型的 API Key，所有密钥本地存储，不会上传。</p>
+
+                <div class="card">
+                    <div class="key-row">
+                        <div class="form-group" style="margin-bottom:0">
+                            <label class="form-label">DeepSeek API Key</label>
+                            <input type="password" class="form-input" id="key-deepseek" placeholder="sk-xxxxxxxx">
+                        </div>
+                        <div class="key-status"><div class="key-dot unset" id="dot-deepseek"></div><span id="status-deepseek">未配置</span></div>
+                    </div>
+                    <div class="key-row">
+                        <div class="form-group" style="margin-bottom:0">
+                            <label class="form-label">智谱 GLM API Key</label>
+                            <input type="password" class="form-input" id="key-glm" placeholder="填写 free 使用免费版">
+                        </div>
+                        <div class="key-status"><div class="key-dot unset" id="dot-glm"></div><span id="status-glm">未配置</span></div>
+                    </div>
+                    <div class="key-row">
+                        <div class="form-group" style="margin-bottom:0">
+                            <label class="form-label">Kimi API Key</label>
+                            <input type="password" class="form-input" id="key-kimi" placeholder="sk-xxxxxxxx">
+                        </div>
+                        <div class="key-status"><div class="key-dot unset" id="dot-kimi"></div><span id="status-kimi">未配置</span></div>
+                    </div>
+                    <div class="key-row">
+                        <div class="form-group" style="margin-bottom:0">
+                            <label class="form-label">通义千问 API Key</label>
+                            <input type="password" class="form-input" id="key-tongyi" placeholder="sk-xxxxxxxx">
+                        </div>
+                        <div class="key-status"><div class="key-dot unset" id="dot-tongyi"></div><span id="status-tongyi">未配置</span></div>
+                    </div>
+                    <div class="key-row">
+                        <div class="form-group" style="margin-bottom:0">
+                            <label class="form-label">文心一言 API Key</label>
+                            <input type="password" class="form-input" id="key-wenxin" placeholder="sk-xxxxxxxx">
+                        </div>
+                        <div class="key-status"><div class="key-dot unset" id="dot-wenxin"></div><span id="status-wenxin">未配置</span></div>
+                    </div>
+                    <div style="margin-top:24px;">
+                        <button class="btn btn-primary" onclick="saveApiKeys()">保存 API Keys</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Preferences Panel -->
+            <div class="settings-panel" id="panel-preferences">
+                <h1 class="page-title">偏好设置</h1>
+                <p class="page-desc">自定义运行时的默认行为。</p>
+
+                <div class="card">
+                    <div class="form-group">
+                        <label class="form-label">默认模型</label>
+                        <select class="form-select" id="default-model">
+                            <option value="deepseek">DeepSeek (推荐)</option>
+                            <option value="glm">智谱 GLM</option>
+                            <option value="kimi">Kimi</option>
+                            <option value="tongyi">通义千问</option>
+                            <option value="wenxin">文心一言</option>
+                            <option value="doubao">豆包</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">默认工作流</label>
+                        <select class="form-select" id="default-workflow">
+                            <option value="build">build - 开发构建</option>
+                            <option value="review">review - 代码审查</option>
+                            <option value="debug">debug - 调试修复</option>
+                            <option value="test">test - 测试生成</option>
+                            <option value="doc">doc - 文档生成</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">任务超时时间（秒）</label>
+                        <input type="number" class="form-input" id="timeout" value="300">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">优先使用本地模型</label>
+                        <select class="form-select" id="prefer-local">
+                            <option value="true">是（零成本，隐私保护）</option>
+                            <option value="false">否（优先云端模型）</option>
+                        </select>
+                    </div>
+                    <div style="margin-top:24px;">
+                        <button class="btn btn-primary" onclick="savePreferences()">保存偏好</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <footer class="footer">
+        <p>Made with ❤️ by Oh My Coder</p>
+    </footer>
+
+    <script>
+        // Theme
+        function loadTheme() {
+            const t = localStorage.getItem('theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', t);
+            document.getElementById('themeToggle').textContent = t === 'dark' ? '☀️' : '🌙';
+        }
+        document.getElementById('themeToggle').addEventListener('click', () => {
+            const c = document.documentElement.getAttribute('data-theme');
+            const n = c === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', n);
+            document.getElementById('themeToggle').textContent = n === 'dark' ? '☀️' : '🌙';
+            localStorage.setItem('theme', n);
+        });
+        loadTheme();
+
+        // Mobile nav
+        document.getElementById('navHamburger').addEventListener('click', () => {
+            document.getElementById('navLinks').classList.toggle('open');
+        });
+
+        // Settings sidebar tabs
+        document.querySelectorAll('.settings-nav-item').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.settings-nav-item').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.settings-panel').forEach(p => p.classList.remove('active'));
+                btn.classList.add('active');
+                document.getElementById('panel-' + btn.dataset.panel).classList.add('active');
+            });
+        });
+
+        // Toast
+        function showToast(msg, type = 'success') {
+            const icons = { success: '✅', error: '❌', info: 'ℹ️' };
+            const t = document.createElement('div');
+            t.className = `toast ${type}`;
+            t.innerHTML = `<span>${icons[type]}</span><span>${msg}</span>`;
+            document.getElementById('toastContainer').appendChild(t);
+            setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, 3000);
+        }
+
+        // Check Ollama
+        async function checkOllama() {
+            const statusDiv = document.getElementById('ollamaStatus');
+            const grid = document.getElementById('localModels');
+            try {
+                const res = await fetch('/api/local-models/status');
+                const data = await res.json();
+                const dot = statusDiv.querySelector('.status-dot');
+                const text = statusDiv.querySelector('span');
+                if (data.available) {
+                    dot.className = 'status-dot online';
+                    text.textContent = `Ollama 运行中 (${data.models.length} 个模型)`;
+                    grid.innerHTML = '';
+                    data.models.forEach(m => {
+                        const card = document.createElement('div');
+                        card.className = 'model-card';
+                        card.dataset.model = 'ollama:' + m.name;
+                        card.innerHTML = `
+                            <div class="model-card-header"><span class="model-card-name">${m.name}</span><span class="badge badge-primary">本地</span></div>
+                            <div class="model-card-desc">${m.description || '本地模型'}</div>
+                            <div class="model-card-meta"><span>📦 ${m.size || '未知'}</span></div>`;
+                        grid.appendChild(card);
+                    });
+                    if (!data.models.length) grid.innerHTML = '<div style="color:var(--text-muted);font-size:14px;">暂无本地模型，运行 <code style="background:var(--primary-light);padding:2px 6px;border-radius:4px;">ollama pull qwen2:7b</code> 拉取</div>';
+                } else {
+                    dot.className = 'status-dot offline';
+                    text.textContent = data.error || 'Ollama 未运行';
+                    grid.innerHTML = '<div style="color:var(--text-muted);font-size:14px;">安装 Ollama: <a href="https://ollama.ai" target="_blank">ollama.ai</a></div>';
+                }
+            } catch (e) {
+                grid.innerHTML = '<div style="color:var(--text-muted);font-size:14px;">无法连接 Ollama</div>';
+            }
+        }
+        checkOllama();
+
+        // Model card selection
+        document.addEventListener('click', e => {
+            const card = e.target.closest('.model-card');
+            if (card) {
+                document.querySelectorAll('.model-card').forEach(c => c.classList.remove('selected'));
+                card.classList.add('selected');
+                localStorage.setItem('selected-model', card.dataset.model);
+                showToast(`已选择: ${card.dataset.model}`);
+            }
+        });
+
+        // Load settings
+        async function loadSettings() {
+            try {
+                const res = await fetch('/api/settings');
+                const data = await res.json();
+                const models = data.models || {};
+                // Update key statuses
+                ['deepseek', 'glm', 'kimi', 'tongyi', 'wenxin'].forEach(k => {
+                    const m = models[k];
+                    const dot = document.getElementById('dot-' + k);
+                    const status = document.getElementById('status-' + k);
+                    const input = document.getElementById('key-' + k);
+                    if (m && m.has_key) {
+                        if (dot) { dot.className = 'key-dot set'; }
+                        if (status) { status.textContent = '已配置 (' + (m.api_key_masked || '****') + ')'; }
+                        if (input) { input.placeholder = m.api_key_masked || '已配置'; }
+                    }
+                });
+                // Defaults
+                const defaults = data.defaults || {};
+                const modelSelect = document.getElementById('default-model');
+                const workflowSelect = document.getElementById('default-workflow');
+                const timeoutInput = document.getElementById('timeout');
+                const preferLocal = document.getElementById('prefer-local');
+                if (modelSelect && defaults.model) modelSelect.value = defaults.model;
+                if (workflowSelect && defaults.workflow) workflowSelect.value = defaults.workflow;
+                if (timeoutInput && defaults.timeout) timeoutInput.value = defaults.timeout;
+                if (preferLocal && defaults.prefer_local !== undefined) preferLocal.value = defaults.prefer_local ? 'true' : 'false';
+            } catch (e) {}
+        }
+        loadSettings();
+
+        // Save API Keys
+        async function saveApiKeys() {
+            const keys = {};
+            ['deepseek', 'glm', 'kimi', 'tongyi', 'wenxin'].forEach(k => {
+                const v = document.getElementById('key-' + k)?.value;
+                if (v) keys[k] = { api_key: v };
+            });
+            try {
+                const res = await fetch('/api/settings', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ models: keys })
+                });
+                if (res.ok) { showToast('API Keys 已保存'); loadSettings(); }
+                else showToast('保存失败', 'error');
+            } catch (e) { showToast('保存失败: ' + e.message, 'error'); }
+        }
+
+        // Save Preferences
+        async function savePreferences() {
+            const prefs = {
+                model: document.getElementById('default-model').value,
+                workflow: document.getElementById('default-workflow').value,
+                timeout: parseInt(document.getElementById('timeout').value),
+                prefer_local: document.getElementById('prefer-local').value === 'true',
+            };
+            try {
+                const res = await fetch('/api/settings', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ defaults: prefs })
+                });
+                if (res.ok) showToast('偏好设置已保存');
+            } catch (e) { showToast('保存失败', 'error'); }
+        }
+
+        // Restore selected model
+        const lastModel = localStorage.getItem('selected-model');
+        if (lastModel) {
+            const card = document.querySelector(`[data-model="${lastModel}"]`);
+            if (card) card.classList.add('selected');
+        }
+    </script>
+</body>
+</html>

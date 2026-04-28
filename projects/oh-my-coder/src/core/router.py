@@ -20,7 +20,7 @@ import logging
 import os
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from ..models.base import (
     BaseModel,
@@ -57,7 +57,7 @@ class TaskType:
     PLANNING = "planning"
 
     @classmethod
-    def all(cls) -> List[str]:
+    def all(cls) -> list[str]:
         return [
             cls.EXPLORE,
             cls.SIMPLE_QA,
@@ -76,7 +76,7 @@ class TaskType:
 # ============================================================
 # 任务类型到模型层级的映射
 # ============================================================
-_TASK_TIER_MAPPING: Dict[str, str] = {
+_TASK_TIER_MAPPING: dict[str, str] = {
     # LOW tier - 快速便宜
     TaskType.EXPLORE: "low",
     TaskType.SIMPLE_QA: "low",
@@ -102,25 +102,25 @@ class RouterConfig:
     """路由器配置"""
 
     # API Keys（从环境变量读取）
-    deepseek_api_key: Optional[str] = None
-    wenxin_api_key: Optional[str] = None
-    tongyi_api_key: Optional[str] = None
-    glm_api_key: Optional[str] = None
-    minimax_api_key: Optional[str] = None
-    kimi_api_key: Optional[str] = None
-    hunyuan_api_key: Optional[str] = None
-    doubao_api_key: Optional[str] = None
+    deepseek_api_key: str | None = None
+    wenxin_api_key: str | None = None
+    tongyi_api_key: str | None = None
+    glm_api_key: str | None = None
+    minimax_api_key: str | None = None
+    kimi_api_key: str | None = None
+    hunyuan_api_key: str | None = None
+    doubao_api_key: str | None = None
 
     # Ollama 本地模型配置
-    ollama_base_url: Optional[str] = None
-    ollama_model: Optional[str] = None  # 如 qwen2:7b
+    ollama_base_url: str | None = None
+    ollama_model: str | None = None  # 如 qwen2:7b
     prefer_local: bool = True  # 优先使用本地模型
 
     # 成本预算（元）
     daily_budget: float = 10.0
 
     # 故障转移顺序
-    fallback_order: List[str] = field(default_factory=list)
+    fallback_order: list[str] = field(default_factory=list)
 
     # 缓存配置
     cache_enabled: bool = True
@@ -206,17 +206,17 @@ class ResponseCache:
     """
 
     def __init__(self, max_entries: int = 100, ttl_seconds: int = 300):
-        self._cache: Dict[str, Dict[str, Any]] = {}
-        self._order: List[str] = []  # 简单 FIFO（非真实 LRU，但够用）
+        self._cache: dict[str, dict[str, Any]] = {}
+        self._order: list[str] = []  # 简单 FIFO（非真实 LRU，但够用）
         self._max_entries = max_entries
         self._ttl = ttl_seconds
 
-    def _make_key(self, messages: List[Message]) -> str:
+    def _make_key(self, messages: list[Message]) -> str:
         """根据消息内容生成缓存 key"""
         content = "".join(m.content for m in messages)
         return hashlib.sha256(content.encode()).hexdigest()[:16]
 
-    def get(self, messages: List[Message]) -> Optional[ModelResponse]:
+    def get(self, messages: list[Message]) -> ModelResponse | None:
         """获取缓存的响应"""
         key = self._make_key(messages)
         entry = self._cache.get(key)
@@ -234,7 +234,7 @@ class ResponseCache:
         logger.debug(f"Cache hit: {key[:8]}... (age={age:.1f}s)")
         return entry["response"]
 
-    def set(self, messages: List[Message], response: ModelResponse) -> None:
+    def set(self, messages: list[Message], response: ModelResponse) -> None:
         """缓存响应"""
         key = self._make_key(messages)
 
@@ -255,7 +255,7 @@ class ResponseCache:
         self._cache.clear()
         self._order.clear()
 
-    def stats(self) -> Dict[str, int]:
+    def stats(self) -> dict[str, int]:
         """缓存统计"""
         total = len(self._cache)
         expired = sum(
@@ -284,10 +284,10 @@ class ModelRouter:
     - get_stats():    获取路由统计
     """
 
-    def __init__(self, config: Optional[RouterConfig] = None):
+    def __init__(self, config: RouterConfig | None = None):
         self.config = config or RouterConfig()
-        self._models: Dict[str, Dict[str, BaseModel]] = {}
-        self._decision_history: List[RoutingDecision] = []
+        self._models: dict[str, dict[str, BaseModel]] = {}
+        self._decision_history: list[RoutingDecision] = []
         self._total_cost = 0.0
         self._cache = (
             ResponseCache(
@@ -445,7 +445,7 @@ class ModelRouter:
         self,
         task_type: str,
         complexity: str = "medium",
-        budget_remaining: Optional[float] = None,
+        budget_remaining: float | None = None,
     ) -> RoutingDecision:
         """
         选择最优模型
@@ -523,7 +523,7 @@ class ModelRouter:
     async def route_and_call(
         self,
         task_type: str,
-        messages: List[Message],
+        messages: list[Message],
         complexity: str = "medium",
         use_cache: bool = True,
         **kwargs,
@@ -559,7 +559,7 @@ class ModelRouter:
         if decision.selected_provider not in fallback_order:
             fallback_order.insert(0, decision.selected_provider)
 
-        last_error: Optional[Exception] = None
+        last_error: Exception | None = None
 
         for provider in fallback_order:
             m = self._models[provider][decision.selected_tier]
@@ -605,11 +605,11 @@ class ModelRouter:
         self,
         provider: str,
         tier: str,
-    ) -> Optional[BaseModel]:
+    ) -> BaseModel | None:
         """直接获取指定模型"""
         return self._models.get(provider, {}).get(tier)
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """获取路由统计"""
         return {
             "total_requests": len(self._decision_history),
@@ -619,8 +619,8 @@ class ModelRouter:
             "cache": self._cache.stats() if self._cache else None,
         }
 
-    def _count_by(self, field: str) -> Dict[str, int]:
-        counts: Dict[str, int] = {}
+    def _count_by(self, field: str) -> dict[str, int]:
+        counts: dict[str, int] = {}
         for d in self._decision_history:
             key = getattr(d, field)
             counts[key] = counts.get(key, 0) + 1

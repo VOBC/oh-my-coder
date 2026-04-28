@@ -21,7 +21,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Type
+from typing import Any
 
 
 class AgentStatus(Enum):
@@ -49,10 +49,10 @@ class AgentContext:
 
     project_path: Path  # 项目路径
     task_description: str  # 任务描述
-    working_directory: Optional[Path] = None  # 工作目录
-    relevant_files: List[Path] = field(default_factory=list)  # 相关文件
-    previous_outputs: Dict[str, Any] = field(default_factory=dict)  # 前序 Agent 输出
-    metadata: Dict[str, Any] = field(default_factory=dict)  # 其他元数据
+    working_directory: Path | None = None  # 工作目录
+    relevant_files: list[Path] = field(default_factory=list)  # 相关文件
+    previous_outputs: dict[str, Any] = field(default_factory=dict)  # 前序 Agent 输出
+    metadata: dict[str, Any] = field(default_factory=dict)  # 其他元数据
     skill_context: str = ""  # Tier 0 自动注入：Skill 经验清单（由 Orchestrator 填充）
 
 
@@ -62,13 +62,13 @@ class AgentOutput:
 
     agent_name: str  # Agent 名称
     status: AgentStatus  # 执行状态
-    result: Optional[str] = None  # 主要结果
-    artifacts: Dict[str, Any] = field(default_factory=dict)  # 产物（文件、数据等）
-    recommendations: List[str] = field(default_factory=list)  # 推荐后续步骤
-    next_agent: Optional[str] = None  # 推荐下一个 Agent
-    usage: Dict[str, int] = field(default_factory=dict)  # Token 使用
+    result: str | None = None  # 主要结果
+    artifacts: dict[str, Any] = field(default_factory=dict)  # 产物（文件、数据等）
+    recommendations: list[str] = field(default_factory=list)  # 推荐后续步骤
+    next_agent: str | None = None  # 推荐下一个 Agent
+    usage: dict[str, int] = field(default_factory=dict)  # Token 使用
     execution_time: float = 0.0  # 执行时间（秒）
-    error: Optional[str] = None  # 错误信息
+    error: str | None = None  # 错误信息
     timestamp: str = field(default_factory=lambda: datetime.now().isoformat())
 
 
@@ -95,12 +95,12 @@ class BaseAgent(ABC):
 
     # 可选属性
     icon: str = "🤖"
-    tools: List[str] = field(default_factory=list)  # 可用工具列表
+    tools: list[str] = field(default_factory=list)  # 可用工具列表
 
     def __init__(
         self,
         model_router,
-        config: Optional[Dict[str, Any]] = None,
+        config: dict[str, Any] | None = None,
     ):
         """
         Args:
@@ -110,7 +110,7 @@ class BaseAgent(ABC):
         self.model_router = model_router
         self.config = config or {}
         self.status = AgentStatus.IDLE
-        self._output_history: List[AgentOutput] = []
+        self._output_history: list[AgentOutput] = []
 
         # 初始化工作目录上下文扫描器
         try:
@@ -151,7 +151,7 @@ class BaseAgent(ABC):
         except Exception as e:
             return f"[工作目录上下文扫描失败: {e}]"
 
-    def get_full_context(self, max_depth: int = 3) -> Dict[str, str]:
+    def get_full_context(self, max_depth: int = 3) -> dict[str, str]:
         """
         获取完整上下文（文件 + 浏览器）
 
@@ -247,7 +247,7 @@ class BaseAgent(ABC):
 
         return output
 
-    def _prepare_prompt(self, context: AgentContext) -> List[Dict[str, str]]:
+    def _prepare_prompt(self, context: AgentContext) -> list[dict[str, str]]:
         """
         准备完整的 Prompt
 
@@ -266,7 +266,7 @@ class BaseAgent(ABC):
 
     @abstractmethod
     async def _run(
-        self, context: AgentContext, prompt: List[Dict[str, str]], **kwargs
+        self, context: AgentContext, prompt: list[dict[str, str]], **kwargs
     ) -> str:
         """
         实际执行逻辑（子类实现）
@@ -297,11 +297,11 @@ class BaseAgent(ABC):
             result=result,
         )
 
-    def get_last_output(self) -> Optional[AgentOutput]:
+    def get_last_output(self) -> AgentOutput | None:
         """获取最后一次输出"""
         return self._output_history[-1] if self._output_history else None
 
-    def get_output_history(self) -> List[AgentOutput]:
+    def get_output_history(self) -> list[AgentOutput]:
         """获取输出历史"""
         return self._output_history.copy()
 
@@ -333,21 +333,21 @@ class BaseAgent(ABC):
 
 
 # Agent 注册表（用于动态发现和创建）
-AGENT_REGISTRY: Dict[str, Type[BaseAgent]] = {}
+AGENT_REGISTRY: dict[str, type[BaseAgent]] = {}
 
 
-def register_agent(agent_class: Type[BaseAgent]):
+def register_agent(agent_class: type[BaseAgent]):
     """注册 Agent"""
     AGENT_REGISTRY[agent_class.name] = agent_class
     return agent_class
 
 
-def get_agent(name: str) -> Optional[Type[BaseAgent]]:
+def get_agent(name: str) -> type[BaseAgent] | None:
     """获取已注册的 Agent"""
     return AGENT_REGISTRY.get(name)
 
 
-def list_all_agents() -> List[Dict[str, Any]]:
+def list_all_agents() -> list[dict[str, Any]]:
     """
     列出所有已注册的 Agent
 
@@ -367,6 +367,6 @@ def list_all_agents() -> List[Dict[str, Any]]:
     return result
 
 
-def list_agents() -> List[str]:
+def list_agents() -> list[str]:
     """列出所有已注册的 Agent"""
     return list(AGENT_REGISTRY.keys())

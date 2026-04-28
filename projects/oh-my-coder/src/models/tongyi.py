@@ -16,7 +16,7 @@
 
 import json
 import time
-from typing import AsyncIterator, Dict, List, Optional
+from collections.abc import AsyncIterator
 
 import httpx
 
@@ -81,7 +81,7 @@ class TongyiModel(BaseModel):
 
         super().__init__(config, tier)
 
-        self._client: Optional[httpx.AsyncClient] = None
+        self._client: httpx.AsyncClient | None = None
 
     @property
     def provider(self) -> ModelProvider:
@@ -109,7 +109,7 @@ class TongyiModel(BaseModel):
             await self._client.aclose()
             self._client = None
 
-    def _format_messages(self, messages: List[Message]) -> List[Dict[str, str]]:
+    def _format_messages(self, messages: list[Message]) -> list[dict[str, str]]:
         """将统一消息格式转换为通义千问 API 格式"""
         formatted = []
         for msg in messages:
@@ -118,7 +118,7 @@ class TongyiModel(BaseModel):
         return formatted
 
     @safe_execute(max_attempts=3, timeout=30.0)
-    async def generate(self, messages: List[Message], **kwargs) -> ModelResponse:
+    async def generate(self, messages: list[Message], **kwargs) -> ModelResponse:
         """非流式生成"""
         client = await self._get_client()
 
@@ -187,7 +187,7 @@ class TongyiModel(BaseModel):
             raise TongyiAPIError(f"网络请求失败: {type(e).__name__}")
 
     @safe_execute(max_attempts=3, timeout=30.0)
-    async def stream(self, messages: List[Message], **kwargs) -> AsyncIterator[str]:
+    async def stream(self, messages: list[Message], **kwargs) -> AsyncIterator[str]:
         """流式生成"""
         client = await self._get_client()
 

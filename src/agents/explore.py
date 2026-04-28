@@ -286,7 +286,7 @@ class ExploreAgent(BaseAgent):
                     with open(file_path, encoding="utf-8", errors="ignore") as f:
                         lines = sum(1 for _ in f)
                         total_lines += lines
-                except:
+                except Exception:
                     pass
 
                 # 识别关键文件
@@ -321,7 +321,7 @@ class ExploreAgent(BaseAgent):
                         for line in f
                         if line.strip() and not line.startswith("#")
                     ]
-            except:
+            except Exception:
                 pass
 
         # Node 依赖
@@ -333,7 +333,7 @@ class ExploreAgent(BaseAgent):
                 with open(package_file) as f:
                     package = json.load(f)
                     dependencies["node"] = list(package.get("dependencies", {}).keys())
-            except:
+            except Exception:
                 pass
 
         return dependencies

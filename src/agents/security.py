@@ -115,7 +115,7 @@ class SecurityReviewerAgent(BaseAgent):
                         code_parts.append(
                             f"### {file_path.relative_to(context.project_path)}\n```\n{content}\n```"
                         )
-                except:
+                except Exception:
                     pass
 
             if code_parts:

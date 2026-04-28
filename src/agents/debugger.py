@@ -109,7 +109,7 @@ class DebuggerAgent(BaseAgent):
                         code_parts.append(
                             f"### {file_path.name}\n```\n{content[:3000]}\n```"
                         )
-                except:
+                except Exception:
                     pass
 
             if code_parts:

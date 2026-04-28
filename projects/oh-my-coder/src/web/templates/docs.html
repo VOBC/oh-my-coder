@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>使用文档 - Oh My Coder</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        .docs-layout {
+            display: grid;
+            grid-template-columns: 220px 1fr;
+            gap: 32px;
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 32px 24px;
+        }
+        .docs-sidebar {
+            position: sticky;
+            top: 80px;
+            max-height: calc(100vh - 100px);
+            overflow-y: auto;
+        }
+        .docs-nav-title {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 12px;
+        }
+        .docs-nav-item {
+            display: block;
+            padding: 8px 12px;
+            font-size: 14px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            border-radius: 8px;
+            transition: var(--transition);
+            margin-bottom: 2px;
+        }
+        .docs-nav-item:hover {
+            background: var(--primary-light);
+            color: var(--primary);
+            text-decoration: none;
+        }
+        .docs-nav-item.active {
+            background: var(--primary-light);
+            color: var(--primary);
+            font-weight: 600;
+        }
+        .docs-content {
+            min-width: 0;
+        }
+        .docs-section {
+            margin-bottom: 48px;
+        }
+        .docs-section h2 {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border);
+        }
+        .docs-section h3 {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text);
+            margin: 24px 0 12px;
+        }
+        .docs-section p {
+            font-size: 15px;
+            color: var(--text-secondary);
+            line-height: 1.8;
+            margin: 12px 0;
+        }
+        .docs-section ul, .docs-section ol {
+            padding-left: 24px;
+            margin: 12px 0;
+            color: var(--text-secondary);
+        }
+        .docs-section li { margin: 8px 0; font-size: 15px; line-height: 1.7; }
+        .code-block {
+            background: #0d1117;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+            overflow-x: auto;
+            margin: 16px 0;
+            font-family: var(--font-mono);
+            font-size: 13px;
+            line-height: 1.7;
+            color: #c9d1d9;
+        }
+        .code-block .comment { color: #6e7681; }
+        .code-block .cmd { color: #79c0ff; }
+        .code-block .flag { color: #ff7b72; }
+        .code-block .string { color: #a5d6ff; }
+        .inline-code {
+            background: var(--primary-light);
+            color: var(--primary);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: var(--font-mono);
+            font-size: 13px;
+        }
+        .callout {
+            border-radius: var(--radius);
+            padding: 16px 20px;
+            margin: 16px 0;
+            display: flex;
+            gap: 12px;
+        }
+        .callout-icon { font-size: 20px; flex-shrink: 0; }
+        .callout-content { font-size: 14px; color: var(--text-secondary); line-height: 1.7; }
+        .callout-info { background: var(--primary-light); border: 1px solid rgba(99,102,241,0.2); }
+        .callout-warning { background: var(--warning-bg); border: 1px solid rgba(251,191,36,0.2); }
+        .callout-success { background: var(--success-bg); border: 1px solid rgba(52,211,153,0.2); }
+        .step-list { list-style: none; padding: 0; counter-reset: step; }
+        .step-list li {
+            counter-increment: step;
+            position: relative;
+            padding-left: 44px;
+            margin: 20px 0;
+        }
+        .step-list li::before {
+            content: counter(step);
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 32px; height: 32px;
+            border-radius: 8px;
+            background: var(--primary-light);
+            color: var(--primary);
+            font-weight: 700;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .step-title { font-weight: 600; color: var(--text); margin-bottom: 4px; }
+        .step-desc { color: var(--text-secondary); font-size: 14px; }
+
+        @media (max-width: 768px) {
+            .docs-layout { grid-template-columns: 1fr; padding: 20px 16px; }
+            .docs-sidebar { position: static; max-height: none; display: none; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Nav -->
+    <nav class="nav">
+        <div class="nav-content">
+            <a href="/" class="nav-brand">
+                <span class="nav-brand-icon">🤖</span>
+                <span class="nav-brand-name">Oh My Coder</span>
+            </a>
+            <div class="nav-links" id="navLinks">
+                <a href="/" class="nav-link">首页</a>
+                <a href="/dashboard" class="nav-link">仪表板</a>
+                <a href="/history" class="nav-link">历史</a>
+                <a href="/docs" class="nav-link active">文档</a>
+                <a href="/settings" class="nav-link">设置</a>
+            </div>
+            <div class="nav-actions">
+                <div class="nav-toggle" id="themeToggle" title="切换主题">☀️</div>
+                <button class="nav-hamburger" id="navHamburger">☰</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="docs-layout">
+        <!-- Sidebar -->
+        <aside class="docs-sidebar">
+            <div class="docs-nav-title">快速开始</div>
+            <a href="#install" class="docs-nav-item active">安装</a>
+            <a href="#first-task" class="docs-nav-item">第一个任务</a>
+            <a href="#config" class="docs-nav-item">配置 API Key</a>
+            <div class="docs-nav-title" style="margin-top:24px;">核心概念</div>
+            <a href="#workflows" class="docs-nav-item">工作流</a>
+            <a href="#agents" class="docs-nav-item">Agent 体系</a>
+            <a href="#models" class="docs-nav-item">模型路由</a>
+            <div class="docs-nav-title" style="margin-top:24px;">进阶</div>
+            <a href="#cli" class="docs-nav-item">CLI 使用</a>
+            <a href="#plugins" class="docs-nav-item">插件系统</a>
+            <a href="#local-models" class="docs-nav-item">本地模型</a>
+        </aside>
+
+        <!-- Content -->
+        <main class="docs-content">
+            <h1 class="page-title">📖 使用文档</h1>
+            <p class="page-desc">从安装到进阶，快速掌握 Oh My Coder 的全部能力。</p>
+
+            <!-- Install -->
+            <section class="docs-section" id="install">
+                <h2>安装</h2>
+                <p>一行命令安装 Oh My Coder：</p>
+                <div class="code-block">
+                    <span class="cmd">pip</span> install oh-my-coder
+                </div>
+                <p>或者从源码安装：</p>
+                <div class="code-block">
+                    <span class="cmd">git</span> clone https://github.com/VOBC/oh-my-coder.git
+                    <span class="cmd">cd</span> oh-my-coder
+                    <span class="cmd">pip</span> install <span class="flag">-e</span> .
+                </div>
+                <div class="callout callout-info">
+                    <span class="callout-icon">💡</span>
+                    <div class="callout-content">需要 Python 3.9+。推荐使用虚拟环境：<span class="inline-code">python -m venv .venv && source .venv/bin/activate</span></div>
+                </div>
+            </section>
+
+            <!-- First Task -->
+            <section class="docs-section" id="first-task">
+                <h2>第一个任务</h2>
+                <p>安装完成后，启动 Web 界面：</p>
+                <div class="code-block">
+                    <span class="cmd">omc</span> web
+                </div>
+                <p>浏览器打开 <span class="inline-code">http://localhost:8000</span>，在任务输入框描述你的需求即可。</p>
+                <p>或者使用 CLI 直接执行：</p>
+                <div class="code-block">
+                    <span class="cmd">omc</span> run <span class="string">"实现一个用户认证系统"</span>
+                </div>
+            </section>
+
+            <!-- Config -->
+            <section class="docs-section" id="config">
+                <h2>配置 API Key</h2>
+                <p>Oh My Coder 默认使用 DeepSeek 免费额度，零成本即可使用。配置 API Key 有两种方式：</p>
+                <h3>方式一：Web 界面配置</h3>
+                <p>进入 <a href="/settings">设置页面</a>，在 API Keys 标签页填入你的 Key。</p>
+                <h3>方式二：命令行配置</h3>
+                <div class="code-block">
+                    <span class="cmd">omc</span> config set deepseek.api_key <span class="string">sk-your-key-here</span>
+                </div>
+                <div class="callout callout-success">
+                    <span class="callout-icon">🎉</span>
+                    <div class="callout-content">DeepSeek 每天 4000 万 token 免费额度，大部分个人使用完全够用！</div>
+                </div>
+                <h3>支持的模型</h3>
+                <ul>
+                    <li><strong>DeepSeek</strong> — 推荐，免费额度，国内直连</li>
+                    <li><strong>智谱 GLM-4</strong> — 完全免费，国产大模型</li>
+                    <li><strong>通义千问</strong> — 阿里云，低成本</li>
+                    <li><strong>文心一言</strong> — 百度，中文能力强</li>
+                    <li><strong>Kimi</strong> — 超长上下文（20万字）</li>
+                    <li><strong>豆包</strong> — 字节跳动，性价比高</li>
+                    <li><strong>Ollama 本地模型</strong> — 零成本，隐私保护</li>
+                </ul>
+            </section>
+
+            <!-- Workflows -->
+            <section class="docs-section" id="workflows">
+                <h2>工作流</h2>
+                <p>工作流定义了 Agent 的协作流程。不同场景使用不同的工作流：</p>
+                <table>
+                    <thead>
+                        <tr><th>工作流</th><th>用途</th><th>Agent 链</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><span class="badge badge-primary">build</span></td><td>完整开发</td><td>Explore → Analyst → Architect → Executor → Verifier</td></tr>
+                        <tr><td><span class="badge badge-success">review</span></td><td>代码审查</td><td>Explore → CodeReviewer → Security</td></tr>
+                        <tr><td><span class="badge badge-warning">debug</span></td><td>调试修复</td><td>Explore → Debugger → Executor → Verifier</td></tr>
+                        <tr><td><span class="badge badge-muted">test</span></td><td>测试生成</td><td>Explore → TestEngineer → Verifier</td></tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <!-- Agents -->
+            <section class="docs-section" id="agents">
+                <h2>Agent 体系</h2>
+                <p>每个 Agent 专注于一个领域，像一个真实工程团队的成员：</p>
+                <ol class="step-list">
+                    <li><div class="step-title">🔍 Explorer</div><div class="step-desc">探索项目结构，理解代码库，收集上下文</div></li>
+                    <li><div class="step-title">🧠 Analyst</div><div class="step-desc">分析需求，拆解任务，制定执行计划</div></li>
+                    <li><div class="step-title">🏗️ Architect</div><div class="step-desc">设计架构方案，确定技术选型和代码结构</div></li>
+                    <li><div class="step-title">💻 Executor</div><div class="step-desc">编写代码，实现功能，修改文件</div></li>
+                    <li><div class="step-title">✅ Verifier</div><div class="step-desc">验证结果，运行测试，确认代码质量</div></li>
+                    <li><div class="step-title">🐛 Debugger</div><div class="step-desc">定位 Bug，分析错误，修复问题</div></li>
+                    <li><div class="step-title">🔎 CodeReviewer</div><div class="step-desc">代码审查，发现潜在问题，提出改进建议</div></li>
+                    <li><div class="step-title">🛡️ Security</div><div class="step-desc">安全扫描，检测漏洞，验证合规性</div></li>
+                </ol>
+            </section>
+
+            <!-- Models -->
+            <section class="docs-section" id="models">
+                <h2>模型路由</h2>
+                <p>Oh My Coder 根据任务复杂度自动路由到最合适的模型：</p>
+                <div class="callout callout-info">
+                    <span class="callout-icon">🧠</span>
+                    <div class="callout-content">
+                        <strong>LOW</strong> → 简单查询（文件列表、格式化）<br>
+                        <strong>MEDIUM</strong> → 常规任务（功能实现、Bug 修复）<br>
+                        <strong>HIGH</strong> → 复杂任务（架构设计、全流程开发）
+                    </div>
+                </div>
+                <p>智能路由可节省 30-50% 的 Token 消耗，同时保证任务质量。</p>
+            </section>
+
+            <!-- CLI -->
+            <section class="docs-section" id="cli">
+                <h2>CLI 使用</h2>
+                <div class="code-block">
+<span class="comment"># 启动 Web 界面</span>
+<span class="cmd">omc</span> web
+
+<span class="comment"># 执行任务</span>
+<span class="cmd">omc</span> run <span class="string">"任务描述"</span>
+
+<span class="comment"># 指定模型和工作流</span>
+<span class="cmd">omc</span> run <span class="flag">--model</span> deepseek <span class="flag">--workflow</span> build <span class="string">"任务描述"</span>
+
+<span class="comment"># 查看历史</span>
+<span class="cmd">omc</span> history
+
+<span class="comment"># 查看配置</span>
+<span class="cmd">omc</span> config list
+
+<span class="comment"># 代码审查</span>
+<span class="cmd">omc</span> review
+                </div>
+            </section>
+
+            <!-- Plugins -->
+            <section class="docs-section" id="plugins">
+                <h2>插件系统</h2>
+                <p>Oh My Coder 支持插件扩展，可以注册自定义 Agent、Skill 和 Hook。</p>
+                <div class="code-block">
+<span class="comment"># 创建插件</span>
+<span class="keyword">from</span> src.plugins <span class="keyword">import</span> register, PluginBase, PluginMetadata
+
+<span class="keyword">@register</span>
+<span class="keyword">class</span> <span class="string">MyPlugin</span>(PluginBase):
+    <span class="keyword">@property</span>
+    <span class="keyword">def</span> <span class="cmd">metadata</span>(self):
+        <span class="keyword">return</span> PluginMetadata(
+            name=<span class="string">"my-plugin"</span>,
+            version=<span class="string">"0.1.0"</span>,
+            description=<span class="string">"我的自定义插件"</span>,
+        )
+
+    <span class="keyword">def</span> <span class="cmd">on_load</span>(self):
+        print(<span class="string">"插件已加载"</span>)
+
+    <span class="keyword">def</span> <span class="cmd">register_skills</span>(self):
+        <span class="keyword">return</span> {<span class="string">"greet"</span>: <span class="keyword">lambda</span>: <span class="string">"Hello!"</span>}
+                </div>
+            </section>
+
+            <!-- Local Models -->
+            <section class="docs-section" id="local-models">
+                <h2>本地模型 (Ollama)</h2>
+                <p>使用 Ollama 运行本地模型，零成本且完全隐私：</p>
+                <ol class="step-list">
+                    <li><div class="step-title">安装 Ollama</div><div class="step-desc">访问 <a href="https://ollama.ai" target="_blank">ollama.ai</a> 下载安装</div></li>
+                    <li><div class="step-title">拉取模型</div><div class="step-desc"><span class="inline-code">ollama pull qwen2:7b</span> — 推荐 7B 参数模型</div></li>
+                    <li><div class="step-title">启动服务</div><div class="step-desc"><span class="inline-code">ollama serve</span> — Oh My Coder 会自动检测</div></li>
+                </ol>
+                <div class="callout callout-warning">
+                    <span class="callout-icon">⚠️</span>
+                    <div class="callout-content">本地模型需要至少 8GB 内存。7B 模型约需 4GB 显存，13B 约需 8GB。</div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <footer class="footer">
+        <p>Made with ❤️ by Oh My Coder</p>
+    </footer>
+
+    <script>
+        // Theme
+        function loadTheme() {
+            const t = localStorage.getItem('theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', t);
+            document.getElementById('themeToggle').textContent = t === 'dark' ? '☀️' : '🌙';
+        }
+        document.getElementById('themeToggle').addEventListener('click', () => {
+            const c = document.documentElement.getAttribute('data-theme');
+            const n = c === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', n);
+            document.getElementById('themeToggle').textContent = n === 'dark' ? '☀️' : '🌙';
+            localStorage.setItem('theme', n);
+        });
+        loadTheme();
+
+        // Mobile nav
+        document.getElementById('navHamburger').addEventListener('click', () => {
+            document.getElementById('navLinks').classList.toggle('open');
+        });
+
+        // Sidebar active tracking
+        const sections = document.querySelectorAll('.docs-section');
+        const navItems = document.querySelectorAll('.docs-nav-item');
+        const observer = new IntersectionObserver(entries => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    navItems.forEach(i => i.classList.remove('active'));
+                    const link = document.querySelector(`.docs-nav-item[href="#${entry.target.id}"]`);
+                    if (link) link.classList.add('active');
+                }
+            });
+        }, { rootMargin: '-20% 0px -70% 0px' });
+        sections.forEach(s => observer.observe(s));
+    </script>
+</body>
+</html>

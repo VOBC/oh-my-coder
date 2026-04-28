@@ -269,7 +269,7 @@ class Orchestrator:
         return self._memory_manager
 
     @property
-    def health_checker(self) -> "HealthChecker":
+    def health_checker(self) -> HealthChecker:
         """懒加载 HealthChecker"""
         if self._health_checker is None:
             from ..agents.health_check import HealthChecker
@@ -737,7 +737,7 @@ class Orchestrator:
 
             results = await asyncio.gather(*tasks, return_exceptions=True)
 
-            for step, task_result in zip(level, results):
+            for step, task_result in zip(level, results, strict=True):
                 if isinstance(task_result, Exception):
                     result.steps_failed.append(step.agent_name)
                     raise Exception(

@@ -214,7 +214,7 @@ class DependencyGraph:
         sorted_nodes, _ = self.topological_sort()
 
         # 按 CRITICAL > HIGH > MEDIUM > LOW 排序
-        priority_order = {
+        _priority_order = {
             TaskPriority.CRITICAL: 0,
             TaskPriority.HIGH: 1,
             TaskPriority.MEDIUM: 2,
@@ -543,7 +543,7 @@ class PlannerAgent(BaseAgent):
         graph = PlannerAgent._build_dependency_graph(plan)
 
         # 获取就绪任务
-        ready_tasks = graph.get_ready_tasks(completed_tasks)
+        _ready_tasks = graph.get_ready_tasks(completed_tasks)
 
         # 处理失败任务
         for failed_id in failed_tasks:
