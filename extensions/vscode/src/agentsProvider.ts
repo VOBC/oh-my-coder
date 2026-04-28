@@ -1,5 +1,5 @@
 /**
- * Agents 视图提供者 - 30 个 Agent
+ * Agents 视图提供者 - 31 个 Agent
  */
 
 import * as vscode from "vscode";

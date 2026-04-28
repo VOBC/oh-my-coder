@@ -80,6 +80,14 @@ class CommandManager {
         context.subscriptions.push(vscode.commands.registerCommand('omc.stopTask', () => {
             this.stopTask();
         }));
+        // 本地模型 (Ollama)
+        context.subscriptions.push(vscode.commands.registerCommand('omc.localModel', async () => {
+            await this.localModel();
+        }));
+        // 运行 Skill
+        context.subscriptions.push(vscode.commands.registerCommand('omc.runSkill', async () => {
+            await this.runSkill();
+        }));
     }
     async runTask() {
         const editor = vscode.window.activeTextEditor;
@@ -208,6 +216,28 @@ class CommandManager {
     showHistory() {
         vscode.commands.executeCommand('workbench.view.extension.omc-sidebar');
         vscode.commands.executeCommand('omc-history.focus');
+    }
+    async localModel() {
+        const action = await vscode.window.showQuickPick(['查看状态', '列出模型', '开始聊天'], { placeHolder: 'Ollama 本地模型操作' });
+        if (!action) {
+            return;
+        }
+        const workflow = action === '查看状态' ? 'local-status' : action === '列出模型' ? 'local-list' : 'local-chat';
+        this.outputChannel.appendLine(`\n🤖 本地模型: ${action}`);
+        this.outputChannel.show(true);
+        await this.taskManager.runTask({ description: `Ollama ${action}`, workflow });
+    }
+    async runSkill() {
+        const skillName = await vscode.window.showInputBox({
+            prompt: '输入 Skill 名称',
+            placeHolder: '例如: /review, /test, /doc',
+        });
+        if (!skillName) {
+            return;
+        }
+        this.outputChannel.appendLine(`\n⚡ 运行 Skill: ${skillName}`);
+        this.outputChannel.show(true);
+        await this.taskManager.runTask({ description: `运行 Skill: ${skillName}`, workflow: 'skill' });
     }
     stopTask() {
         this.taskManager.stop();
