@@ -117,6 +117,14 @@ from .cli_model import app as model_app  # noqa: E402
 
 app.add_typer(model_app, name="model", help="模型管理 - 查看/切换默认模型")
 
+# models 子命令 - 模型配置分享
+try:
+    from .cli_models import app as models_app  # noqa: E402
+
+    app.add_typer(models_app, name="models", help="模型配置分享 - 分享/浏览社区配置")
+except Exception:
+    pass
+
 # gateway 子命令（懒导入，避免 gateway 依赖缺失时报错）
 try:
     from .cli_gateway import app as gateway_app  # noqa: E402
