@@ -47,6 +47,7 @@ export class TaskManager implements vscode.Disposable {
     private context: vscode.ExtensionContext;
     private currentTask: Task | null = null;
     private process: ChildProcess | null = null;
+    private historyProvider: any = null;
     private _onDidChangeStatus = new vscode.EventEmitter<TaskStatus>();
     private _onDidChangeOutput = new vscode.EventEmitter<string>();
     private outputBuffer: string = "";
@@ -56,6 +57,10 @@ export class TaskManager implements vscode.Disposable {
 
     constructor(context: vscode.ExtensionContext) {
         this.context = context;
+    }
+
+    setHistoryProvider(historyProvider: any): void {
+        this.historyProvider = historyProvider;
     }
 
     /**
@@ -130,6 +135,22 @@ export class TaskManager implements vscode.Disposable {
             task.status = TaskStatus.Completed;
             task.endTime = new Date();
             task.output = result.output;
+            
+            // 记录到历史
+            if (this.historyProvider) {
+                const duration = task.startTime && task.endTime
+                    ? (task.endTime.getTime() - task.startTime.getTime()) / 1000
+                    : undefined;
+                this.historyProvider.addEntry({
+                    description: task.description,
+                    status: 'completed',
+                    model: task.model,
+                    workflow: task.workflow,
+                    duration: duration,
+                    tokens: result.metrics?.tokens,
+                });
+            }
+            
             this._onDidChangeStatus.fire(TaskStatus.Completed);
             return result;
         } catch (error) {
@@ -137,6 +158,21 @@ export class TaskManager implements vscode.Disposable {
             task.endTime = new Date();
             task.error = error instanceof Error ? error.message : String(error);
             task.output = task.error;
+            
+            // 记录失败任务到历史
+            if (this.historyProvider) {
+                const duration = task.startTime && task.endTime
+                    ? (task.endTime.getTime() - task.startTime.getTime()) / 1000
+                    : undefined;
+                this.historyProvider.addEntry({
+                    description: task.description,
+                    status: 'failed',
+                    model: task.model,
+                    workflow: task.workflow,
+                    duration: duration,
+                });
+            }
+            
             this._onDidChangeStatus.fire(TaskStatus.Error);
             throw error;
         }

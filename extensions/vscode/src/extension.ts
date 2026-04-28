@@ -97,6 +97,9 @@ function registerViews(context: vscode.ExtensionContext) {
     context.subscriptions.push(
         vscode.window.registerTreeDataProvider('omc-history', historyProvider)
     );
+    
+    // 将 historyProvider 注入到 taskManager
+    taskManager.setHistoryProvider(historyProvider);
 
     // Agents 视图
     const agentsProvider = new AgentsProvider();

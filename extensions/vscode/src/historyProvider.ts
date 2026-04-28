@@ -11,6 +11,7 @@ interface HistoryEntry {
     description: string;
     timestamp: string;
     status: 'completed' | 'failed';
+    model?: string;
     workflow?: string;
     duration?: number;
     tokens?: number;
@@ -90,6 +91,7 @@ export class HistoryProvider implements vscode.TreeDataProvider<HistoryItem> {
                     entry.description,
                     entry.timestamp,
                     entry.status,
+                    entry.model,
                     entry.workflow,
                     entry.duration,
                     entry.tokens
@@ -106,6 +108,7 @@ class HistoryItem extends vscode.TreeItem {
         public readonly description: string,
         public readonly timestamp: string,
         public readonly status: 'completed' | 'failed',
+        public readonly model?: string,
         public readonly workflow?: string,
         public readonly duration?: number,
         public readonly tokens?: number
@@ -138,6 +141,9 @@ class HistoryItem extends vscode.TreeItem {
             `任务: ${this.description}`,
             `状态: ${this.status === 'completed' ? '✓ 完成' : '✗ 失败'}`,
         ];
+        if (this.model) {
+            lines.push(`模型: ${this.model}`);
+        }
         if (this.workflow) {
             lines.push(`工作流: ${this.workflow}`);
         }

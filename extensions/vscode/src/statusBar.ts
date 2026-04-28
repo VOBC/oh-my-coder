@@ -30,21 +30,24 @@ export class StatusBarManager implements vscode.Disposable {
         }
 
         const status = this.taskManager.getStatus();
+        const currentTask = this.taskManager.getCurrentTask();
+        const defaultModel = config.get<string>('defaultModel') || 'deepseek';
+        const modelDisplay = currentTask?.model || defaultModel;
 
         if (status === TaskStatus.Idle) {
-            this.statusBarItem.text = '$(hubot) OMC';
+            this.statusBarItem.text = `$(hubot) OMC [${modelDisplay}]`;
             this.statusBarItem.tooltip = 'Oh My Coder - 就绪';
             this.statusBarItem.command = 'omc.openPanel';
             this.statusBarItem.backgroundColor = undefined;
         } else if (status === TaskStatus.Running) {
-            this.statusBarItem.text = '$(sync~spin) OMC 运行中...';
+            this.statusBarItem.text = `$(sync~spin) OMC [${modelDisplay}] 运行中...`;
             this.statusBarItem.tooltip = '点击查看进度';
             this.statusBarItem.command = 'omc.openPanel';
             this.statusBarItem.backgroundColor = new vscode.ThemeColor(
                 'statusBarItem.warningBackground'
             );
         } else if (status === TaskStatus.Error) {
-            this.statusBarItem.text = '$(error) OMC 错误';
+            this.statusBarItem.text = `$(error) OMC [${modelDisplay}] 错误`;
             this.statusBarItem.tooltip = '任务执行失败，点击查看详情';
             this.statusBarItem.command = 'omc.showHistory';
             this.statusBarItem.backgroundColor = new vscode.ThemeColor(
