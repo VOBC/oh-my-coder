@@ -368,7 +368,9 @@ def chat_model(
 
             if no_stream:
                 # 非流式
-                response = asyncio.run(model.complete(messages, temperature=temperature))
+                response = asyncio.run(
+                    model.complete(messages, temperature=temperature)
+                )
                 console.print(response.content)
                 messages.append(Message(role="assistant", content=response.content))
             else:

@@ -155,9 +155,7 @@ def show_template(
 def use_template(
     name: str = typer.Argument(..., help="模板名称"),
     task: str = typer.Option("", "--task", "-t", help="任务描述"),
-    project_path: Path | None = typer.Option(
-        None, "--project", "-p", help="项目路径"
-    ),
+    project_path: Path | None = typer.Option(None, "--project", "-p", help="项目路径"),
     dry_run: bool = typer.Option(False, "--dry-run", help="只显示将执行的命令"),
 ):
     """使用模板创建工作流"""

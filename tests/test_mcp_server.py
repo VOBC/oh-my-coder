@@ -11,7 +11,7 @@ from src.mcp.tools import MCP_TOOLS, get_mcp_tools, get_tool_handler
 
 class TestMcpServerMetadata:
     def test_server_version(self):
-        assert McpServer.VERSION == "1.0.0"
+        assert McpServer.VERSION == "0.2.0"
 
     def test_protocol_version(self):
         assert McpServer.PROTOCOL_VERSION == "2024-11-05"
@@ -23,7 +23,7 @@ class TestMcpServerCapabilities:
         # 直接调用 _capabilities
         caps = server._capabilities()
         assert caps["serverInfo"]["name"] == "oh-my-coder"
-        assert caps["serverInfo"]["version"] == "1.0.0"
+        assert caps["serverInfo"]["version"] == "0.2.0"
         assert "capabilities" in caps
         assert "tools" in caps["capabilities"]
         assert "resources" in caps["capabilities"]

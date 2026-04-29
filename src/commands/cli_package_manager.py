@@ -252,9 +252,7 @@ def _select_best_manager(package: str) -> str | None:
     return None
 
 
-def _build_install_command(
-    manager: str, package: str, sudo: bool
-) -> list[str] | None:
+def _build_install_command(manager: str, package: str, sudo: bool) -> list[str] | None:
     """构建安装命令"""
     cmd_prefix = ["sudo"] if sudo else []
 

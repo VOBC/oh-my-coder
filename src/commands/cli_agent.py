@@ -580,9 +580,7 @@ def save_agent(
     name: str = typer.Argument(..., help="Agent 名称"),
     model: str = typer.Option("deepseek", "--model", "-m", help="模型"),
     description: str = typer.Option("", "--description", "-d", help="描述"),
-    output: Path | None = typer.Option(
-        None, "--output", "-o", help="导出 JSON 文件"
-    ),
+    output: Path | None = typer.Option(None, "--output", "-o", help="导出 JSON 文件"),
 ):
     """
     保存 Agent 配置到 ~/.oh-my-coder/agents/<name>/
