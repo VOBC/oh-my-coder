@@ -76,13 +76,11 @@ omc run "修复登录接口超时" -w debug
 
 覆盖完整开发生命周期的五大通道：
 
-| 通道 | Agent | 职责 |
-|------|-------|------|
-| 🚀 **构建** | Explore → Analyst → Planner → Architect → Executor → Verifier | 探索 → 分析 → 设计 → 实现 → 验证 |
+| 🚀 **构建** | Explore → Analyst → Planner → Architect → Executor → Verifier | 探索→分析→设计→实现→验证 |
 | 🔍 **审查** | CodeReviewer + SecurityReviewer | 质量审查 + 安全扫描 |
-| 🎯 **领域** | TestEngineer / Designer / VisionAgent / GitMaster / DatabaseAgent … | 测试、设计、视觉、Git、数据库等 |
-| 🧙 **协调** | PromptAgent + SelfImprovingAgent + SkillManageAgent + CriticAgent | 提示词优化 · 自我进化 · 经验沉淀 |
-| 🛡️ **安全** | Debugger + Tracer + PerformanceAgent | 调试追踪 + 性能分析 |
+| 🎯 **领域** | TestEngineer / Designer / Vision / GitMaster / Database … | 测试·设计·视觉·Git·数据库 |
+| 🧙 **协调** | PromptAgent + SelfImproving + SkillManage + Critic | 提示词·自进化·经验沉淀 |
+| 🛡️ **安全** | Debugger + Tracer + Performance | 调试追踪·性能分析 |
 
 > 📖 [完整 Agent 清单](docs/agents/agent-list.md)
 
@@ -116,7 +114,7 @@ omc quest-notify --dingtalk <webhook>   # 订阅通知
 
 | 模型 | 推荐度 | 免费额度 | 获取 Key |
 |------|--------|----------|----------|
-| **DeepSeek V3** | ⭐⭐⭐ | 新用户赠送 | [platform.deepseek.com](https://platform.deepseek.com/) |
+| **DeepSeek V4** | ⭐⭐⭐⭐⭐ | 新用户赠送 | [platform.deepseek.com](https://platform.deepseek.com/) |
 | **GLM-4.7-Flash** | ⭐⭐⭐ | **完全免费** | [open.bigmodel.cn](https://open.bigmodel.cn/) |
 | 通义千问 / Kimi / 豆包 / 天工 / 百川 / MiniMax / 星火 / 文心 / 混元 / MiMo | ⭐⭐ | 各有免费额度 | `omc config list-models` |
 
