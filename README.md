@@ -1,8 +1,10 @@
 # Oh My Coder
 
-> 🤖 国产首个多 Agent 编程框架 — 31 个专业 Agent · 12 家国产大模型 · 自进化 · 完全开源
+> 🤖 **31 个专业 Agent · 12 家国产大模型 · 自进化系统** — 国产首个多 Agent 编程框架，开箱即用。
 
-🎯 **GLM-4.7-Flash 完全免费 · 零成本起步 · 无需翻墙 · 本地运行**
+🎯 **GLM-4.7-Flash 完全免费 · 一键 `pip install` 体验 · 无需翻墙 · 本地运行**
+
+✨ **适合谁？** 国内开发者 / 需要免费 AI 编程助手 / 想要私有化部署的团队
 
 [![PyPI version](https://img.shields.io/pypi/v/oh-my-coder?color=blue&label=PyPI)](https://pypi.org/project/oh-my-coder/)
 [![PyPI downloads](https://img.shields.io/pypi/dm/oh-my-coder?color=green&label=Downloads)](https://pypi.org/project/oh-my-coder/)
@@ -14,6 +16,9 @@
 **💡 灵感来源**: [oh-my-claudecode](https://github.com/Yeachan-Heo/oh-my-claudecode) (28.9k ⭐) — 我们为国内开发者提供零门槛替代方案
 
 ![Agent System](docs/screenshots/demo-agents.svg)
+
+<!-- DEMO GIF 占位：P24 完成后替换为实际 GIF -->
+<!-- 建议尺寸：800x450，展示 omc run 命令执行过程 -->
 
 ---
 
