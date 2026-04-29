@@ -17,6 +17,7 @@ if [ ! -d "venv" ]; then
 fi
 
 # 激活环境
+# shellcheck source=/dev/null
 source venv/bin/activate
 
 # 安装依赖
