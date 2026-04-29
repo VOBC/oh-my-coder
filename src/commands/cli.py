@@ -20,6 +20,11 @@ import os
 from pathlib import Path
 
 import typer
+
+# ============================================================
+# 启动时加载环境变量（优先级：用户级 > 项目级）
+# ============================================================
+from dotenv import load_dotenv
 from rich.console import Console
 from rich.panel import Panel
 from rich.progress import Progress, SpinnerColumn, TextColumn
@@ -50,6 +55,16 @@ from .cli_skill import app as skill_app
 from .cli_task import app as task_app
 from .cli_trace import app as trace_app
 from .cli_tui import app as tui_app
+
+# 用户级配置 ~/.omc/.env（最高优先级）
+_user_env = Path.home() / ".omc" / ".env"
+if _user_env.exists():
+    load_dotenv(_user_env, override=True)
+
+# 项目级配置 .env（次优先级）
+_project_env = Path(".env")
+if _project_env.exists():
+    load_dotenv(_project_env, override=True)
 
 # 版本信息
 __version__ = "1.0.0"
