@@ -79,3 +79,8 @@ health/
 desktop/dist/
 desktop/.parcel-cache/
 
+# Workspace private files
+projects/
+memory/
+task-summary_*.md
+
