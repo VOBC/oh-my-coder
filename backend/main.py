@@ -70,12 +70,18 @@ def chat(req: ChatRequest):
             env = os.environ.copy()
             if req.apiKey:
                 ml = req.model.lower()
-                if "glm" in ml: env["ZHIPU_API_KEY"] = req.apiKey
-                elif "deepseek" in ml: env["DEEPSEEK_API_KEY"] = req.apiKey
-                elif "gpt" in ml: env["OPENAI_API_KEY"] = req.apiKey
-                elif "claude" in ml: env["ANTHROPIC_API_KEY"] = req.apiKey
-                elif "gemini" in ml: env["GOOGLE_API_KEY"] = req.apiKey
-                else: env["ZHIPU_API_KEY"] = req.apiKey
+                if "glm" in ml:
+                    env["ZHIPU_API_KEY"] = req.apiKey
+                elif "deepseek" in ml:
+                    env["DEEPSEEK_API_KEY"] = req.apiKey
+                elif "gpt" in ml:
+                    env["OPENAI_API_KEY"] = req.apiKey
+                elif "claude" in ml:
+                    env["ANTHROPIC_API_KEY"] = req.apiKey
+                elif "gemini" in ml:
+                    env["GOOGLE_API_KEY"] = req.apiKey
+                else:
+                    env["ZHIPU_API_KEY"] = req.apiKey
 
             cli_path = PROJECT_ROOT / "src" / "cli.py"
             if not cli_path.exists():

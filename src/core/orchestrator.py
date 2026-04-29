@@ -737,7 +737,7 @@ class Orchestrator:
 
             results = await asyncio.gather(*tasks, return_exceptions=True)
 
-            for step, task_result in zip(level, results, strict=True):
+            for step, task_result in zip(level, results, strict=False):
                 if isinstance(task_result, Exception):
                     result.steps_failed.append(step.agent_name)
                     raise Exception(

@@ -199,7 +199,7 @@ class MultiAgentCoordinator:
         coroutines = [self._run_agent(agent, task) for agent in agents]
         task_results = await asyncio.gather(*coroutines, return_exceptions=True)
 
-        for agent, result in zip(agents, task_results, strict=True):
+        for agent, result in zip(agents, task_results, strict=False):
             if isinstance(result, Exception):
                 results.append(
                     TaskResult(

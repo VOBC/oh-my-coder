@@ -272,7 +272,7 @@ def test_get_product():
         json={"name": "测试商品", "price": 99.99}
     )
     product_id = create_response.json()["id"]
-    
+
     # 再获取
     response = client.get(f"/products/{product_id}")
     assert response.status_code == 200

@@ -197,7 +197,8 @@ def demo_complex_task():
     print("=" * 60)
 
     # 场景：重构整个后端模块
-    _complex_task = """
+    complex_task = (  # noqa: F841
+        """
     重构 user 模块：
     1. 将同步 API 改为异步
     2. 添加 JWT 认证
@@ -205,6 +206,7 @@ def demo_complex_task():
     4. 添加完整的单元测试
     5. 更新 Swagger 文档
     """
+    )
 
     print("\n📋 复杂任务分解：")
     print("-" * 50)
@@ -395,7 +397,7 @@ async def main():
         ("自定义工作流", demo_custom_workflow),
     ]
 
-    for _i, (_name, demo_fn) in enumerate(demos, 1):
+    for i, (_name, demo_fn) in enumerate(demos, 1):
         try:
             if asyncio.iscoroutinefunction(demo_fn):
                 await demo_fn()

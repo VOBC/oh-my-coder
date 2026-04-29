@@ -50,6 +50,8 @@ git status                           # 4. 确认所有更改都已暂存
 ### 🚨 多 git 仓库陷阱（2026-04-24 教训）
 这个 workspace 结构特殊：
 - **根目录**（`workspace-agent-bf627e2b/`）= 一个 git 仓库
+- **`projects/oh-my-coder/`** = 另一个独立的 git 仓库
+- **两个仓库指向同一个远程** `github.com/VOBC/oh-my-coder.git`
 
 **教训：**
 1. 修改 `projects/oh-my-coder/` 下的文件时，必须确认**在该仓库内** add + commit + push
@@ -189,8 +191,6 @@ output = base / "subdir" / "file"
 ```
 
 ---
-- ruff.toml 优先级高于 pyproject.toml — 修改 ruff 配置时必须先确认哪个文件生效（根目录 ruff.toml 会覆盖 pyproject.toml）
-- ID 唯一性：CI 环境同一毫秒可能执行两次，用单调递增计数器（_seq）替代时间戳取模生成 cp_id，避免 ID 冲突覆盖
 
 ## ⌨️ Typer/CLI 开发规范
 

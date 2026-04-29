@@ -112,7 +112,7 @@ async def demo_async_with_sse():
         # 4. 通过 SSE 等待完成
         print("\n[4] 等待执行（SSE 实时推送）...")
         start = time.time()
-        _final_result = await wait_for_task(client, task_id, timeout=120)
+        final_result = await wait_for_task(client, task_id, timeout=120)  # noqa: F841
         print(f"\n⏱️  总耗时: {time.time() - start:.1f} 秒")
 
         # 5. 获取任务详情
@@ -191,7 +191,7 @@ async def demo_review_workflow():
         print(f"任务 ID: {result['task_id']}")
 
         print("\n等待执行...")
-        _final_result = await wait_for_task(client, result["task_id"])
+        final_result = await wait_for_task(client, result["task_id"])  # noqa: F841
 
 
 # ============================================================

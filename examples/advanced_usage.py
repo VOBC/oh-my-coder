@@ -27,7 +27,7 @@ async def example_multi_agent():
     # 初始化路由器和编排器
     config = RouterConfig()
     router = ModelRouter(config)
-    orchestrator = Orchestrator(router)
+    orchestrator = Orchestrator(router)  # noqa: F841
 
     # 定义复杂任务
     task = """
@@ -99,11 +99,11 @@ async def example_workflow_orchestration():
 
     config = RouterConfig(deepseek_api_key="test_key")
     router = ModelRouter(config)
-    _orchestrator = Orchestrator(router)
+    orchestrator = Orchestrator(router)  # noqa: F841
 
     # 顺序执行示例
     print("顺序执行模式：")
-    _sequential_workflow = {
+    sequential_workflow = {  # noqa: F841
         "name": "sequential_review",
         "steps": [
             {"agent": "explore", "required": True},
@@ -115,7 +115,7 @@ async def example_workflow_orchestration():
 
     # 并行执行示例
     print("\n并行执行模式：")
-    _parallel_workflow = {
+    parallel_workflow = {  # noqa: F841
         "name": "parallel_analysis",
         "steps": [
             {"agent": "analyst", "required": True},
@@ -126,7 +126,7 @@ async def example_workflow_orchestration():
 
     # 条件执行示例
     print("\n条件执行模式：")
-    _conditional_workflow = {
+    conditional_workflow = {  # noqa: F841
         "name": "adaptive_build",
         "steps": [
             {"agent": "explore", "required": True},

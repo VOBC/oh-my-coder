@@ -68,7 +68,7 @@ import pytest
 
 class TestXXX:
     '''测试 XXX 功能'''
-    
+
     def test_case_1(self):
         '''测试正常情况'''
         # Arrange
@@ -77,11 +77,11 @@ class TestXXX:
         ...
         # Assert
         ...
-    
+
     def test_case_2(self):
         '''测试边界情况'''
         ...
-    
+
     def test_case_3(self):
         '''测试异常情况'''
         ...

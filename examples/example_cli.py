@@ -412,7 +412,7 @@ class Database:
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
-            
+
             CREATE TABLE IF NOT EXISTS tasks (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 project_id INTEGER NOT NULL,
@@ -424,7 +424,7 @@ class Database:
                 completed_at TIMESTAMP,
                 FOREIGN KEY (project_id) REFERENCES projects(id)
             );
-            
+
             CREATE TABLE IF NOT EXISTS current_project (
                 id INTEGER PRIMARY KEY CHECK (id = 1),
                 project_id INTEGER
@@ -564,7 +564,7 @@ def test_create_project():
 def test_add_task():
     # 先创建项目
     runner.invoke(app, ["new", "测试项目"])
-    
+
     # 添加任务
     result = runner.invoke(app, ["add", "测试任务", "-p", "high"])
     assert result.exit_code == 0
@@ -574,7 +574,7 @@ def test_add_task():
 def test_list_tasks():
     runner.invoke(app, ["new", "测试项目"])
     runner.invoke(app, ["add", "任务1"])
-    
+
     result = runner.invoke(app, ["list", "--all"])
     assert result.exit_code == 0
 
@@ -582,7 +582,7 @@ def test_list_tasks():
 def test_complete_task():
     runner.invoke(app, ["new", "测试项目"])
     runner.invoke(app, ["add", "任务"])
-    
+
     result = runner.invoke(app, ["done", "1"])
     assert result.exit_code == 0
     assert "已完成" in result.output

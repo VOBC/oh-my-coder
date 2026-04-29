@@ -34,7 +34,7 @@ from src.core.router import ModelRouter, RouterConfig  # 模型路由器
 def init_oh_my_coder():
     """
     初始化 Oh My Coder
-    
+
     1. 从环境变量获取 API Key
     2. 创建路由器配置
     3. 初始化模型路由器
@@ -84,7 +84,7 @@ DEMO_TASK = """
 async def run_workflow(router: ModelRouter, project_path: Path):
     """
     执行多 Agent 协作工作流
-    
+
     工作流：
     1. Explore Agent → 探索代码库结构
     2. Analyst Agent → 分析需求

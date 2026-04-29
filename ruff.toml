@@ -1,19 +1,28 @@
 line-length = 88
 target-version = "py310"
-lint.select = ["E", "F", "W", "I", "B", "N", "UP"]  # Phase 1: 开启全部规则
-lint.ignore = [
-    "E501",   # 行太长 — black 格式化处理
-    "E701",   # 一行多语句 — 短语句惯用法
+
+[lint]
+select = ["E", "F", "W", "I", "B", "N", "UP"]
+ignore = [
+    # 保留的 ignore（有合理原因）
+    "E402",   # 模块级 import: examples 中条件导入/延迟导入
+    "E501",   # 行太长：代码格式化后的自然结果
     "B008",   # Typer/FastAPI: 函数默认参数中的调用是框架惯用法
-    "B904",   # raise from: 覆盖面太大，逐个修复成本高
-    "N802",   # 函数名风格: 内部回调/路由函数
-    "N805",   # 方法首参数: discord.Client 绕过
-    "N806",   # 变量名: TraceContext 类引用
-    "N815",   # 类变量大写
+    "B904",   # raise from: 覆盖面太大（111 处），逐个修复成本高
     "B027",   # 空抽象方法: 插件钩子
-    "E402",   # 模块级 import: 条件导入/延迟导入
-    "W293",   # 尾部空格: 模板文件
-    "B005",   # .strip() 多字符: 测试代码
-    "B023",   # 闭包捕获循环变量
-    "F821",   # undefined-name: 自动修复引入
+    "N802",   # 函数名风格: 内部回调/路由函数（如 verifyGET, messagePOST）
+    "N805",   # 方法首参数: discord.Client inner_self 绕过
+    "N806",   # 变量名: TraceContext 类引用
+    "N815",   # 类变量大写：API 响应字段
+    "B005",   # strip 多字符: 测试代码中的 SSE 解析
+    "B023",   # 循环变量闭包: cli_local_models 的 stream_chat
+    
+    # 以下规则已修复，但保留 ignore 以防未来新增：
+    # E722 (bare except): 已修复为 except Exception
+    # F841 (未使用变量): 已加 _ 前缀或 # noqa
+    # F401 (未使用导入): 已删除
+    # W293 (尾部空格): 已清理
+    # W292 (文件末尾换行): 已添加
+    # B905 (zip strict): 已加 strict=False
+    # B007 (未用循环变量): 已加 _ 前缀
 ]

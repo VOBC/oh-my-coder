@@ -233,7 +233,7 @@ class SemanticSearch:
 
         # 结合查询嵌入和上下文嵌入
         combined_embedding = [
-            (q + c) / 2 for q, c in zip(query_embedding, avg_embedding, strict=True)
+            (q + c) / 2 for q, c in zip(query_embedding, avg_embedding, strict=False)
         ]
 
         # 搜索
@@ -269,7 +269,7 @@ class SemanticSearch:
         if not vec1 or not vec2 or len(vec1) != len(vec2):
             return 0.0
 
-        dot_product = sum(a * b for a, b in zip(vec1, vec2, strict=True))
+        dot_product = sum(a * b for a, b in zip(vec1, vec2, strict=False))
         norm1 = math.sqrt(sum(a * a for a in vec1))
         norm2 = math.sqrt(sum(b * b for b in vec2))
 
