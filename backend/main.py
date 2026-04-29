@@ -110,7 +110,7 @@ def chat(req: ChatRequest):
 
             proc.wait()
         except Exception as e:
-            yield f"data: [ERROR] {str(e)}\n\n"
+            yield f"data: [ERROR] {type(e).__name__}\n\n"
 
     return StreamingResponse(
         generate(),
