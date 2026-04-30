@@ -230,3 +230,94 @@ class TestMemoryManagerIntegration:
 
         assert manager.auto_compact.compact_threshold == 0.80
         assert manager.auto_compact.warning_threshold == 0.65
+
+
+
+class TestAutoCompactDedup:
+    """去重功能测试"""
+
+    @pytest.fixture
+    def memory_manager(self, tmp_path):
+        config = MemoryConfig(storage_dir=tmp_path / ".omc" / "memory")
+        return MemoryManager(config)
+
+    @pytest.fixture
+    def auto_compact(self, memory_manager):
+        return AutoCompact(memory_manager, enable_deduplication=True)
+
+    @pytest.fixture
+    def auto_compact_disabled(self, memory_manager):
+        return AutoCompact(memory_manager, enable_deduplication=False)
+
+    def test_dedup_removes_consecutive_duplicates(self, auto_compact):
+        """连续重复的 tool_call 只保留最后一次"""
+        tc = '{"tool_calls":[{"name":"read_file","arguments":{"path":"/tmp/test.txt"}}]}'
+        msgs = [Message(role="assistant", content=tc) for _ in range(3)]
+        result, count = auto_compact._deduplicate_tool_calls(msgs)
+        assert count == 2
+        assert len(result) == 1
+
+    def test_dedup_keeps_different_tool_calls(self, auto_compact):
+        """不同的 tool_call 不被去重"""
+        tc_a = '{"tool_calls":[{"name":"read_file","arguments":{"path":"/a.txt"}}]}'
+        tc_b = '{"tool_calls":[{"name":"read_file","arguments":{"path":"/b.txt"}}]}'
+        tc_c = '{"tool_calls":[{"name":"write_file","arguments":{"path":"/c.txt"}}]}'
+        msgs = [Message(role="assistant", content=tc_a),
+                Message(role="assistant", content=tc_b),
+                Message(role="assistant", content=tc_c)]
+        result, count = auto_compact._deduplicate_tool_calls(msgs)
+        assert count == 0
+        assert len(result) == 3
+
+    def test_dedup_preserves_non_assistant_messages(self, auto_compact):
+        """user/system 消息不被去重逻辑干扰"""
+        tc = '{"tool_calls":[{"name":"ls","arguments":{}}]}'
+        msgs = [
+            Message(role="user", content="list files"),
+            Message(role="assistant", content="OK."),
+            Message(role="assistant", content=tc),
+            Message(role="assistant", content=tc),
+            Message(role="user", content="thanks"),
+        ]
+        result, count = auto_compact._deduplicate_tool_calls(msgs)
+        assert count == 1
+        roles = [m.role for m in result]
+        assert roles == ["user", "assistant", "assistant", "user"]
+
+    def test_dedup_disabled_config(self, auto_compact_disabled):
+        """enable_deduplication=False 时不去重"""
+        tc = '{"tool_calls":[{"name":"test","arguments":{"x":1}}]}'
+        msgs = [Message(role="assistant", content=tc) for _ in range(3)]
+        result, count = auto_compact_disabled._deduplicate_tool_calls(msgs)
+        assert count == 0
+        assert len(result) == 3
+
+    def test_dedup_different_args_same_name(self, auto_compact):
+        """同一工具名、不同参数不被去重"""
+        tc1 = '{"tool_calls":[{"name":"read_file","arguments":"{\"path\":\"/a.txt\"}"}]}'
+        tc2 = '{"tool_calls":[{"name":"read_file","arguments":"{\"path\":\"/b.txt\"}"}]}'
+        msgs = [Message(role="assistant", content=tc1),
+                Message(role="assistant", content=tc2)]
+        result, count = auto_compact._deduplicate_tool_calls(msgs)
+        assert count == 0
+        assert len(result) == 2
+
+    def test_dedup_empty_content(self, auto_compact):
+        """空消息内容安全处理"""
+        msgs = [
+            Message(role="assistant", content=""),
+            Message(role="assistant", content=""),
+        ]
+        result, count = auto_compact._deduplicate_tool_calls(msgs)
+        assert count == 0
+        assert len(result) == 2
+
+    def test_dedup_none_json_content(self, auto_compact):
+        """普通文本消息不被误判"""
+        msgs = [
+            Message(role="assistant", content="Hello, how can I help you?"),
+            Message(role="assistant", content="Hello, how can I help you?"),
+        ]
+        result, count = auto_compact._deduplicate_tool_calls(msgs)
+        assert count == 0
+        assert len(result) == 2

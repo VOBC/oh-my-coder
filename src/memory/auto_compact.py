@@ -5,8 +5,11 @@
 """
 
 import json
-from dataclasses import dataclass
+import json
+import re
+from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Any
 
 from .short_term import Message, SessionContext
 
@@ -20,6 +23,7 @@ class CompactResult:
     tokens_after: int
     messages_removed: int
     warning_level: str  # "ok" / "warning" / "critical" / "compacted"
+    deduplicated_count: int = 0  # 去重次数（连续重复的 tool_call 结果数）
 
     @property
     def tokens_saved(self) -> int:
@@ -40,6 +44,7 @@ class AutoCompact:
         model_context_window: int = DEFAULT_CONTEXT_WINDOW,
         compact_threshold: float = 0.85,
         warning_threshold: float = 0.70,
+        enable_deduplication: bool = True,
     ):
         """
         Args:
@@ -47,11 +52,13 @@ class AutoCompact:
             model_context_window: 模型上下文窗口大小（默认 128k）
             compact_threshold: 触发压缩的阈值（默认 0.85 = 85%）
             warning_threshold: 发出警告的阈值（默认 0.70 = 70%）
+            enable_deduplication: 是否启用工具调用去重（默认 True）
         """
         self.memory_manager = memory_manager
         self.model_context_window = model_context_window
         self.compact_threshold = compact_threshold
         self.warning_threshold = warning_threshold
+        self.enable_deduplication = enable_deduplication
 
     def _get_model_context_window(self, provider: str = "", model: str = "") -> int:
         """从 model_metadata.json 获取模型的 context window"""
@@ -117,10 +124,156 @@ class AutoCompact:
                 tokens_after=tokens_before,
                 messages_removed=0,
                 warning_level=warning_level,
+                deduplicated_count=0,
             )
 
         # 执行压缩
         return self._compact(session, target_ratio=0.5)
+
+    def _deduplicate_tool_calls(
+        self, messages: list[Message]
+    ) -> tuple[list[Message], int]:
+        """检测并去除连续重复的 tool_call 结果
+
+        遍历 assistant 消息，找出连续重复的 tool_call 结果
+        （相同工具名称 + 相同参数），只保留最后一次。
+
+        Args:
+            messages: 消息列表（按时间顺序）
+
+        Returns:
+            (去重后的消息列表, 被去重的次数)
+        """
+        if not self.enable_deduplication:
+            return messages, 0
+
+        result: list[Message] = []
+        dedup_count = 0
+        i = 0
+
+        while i < len(messages):
+            msg = messages[i]
+
+            # 只处理 assistant 消息，尝试解析 tool_call
+            if msg.role != "assistant":
+                result.append(msg)
+                i += 1
+                continue
+
+            # 提取 tool_call 信息
+            current_calls = self._extract_tool_calls(msg.content)
+            if not current_calls:
+                result.append(msg)
+                i += 1
+                continue
+
+            # 收集连续重复的 tool_call 结果
+            # current_calls 是本条消息里的所有 tool_call
+            # 检查下一条消息是否也是 assistant，且 tool_call 相同
+            consecutive_dups: list[tuple[Message, int]] = []  # (消息, 被去重的tool_call数)
+            j = i + 1
+
+            while j < len(messages):
+                next_msg = messages[j]
+                if next_msg.role != "assistant":
+                    break
+                next_calls = self._extract_tool_calls(next_msg.content)
+                if not next_calls:
+                    break
+                # 判断是否完全相同（工具名 + 参数都一样）
+                if self._tool_calls_equal(current_calls, next_calls):
+                    consecutive_dups.append((next_msg, len(next_calls)))
+                    j += 1
+                else:
+                    break
+
+            if consecutive_dups:
+                # 保留当前消息（最后一次），删除之前的重复
+                dedup_count += sum(n for _, n in consecutive_dups)
+                result.append(msg)
+                i = j
+            else:
+                result.append(msg)
+                i += 1
+
+        return result, dedup_count
+
+    def _extract_tool_calls(self, content: str) -> list[dict[str, Any]]:
+        """从 assistant 消息内容中提取 tool_call 列表
+
+        支持多种格式：
+        - {"tool_calls": [...]} (标准 JSON)
+        - function_call 格式
+        - 嵌套在 JSON 块中
+
+        Returns:
+            tool_call 列表，每个 dict 包含 name/id 和 arguments
+        """
+        if not content:
+            return []
+
+        # 尝试 JSON 解析（处理 tool_calls 字段）
+        try:
+            # 先尝试直接解析整个 content
+            data = json.loads(content)
+            tool_calls = data.get("tool_calls") or data.get("function_call") or []
+            if isinstance(tool_calls, list):
+                normalized = []
+                for tc in tool_calls:
+                    if isinstance(tc, dict):
+                        name = tc.get("name") or tc.get("id") or ""
+                        args = tc.get("arguments") or ""
+                        if isinstance(args, str):
+                            args_str = args
+                        else:
+                            args_str = json.dumps(args, sort_keys=True)
+                        normalized.append({"name": name, "args": args_str})
+                return normalized
+        except (json.JSONDecodeError, TypeError):
+            pass
+
+        # 尝试从文本中提取 tool_calls JSON 块
+        patterns = [
+            r'"tool_calls"\s*:\s*(\[.*?\])',
+            r'"function_call"\s*:\s*(\[.*?\])',
+            r'```json\s*(.*?)\s*```',
+        ]
+
+        for pattern in patterns:
+            match = re.search(pattern, content, re.DOTALL)
+            if match:
+                try:
+                    tc_list = json.loads(match.group(1))
+                    if isinstance(tc_list, list):
+                        normalized = []
+                        for tc in tc_list:
+                            if isinstance(tc, dict):
+                                name = tc.get("name") or tc.get("id") or ""
+                                args = tc.get("arguments") or ""
+                                if isinstance(args, str):
+                                    args_str = args
+                                else:
+                                    args_str = json.dumps(args, sort_keys=True)
+                                normalized.append({"name": name, "args": args_str})
+                        if normalized:
+                            return normalized
+                except (json.JSONDecodeError, TypeError):
+                    continue
+
+        return []
+
+    def _tool_calls_equal(
+        self, a: list[dict[str, Any]], b: list[dict[str, Any]]
+    ) -> bool:
+        """判断两组 tool_call 是否完全相同（用于去重检测）"""
+        if len(a) != len(b):
+            return False
+        for tc_a, tc_b in zip(a, b):
+            if tc_a["name"] != tc_b["name"]:
+                return False
+            if tc_a["args"] != tc_b["args"]:
+                return False
+        return True
 
     def _compact(
         self, session: SessionContext, target_ratio: float = 0.5
@@ -147,6 +300,7 @@ class AutoCompact:
                 tokens_after=0,
                 messages_removed=0,
                 warning_level="ok",
+                deduplicated_count=0,
             )
 
         tokens_before = self._count_session_tokens(session)
@@ -183,10 +337,33 @@ class AutoCompact:
                 tokens_after=tokens_before,
                 messages_removed=0,
                 warning_level="ok",
+                deduplicated_count=0,
             )
 
-        # 生成摘要（简单实现：提取关键词和统计信息）
-        summary_content = self._generate_summary(to_compress)
+        # 1. 工具调用去重（先对全量 non_system_msgs 去重，再分片）
+        deduped_non_system, dedup_count = self._deduplicate_tool_calls(non_system_msgs)
+
+        # 重新计算 keep_count 和分片（基于去重后的消息数）
+        keep_count = max(1, int(len(deduped_non_system) * 0.2))
+        recent_msgs = deduped_non_system[-keep_count:]
+        to_compress = deduped_non_system[:-keep_count]
+
+        if not to_compress:
+            return CompactResult(
+                triggered=False,
+                tokens_before=tokens_before,
+                tokens_after=tokens_before,
+                messages_removed=0,
+                warning_level="ok",
+                deduplicated_count=dedup_count,
+            )
+
+        # 2. 生成摘要（简单实现：提取关键词和统计信息）
+        summary_parts = []
+        if dedup_count > 0:
+            summary_parts.append(f"[去重: {dedup_count} 次重复 tool_call]")
+        summary_parts.append(self._generate_summary(to_compress))
+        summary_content = " ".join(summary_parts)
         summary_msg = Message(
             role="system",
             content=f"[上下文压缩] {summary_content}",
@@ -204,6 +381,7 @@ class AutoCompact:
             tokens_after=tokens_after,
             messages_removed=messages_removed,
             warning_level="compacted",
+            deduplicated_count=dedup_count,
         )
 
     def _generate_summary(self, messages: list[Message]) -> str:
