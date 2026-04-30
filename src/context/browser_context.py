@@ -296,4 +296,9 @@ class BrowserAwareness:
 
     def to_context_string(self) -> str:
         """生成上下文字符串（同步版本，获取当前标签页）"""
-        return asyncio.run(self.get_current_tab()).to_context_string()
+        try:
+            asyncio.get_running_loop()
+            # 在 async context 中无法使用 asyncio.run()，返回默认值
+            return "[浏览器上下文: 请在同步环境中调用]"
+        except RuntimeError:
+            return asyncio.run(self.get_current_tab()).to_context_string()

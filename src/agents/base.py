@@ -168,8 +168,14 @@ class BaseAgent(ABC):
 
         try:
             awareness = BrowserAwareness()
-            browser_ctx = asyncio.run(awareness.get_current_tab())
-            result["browser"] = browser_ctx.to_context_string()
+            try:
+                asyncio.get_running_loop()  # 检查是否在 async context 中
+                # 在 async context 中，使用同步兜底
+                result["browser"] = "[浏览器上下文: 请在同步环境中调用获取]"
+            except RuntimeError:
+                # 不在 async context 中，安全使用 asyncio.run()
+                browser_ctx = asyncio.run(awareness.get_current_tab())
+                result["browser"] = browser_ctx.to_context_string()
         except Exception:
             result["browser"] = "[浏览器上下文不可用]"
 

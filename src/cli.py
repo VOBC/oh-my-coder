@@ -312,7 +312,8 @@ def run(
                     notify_workflow_complete_dingtalk,
                 )
 
-                status = "completed" if result.success else "failed"
+                from src.core.orchestrator import WorkflowStatus
+                status = "completed" if result.status == WorkflowStatus.COMPLETED else "failed"
                 steps = len(result.steps) if hasattr(result, "steps") else 1
                 exec_time = getattr(result, "execution_time", 0.0)
 
