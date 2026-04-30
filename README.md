@@ -26,6 +26,7 @@
 <p align="center">
  <img src="assets/demo.gif" alt="oh-my-coder Demo" width="800"/>
 </p>
+
 - [🎯 为什么选择 Oh My Coder？](#-为什么选择-oh-my-coder)
 - [🚀 Claude Code 迁移指南](#-claude-code-迁移指南)
 - [💰 零成本起步](#️-零成本起步) **[NEW]**
