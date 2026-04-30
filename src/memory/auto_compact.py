@@ -24,6 +24,7 @@ class CompactResult:
     messages_removed: int
     warning_level: str  # "ok" / "warning" / "critical" / "compacted"
     deduplicated_count: int = 0  # 去重次数（连续重复的 tool_call 结果数）
+    error_removed_count: int = 0  # 清理的历史 error 消息数
 
     @property
     def tokens_saved(self) -> int:
@@ -322,31 +323,16 @@ class AutoCompact:
                 warning_level="ok",
             )
 
-        # 保留最近 20% 的消息
-        keep_count = max(1, int(len(non_system_msgs) * 0.2))
-        recent_msgs = non_system_msgs[-keep_count:]
-
-        # 中间部分需要压缩的消息
-        to_compress = non_system_msgs[:-keep_count]
-
-        if not to_compress:
-            # 消息太少，不压缩
-            return CompactResult(
-                triggered=False,
-                tokens_before=tokens_before,
-                tokens_after=tokens_before,
-                messages_removed=0,
-                warning_level="ok",
-                deduplicated_count=0,
-            )
-
         # 1. 工具调用去重（先对全量 non_system_msgs 去重，再分片）
         deduped_non_system, dedup_count = self._deduplicate_tool_calls(non_system_msgs)
 
-        # 重新计算 keep_count 和分片（基于去重后的消息数）
-        keep_count = max(1, int(len(deduped_non_system) * 0.2))
-        recent_msgs = deduped_non_system[-keep_count:]
-        to_compress = deduped_non_system[:-keep_count]
+        # 2. 清理历史 error 消息（清理 4 回合前的 error）
+        purged_non_system, error_count = self._purge_old_errors(deduped_non_system, max_age_rounds=4)
+
+        # 基于清理后的消息重新分片
+        keep_count = max(1, int(len(purged_non_system) * 0.2))
+        recent_msgs = purged_non_system[-keep_count:]
+        to_compress = purged_non_system[:-keep_count]
 
         if not to_compress:
             return CompactResult(
@@ -356,12 +342,15 @@ class AutoCompact:
                 messages_removed=0,
                 warning_level="ok",
                 deduplicated_count=dedup_count,
+                error_removed_count=error_count,
             )
 
-        # 2. 生成摘要（简单实现：提取关键词和统计信息）
+        # 3. 生成摘要（简单实现：提取关键词和统计信息）
         summary_parts = []
         if dedup_count > 0:
             summary_parts.append(f"[去重: {dedup_count} 次重复 tool_call]")
+        if error_count > 0:
+            summary_parts.append(f"[已清理 {error_count} 个历史错误]")
         summary_parts.append(self._generate_summary(to_compress))
         summary_content = " ".join(summary_parts)
         summary_msg = Message(
@@ -382,6 +371,7 @@ class AutoCompact:
             messages_removed=messages_removed,
             warning_level="compacted",
             deduplicated_count=dedup_count,
+            error_removed_count=error_count,
         )
 
     def _generate_summary(self, messages: list[Message]) -> str:
@@ -417,3 +407,119 @@ class AutoCompact:
             f"({user_count} user, {assistant_count} assistant)。"
             f"关键词: {keywords_str}"
         )
+
+
+    # ------------------------------------------------------------------ P1-2: Error Purge ---------------------------------------------------------
+
+    def _purge_old_errors(
+        self, messages: list[Message], max_age_rounds: int = 4
+    ) -> tuple[list[Message], int]:
+        """清理历史 error 消息
+
+        删除超过 max_age_rounds 回合的历史 error 消息。
+        需保留的回合内的 error 消息不受影响。
+        超出阈值的旧回合：清除所有 error，但保留最后 1 条 error。
+
+        回合定义：两 user 消息之间的所有消息（含开头的 user）。
+        最后一段 trailing 内容（不包含 user 的消息）合并到最后一回合。
+
+        Args:
+            messages: 消息列表（按时间顺序）
+            max_age_rounds: 最大保留的回合数（默认 4）
+
+        Returns:
+            (清理后的消息列表, 被清理的 error 消息数)
+        """
+        if not messages:
+            return messages, 0
+
+        # 将消息按回合分组
+        # 回合 = 从当前 user 到下一个 user（含当前 user，不含下一个）
+        # 最后一段不含 user 的 trailing 内容 → 合并到最后一回合
+        rounds: list[list[Message]] = []
+        current_round: list[Message] = []
+
+        for msg in messages:
+            current_round.append(msg)
+            if msg.role == "user":
+                rounds.append(current_round)
+                current_round = []
+
+        # trailing 内容合并到最后一回合
+        if current_round and rounds:
+            rounds[-1].extend(current_round)
+        elif current_round and not rounds:
+            rounds.append(current_round)
+
+        total_rounds = len(rounds)
+        if total_rounds <= max_age_rounds:
+            return messages, 0
+
+        # 旧回合：超过 max_age_rounds 的部分（会被压缩的中间段）
+        old_round_count = total_rounds - max_age_rounds
+        old_rounds = rounds[:old_round_count]
+        keep_rounds = rounds[old_round_count:]
+
+        # 旧回合中所有 error 消息
+        old_error_msgs = [
+            m for round_msgs in old_rounds for m in round_msgs
+            if self._is_error_message(m)
+        ]
+
+        # 保留旧回合中最后 1 条 error
+        preserved_last_error: list[Message] = [old_error_msgs[-1]] if old_error_msgs else []
+
+        # 旧回合：删除所有 error 消息
+        old_kept: list[Message] = [
+            m for round_msgs in old_rounds for m in round_msgs
+            if not self._is_error_message(m)
+        ]
+        removed_count = len(old_error_msgs)
+
+        # 重建：旧回合保留非 error + 最后 1 条 error + 近 max_age_rounds 回合（全部保留）
+        purged = old_kept + preserved_last_error + [
+            m for round_msgs in keep_rounds for m in round_msgs
+        ]
+
+        # 按原始顺序排序
+        msg_id_to_index = {id(m): i for i, m in enumerate(messages)}
+        purged.sort(key=lambda m: msg_id_to_index.get(id(m), 0))
+
+        return purged, removed_count
+
+    def _is_error_message(self, msg: Message) -> bool:
+        """判断消息是否为 error 类型
+
+        检测依据：
+        1. metadata.role == "tool" 且 name 包含 error/exception/fail/err
+        2. metadata.is_error == True
+        3. tool role 的 content 包含 traceback/error:/exception: 等关键词
+        """
+        meta = msg.metadata or {}
+
+        # 兼容：role 可能在 Message.role 或 metadata.role 中
+        is_tool_msg = msg.role == "tool" or meta.get("role") == "tool"
+        if not is_tool_msg:
+            return False
+
+        # metadata 明确标注
+        if meta.get("is_error"):
+            return True
+        name = (meta.get("name") or "").lower()
+        if any(k in name for k in ("error", "exception", "fail", "err")):
+            return True
+        # tool 结果内容含 traceback / error:
+        content_lower = (msg.content or "").lower()
+        error_keywords = (
+            "traceback",
+            "error:",
+            "exception:",
+            "failed:",
+            "failure:",
+            "critical:",
+            "fatal:",
+        )
+        if any(kw in content_lower for kw in error_keywords):
+            return True
+
+        return False

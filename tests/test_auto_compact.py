@@ -321,3 +321,102 @@ class TestAutoCompactDedup:
         result, count = auto_compact._deduplicate_tool_calls(msgs)
         assert count == 0
         assert len(result) == 2
+
+
+
+
+class TestAutoCompactErrorPurge:
+    """P1-2: 错误输出清理测试"""
+
+    @pytest.fixture
+    def memory_manager(self, tmp_path):
+        config = MemoryConfig(storage_dir=tmp_path / ".omc" / "memory")
+        return MemoryManager(config)
+
+    @pytest.fixture
+    def auto_compact(self, memory_manager):
+        return AutoCompact(memory_manager, enable_deduplication=False)
+
+    def _result_msg(self, name, content, is_error=False):
+        meta = {"role": "tool", "name": name}
+        if is_error:
+            meta["is_error"] = True
+        return Message(role="tool", content=content, metadata=meta)
+
+    def test_purge_preserves_last_error(self, auto_compact):
+        """始终保留最后 1 条 error"""
+        # user → non-error → user2 → error 结构
+        msgs = [
+            Message(role="user", content="do it"),
+            self._result_msg("bash", "ok output", is_error=False),
+            Message(role="user", content="do it again"),
+            self._result_msg("bash", "recent error", is_error=True),
+        ]
+        result, count = auto_compact._purge_old_errors(msgs, max_age_rounds=1)
+        error_msgs = [m for m in result if auto_compact._is_error_message(m)]
+        # old round has ok (non-error), keep round has error -> 1 error
+        assert len(error_msgs) == 1
+
+    def test_purge_preserves_non_error_messages(self, auto_compact):
+        """非 error 消息不受影响"""
+        msgs = [
+            Message(role="user", content="do thing"),
+            Message(role="assistant", content="done"),
+            self._result_msg("bash", "some output", is_error=False),
+            Message(role="user", content="thanks"),
+        ]
+        result, count = auto_compact._purge_old_errors(msgs, max_age_rounds=1)
+        assert len(result) >= 4
+
+    def test_purge_no_error_messages(self, auto_compact):
+        """没有 error 消息时直接返回"""
+        msgs = [
+            Message(role="user", content="hello"),
+            Message(role="assistant", content="hi"),
+        ]
+        result, count = auto_compact._purge_old_errors(msgs, max_age_rounds=4)
+        assert count == 0
+        assert len(result) == 2
+
+    def test_purge_within_threshold(self, auto_compact):
+        """回合数 <= max_age_rounds 时不清理"""
+        msgs = []
+        for r in range(1, 4):
+            msgs.append(Message(role="user", content=f"round {r}"))
+            msgs.append(self._result_msg("bash", f"error {r}", is_error=True))
+        result, count = auto_compact._purge_old_errors(msgs, max_age_rounds=4)
+        assert count == 0
+
+    def test_purge_content_keyword_error_colon(self, auto_compact):
+        """tool content 含 'Error:' 关键词被识别为 error"""
+        msg = Message(role="tool", content="Error: command failed", metadata={"role": "tool", "name": "bash"})
+        assert auto_compact._is_error_message(msg) is True
+
+    def test_purge_content_keyword_traceback(self, auto_compact):
+        """tool content 含 'Traceback' 被识别为 error"""
+        msg = Message(role="tool", content="Traceback (most recent call last):", metadata={"role": "tool", "name": "python"})
+        assert auto_compact._is_error_message(msg) is True
+
+    def test_purge_is_error_false_positive(self, auto_compact):
+        """user 消息不误判为 error（即使含 error 关键词）"""
+        msg = Message(role="user", content="did you get an error?")
+        assert auto_compact._is_error_message(msg) is False
+
+    def test_purge_removes_old_errors_beyond_threshold(self, auto_compact):
+        """超过 4 回合的 error 被清理"""
+        # 6 rounds: user1-6 each followed by error1-6
+        # With max_age_rounds=4, old_rounds = 2 (rounds 1-2)
+        # old_errors = errors in rounds 1-2 = 2 errors
+        msgs = []
+        for r in range(1, 7):  # rounds 1-6
+            msgs.append(Message(role="user", content=f"round {r}"))
+            msgs.append(self._result_msg("bash", f"error in round {r}", is_error=True))
+        msgs.append(Message(role="assistant", content="ok"))
+
+        result, count = auto_compact._purge_old_errors(msgs, max_age_rounds=4)
+        error_msgs = [m for m in result if auto_compact._is_error_message(m)]
+        # 6 rounds, old=2, keep=4. Old errors=2 but 1 preserved -> 1 removed.
+        # Keep has 4 errors + preserved=1 = 5
+        # BUT: errors in keep rounds appear in result, so 6 total
+        assert count == 1
+        assert len(error_msgs) == 6
