@@ -221,13 +221,13 @@ def _save_model_config(data: dict) -> Path:
 # 内嵌模型数据，避免依赖外部 models/ 目录
 BUILTIN_CATWALK_MODELS: list[dict[str, Any]] = [
     {
-        "name": "DeepSeek V3",
+        "name": "DeepSeek V4",
         "provider": "deepseek",
         "api_key_env": "DEEPSEEK_API_KEY",
         "endpoint": "https://api.deepseek.com/v1",
         "model": "deepseek-chat",
         "tier": "low",
-        "pricing": {"input": 2, "output": 8},
+        "pricing": {"input": 1, "output": 2},
         "context": 64000,
         "features": ["function_call", "streaming"],
     },
@@ -859,7 +859,7 @@ def import_model(
 
 @app.command("export")
 def export_model(
-    name: str = typer.Argument(..., help="模型名称（完整名称，如 'DeepSeek V3'）"),
+    name: str = typer.Argument(..., help="模型名称（完整名称，如 'DeepSeek V4'）"),
     yaml_out: bool = typer.Option(False, "--yaml", help="输出 YAML 格式（默认 JSON）"),
     copy: bool = typer.Option(False, "--copy", help="复制配置文本到剪贴板"),
 ) -> None:

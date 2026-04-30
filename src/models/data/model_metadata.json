@@ -1,5 +1,5 @@
 {
-  "deepseek-chat": { "status": "production", "provider": "DeepSeek", "name": "DeepSeek V3" },
+  "deepseek-chat": { "status": "production", "provider": "DeepSeek", "name": "DeepSeek V4" },
   "deepseek-reasoner": { "status": "production", "provider": "DeepSeek", "name": "DeepSeek R1" },
   "glm-4-flash": { "status": "production", "provider": "Zhipu", "name": "GLM-4-Flash" },
   "glm-4v-flash": { "status": "production", "provider": "Zhipu", "name": "GLM-4V-Flash" },

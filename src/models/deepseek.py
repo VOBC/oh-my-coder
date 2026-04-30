@@ -45,7 +45,7 @@ DEEPSEEK_MODELS = {
         "cost_per_1k_completion": 0.0,
     },
     ModelTier.HIGH: {
-        "name": "deepseek-chat",  # 暂时用 chat，后续可接入 DeepSeek-V3
+        "name": "deepseek-chat",  # DeepSeek V4 对应的 API model name
         "cost_per_1k_prompt": 0.0,
         "cost_per_1k_completion": 0.0,
     },

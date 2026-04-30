@@ -217,7 +217,7 @@ def _generate_recommendations(
 
     # 成本建议
     if total_cost > 1.0:
-        recs.append("💡 成本较高，考虑使用 DeepSeek-V3（低成本）处理简单任务")
+        recs.append("💡 成本较高，考虑使用 DeepSeek-V4（低成本）处理简单任务")
     elif total_cost > 0.1:
         recs.append("💡 当前成本适中，继续保持")
 
