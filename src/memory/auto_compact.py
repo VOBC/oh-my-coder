@@ -46,6 +46,7 @@ class AutoCompact:
         compact_threshold: float = 0.85,
         warning_threshold: float = 0.70,
         enable_deduplication: bool = True,
+        enable_purge_errors: bool = True,
     ):
         """
         Args:
@@ -54,12 +55,14 @@ class AutoCompact:
             compact_threshold: 触发压缩的阈值（默认 0.85 = 85%）
             warning_threshold: 发出警告的阈值（默认 0.70 = 70%）
             enable_deduplication: 是否启用工具调用去重（默认 True）
+            enable_purge_errors: 是否启用历史错误消息清理（默认 True）
         """
         self.memory_manager = memory_manager
         self.model_context_window = model_context_window
         self.compact_threshold = compact_threshold
         self.warning_threshold = warning_threshold
         self.enable_deduplication = enable_deduplication
+        self.enable_purge_errors = enable_purge_errors
 
     def _get_model_context_window(self, provider: str = "", model: str = "") -> int:
         """从 model_metadata.json 获取模型的 context window"""
@@ -327,7 +330,10 @@ class AutoCompact:
         deduped_non_system, dedup_count = self._deduplicate_tool_calls(non_system_msgs)
 
         # 2. 清理历史 error 消息（清理 4 回合前的 error）
-        purged_non_system, error_count = self._purge_old_errors(deduped_non_system, max_age_rounds=4)
+        if self.enable_purge_errors:
+            purged_non_system, error_count = self._purge_old_errors(deduped_non_system, max_age_rounds=4)
+        else:
+            purged_non_system, error_count = deduped_non_system, 0
 
         # 基于清理后的消息重新分片
         keep_count = max(1, int(len(purged_non_system) * 0.2))
