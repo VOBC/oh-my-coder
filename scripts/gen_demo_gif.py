@@ -5,6 +5,7 @@ Generate oh-my-coder Demo GIF
 """
 
 import os
+
 from PIL import Image, ImageDraw, ImageFont
 
 # ── 配置 ─────────────────────────────────────────────────────────────────────
@@ -16,7 +17,7 @@ DURATION = 600  # 每帧 0.6 秒
 
 # 每步重复帧数 (控制每步停留时间)
 # Step 1: List Agents (~7s)
-# Step 2: Ask Question (~5s)  
+# Step 2: Ask Question (~5s)
 # Step 3: Code Generated (~11s)
 REPEAT_COUNTS = (12, 8, 18)
 
@@ -47,22 +48,22 @@ def make_terminal(title: str, lines: list, width: int = 800, height: int = 480) 
     """Render a terminal-like image."""
     img = Image.new("RGB", (width, height), BG)
     draw = ImageDraw.Draw(img)
-    
+
     # Title bar
     draw.rectangle([0, 0, width - 1, 28], fill=TITLE_BG)
     draw.rectangle([0, 28, width - 1, 29], fill=BORDER)
     for i, color in enumerate([(210, 95, 85), (210, 165, 75), (75, 195, 90)]):
         draw.ellipse([10 + i * 22, 8, 22 + i * 22, 20], fill=color)
-    
+
     try:
         font_b = ImageFont.truetype(FONT_PATH, 12)
         font_l = ImageFont.truetype(FONT_PATH, 13)
     except Exception:
         font_b = font_l = ImageFont.load_default()
-    
+
     tw = draw.textlength(title, font=font_b)
     draw.text((width // 2 - tw // 2, 5), title, fill=TEXT, font=font_b)
-    
+
     # Content
     y = 42
     for line in lines:
@@ -73,7 +74,7 @@ def make_terminal(title: str, lines: list, width: int = 800, height: int = 480) 
             text = line
         draw.text((14, y), text, fill=color, font=font_l)
         y += 22
-    
+
     draw.rectangle([0, 0, width - 1, height - 1], outline=BORDER, width=1)
     return img
 
@@ -147,27 +148,27 @@ def gen_step3_code_generated():
 
 
 def main():
-    print(f"Generating Demo GIF...")
+    print("Generating Demo GIF...")
     print(f"  Duration per frame: {DURATION}ms")
     print(f"  Repeat counts: {REPEAT_COUNTS}")
-    
+
     # Generate frames for each step
     frames = []
     step_generators = [gen_step1_list_agents, gen_step2_ask_question, gen_step3_code_generated]
-    
-    for i, (gen_fn, repeat) in enumerate(zip(step_generators, REPEAT_COUNTS)):
+
+    for i, (gen_fn, repeat) in enumerate(zip(step_generators, REPEAT_COUNTS, strict=True)):
         print(f"  Step {i+1}: {repeat} frames")
         img = gen_fn()
         for _ in range(repeat):
             frames.append(img)
-    
+
     print(f"  Total frames: {len(frames)}")
     print(f"  Total duration: ~{len(frames) * DURATION / 1000:.1f}s")
-    
+
     # Save GIF
     print(f"Saving to {OUTPUT}...")
     os.makedirs(os.path.dirname(OUTPUT), exist_ok=True)
-    
+
     frames[0].save(
         OUTPUT,
         save_all=True,
@@ -176,10 +177,10 @@ def main():
         duration=DURATION,
         loop=0,
     )
-    
+
     size_kb = os.path.getsize(OUTPUT) / 1024
     print(f"✅ Done! File size: {size_kb:.1f} KB")
-    
+
     if size_kb > 2048:
         print("⚠️  Warning: File exceeds 2MB")
     else:
