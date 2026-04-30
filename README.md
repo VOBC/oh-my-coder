@@ -15,7 +15,7 @@
 
 <!-- Watch 提示 -->
 <p align="center">
- <sub>⭐ 如果这个项目对你有帮助，请点个 <a href="https://github.com/VOBC/oh-my-coder">Watch</a> 关注更新！</sub>
+ <sub>⭐ 如果这个项目对你有帮助，请点个 <a href="https://github.com/VOBC/oh-my-coder"><b>⭐ Star</b></a> 和 <a href="https://github.com/VOBC/oh-my-coder/subscription">👁 Watch</a> 关注更新！</sub>
 </p>
 
 **💡 灵感来源**: [oh-my-claudecode](https://github.com/Yeachan-Heo/oh-my-claudecode) (28.9k ⭐) — 我们为国内开发者提供零门槛替代方案
