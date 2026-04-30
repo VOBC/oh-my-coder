@@ -14,6 +14,7 @@ TUI 交互界面 - 简易交互界面
 """
 
 from __future__ import annotations
+from typing import Optional
 
 import subprocess
 from enum import Enum
@@ -123,7 +124,7 @@ class TUISession:
 
     def __init__(self):
         self.state = State.MAIN
-        self.selected_workflow: str | None = None
+        self.selected_workflow: Optional[str] = None
         self.selected_model: str = "deepseek"
         self.task_input: str = ""
         self.cursor: int = 0
@@ -467,9 +468,9 @@ class TUISession:
 
 @app.command()
 def start(
-    task: str | None = typer.Argument(None, help="任务描述（可选）"),
-    workflow: str | None = typer.Option(None, "--workflow", "-w", help="指定工作流"),
-    model: str | None = typer.Option(None, "--model", "-m", help="指定模型"),
+    task: Optional[str] = typer.Argument(None, help="任务描述（可选）"),
+    workflow: Optional[str] = typer.Option(None, "--workflow", "-w", help="指定工作流"),
+    model: Optional[str] = typer.Option(None, "--model", "-m", help="指定模型"),
 ):
     """启动 TUI 交互界面"""
     session = TUISession()

@@ -8,6 +8,7 @@ omc quickstart - 交互式引导命令
 """
 
 from __future__ import annotations
+from typing import Optional
 
 import asyncio
 import json
@@ -217,7 +218,7 @@ def _check_api_key_works(env_key: str, provider: str) -> bool:
 # ============================================================
 # 步骤 1：选择模型
 # ============================================================
-def _step1_select_model() -> dict | None:
+def _step1_select_model() -> Optional[dict]:
     """交互式选择模型，返回选中的模型信息或 None（跳过）"""
     console.print()
     console.print(
@@ -566,7 +567,7 @@ async def _call_model_demo(model_info: dict) -> dict:
         return {"success": False, "error": "请求失败"}
 
 
-def _get_wenxin_access_token(api_key: str) -> str | None:
+def _get_wenxin_access_token(api_key: str) -> Optional[str]:
     """获取文心一言 access_token（简化版）"""
     try:
         secret_key = os.getenv("WENXIN_SECRET_KEY", "")
@@ -586,7 +587,7 @@ def _get_wenxin_access_token(api_key: str) -> str | None:
     return None
 
 
-def _get_hunyuan_access_token(api_key: str, secret_key: str) -> str | None:
+def _get_hunyuan_access_token(api_key: str, secret_key: str) -> Optional[str]:
     """获取腾讯混元 access_token（简化版）"""
     try:
         resp = httpx.post(
@@ -766,7 +767,7 @@ def main(
         console.print("[dim]已取消[/dim]")
         raise typer.Exit(0)
 
-    selected_model: dict | None = None
+    selected_model: Optional[dict] = None
 
     # ---- 步骤 1 ----
     if not completed["model"]:

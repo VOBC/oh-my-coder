@@ -5,6 +5,7 @@ LSP 集成 - AI 可读取 diagnostics
 """
 
 from __future__ import annotations
+from typing import Optional
 
 import json
 import os
@@ -37,7 +38,7 @@ SEVERITY_NAMES = {
 }
 
 
-def find_lsp_diagnostics(file_path: str | None = None) -> list[dict[str, Any]]:
+def find_lsp_diagnostics(file_path: Optional[str] = None) -> list[dict[str, Any]]:
     """
     查找 LSP 诊断信息
 
@@ -200,8 +201,8 @@ def format_diagnostics_for_ai(diagnostics: list[dict[str, Any]]) -> str:
 
 @app.command()
 def check(
-    file: str | None = typer.Option(None, "--file", "-f", help="指定文件"),
-    source: str | None = typer.Option(
+    file: Optional[str] = typer.Option(None, "--file", "-f", help="指定文件"),
+    source: Optional[str] = typer.Option(
         None, "--source", "-s", help="指定诊断来源 (ruff/mypy/eslint)"
     ),
     format: str = typer.Option(
@@ -276,7 +277,7 @@ def fix(
     dry_run: bool = typer.Option(
         True, "--dry-run/--no-dry-run", help="是否仅显示修复建议"
     ),
-    source: str | None = typer.Option(None, "--source", "-s", help="指定修复工具"),
+    source: Optional[str] = typer.Option(None, "--source", "-s", help="指定修复工具"),
 ):
     """
     自动修复代码问题

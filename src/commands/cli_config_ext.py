@@ -7,6 +7,7 @@ omc config list           - 列出本地配置
 """
 
 from __future__ import annotations
+from typing import Optional
 
 from pathlib import Path
 

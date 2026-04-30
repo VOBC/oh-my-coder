@@ -11,6 +11,7 @@
 """
 
 from __future__ import annotations
+from typing import Optional
 
 from pathlib import Path
 
@@ -30,7 +31,7 @@ def clean(
     strategy: str = typer.Option(
         "safe", "--strategy", "-s", help="策略: safe/aggressive"
     ),
-    output: str | None = typer.Option(None, "--output", "-o", help="报告输出文件"),
+    output: Optional[str] = typer.Option(None, "--output", "-o", help="报告输出文件"),
     verbose: bool = typer.Option(False, "--verbose", "-v", help="显示详细信息"),
 ):
     """

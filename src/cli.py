@@ -25,25 +25,25 @@ from rich.table import Table
 
 from .agents.cross_validation import CrossValidationLayer
 from .capabilities import app as cap_app
-from .cli_checkpoint import app as checkpoint_app
-from .cli_commands import app as commands_app
-from .cli_compact import app as compact_app
-from .cli_config_ext import app as config_ext_app
-from .cli_context import context_app
-from .cli_lsp import app as lsp_app
-from .cli_mcp import app as mcp_app
-from .cli_memory import app as memory_app
-from .cli_migrate import app as migrate_app
-from .cli_multiagent import app as multiagent_app
-from .cli_package_manager import app as pkg_app
-from .cli_search import app as search_app
-from .cli_security import app as security_app
-from .cli_self_config import app as self_config_app
-from .cli_server import app as server_app
-from .cli_skill import app as skill_app
-from .cli_task import app as task_app
-from .cli_trace import app as trace_app
-from .cli_tui import app as tui_app
+from .commands.cli_checkpoint import app as checkpoint_app
+from .commands.cli_commands import app as commands_app
+from .commands.cli_compact import app as compact_app
+from .commands.cli_config_ext import app as config_ext_app
+from .commands.cli_context import context_app
+from .commands.cli_lsp import app as lsp_app
+from .commands.cli_mcp import app as mcp_app
+from .commands.cli_memory import app as memory_app
+from .commands.cli_migrate import app as migrate_app
+from .commands.cli_multiagent import app as multiagent_app
+from .commands.cli_package_manager import app as pkg_app
+from .commands.cli_search import app as search_app
+from .commands.cli_security import app as security_app
+from .commands.cli_self_config import app as self_config_app
+from .commands.cli_server import app as server_app
+from .commands.cli_skill import app as skill_app
+from .commands.cli_task import app as task_app
+from .commands.cli_trace import app as trace_app
+from .commands.cli_tui import app as tui_app
 from .core.orchestrator import Orchestrator
 from .core.router import ModelRouter, RouterConfig
 from .quest import QuestStatus
@@ -113,7 +113,7 @@ except Exception:
     pass
 
 # model 子命令
-from .cli_model import app as model_app  # noqa: E402
+from .commands.cli_model import app as model_app  # noqa: E402
 
 app.add_typer(model_app, name="model", help="模型管理 - 查看/切换默认模型")
 

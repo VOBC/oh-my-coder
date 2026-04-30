@@ -12,6 +12,7 @@ Usage:
 """
 
 from __future__ import annotations
+from typing import Optional
 
 import platform
 import subprocess
@@ -180,7 +181,7 @@ RECOMMENDED_PACKAGES = {
 @app.command()
 def install(
     package: str = typer.Argument(..., help="包名称"),
-    manager: str | None = typer.Option(None, "--manager", "-m", help="指定包管理器"),
+    manager: Optional[str] = typer.Option(None, "--manager", "-m", help="指定包管理器"),
     sudo: bool = typer.Option(False, "--sudo", "-s", help="使用 sudo 安装"),
 ):
     """
@@ -223,7 +224,7 @@ def install(
             console.print(f"[dim]{stderr}[/dim]")
 
 
-def _select_best_manager(package: str) -> str | None:
+def _select_best_manager(package: str) -> Optional[str]:
     """选择最佳包管理器"""
     available = get_available_managers()
 
@@ -252,7 +253,7 @@ def _select_best_manager(package: str) -> str | None:
     return None
 
 
-def _build_install_command(manager: str, package: str, sudo: bool) -> list[str] | None:
+def _build_install_command(manager: str, package: str, sudo: bool) -> Optional[list[str]]:
     """构建安装命令"""
     cmd_prefix = ["sudo"] if sudo else []
 
@@ -273,7 +274,7 @@ def _build_install_command(manager: str, package: str, sudo: bool) -> list[str] 
 @app.command()
 def search(
     query: str = typer.Argument(..., help="搜索关键词"),
-    manager: str | None = typer.Option(None, "--manager", "-m", help="指定包管理器"),
+    manager: Optional[str] = typer.Option(None, "--manager", "-m", help="指定包管理器"),
 ):
     """
     搜索包
@@ -319,7 +320,7 @@ def _search_with_manager(manager: str, query: str):
 
 @app.command()
 def list_installed(
-    manager: str | None = typer.Option(None, "--manager", "-m", help="指定包管理器"),
+    manager: Optional[str] = typer.Option(None, "--manager", "-m", help="指定包管理器"),
 ):
     """
     列出已安装的包
@@ -365,8 +366,8 @@ def _list_with_manager(manager: str):
 
 @app.command()
 def update(
-    package: str | None = typer.Argument(None, help="包名称（不指定则更新所有）"),
-    manager: str | None = typer.Option(None, "--manager", "-m", help="指定包管理器"),
+    package: Optional[str] = typer.Argument(None, help="包名称（不指定则更新所有）"),
+    manager: Optional[str] = typer.Option(None, "--manager", "-m", help="指定包管理器"),
 ):
     """
     更新包

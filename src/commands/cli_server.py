@@ -9,6 +9,7 @@ API: http://localhost:{port}/docs（Swagger UI）
 """
 
 from __future__ import annotations
+from typing import Optional
 
 import asyncio
 import contextlib
@@ -33,8 +34,8 @@ app = typer.Typer(
 )
 
 # 全局进程引用
-_server_process: uvicorn.Server | None = None
-_config: dict | None = None
+_server_process: uvicorn.Optional[Server] = None
+_config: Optional[dict] = None
 
 
 def _find_free_port(port: int) -> int:
@@ -61,7 +62,7 @@ def start(
     host: str = typer.Option(
         "0.0.0.0", "--host", help="监听地址（0.0.0.0 = 所有网卡）"  # nosec B104
     ),
-    api_key: str | None = typer.Option(
+    api_key: Optional[str] = typer.Option(
         None, "--api-key", help="API 密钥（不设置则无认证）"
     ),
     no_auth: bool = typer.Option(
@@ -91,7 +92,7 @@ def start(
 
     # API Key 处理
     if no_auth:
-        effective_key: str | None = None
+        effective_key: Optional[str] = None
     elif api_key:
         effective_key = api_key
     else:
@@ -227,7 +228,7 @@ def logs(
 # ---------------------------------------------------------------------------
 
 
-def _load_api_key_from_config() -> str | None:
+def _load_api_key_from_config() -> Optional[str]:
     """从 ~/.omc/.env 读取 API Key"""
     env_file = Path.home() / ".omc" / ".env"
     if not env_file.exists():

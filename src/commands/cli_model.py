@@ -11,6 +11,7 @@ Model CLI - 模型切换 + Catwalk 模型仓库
 """
 
 from __future__ import annotations
+from typing import Optional
 
 import json
 import os
@@ -108,7 +109,7 @@ def _get_current_model() -> str:
     return config.get("default_model", "deepseek")
 
 
-def _get_current_api_key(model_id: str) -> str | None:
+def _get_current_api_key(model_id: str) -> Optional[str]:
     """获取当前模型的 API Key（从环境变量推断）"""
     key_map = {
         "deepseek": "DEEPSEEK_API_KEY",
