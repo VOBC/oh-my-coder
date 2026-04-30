@@ -5,9 +5,8 @@
 """
 
 import json
-import json
 import re
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
@@ -97,6 +96,8 @@ class AutoCompact:
         session: SessionContext,
         provider: str = "",
         model: str = "",
+        force: bool = False,
+        since_last_user: bool = False,
     ) -> CompactResult:
         """检查并执行压缩
 
@@ -104,11 +105,25 @@ class AutoCompact:
             session: 当前会话上下文
             provider: 模型提供商（用于查 context window）
             model: 模型名称（用于查 context window）
+            force: 强制压缩（忽略阈值检查，默认 False）
+            since_last_user: 从最后用户消息开始清理（默认 False）
 
         Returns:
             CompactResult: 压缩结果
         """
         context_window = self._get_model_context_window(provider, model)
+
+        # 如果指定 since_last_user，裁剪消息从最后一条 user 开始
+        if since_last_user:
+            messages = session.messages
+            last_user_idx = None
+            for i in range(len(messages) - 1, -1, -1):
+                if messages[i].role == "user":
+                    last_user_idx = i
+                    break
+            if last_user_idx is not None and last_user_idx > 0:
+                session.messages = messages[last_user_idx:]
+
         tokens_before = self._count_session_tokens(session)
         usage_ratio = tokens_before / context_window
 
@@ -120,8 +135,8 @@ class AutoCompact:
         else:
             warning_level = "ok"
 
-        # 如果低于压缩阈值，只返回警告
-        if usage_ratio < self.compact_threshold:
+        # 如果低于压缩阈值且非强制模式，只返回警告
+        if not force and usage_ratio < self.compact_threshold:
             return CompactResult(
                 triggered=False,
                 tokens_before=tokens_before,
@@ -272,7 +287,7 @@ class AutoCompact:
         """判断两组 tool_call 是否完全相同（用于去重检测）"""
         if len(a) != len(b):
             return False
-        for tc_a, tc_b in zip(a, b):
+        for tc_a, tc_b in zip(a, b):  # noqa: B905
             if tc_a["name"] != tc_b["name"]:
                 return False
             if tc_a["args"] != tc_b["args"]:

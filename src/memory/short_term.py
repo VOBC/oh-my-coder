@@ -156,6 +156,23 @@ class ShortTermMemory:
         session.messages = [*system_msgs, summary, *keep]
         return session.messages
 
+    def list_sessions(self) -> list[SessionContext]:
+        """列出所有会话（按最后活跃时间倒序）"""
+        sessions = []
+        for f in self.storage_dir.glob("*.json"):
+            try:
+                data = json.loads(f.read_text())
+                sessions.append(SessionContext.from_dict(data))
+            except Exception:
+                pass
+        sessions.sort(key=lambda s: s.last_active, reverse=True)
+        return sessions
+
+    def get_latest_session(self) -> SessionContext | None:
+        """获取最新活跃的会话"""
+        sessions = self.list_sessions()
+        return sessions[0] if sessions else None
+
     def clear_expired(self, max_age_hours: int = 24):
         """清理过期会话（超过 max_age_hours）"""
         now = time.time()

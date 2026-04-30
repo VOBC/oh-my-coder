@@ -125,6 +125,8 @@ class MemoryManager:
         session: SessionContext,
         provider: str = "",
         model: str = "",
+        force: bool = False,
+        since_last_user: bool = False,
     ) -> CompactResult:
         """检查并执行自动压缩
 
@@ -132,14 +134,26 @@ class MemoryManager:
             session: 当前会话上下文
             provider: 模型提供商
             model: 模型名称
+            force: 强制压缩（忽略阈值检查，默认 False）
+            since_last_user: 从最后用户消息开始清理（默认 False）
 
         Returns:
             CompactResult: 压缩结果
         """
-        result = self.auto_compact.check_and_compact(session, provider, model)
+        result = self.auto_compact.check_and_compact(
+            session, provider, model, force=force, since_last_user=since_last_user
+        )
         if result.compacted:
             self.record_compact(result)
         return result
+
+    def get_latest_session(self):
+        """获取最新活跃的会话"""
+        return self.short_term.get_latest_session()
+
+    def save_session(self, session):
+        """保存会话"""
+        self.short_term.save_session(session)
 
     @classmethod
     def from_project(cls, project_path: Path) -> MemoryManager:
