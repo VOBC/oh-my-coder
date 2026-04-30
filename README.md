@@ -13,6 +13,11 @@
 [![Stars](https://img.shields.io/github/stars/VOBC/oh-my-coder?style=flat-square&logo=github)](https://github.com/VOBC/oh-my-coder/stargazers)
 [![Tests](https://img.shields.io/github/actions/workflow/status/VOBC/oh-my-coder/test.yml?branch=main&label=Tests)](https://github.com/VOBC/oh-my-coder/actions)
 
+<!-- Watch 提示 -->
+<p align="center">
+ <sub>⭐ 如果这个项目对你有帮助，请点个 <a href="https://github.com/VOBC/oh-my-coder/watch">Watch</a> 关注更新！</sub>
+</p>
+
 **💡 灵感来源**: [oh-my-claudecode](https://github.com/Yeachan-Heo/oh-my-claudecode) (28.9k ⭐) — 我们为国内开发者提供零门槛替代方案
 
 ![Agent System](docs/screenshots/demo-agents.svg)
@@ -964,6 +969,11 @@ MIT License - 详见 [LICENSE](LICENSE)
 - **分享给朋友** — 让更多需要的人知道这个工具
 
 ---
+
+
+### 📅 更新日志
+
+查看完整变更记录请访问 [CHANGELOG.md](./CHANGELOG.md) 或关注 [Releases](https://github.com/VOBC/oh-my-coder/releases)。
 
 ## 📈 Star History
 
