@@ -165,6 +165,14 @@ try:
 except Exception:
     pass
 
+# monorepo 子命令 - 工作区感知
+try:
+    from .cli_monorepo import app as monorepo_app  # noqa: E402
+
+    app.add_typer(monorepo_app, name="monorepo", help="Monorepo 支持 - pnpm/lerna/nx 工作区感知")
+except Exception:
+    pass
+
 console = Console()
 
 
