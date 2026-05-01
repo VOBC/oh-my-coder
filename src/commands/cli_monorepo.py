@@ -240,7 +240,7 @@ def monorepo_run(
                     console.print("[green]✓[/green]")
                     results.append((pkg, True, ""))
                 else:
-                    console.print(f"[red]✗[/red]")
+                    console.print("[red]✗[/red]")
                     results.append((pkg, False, result.stderr[:100]))
             except Exception as e:
                 console.print(f"[red]✗ {e}[/red]")
