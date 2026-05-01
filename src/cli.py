@@ -73,7 +73,9 @@ app.add_typer(
     skill_app, name="skill", help="Skill 系统 - 内置和自定义 Skill 管理与执行"
 )
 app.add_typer(trace_app, name="trace", help="Trace 执行记录 - 查看 Agent 执行过程")
-app.add_typer(compact_app, name="compact", help="自动压缩统计 - 查看压缩历史和 token 使用情况")
+app.add_typer(
+    compact_app, name="compact", help="自动压缩统计 - 查看压缩历史和 token 使用情况"
+)
 app.add_typer(memory_app, name="memory", help="分层记忆管理 - 查看核心/精选/完整记忆")
 app.add_typer(migrate_app, name="migrate", help="记忆迁移 - 从 Claude/Gemini 导入配置")
 app.add_typer(tui_app, name="tui", help="TUI 交互界面 - 简易终端交互")
@@ -313,7 +315,12 @@ def run(
                     notify_workflow_complete,
                     notify_workflow_complete_dingtalk,
                 )
-                status = "completed" if result.status == WorkflowStatus.COMPLETED else "failed"
+
+                status = (
+                    "completed"
+                    if result.status == WorkflowStatus.COMPLETED
+                    else "failed"
+                )
                 steps = len(result.steps) if hasattr(result, "steps") else 1
                 exec_time = getattr(result, "execution_time", 0.0)
 

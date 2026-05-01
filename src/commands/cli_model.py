@@ -511,7 +511,9 @@ def list_models(
             all_configs = [c for c in all_configs if c.get("tier") in RECOMMENDED_TIERS]
             recommended_count = len(all_configs)
         else:
-            recommended_count = len([c for c in all_configs if c.get("tier") in RECOMMENDED_TIERS])
+            recommended_count = len(
+                [c for c in all_configs if c.get("tier") in RECOMMENDED_TIERS]
+            )
 
         if json_output:
             # JSON 输出（供 AI 消费）
@@ -1108,7 +1110,9 @@ def _load_model_config() -> dict:
 def _save_model_config(data: dict) -> None:
     MODEL_CONFIG_FILE.parent.mkdir(parents=True, exist_ok=True)
     with open(MODEL_CONFIG_FILE, "w", encoding="utf-8") as f:
-        yaml.dump(data, f, allow_unicode=True, sort_keys=False, default_flow_style=False)
+        yaml.dump(
+            data, f, allow_unicode=True, sort_keys=False, default_flow_style=False
+        )
 
 
 @app.command("config")

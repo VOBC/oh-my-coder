@@ -232,7 +232,6 @@ class TestMemoryManagerIntegration:
         assert manager.auto_compact.warning_threshold == 0.65
 
 
-
 class TestAutoCompactDedup:
     """去重功能测试"""
 
@@ -251,7 +250,9 @@ class TestAutoCompactDedup:
 
     def test_dedup_removes_consecutive_duplicates(self, auto_compact):
         """连续重复的 tool_call 只保留最后一次"""
-        tc = '{"tool_calls":[{"name":"read_file","arguments":{"path":"/tmp/test.txt"}}]}'
+        tc = (
+            '{"tool_calls":[{"name":"read_file","arguments":{"path":"/tmp/test.txt"}}]}'
+        )
         msgs = [Message(role="assistant", content=tc) for _ in range(3)]
         result, count = auto_compact._deduplicate_tool_calls(msgs)
         assert count == 2
@@ -262,9 +263,11 @@ class TestAutoCompactDedup:
         tc_a = '{"tool_calls":[{"name":"read_file","arguments":{"path":"/a.txt"}}]}'
         tc_b = '{"tool_calls":[{"name":"read_file","arguments":{"path":"/b.txt"}}]}'
         tc_c = '{"tool_calls":[{"name":"write_file","arguments":{"path":"/c.txt"}}]}'
-        msgs = [Message(role="assistant", content=tc_a),
-                Message(role="assistant", content=tc_b),
-                Message(role="assistant", content=tc_c)]
+        msgs = [
+            Message(role="assistant", content=tc_a),
+            Message(role="assistant", content=tc_b),
+            Message(role="assistant", content=tc_c),
+        ]
         result, count = auto_compact._deduplicate_tool_calls(msgs)
         assert count == 0
         assert len(result) == 3
@@ -294,10 +297,12 @@ class TestAutoCompactDedup:
 
     def test_dedup_different_args_same_name(self, auto_compact):
         """同一工具名、不同参数不被去重"""
-        tc1 = '{"tool_calls":[{"name":"read_file","arguments":"{\"path\":\"/a.txt\"}"}]}'
-        tc2 = '{"tool_calls":[{"name":"read_file","arguments":"{\"path\":\"/b.txt\"}"}]}'
-        msgs = [Message(role="assistant", content=tc1),
-                Message(role="assistant", content=tc2)]
+        tc1 = '{"tool_calls":[{"name":"read_file","arguments":"{"path":"/a.txt"}"}]}'
+        tc2 = '{"tool_calls":[{"name":"read_file","arguments":"{"path":"/b.txt"}"}]}'
+        msgs = [
+            Message(role="assistant", content=tc1),
+            Message(role="assistant", content=tc2),
+        ]
         result, count = auto_compact._deduplicate_tool_calls(msgs)
         assert count == 0
         assert len(result) == 2
@@ -321,8 +326,6 @@ class TestAutoCompactDedup:
         result, count = auto_compact._deduplicate_tool_calls(msgs)
         assert count == 0
         assert len(result) == 2
-
-
 
 
 class TestAutoCompactErrorPurge:
@@ -389,12 +392,20 @@ class TestAutoCompactErrorPurge:
 
     def test_purge_content_keyword_error_colon(self, auto_compact):
         """tool content 含 'Error:' 关键词被识别为 error"""
-        msg = Message(role="tool", content="Error: command failed", metadata={"role": "tool", "name": "bash"})
+        msg = Message(
+            role="tool",
+            content="Error: command failed",
+            metadata={"role": "tool", "name": "bash"},
+        )
         assert auto_compact._is_error_message(msg) is True
 
     def test_purge_content_keyword_traceback(self, auto_compact):
         """tool content 含 'Traceback' 被识别为 error"""
-        msg = Message(role="tool", content="Traceback (most recent call last):", metadata={"role": "tool", "name": "python"})
+        msg = Message(
+            role="tool",
+            content="Traceback (most recent call last):",
+            metadata={"role": "tool", "name": "python"},
+        )
         assert auto_compact._is_error_message(msg) is True
 
     def test_purge_is_error_false_positive(self, auto_compact):
@@ -608,7 +619,9 @@ class TestCompactSweepIntegration:
         # force=True 时跳过阈值检查，应该触发压缩逻辑
         assert result.triggered is True
 
-    def test_auto_compact_check_since_last_user_parameter(self, memory_manager, session):
+    def test_auto_compact_check_since_last_user_parameter(
+        self, memory_manager, session
+    ):
         """since_last_user=True 时从最后用户消息处截断"""
         ac = AutoCompact(
             memory_manager,
@@ -653,7 +666,10 @@ class TestGenerateSummaryNewFormat:
     def test_summary_mentions_file_reads(self, auto_compact_for_summary):
         """摘要包含文件读取统计"""
         messages = [
-            Message(role="assistant", content='{"tool_calls":[{"name":"Read","arguments":{}}]}'),
+            Message(
+                role="assistant",
+                content='{"tool_calls":[{"name":"Read","arguments":{}}]}',
+            ),
             Message(role="tool", content="file content"),
         ]
         summary = auto_compact_for_summary._generate_summary(messages)
@@ -662,7 +678,10 @@ class TestGenerateSummaryNewFormat:
     def test_summary_mentions_commands(self, auto_compact_for_summary):
         """摘要包含命令执行统计"""
         messages = [
-            Message(role="assistant", content='{"tool_calls":[{"name":"Bash","arguments":{}}]}'),
+            Message(
+                role="assistant",
+                content='{"tool_calls":[{"name":"Bash","arguments":{}}]}',
+            ),
             Message(role="tool", content="ls output"),
         ]
         summary = auto_compact_for_summary._generate_summary(messages)
@@ -671,7 +690,11 @@ class TestGenerateSummaryNewFormat:
     def test_summary_mentions_errors(self, auto_compact_for_summary):
         """摘要包含错误统计"""
         messages = [
-            Message(role="tool", content="Error: something failed", metadata={"role": "tool", "is_error": True}),
+            Message(
+                role="tool",
+                content="Error: something failed",
+                metadata={"role": "tool", "is_error": True},
+            ),
         ]
         summary = auto_compact_for_summary._generate_summary(messages)
         assert "省略了" in summary
@@ -685,9 +708,15 @@ class TestGenerateSummaryNewFormat:
         """混合类型消息摘要"""
         messages = [
             Message(role="user", content="do it"),
-            Message(role="assistant", content='{"tool_calls":[{"name":"Bash","arguments":{}}]}'),
+            Message(
+                role="assistant",
+                content='{"tool_calls":[{"name":"Bash","arguments":{}}]}',
+            ),
             Message(role="tool", content="ok"),
-            Message(role="assistant", content='{"tool_calls":[{"name":"Read","arguments":{}}]}'),
+            Message(
+                role="assistant",
+                content='{"tool_calls":[{"name":"Read","arguments":{}}]}',
+            ),
             Message(role="tool", content="content"),
             Message(role="user", content="thanks"),
         ]

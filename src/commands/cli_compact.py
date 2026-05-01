@@ -47,7 +47,9 @@ def compact_stats(
     manager = _get_manager(project_path.resolve())
     stats = manager.compact_stats
 
-    table = Table(title="🗜️ AutoCompact 统计", show_header=True, header_style="bold cyan")
+    table = Table(
+        title="🗜️ AutoCompact 统计", show_header=True, header_style="bold cyan"
+    )
     table.add_column("指标", style="dim")
     table.add_column("值", justify="right")
 
@@ -114,9 +116,7 @@ def compact_sweep(
                 f"节省约 {result.tokens_saved} tokens[/yellow]"
             )
         else:
-            console.print(
-                "[dim]Dry-run: 当前使用率未达到阈值，无需压缩。[/dim]"
-            )
+            console.print("[dim]Dry-run: 当前使用率未达到阈值，无需压缩。[/dim]")
             console.print(f"  当前 token: {result.tokens_before}")
         raise typer.Exit(0)
 
@@ -129,7 +129,5 @@ def compact_sweep(
             f"节省 ~{result.tokens_saved} tokens[/green]"
         )
     else:
-        console.print(
-            "[yellow]⚠️  未触发压缩（usage_ratio < threshold）。[/yellow]"
-        )
+        console.print("[yellow]⚠️  未触发压缩（usage_ratio < threshold）。[/yellow]")
         console.print(f"  当前 token: {result.tokens_before}")

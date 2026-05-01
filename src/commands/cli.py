@@ -169,7 +169,9 @@ except Exception:
 try:
     from .cli_monorepo import app as monorepo_app  # noqa: E402
 
-    app.add_typer(monorepo_app, name="monorepo", help="Monorepo 支持 - pnpm/lerna/nx 工作区感知")
+    app.add_typer(
+        monorepo_app, name="monorepo", help="Monorepo 支持 - pnpm/lerna/nx 工作区感知"
+    )
 except Exception:
     pass
 
@@ -352,7 +354,12 @@ def run(
                     notify_workflow_complete,
                     notify_workflow_complete_dingtalk,
                 )
-                status = "completed" if result.status == WorkflowStatus.COMPLETED else "failed"
+
+                status = (
+                    "completed"
+                    if result.status == WorkflowStatus.COMPLETED
+                    else "failed"
+                )
                 steps = len(result.steps) if hasattr(result, "steps") else 1
                 exec_time = getattr(result, "execution_time", 0.0)
 

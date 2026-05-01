@@ -109,8 +109,12 @@ def detect(
     info = detect_monorepo(path)
 
     if info is None:
-        console.print(f"[yellow]⚠[/yellow] 目录 [cyan]{path}[/cyan] 不是已知的 monorepo 结构")
-        console.print("[dim]支持: pnpm workspace, lerna, nx, turborepo, bazel, rush[/dim]")
+        console.print(
+            f"[yellow]⚠[/yellow] 目录 [cyan]{path}[/cyan] 不是已知的 monorepo 结构"
+        )
+        console.print(
+            "[dim]支持: pnpm workspace, lerna, nx, turborepo, bazel, rush[/dim]"
+        )
         return
 
     console.print(f"[green]✓[/green] 检测到 Monorepo: [bold]{info.type}[/bold]")
@@ -235,7 +239,9 @@ def monorepo_run(
         else:
             console.print(f"[cyan]→[/cyan] {pkg.name}...", end=" ")
             try:
-                result = subprocess.run(cmd, cwd=info.root, capture_output=True, text=True, timeout=60)
+                result = subprocess.run(
+                    cmd, cwd=info.root, capture_output=True, text=True, timeout=60
+                )
                 if result.returncode == 0:
                     console.print("[green]✓[/green]")
                     results.append((pkg, True, ""))
