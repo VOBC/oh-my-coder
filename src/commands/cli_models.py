@@ -400,9 +400,23 @@ def remove_model(
     console.print(f"[green]✓ 已删除: {target.get('name', '-')}[/green]")
 
 
+from src.commands.cli_models_recommend import show_recommend
+
+
 @app.callback(invoke_without_command=True)
-def main(ctx: typer.Context) -> None:
-    """默认显示帮助"""
+def main(
+    ctx: typer.Context,
+    recommend: bool = typer.Option(
+        False, "--recommend", help="显示模型精选推荐"
+    ),
+    task: str = typer.Option(
+        None, "--task", "-t", help="推荐的任务类型: coding/reasoning/creative/fast/chat"
+    ),
+) -> None:
+    """模型配置分享 - 分享/浏览社区模型配置"""
+    if recommend:
+        show_recommend(task=task)
+        return
     if ctx.invoked_subcommand is None:
         console.print(ctx.get_help())
 
