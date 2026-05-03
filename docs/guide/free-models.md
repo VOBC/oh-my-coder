@@ -99,7 +99,7 @@ omc config set -k MIMOX_API_KEY -v "your_api_key"
 omc config set -k DEFAULT_MODEL -v "mimo"
 ```
 
-**获取 API Key**: [小米开放平台](https://platform.ai.xiaomi.com/)
+**获取 API Key**: [小米 MiMo 平台](https://platform.xiaomimimo.com/)
 
 **适用场景**:
 - 长代码文件分析
