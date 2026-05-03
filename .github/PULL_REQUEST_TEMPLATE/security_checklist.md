@@ -31,9 +31,9 @@ grep -rn "hashlib.md5\|hashlib.sha1" src/ --include="*.py"
 
 ## 参考文档
 
-- [安全编码规范](../../SECURITY_CODING_GUIDE.md)
-- [CodeQL 解决方案](security-whackamole-investigation.md)
-- [小麦的 6 条经验](security-whackamole-investigation.md#经验教训整合小麦的-6-条核心经验)
+- [安全编码规范](../../docs/security/coding-guide.md)
+- [CodeQL 解决方案](../../docs/security/security-whackamole-investigation.md)
+- [小麦的 6 条经验](../../docs/security/security-whackamole-investigation.md#经验教训整合小麦的-6-条核心经验)
 
 ---
 
