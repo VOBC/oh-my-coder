@@ -259,7 +259,6 @@ omc run "任务" --model qwen
 
 - **oh-my-coder GitHub**: https://github.com/VOBC/oh-my-coder
 - **智谱 AI 开放平台**: https://open.bigmodel.cn/
-- **Claude 封号新闻**: [难搞!Claude开始搞AI实名制了,国内用户可咋办](https://new.qq.com/rain/a/20260415A06C6F00)
 - **智谱搬家计划**: [智谱AI开放平台](https://open.bigmodel.cn/) - 查看"Claude用户特别搬家计划"公告
 
 ---
