@@ -26,3 +26,7 @@ ignore = [
     # B905 (zip strict): 已加 strict=False
     # B007 (未用循环变量): 已加 _ 前缀
 ]
+
+[lint.per-file-ignores]
+"tests/*" = ["B905"]
+"src/*" = ["B905"]  # zip strict=False 兼容 Python 3.9

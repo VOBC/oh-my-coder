@@ -123,14 +123,14 @@ class Calculator:
         vec1 = [1.0, 0.0, 0.0]
         vec2 = [1.0, 0.0, 0.0]
         # 直接计算，不使用 strict 参数（Python 3.9 兼容）
-        dot = sum(a * b for a, b in zip(vec1, vec2, strict=False))
+        dot = sum(a * b for a, b in zip(vec1, vec2))
         norm1 = sum(a * a for a in vec1) ** 0.5
         norm2 = sum(b * b for b in vec2) ** 0.5
         similarity = dot / (norm1 * norm2) if norm1 and norm2 else 0.0
         assert abs(similarity - 1.0) < 0.001
 
         vec3 = [0.0, 1.0, 0.0]
-        dot = sum(a * b for a, b in zip(vec1, vec3, strict=False))
+        dot = sum(a * b for a, b in zip(vec1, vec3))
         similarity = dot / (norm1 * norm2) if norm1 and norm2 else 0.0
         assert abs(similarity) < 0.001
 
@@ -385,7 +385,7 @@ class TestEdgeCases:
             assert avg == []
         else:
             assert len(avg) == len(expected)
-            for a, e in zip(avg, expected, strict=False):
+            for a, e in zip(avg, expected):
                 assert abs(a - e) < 0.001
 
     def test_search_with_special_characters(self, tmp_path):

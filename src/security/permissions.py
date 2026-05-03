@@ -140,7 +140,7 @@ class PermissionGuard:
 
         # 2. 配置文件黑名单
         for pattern, compiled in zip(
-            self.rules.denied_patterns, self._denied_re, strict=False
+            self.rules.denied_patterns, self._denied_re
         ):
             if compiled.search(command):
                 return CheckResult(
@@ -152,7 +152,7 @@ class PermissionGuard:
         # 3. 白名单模式
         if self._allowed_re:
             for pattern, compiled in zip(
-                self.rules.allowed_patterns, self._allowed_re, strict=False
+                self.rules.allowed_patterns, self._allowed_re
             ):
                 if compiled.search(command):
                     return CheckResult(allowed=True, reason=f"匹配白名单: {pattern}")
