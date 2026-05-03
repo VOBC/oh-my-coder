@@ -3,7 +3,7 @@
 import sys
 import tempfile
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -11,9 +11,8 @@ import pytest
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from src.rag.indexer import (
-    CodeElement,
-    CodeElementType,
     CodebaseIndexer,
+    CodeElementType,
     IndexConfig,
     ProgrammingLanguage,
     PythonParser,
@@ -119,7 +118,7 @@ def hello():
     def test_should_index_exclude(self, temp_project):
         """测试排除模式"""
         config = IndexConfig(root_path=temp_project)
-        indexer = CodebaseIndexer(config)
+        CodebaseIndexer(config)
 
         # __pycache__ 路径应该被排除（检查路径字符串）
         pycache_path = str(temp_project / "__pycache__" / "test.pyc")

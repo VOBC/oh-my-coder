@@ -1,9 +1,8 @@
 """RAG 模块测试 - Search"""
 
 import sys
-import tempfile
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -11,15 +10,13 @@ import pytest
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from src.rag.indexer import (
+    CodebaseIndexer,
     CodeElement,
     CodeElementType,
-    CodebaseIndexer,
     IndexConfig,
-    ProgrammingLanguage,
 )
 from src.rag.search import (
     ContextBuilder,
-    SearchConfig,
     SearchConfig,
     SearchResult,
     SemanticSearch,
@@ -121,11 +118,11 @@ class Calculator:
 
     def test_cosine_similarity(self, indexer_with_elements):
         """测试余弦相似度计算"""
-        search = SemanticSearch(indexer_with_elements)
+        SemanticSearch(indexer_with_elements)
 
         vec1 = [1.0, 0.0, 0.0]
         vec2 = [1.0, 0.0, 0.0]
-        # 直接计算，避免调用有 strict 参数的方法
+        # 直接计算，不使用 strict 参数（Python 3.9 兼容）
         dot = sum(a * b for a, b in zip(vec1, vec2))
         norm1 = sum(a * a for a in vec1) ** 0.5
         norm2 = sum(b * b for b in vec2) ** 0.5
