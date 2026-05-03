@@ -279,7 +279,7 @@ class Orchestrator:
                 check_interval=60.0,
                 stale_threshold=300.0,
                 max_retries=3,
-                state_dir=self.state_dir.parent.parent / "health",
+                state_dir=self.state_dir / "health",
             )
         return self._health_checker
 

@@ -833,16 +833,15 @@ oh-my-coder/
 oh-my-coder/
 ├── src/                   # 核心源码（31 个 Agent）
 ├── desktop/               # Electron 桌面端
-├── docs/                  # 所有文档（含 examples/）
-│   └── examples/          # 示例代码（web_demo, cli_demo, advanced_demo...）
+├── docs/                  # 所有文档（含 examples/、community/）
 ├── tests/                 # 测试套件（954+ 测试）
 ├── assets/                # 静态资源（GIF、logo）
-├── community/             # 社区模板（Agent & Workflow）
 ├── .github/               # CI/CD + deploy + vscode-extension
 ├── scripts/               # 安装/构建脚本
 ├── tools/                 # 工具脚本
 ├── README.md
 └── pyproject.toml
+```
 ```
 
 ---
