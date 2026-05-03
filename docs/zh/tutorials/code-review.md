@@ -355,6 +355,6 @@ diff /tmp/before_review.txt /tmp/after_review.txt
 ## 📖 相关资源
 
 - [OWASP Top 10 2023](https://owasp.org/Top10/)
-- [Flask 安全最佳实践](https://flask.palletsprojects.com/en/stable/security/)
+- [Flask 安全最佳实践](https://flask.palletsprojects.com/en/stable/web-security/)
 - [教程一：Flask 项目重构](./flask-restructure.md)
 - [教程二：为开源项目写测试](./open-source-test.md)

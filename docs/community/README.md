@@ -197,4 +197,4 @@ A: 可以，安装后的模板保存在本地，你可以自由修改。
 
 感谢所有社区贡献者！
 
-模板格式参考 [Stripe V2 Conventions](https://devhub.vc/) 和 GitHub 社区最佳实践。
+模板格式参考 GitHub 社区最佳实践。

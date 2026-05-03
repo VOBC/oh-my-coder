@@ -222,6 +222,4 @@ def buggy_function():
 
 ## 相关资源
 
-- [Debugging Guide](https://medium.com/@alexgolec/how-to-debug-any-program-93710e758fd5)
 - [Python 调试技巧](https://realpython.com/python-debugging-pdb/)
-- [故障排查流程](https://sre.google/sre-book/troubleshooting-down-the-stack/)

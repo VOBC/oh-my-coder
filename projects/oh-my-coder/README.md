@@ -15,7 +15,7 @@
 
 **💡 灵感来源**: [oh-my-claudecode](https://github.com/Yeachan-Heo/oh-my-claudecode) (28.9k ⭐) — 我们为国内开发者提供零门槛替代方案
 
-![Agent System](docs/screenshots/demo-agents.svg)
+![Agent System](docs/screenshots/demo-agents.svg) <!-- TODO: 请替换为实际截图 -->
 
 <!-- DEMO GIF 占位：P24 完成后替换为实际 GIF -->
 <!-- 建议尺寸：800x450，展示 omc run 命令执行过程 -->
@@ -654,7 +654,7 @@ python -m src.cli context browser
 | `DOUBAO_API_KEY` | 可选 | [火山引擎](https://console.volcengine.com/) |
 | `BAIDU_API_KEY` / `ERNIE_API_KEY` | 可选 | [文心一言](https://console.bce.baidu.com/) |
 | `MINIMAX_API_KEY` | 可选 | [MiniMax](https://api.minimax.chat/) |
-| `MIMOX_API_KEY` | 可选 | [小米 MiMo](https://mimo.ai.utrain.cloud/) |
+| `MIMOX_API_KEY` | 可选 | 小米 MiMo |
 | `OMC_DEFAULT_MODEL` | 可选 | 覆盖默认模型，如 `deepseek-chat` |
 | `REQUEST_TIMEOUT` | 可选 | 请求超时（秒），默认 60 |
 | `TELEGRAM_BOT_TOKEN` | 可选 | Telegram Bot Token（Gateway 消息推送） |
@@ -838,7 +838,7 @@ oh-my-coder/
 **Q: API Key 如何获取？**
 A: 请访问对应模型的官方网站注册账号后获取：
    - DeepSeek: https://platform.deepseek.com/
-   - 小米 MiMo: https://mimo.ai.utrain.cloud/
+   - 小米 MiMo
    - 智谱 GLM: https://open.bigmodel.cn/
    - Kimi: https://platform.moonshot.cn/
    - 豆包: https://console.volcengine.com/

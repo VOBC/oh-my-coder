@@ -171,7 +171,7 @@
 
 ### 2.4 Claude Code
 
-**官方链接：** https://claude.ai/code
+**官方链接：** [https://claude.ai/code](https://claude.ai/code)
 
 **产品定位：** Anthropic 官方 CLI 工具 + VS Code 扩展 + JetBrains 插件 + 桌面应用，五种运行环境。
 
@@ -552,8 +552,8 @@
 
 ### 技术参考
 
-- **Bubble Tea 框架**：https://github.com/charmbracelet/bubbletea（TUI 构建框架）
-- **Lip Gloss**：https://github.com/charmbracelet/lipgloss（终端样式库）
+- **Bubble Tea 框架**：[https://github.com/charmbracelet/bubbletea](https://github.com/charmbracelet/bubbletea)（TUI 构建框架）
+- **Lip Gloss**：[https://github.com/charmbracelet/lipgloss](https://github.com/charmbracelet/lipgloss)（终端样式库）
 - **OpenCode README**：https://github.com/opencode-ai/opencode
 - **Crush README**：https://github.com/charmbracelet/crush
 - **Aider 文档**：https://aider.chat/docs/
