@@ -1,7 +1,7 @@
 """Tests for the simple weather agent."""
 
 import os
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 
 import pytest
 
@@ -48,9 +48,10 @@ class TestWeatherAgent:
 
     def test_init_without_key_raises(self):
         """Test that initialization fails without API key."""
-        with patch.dict(os.environ, {}, clear=True):
-            with pytest.raises(ValueError, match="API key required"):
-                WeatherAgent()
+        with patch.dict(os.environ, {}, clear=True), pytest.raises(
+            ValueError, match="API key required"
+        ):
+            WeatherAgent()
 
     @pytest.mark.asyncio
     @patch.dict(os.environ, {"OPENAI_API_KEY": "test-key"})
@@ -76,7 +77,7 @@ class TestWeatherAgent:
         """Test various weather-related keywords trigger weather lookup."""
         agent = WeatherAgent()
         keywords = ["temperature", "forecast", "rain", "sunny"]
-        
+
         for keyword in keywords:
             response = await agent.chat(f"What's the {keyword} in London?")
             assert "London" in response

@@ -18,9 +18,9 @@ from pydantic import BaseModel, Field
 # Add parent paths for omc imports (when running standalone)
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../.."))
 
-from src.core.tool import tool
 from src.core.agent import Agent
 from src.core.llm import LLMClient
+from src.core.tool import tool
 
 
 class WeatherResult(BaseModel):
@@ -35,10 +35,10 @@ class WeatherResult(BaseModel):
 def get_weather(city: str) -> str:
     """
     Fetch weather information for a given city.
-    
+
     Args:
         city: City name (e.g., "Beijing", "Shanghai", "Tokyo")
-    
+
     Returns:
         Weather description string
     """
@@ -47,7 +47,7 @@ def get_weather(city: str) -> str:
         url = f"https://wttr.in/{city}?format=%C|%t|%h"
         response = httpx.get(url, timeout=10.0)
         response.raise_for_status()
-        
+
         parts = response.text.strip().split("|")
         if len(parts) >= 2:
             condition = parts[0]
@@ -63,7 +63,7 @@ def get_weather(city: str) -> str:
 
 class WeatherAgent(Agent):
     """A simple weather query agent."""
-    
+
     def __init__(self, api_key: Optional[str] = None):
         super().__init__()
         self.api_key = api_key or os.getenv("OPENAI_API_KEY")
@@ -74,7 +74,7 @@ class WeatherAgent(Agent):
             )
         self.llm = LLMClient(api_key=self.api_key)
         self.register_tool(get_weather)
-    
+
     async def chat(self, message: str) -> str:
         """Process user message and return response."""
         # Simple intent detection
@@ -85,7 +85,7 @@ class WeatherAgent(Agent):
             city = words[-1] if len(words) > 1 else "Beijing"
             weather_info = get_weather(city)
             return f"🌤️ {weather_info}\n\nPowered by Oh My Coder Community Template"
-        
+
         return (
             "I'm a weather agent! Ask me about weather in any city.\n"
             "Example: 'What's the weather in Tokyo?'"
@@ -95,17 +95,17 @@ class WeatherAgent(Agent):
 def main():
     """CLI entry point."""
     import asyncio
-    
+
     print("🌤️  Simple Weather Agent")
     print("=" * 40)
     print("Type 'quit' to exit\n")
-    
+
     try:
         agent = WeatherAgent()
     except ValueError as e:
         print(f"❌ {e}")
         sys.exit(1)
-    
+
     while True:
         try:
             user_input = input("You: ").strip()
@@ -114,10 +114,10 @@ def main():
                 break
             if not user_input:
                 continue
-            
+
             response = asyncio.run(agent.chat(user_input))
             print(f"Agent: {response}\n")
-            
+
         except KeyboardInterrupt:
             print("\nGoodbye! 👋")
             break
