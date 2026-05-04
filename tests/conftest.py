@@ -5,15 +5,13 @@ conftest.py - pytest 全局 fixtures
 """
 
 import json
-from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
 
 from src.agents.persistence.store import AgentConfig, AgentState
-from src.quest.models import Quest, QuestPriority, QuestStatus, QuestStep
+from src.quest.models import Quest, QuestStep
 from src.web.app import app
-
 
 # ---------------------------------------------------------------------------
 # Web 客户端
