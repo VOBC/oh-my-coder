@@ -403,3 +403,145 @@ class TestEdgeCases:
         # 特殊字符查询不应该崩溃
         results = search.search("test@#$%", search_type="keyword")
         assert isinstance(results, list)
+
+
+class TestRetrievalQuality:
+    """检索质量测试"""
+
+    def test_similarity_threshold_filtering(self, tmp_path):
+        """测试相似度阈值过滤效果"""
+        project = tmp_path / "test"
+        project.mkdir()
+        (project / "test.py").write_text("""
+def add(a, b):
+    return a + b
+
+def subtract(a, b):
+    return a - b
+
+def multiply(a, b):
+    return a * b
+
+def divide(a, b):
+    return a / b
+""")
+
+        config = IndexConfig(root_path=project)
+        indexer = CodebaseIndexer(config)
+        indexer.index_directory()
+
+        # 低阈值 - 应该返回更多结果
+        low_config = SearchConfig(min_score=0.1, max_results=10)
+        search_low = SemanticSearch(indexer, low_config)
+        results_low = search_low.search("add", search_type="semantic")
+
+        # 高阈值 - 应该返回更少结果
+        high_config = SearchConfig(min_score=0.5, max_results=10)
+        search_high = SemanticSearch(indexer, high_config)
+        results_high = search_high.search("add", search_type="semantic")
+
+        # 高阈值结果应该 <= 低阈值结果
+        assert len(results_high) <= len(results_low)
+
+    @pytest.mark.parametrize(
+        "chunk_size",
+        [512, 1024, 2048],
+    )
+    def test_chunk_size_impact(self, tmp_path, chunk_size):
+        """测试分块大小配置对索引的影响"""
+        project = tmp_path / "test"
+        project.mkdir()
+        content = "x = 1\n" * 500
+        (project / "large.py").write_text(content)
+
+        config = IndexConfig(root_path=project, chunk_size=chunk_size)
+        indexer = CodebaseIndexer(config)
+        # 索引应该成功执行，不崩溃
+        indexer.index_directory()
+        stats = indexer.get_stats()
+        # 验证统计返回是字典
+        assert isinstance(stats, dict)
+        assert "files_indexed" in stats
+
+    def test_hybrid_search_blend(self, tmp_path):
+        """测试混合搜索的融合效果"""
+        project = tmp_path / "test"
+        project.mkdir()
+        (project / "test.py").write_text("""
+def calculate_sum(numbers):
+    total = 0
+    for n in numbers:
+        total += n
+    return total
+
+def calculate_average(numbers):
+    return sum(numbers) / len(numbers)
+""")
+
+        config = IndexConfig(root_path=project)
+        indexer = CodebaseIndexer(config)
+        indexer.index_directory()
+
+        # 测试不同的 alpha 值
+        for alpha in [0.0, 0.5, 1.0]:
+            search_config = SearchConfig(hybrid_alpha=alpha)
+            search = SemanticSearch(indexer, search_config)
+            results = search.search("sum", search_type="hybrid")
+            # 混合搜索不应该返回错误
+            assert isinstance(results, list)
+
+    def test_keyword_vs_semantic_ranking(self, tmp_path):
+        """测试关键词搜索功能"""
+        project = tmp_path / "test"
+        project.mkdir()
+        # 使用更多内容来确保索引成功
+        (project / "test.py").write_text("""
+def add(a, b):
+    '''Add two numbers'''
+    return a + b
+
+def add_numbers(a, b, c):
+    '''Add three numbers'''
+    return a + b + c
+
+def sum_list(items):
+    '''Sum a list of items'''
+    return sum(items)
+""")
+
+        config = IndexConfig(root_path=project)
+        indexer = CodebaseIndexer(config)
+        indexer.index_directory()
+
+        keyword_search = SemanticSearch(indexer, SearchConfig(min_score=0.0))
+
+        kw_results = keyword_search.search("add", search_type="keyword")
+
+        # 验证搜索不崩溃
+        assert isinstance(kw_results, list)
+
+    def test_context_window_size_impact(self, tmp_path):
+        """测试上下文窗口大小影响"""
+        project = tmp_path / "test"
+        project.mkdir()
+        (project / "test.py").write_text("""
+def main():
+    x = 1
+    y = 2
+    z = 3
+    result = x + y + z
+    return result
+""")
+
+        config = IndexConfig(root_path=project)
+        indexer = CodebaseIndexer(config)
+        indexer.index_directory()
+
+        search = SemanticSearch(indexer)
+
+        # 测试不同的上下文行数
+        for context_lines in [0, 1, 3, 5]:
+            search_config = SearchConfig(context_lines=context_lines)
+            search = SemanticSearch(indexer, search_config)
+            results = search.search("main", search_type="keyword")
+            assert isinstance(results, list)

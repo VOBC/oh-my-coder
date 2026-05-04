@@ -3,13 +3,12 @@
 import pytest
 
 from src.agents.cost_optimizer import (
+    MODEL_PRICING,
     Complexity,
     CostOptimizer,
     ModelRecommendation,
     calculate_cost,
     calculate_multi_model_cost,
-    CostEstimate,
-    MODEL_PRICING,
 )
 
 
