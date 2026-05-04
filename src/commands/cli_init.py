@@ -17,6 +17,7 @@ from rich.panel import Panel
 from rich.prompt import Confirm, Prompt
 from rich.table import Table
 
+from src.core.monorepo import detect_monorepo, list_subprojects
 from src.tools.sourcegraph import check_status
 
 console = Console()
@@ -125,10 +126,42 @@ def _save_api_key(model_id: str, api_key: str) -> None:
 @app.callback(invoke_without_command=True)
 def init_wizard(
     ctx: typer.Context,
+    monorepo: bool = typer.Option(
+        False,
+        "--monorepo",
+        "-m",
+        help="在 Monorepo 根目录初始化，自动检测子项目",
+    ),
 ) -> None:
     """交互式初始化引导 - 首次使用推荐运行"""
     if ctx.invoked_subcommand is not None:
         return
+
+    # ── Step 0: Monorepo 检测 ──
+    monorepo_info = None
+    if monorepo:
+        monorepo_info = detect_monorepo(Path.cwd())
+        if monorepo_info is None:
+            console.print(
+                "[yellow]⚠[/yellow] 当前目录不是 Monorepo 根目录"
+            )
+            console.print(
+                "[dim]支持的配置: pnpm-workspace.yaml, lerna.json, nx.json, turbo.json[/dim]"
+            )
+            if not Confirm.ask("是否继续普通初始化？", default=True):
+                raise typer.Exit(0)
+        else:
+            console.print()
+            console.print(
+                Panel.fit(
+                    f"[bold cyan]📦 检测到 Monorepo: {monorepo_info.type}[/bold cyan]\n"
+                    f"[dim]根目录: {monorepo_info.root}[/dim]\n"
+                    f"[dim]子项目数: {len(monorepo_info.packages)}[/dim]",
+                    title="Monorepo 模式",
+                    border_style="cyan",
+                )
+            )
+            console.print()
 
     # ── Step 1: 欢迎界面 ──
     console.print()
@@ -309,7 +342,39 @@ def init_wizard(
 
     console.print()
 
-    # ── Step 5: 配置验证 ──
+    # ── Step 5: Monorepo 子项目配置（可选）──
+    if monorepo_info is not None:
+        console.print("[bold yellow]📦 Step 4/4: Monorepo 子项目[/bold yellow]")
+        console.print()
+
+        subprojects = list_subprojects(monorepo_info)
+        if subprojects:
+            from rich.table import Table as RichTable
+            pkg_table = RichTable(show_header=True, header_style="bold cyan")
+            pkg_table.add_column("#", style="dim", width=4)
+            pkg_table.add_column("项目", style="green")
+            pkg_table.add_column("语言", style="yellow")
+            pkg_table.add_column("框架", style="cyan")
+            pkg_table.add_column("Agent", style="dim")
+
+            for i, sp in enumerate(subprojects, 1):
+                agent_status = "✓" if sp.has_agent_config else "-"
+                pkg_table.add_row(
+                    str(i), sp.name, sp.language, sp.framework, agent_status
+                )
+
+            console.print(pkg_table)
+            console.print()
+            console.print(
+                f"[dim]共 {len(subprojects)} 个子项目，"
+                f"{sum(1 for sp in subprojects if sp.has_agent_config)} 个已配置 Agent[/dim]"
+            )
+            console.print()
+        else:
+            console.print("[dim]未检测到子项目[/dim]")
+            console.print()
+
+    # ── Step 6: 配置验证 ──
     console.print("[bold yellow]📋 确认配置[/bold yellow]")
     console.print()
 
@@ -323,6 +388,9 @@ def init_wizard(
     summary_table.add_row("工作目录:", work_dir)
     sg_configured = has_api or has_cli or (use_sg if 'use_sg' in locals() else False)
     summary_table.add_row("Sourcegraph:", "[dim]已配置 ✓[/dim]" if sg_configured else "[dim]未配置[/dim]")
+    if monorepo_info is not None:
+        summary_table.add_row("Monorepo:", f"[cyan]{monorepo_info.type}[/cyan]")
+        summary_table.add_row("子项目:", str(len(monorepo_info.packages)))
     summary_table.add_row("配置文件:", str(CONFIG_FILE))
 
     console.print(Panel(summary_table, title="配置摘要", border_style="cyan"))
@@ -332,24 +400,40 @@ def init_wizard(
         console.print("[yellow]已取消，可重新运行 omc init[/yellow]")
         raise typer.Exit(0)
 
-    # ── Step 6: 保存并完成 ──
+    # ── Step 7: 保存并完成 ──
     config = existing_config.copy()
     config["default_model"] = model_choice
     config["work_dir"] = work_dir
     config["initialized"] = True
+    if monorepo_info is not None:
+        config["monorepo"] = {
+            "type": monorepo_info.type,
+            "root": str(monorepo_info.root),
+            "packages": [str(p) for p in monorepo_info.packages],
+        }
     _save_config(config)
 
     console.print()
+    success_msg = (
+        "[bold green]✅ 配置完成！[/bold green]\n\n"
+        "[bold]接下来试试：[/bold]\n"
+        "  [cyan]omc agents list[/cyan]       查看可用 Agent\n"
+        "  [cyan]omc model list[/cyan]        查看所有模型\n"
+        "  [cyan]omc models --recommend[/cyan] 获取模型推荐\n"
+        "  [cyan]omc run <任务>[/cyan]        开始编程\n"
+    )
+    if monorepo_info is not None:
+        success_msg += (
+            "  [cyan]omc agents list --monorepo[/cyan]  查看 Monorepo 子项目\n"
+        )
+    success_msg += (
+        "\n[dim]配置文件: ~/.config/oh-my-coder/config.json[/dim]\n"
+        "[dim]API Key: ~/.omc/.env[/dim]"
+    )
+
     console.print(
         Panel.fit(
-            "[bold green]✅ 配置完成！[/bold green]\n\n"
-            "[bold]接下来试试：[/bold]\n"
-            "  [cyan]omc agents list[/cyan]       查看可用 Agent\n"
-            "  [cyan]omc model list[/cyan]        查看所有模型\n"
-            "  [cyan]omc models --recommend[/cyan] 获取模型推荐\n"
-            "  [cyan]omc run <任务>[/cyan]        开始编程\n\n"
-            "[dim]配置文件: ~/.config/oh-my-coder/config.json[/dim]\n"
-            "[dim]API Key: ~/.omc/.env[/dim]",
+            success_msg,
             title="🎉 初始化成功",
             border_style="green",
         )

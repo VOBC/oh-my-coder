@@ -30,7 +30,14 @@ console = Console()
 
 
 @app.command("list")
-def list_agents():
+def list_agents(
+    monorepo: bool = typer.Option(
+        False,
+        "--monorepo",
+        "-m",
+        help="显示 Monorepo 中的所有子项目 Agent",
+    ),
+):
     """列出所有可用 Agent"""
     from src.agents.base import list_all_agents
 
@@ -51,6 +58,47 @@ def list_agents():
         )
 
     console.print(table)
+
+    # Monorepo 子项目展示
+    if monorepo:
+        from src.core.monorepo import detect_monorepo, list_subprojects
+
+        info = detect_monorepo()
+        if info is None:
+            console.print(
+                "\n[yellow]⚠[/yellow] 当前目录不是 Monorepo 根目录"
+            )
+            return
+
+        console.print()
+        subprojects = list_subprojects(info)
+        if not subprojects:
+            console.print("[dim]未检测到子项目[/dim]")
+            return
+
+        pkg_table = Table(title=f"Monorepo 子项目 - {info.type}")
+        pkg_table.add_column("项目", style="cyan")
+        pkg_table.add_column("路径", style="dim")
+        pkg_table.add_column("语言", style="yellow")
+        pkg_table.add_column("框架", style="green")
+        pkg_table.add_column("Agent 配置", style="magenta")
+
+        for sp in subprojects:
+            agent_status = "✓ 已配置" if sp.has_agent_config else "- 未配置"
+            rel_path = sp.path.relative_to(info.root)
+            pkg_table.add_row(
+                sp.name,
+                str(rel_path),
+                sp.language,
+                sp.framework,
+                agent_status,
+            )
+
+        console.print(pkg_table)
+        console.print(
+            f"\n[dim]共 {len(subprojects)} 个子项目，"
+            f"{sum(1 for sp in subprojects if sp.has_agent_config)} 个已配置 Agent[/dim]"
+        )
 
 
 @app.command("show")
