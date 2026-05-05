@@ -95,7 +95,7 @@ class HistoryProvider {
             return Promise.resolve([]);
         }
         const history = this.loadHistory();
-        const items = history.slice(0, 50).map((entry) => new HistoryItem(entry.id, entry.description, entry.timestamp, entry.status, entry.workflow, entry.duration, entry.tokens));
+        const items = history.slice(0, 50).map((entry) => new HistoryItem(entry.id, entry.description, entry.timestamp, entry.status, entry.model, entry.workflow, entry.duration, entry.tokens));
         return Promise.resolve(items);
     }
 }
@@ -105,15 +105,17 @@ class HistoryItem extends vscode.TreeItem {
     description;
     timestamp;
     status;
+    model;
     workflow;
     duration;
     tokens;
-    constructor(id, description, timestamp, status, workflow, duration, tokens) {
+    constructor(id, description, timestamp, status, model, workflow, duration, tokens) {
         super(description, vscode.TreeItemCollapsibleState.None);
         this.id = id;
         this.description = description;
         this.timestamp = timestamp;
         this.status = status;
+        this.model = model;
         this.workflow = workflow;
         this.duration = duration;
         this.tokens = tokens;
@@ -139,6 +141,9 @@ class HistoryItem extends vscode.TreeItem {
             `任务: ${this.description}`,
             `状态: ${this.status === 'completed' ? '✓ 完成' : '✗ 失败'}`,
         ];
+        if (this.model) {
+            lines.push(`模型: ${this.model}`);
+        }
         if (this.workflow) {
             lines.push(`工作流: ${this.workflow}`);
         }

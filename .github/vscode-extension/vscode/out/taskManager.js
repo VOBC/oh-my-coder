@@ -1,6 +1,6 @@
 "use strict";
 /**
- * 任务管理器
+ * 任务管理器 - 适配 Monorepo CLI API
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -52,6 +52,7 @@ class TaskManager {
     context;
     currentTask = null;
     process = null;
+    historyProvider = null;
     _onDidChangeStatus = new vscode.EventEmitter();
     _onDidChangeOutput = new vscode.EventEmitter();
     outputBuffer = "";
@@ -59,6 +60,9 @@ class TaskManager {
     onDidChangeOutput = this._onDidChangeOutput.event;
     constructor(context) {
         this.context = context;
+    }
+    setHistoryProvider(historyProvider) {
+        this.historyProvider = historyProvider;
     }
     /**
      * 获取 CLI 路径
@@ -100,6 +104,13 @@ class TaskManager {
     getOutput() {
         return this.outputBuffer;
     }
+    /**
+     * 检查是否为本地模型（ollama 系列）
+     */
+    isLocalModel(model) {
+        const localModels = ["ollama", "llama", "mistral", "codellama", "deepseek-coder"];
+        return localModels.some(m => model.toLowerCase().includes(m));
+    }
     async runTask(taskData) {
         if (this.currentTask && this.currentTask.status === TaskStatus.Running) {
             vscode.window.showWarningMessage("已有任务在运行，请等待完成或停止");
@@ -119,6 +130,20 @@ class TaskManager {
             task.status = TaskStatus.Completed;
             task.endTime = new Date();
             task.output = result.output;
+            // 记录到历史
+            if (this.historyProvider) {
+                const duration = task.startTime && task.endTime
+                    ? (task.endTime.getTime() - task.startTime.getTime()) / 1000
+                    : undefined;
+                this.historyProvider.addEntry({
+                    description: task.description,
+                    status: 'completed',
+                    model: task.model,
+                    workflow: task.workflow,
+                    duration: duration,
+                    tokens: result.metrics?.tokens,
+                });
+            }
             this._onDidChangeStatus.fire(TaskStatus.Completed);
             return result;
         }
@@ -127,36 +152,72 @@ class TaskManager {
             task.endTime = new Date();
             task.error = error instanceof Error ? error.message : String(error);
             task.output = task.error;
+            // 记录失败任务到历史
+            if (this.historyProvider) {
+                const duration = task.startTime && task.endTime
+                    ? (task.endTime.getTime() - task.startTime.getTime()) / 1000
+                    : undefined;
+                this.historyProvider.addEntry({
+                    description: task.description,
+                    status: 'failed',
+                    model: task.model,
+                    workflow: task.workflow,
+                    duration: duration,
+                });
+            }
             this._onDidChangeStatus.fire(TaskStatus.Error);
             throw error;
         }
     }
     async executeTask(task) {
         const config = vscode.workspace.getConfiguration("omc");
-        const apiKey = config.get("apiKey") || process.env.DEEPSEEK_API_KEY || "";
-        const defaultModel = config.get("defaultModel") || "deepseek";
-        const maxTokens = config.get("maxTokens") || 4096;
-        const temperature = config.get("temperature") || 0.7;
-        if (!apiKey) {
-            throw new Error("请配置 API Key：设置中搜索 \"omc.apiKey\" 或设置环境变量");
+        const apiKey = config.get("apiKey") || process.env.API_KEY || "";
+        // 优先使用任务指定的模型，否则使用配置中的默认模型
+        const taskModel = task.model || config.get("defaultModel") || "deepseek";
+        // 本地模型不需要 API key
+        if (!apiKey && !this.isLocalModel(taskModel)) {
+            throw new Error("请配置 API Key：设置中搜索 \"omc.apiKey\" 或设置环境变量 API_KEY");
         }
+        // 判断使用本地模型路径还是普通 run 路径
+        const useLocalModel = this.isLocalModel(taskModel);
         return new Promise((resolve, reject) => {
-            const args = [
-                "run",
-                task.description,
-                "--model", defaultModel,
-                "--max-tokens", String(maxTokens),
-                "--temperature", String(temperature),
-            ];
-            if (task.workflow) {
-                args.push("--workflow", task.workflow);
+            let args;
+            if (useLocalModel) {
+                // 本地模型路径: omc local chat <message> --model <model>
+                args = [
+                    "local",
+                    "chat",
+                    task.description,
+                    "--model", taskModel,
+                ];
             }
-            if (task.fileName) {
-                args.push("--file", task.fileName);
+            else {
+                // 标准路径: omc run <task> --model/-m --workflow/-w --project/-p --notify/-n --cross-validate
+                args = [
+                    "run",
+                    task.description,
+                    "--model", taskModel,
+                ];
+                // 新增参数映射
+                if (task.workflow) {
+                    args.push("--workflow", task.workflow);
+                }
+                if (task.project) {
+                    args.push("--project", task.project);
+                }
+                if (task.notify) {
+                    args.push("--notify", task.notify);
+                }
+                if (task.crossValidate) {
+                    args.push("--cross-validate");
+                }
+                if (task.fileName) {
+                    args.push("--file", task.fileName);
+                }
             }
             const env = {
                 ...process.env,
-                DEEPSEEK_API_KEY: apiKey,
+                API_KEY: apiKey,
             };
             const cliPath = this.getCliPath();
             this.process = (0, child_process_1.spawn)(cliPath, args, { env });
@@ -196,6 +257,148 @@ class TaskManager {
                     reject(err);
                 }
             });
+        });
+    }
+    /**
+     * 获取本地模型列表
+     */
+    async getLocalModels() {
+        return new Promise((resolve, reject) => {
+            const cliPath = this.getCliPath();
+            const proc = (0, child_process_1.spawn)(cliPath, ["local", "list"], {
+                env: process.env
+            });
+            let output = "";
+            let error = "";
+            proc.stdout?.on("data", (data) => {
+                output += data.toString();
+            });
+            proc.stderr?.on("data", (data) => {
+                error += data.toString();
+            });
+            proc.on("close", (code) => {
+                if (code === 0) {
+                    // 解析模型列表，每行一个模型名
+                    const models = output
+                        .split("\n")
+                        .map(line => line.trim())
+                        .filter(line => line && !line.startsWith("#"));
+                    resolve(models);
+                }
+                else {
+                    reject(new Error(error || `获取本地模型列表失败，退出码: ${code}`));
+                }
+            });
+            proc.on("error", reject);
+        });
+    }
+    /**
+     * 检查本地模型服务状态
+     */
+    async checkLocalModelStatus() {
+        return new Promise((resolve) => {
+            const cliPath = this.getCliPath();
+            const proc = (0, child_process_1.spawn)(cliPath, ["local", "status"], {
+                env: process.env
+            });
+            let output = "";
+            proc.stdout?.on("data", (data) => {
+                output += data.toString();
+            });
+            proc.on("close", () => {
+                const versionMatch = output.match(/version[\s:]+(\S+)/i);
+                resolve({
+                    running: output.toLowerCase().includes("running") || output.includes("已运行"),
+                    version: versionMatch?.[1],
+                });
+            });
+            proc.on("error", () => {
+                resolve({ running: false });
+            });
+        });
+    }
+    /**
+     * 获取 Skill 列表
+     */
+    async getSkillList() {
+        return new Promise((resolve, reject) => {
+            const cliPath = this.getCliPath();
+            const proc = (0, child_process_1.spawn)(cliPath, ["skill", "list", "--json"], {
+                env: process.env
+            });
+            let output = "";
+            let error = "";
+            proc.stdout?.on("data", (data) => {
+                output += data.toString();
+            });
+            proc.stderr?.on("data", (data) => {
+                error += data.toString();
+            });
+            proc.on("close", (code) => {
+                if (code === 0) {
+                    try {
+                        const skills = JSON.parse(output);
+                        resolve(Array.isArray(skills) ? skills : []);
+                    }
+                    catch {
+                        // 非 JSON 格式，按行解析
+                        const skills = output
+                            .split("\n")
+                            .map(line => line.trim())
+                            .filter(line => line && !line.startsWith("#"))
+                            .map(line => {
+                            const parts = line.split(/\s{2,}/);
+                            return {
+                                name: parts[0] || line,
+                                description: parts[1] || ""
+                            };
+                        });
+                        resolve(skills);
+                    }
+                }
+                else {
+                    reject(new Error(error || `获取 Skill 列表失败，退出码: ${code}`));
+                }
+            });
+            proc.on("error", reject);
+        });
+    }
+    /**
+     * 运行 Skill
+     */
+    async runSkill(skillName, args = []) {
+        return new Promise((resolve, reject) => {
+            const cliPath = this.getCliPath();
+            const proc = (0, child_process_1.spawn)(cliPath, ["skill", "run", skillName, ...args], {
+                env: process.env
+            });
+            let output = "";
+            let error = "";
+            proc.stdout?.on("data", (data) => {
+                const chunk = data.toString();
+                output += chunk;
+                this.outputBuffer += chunk;
+                this._onDidChangeOutput.fire(chunk);
+            });
+            proc.stderr?.on("data", (data) => {
+                const chunk = data.toString();
+                error += chunk;
+                this.outputBuffer += chunk;
+                this._onDidChangeOutput.fire(chunk);
+            });
+            proc.on("close", (code) => {
+                if (code === 0) {
+                    resolve({
+                        success: true,
+                        output: output,
+                        metrics: this.parseMetrics(output),
+                    });
+                }
+                else {
+                    reject(new Error(error || `Skill 运行失败，退出码: ${code}`));
+                }
+            });
+            proc.on("error", reject);
         });
     }
     parseMetrics(output) {

@@ -69,10 +69,39 @@ class OMCProvider {
         };
         webviewView.webview.html = this.getWebviewContent(webviewView.webview);
         // 接收来自 webview 的消息
-        webviewView.webview.onDidReceiveMessage((data) => {
+        webviewView.webview.onDidReceiveMessage(async (data) => {
             switch (data.type) {
                 case 'runTask':
-                    vscode.commands.executeCommand('omc.runTask');
+                    // 处理 Ollama 本地模型选择
+                    if (data.model === 'ollama') {
+                        try {
+                            const localModels = await this.taskManager.getLocalModels();
+                            if (localModels.length === 0) {
+                                vscode.window.showWarningMessage('未检测到本地 Ollama 模型，请先运行 omc local pull <model> 安装模型');
+                                return;
+                            }
+                            const selected = await vscode.window.showQuickPick(localModels, {
+                                placeHolder: '选择本地 Ollama 模型',
+                            });
+                            if (!selected) {
+                                return; // 用户取消
+                            }
+                            data.model = selected;
+                        }
+                        catch (e) {
+                            vscode.window.showErrorMessage(`获取本地模型列表失败: ${e}`);
+                            return;
+                        }
+                    }
+                    // 保存用户选择的模型和配置
+                    const config = vscode.workspace.getConfiguration('omc');
+                    await config.update('defaultModel', data.model, true);
+                    // 执行带参数的任务
+                    vscode.commands.executeCommand('omc.runTaskWithOptions', {
+                        description: data.description,
+                        model: data.model,
+                        workflow: data.workflow,
+                    });
                     break;
                 case 'stopTask':
                     vscode.commands.executeCommand('omc.stopTask');
@@ -281,25 +310,25 @@ class OMCProvider {
     <div class="select-row">
         <select id="model">
             <option value="deepseek" ${currentModel === 'deepseek' ? 'selected' : ''}>DeepSeek</option>
-            <option value="qwen" ${currentModel === 'qwen' ? 'selected' : ''}>通义千问</option>
             <option value="glm" ${currentModel === 'glm' ? 'selected' : ''}>智谱 GLM</option>
             <option value="kimi" ${currentModel === 'kimi' ? 'selected' : ''}>Kimi</option>
-            <option value="hunyuan" ${currentModel === 'hunyuan' ? 'selected' : ''}>腾讯混元</option>
-            <option value="wenxin" ${currentModel === 'wenxin' ? 'selected' : ''}>文心一言</option>
             <option value="doubao" ${currentModel === 'doubao' ? 'selected' : ''}>豆包</option>
             <option value="minimax" ${currentModel === 'minimax' ? 'selected' : ''}>MiniMax</option>
-            <option value="tiangong" ${currentModel === 'tiangong' ? 'selected' : ''}>天工</option>
-            <option value="spark" ${currentModel === 'spark' ? 'selected' : ''}>讯飞星火</option>
             <option value="baichuan" ${currentModel === 'baichuan' ? 'selected' : ''}>百川</option>
-            <option value="siliconflow" ${currentModel === 'siliconflow' ? 'selected' : ''}>SiliconFlow</option>
+            <option value="ollama" ${currentModel === 'ollama' ? 'selected' : ''}>🖥️ Ollama 本地</option>
         </select>
         <select id="workflow">
             <option value="">默认工作流</option>
+            <option value="autopilot">🤖 自动路由</option>
             <option value="build">🔨 构建</option>
             <option value="review">🔍 审查</option>
             <option value="debug">🐛 调试</option>
             <option value="test">🧪 测试</option>
             <option value="explore">📖 探索</option>
+            <option value="pair">👥 结对编程</option>
+            <option value="refactor">♻️ 重构</option>
+            <option value="doc">📝 文档生成</option>
+            <option value="sequential">⏱️ 顺序执行</option>
         </select>
     </div>
 

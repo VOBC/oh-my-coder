@@ -71,9 +71,9 @@ function activate(context) {
             statusBar.update();
         }
     }));
-    // 首次启动检测 API Key
+    // 首次启动检测 API Key（通用 API_KEY，支持所有模型）
     const config = vscode.workspace.getConfiguration('omc');
-    const apiKey = config.get('apiKey') || process.env.DEEPSEEK_API_KEY || '';
+    const apiKey = config.get('apiKey') || process.env.API_KEY || '';
     if (!apiKey) {
         setTimeout(() => {
             vscode.window.showWarningMessage('Oh My Coder: 未检测到 API Key，请先配置后再使用', '配置 API Key', '使用 GLM 免费模型').then((selection) => {
@@ -105,6 +105,8 @@ function registerViews(context) {
     // 历史视图
     const historyProvider = new historyProvider_1.HistoryProvider(context);
     context.subscriptions.push(vscode.window.registerTreeDataProvider('omc-history', historyProvider));
+    // 将 historyProvider 注入到 taskManager
+    taskManager.setHistoryProvider(historyProvider);
     // Agents 视图
     const agentsProvider = new agentsProvider_1.AgentsProvider();
     context.subscriptions.push(vscode.window.registerTreeDataProvider('omc-agents', agentsProvider));
