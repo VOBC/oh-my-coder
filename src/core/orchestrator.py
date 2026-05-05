@@ -21,6 +21,7 @@ import asyncio
 import json
 from collections.abc import Callable
 from dataclasses import dataclass, field
+import os
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
@@ -583,7 +584,11 @@ class Orchestrator:
 
         except Exception as e:
             result.status = WorkflowStatus.FAILED
-            result.error = f"{type(e).__name__}: {e}"  # 显示实际错误信息便于排查
+            import traceback as _tb
+            _detail = f"{type(e).__name__}: {e}"
+            if os.environ.get("OMC_DEBUG", "").lower() in ("1", "true", "yes"):
+                _detail += f"\n\n{_tb.format_exc()}"
+            result.error = _detail
 
         finally:
             result.execution_time = time.time() - start_time

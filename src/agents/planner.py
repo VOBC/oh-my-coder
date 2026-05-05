@@ -36,6 +36,21 @@ from .base import (
 # ============================================================
 
 
+# 中文 → 英文映射表，用于模型返回中文值时的容错
+_PRIORITY_CN_MAP: dict[str, str] = {
+    "紧急": "critical", "极高": "critical", "阻塞": "critical",
+    "高": "high", "重要": "high",
+    "中": "medium", "中等": "medium", "普通": "medium", "常规": "medium",
+    "低": "low", "次要": "low", "可延后": "low",
+}
+
+_COMPLEXITY_CN_MAP: dict[str, str] = {
+    "简单": "simple", "低": "simple", "容易": "simple",
+    "中等": "moderate", "中": "moderate", "普通": "moderate",
+    "高": "complex", "复杂": "complex", "困难": "complex", "难": "complex",
+}
+
+
 class TaskPriority(str, Enum):
     """任务优先级"""
 
@@ -43,6 +58,26 @@ class TaskPriority(str, Enum):
     HIGH = "high"  # 重要任务
     MEDIUM = "medium"  # 常规任务
     LOW = "low"  # 可延后任务
+
+    @classmethod
+    def from_string(cls, value: str) -> TaskPriority:
+        """从字符串解析优先级，支持中文容错。
+
+        优先级：英文精确匹配 > 中文映射 > 默认 MEDIUM
+        """
+        if not value:
+            return cls.MEDIUM
+        normalized = value.strip().lower()
+        # 1. 直接英文匹配
+        try:
+            return cls(normalized)
+        except ValueError:
+            pass
+        # 2. 中文映射
+        if normalized in _PRIORITY_CN_MAP:
+            return cls(_PRIORITY_CN_MAP[normalized])
+        # 3. 默认值
+        return cls.MEDIUM
 
 
 class TaskStatus(str, Enum):
@@ -62,6 +97,26 @@ class TaskComplexity(str, Enum):
     SIMPLE = "simple"  # 单文件修改
     MODERATE = "moderate"  # 多文件修改
     COMPLEX = "complex"  # 架构级别改动
+
+    @classmethod
+    def from_string(cls, value: str) -> TaskComplexity:
+        """从字符串解析复杂度，支持中文容错。
+
+        优先级：英文精确匹配 > 中文映射 > 默认 MODERATE
+        """
+        if not value:
+            return cls.MODERATE
+        normalized = value.strip().lower()
+        # 1. 直接英文匹配
+        try:
+            return cls(normalized)
+        except ValueError:
+            pass
+        # 2. 中文映射
+        if normalized in _COMPLEXITY_CN_MAP:
+            return cls(_COMPLEXITY_CN_MAP[normalized])
+        # 3. 默认值
+        return cls.MODERATE
 
 
 class SubTask(BaseModel):
@@ -406,8 +461,8 @@ class PlannerAgent(BaseAgent):
                 title=title.strip(),
                 description=title.strip(),
                 agent=agent.strip(),
-                priority=TaskPriority(priority.lower()),
-                complexity=TaskComplexity(complexity.upper()),
+                priority=TaskPriority.from_string(priority),
+                complexity=TaskComplexity.from_string(complexity),
                 dependencies=dependencies,
                 estimated_time=time.strip(),
             )

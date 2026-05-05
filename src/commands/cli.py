@@ -40,6 +40,7 @@ from src.wiki import WikiGenerator
 
 from .cli_checkpoint import app as checkpoint_app
 from .cli_commands import app as commands_app
+from .cli_doctor import app as doctor_app
 from .cli_config_ext import app as config_ext_app
 from .cli_context import context_app
 from .cli_lsp import app as lsp_app
@@ -97,6 +98,7 @@ app.add_typer(tui_app, name="tui", help="TUI 交互界面 - 简易终端交互")
 app.add_typer(
     self_config_app, name="self-config", help="自配置 - 自然语言配置 API Key/模型/代理"
 )
+app.add_typer(doctor_app, name="doctor", help="环境诊断 - 检查常见问题并给出修复建议")
 app.add_typer(commands_app, name="cmd", help="命令系统 - 运行自定义 Markdown 命令")
 app.add_typer(pkg_app, name="pkg", help="包管理器 - Homebrew/npm/scoop/winget/AUR")
 app.add_typer(lsp_app, name="lsp", help="LSP 集成 - 读取代码诊断信息")
