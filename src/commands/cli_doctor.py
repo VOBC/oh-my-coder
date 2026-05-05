@@ -111,7 +111,7 @@ def _check_config_file() -> tuple[bool, str, str]:
     # 用户级 JSON 配置
     user_config = Path.home() / ".config" / "oh-my-coder" / "config.json"
     if user_config.exists():
-        paths.append(f"~/.config/oh-my-coder/config.json")
+        paths.append("~/.config/oh-my-coder/config.json")
 
     if paths:
         return True, " / ".join(paths), ""
@@ -124,8 +124,8 @@ def _check_config_file() -> tuple[bool, str, str]:
 
 def _check_network(url: str, timeout: float = 5.0) -> tuple[bool, str]:
     """测试网络连通性"""
-    import urllib.request
     import urllib.error
+    import urllib.request
 
     try:
         req = urllib.request.Request(url, method="HEAD")
@@ -138,7 +138,7 @@ def _check_network(url: str, timeout: float = 5.0) -> tuple[bool, str]:
     except urllib.error.URLError:
         return False, "连接失败"
     except Exception as e:
-        return False, str(e)
+        return False, type(e).__name__
 
 
 @app.command()
