@@ -26,6 +26,25 @@
   --text:       #e8e8ed;
   --text-dim:   #8a8a9a;
 
+  /* ── Unified Color System (aliases) ── */
+  --primary:    var(--amber);
+  --primary-dim: var(--amber-dim);
+  --secondary: var(--blue);
+  --success:   var(--green);
+  --error:     var(--red);
+  --warning:  var(--amber);
+  --info:      var(--blue);
+
+  /* ── Unified Spacing (8px grid) ── */
+  --space-1:   4px;
+  --space-2:   8px;
+  --space-3:   12px;
+  --space-4:   16px;
+  --space-5:   24px;
+  --space-6:   32px;
+  --space-7:   48px;
+  --space-8:   64px;
+
   --font-mono:  'JetBrains Mono', 'Fira Code', 'SF Mono', 'Cascadia Code', monospace;
   --font-ui:    -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
 
