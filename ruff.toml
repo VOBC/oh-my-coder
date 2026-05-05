@@ -1,5 +1,5 @@
 line-length = 88
-target-version = "py310"
+target-version = "py39"
 
 [lint]
 select = ["E", "F", "W", "I", "B", "N", "UP"]
@@ -16,6 +16,7 @@ ignore = [
     "N815",   # 类变量大写：API 响应字段
     "B005",   # strip 多字符: 测试代码中的 SSE 解析
     "B023",   # 循环变量闭包: cli_local_models 的 stream_chat
+    "UP045",  # X | None: CI 运行 Python 3.9（不支持联合类型语法）
     
     # 以下规则已修复，但保留 ignore 以防未来新增：
     # E722 (bare except): 已修复为 except Exception
@@ -28,5 +29,5 @@ ignore = [
 ]
 
 [lint.per-file-ignores]
-"tests/*" = ["B905"]
-"src/*" = ["B905"]  # zip strict=False 兼容 Python 3.9
+"tests/*" = ["B905", "UP045"]
+"src/*" = ["B905", "UP045"]

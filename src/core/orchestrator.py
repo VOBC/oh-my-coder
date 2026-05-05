@@ -25,7 +25,7 @@ import os
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Optional
 
 if TYPE_CHECKING:
     from ..agents.health_check import HealthChecker
@@ -223,7 +223,7 @@ class Orchestrator:
         self._checkpoint_manager = None  # type: ignore
 
         # HealthChecker 管理器（懒加载）
-        self._health_checker: HealthChecker | None = None
+        self._health_checker: Optional[HealthChecker] = None
 
         # Agent 实例缓存
         self._agents: dict[str, Any] = {}
