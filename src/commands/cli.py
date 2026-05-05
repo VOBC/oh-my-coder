@@ -1407,6 +1407,9 @@ def _display_result(result):
 
     if result.error:
         console.print(f"\n[red]错误: {result.error}[/red]")
+        console.print(
+            f"\n[cyan]💡 详细日志:[/cyan] .omc/state/workflow_{result.workflow_id}.json"
+        )
 
 
 def _display_cross_validation_result(result):

@@ -583,7 +583,7 @@ class Orchestrator:
 
         except Exception as e:
             result.status = WorkflowStatus.FAILED
-            result.error = f"{type(e).__name__}: [执行异常，请查看工作流日志]"  # 不输出原始错误，防止泄露
+            result.error = f"{type(e).__name__}: {e}"  # 显示实际错误信息便于排查
 
         finally:
             result.execution_time = time.time() - start_time
