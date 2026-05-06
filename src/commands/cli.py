@@ -49,6 +49,7 @@ from .cli_memory import app as memory_app
 from .cli_migrate import app as migrate_app
 from .cli_multiagent import app as multiagent_app
 from .cli_package_manager import app as pkg_app
+from .cli_review import app as review_app
 from .cli_search import app as search_app
 from .cli_security import app as security_app
 from .cli_self_config import app as self_config_app
@@ -103,6 +104,7 @@ app.add_typer(commands_app, name="cmd", help="命令系统 - 运行自定义 Mar
 app.add_typer(pkg_app, name="pkg", help="包管理器 - Homebrew/npm/scoop/winget/AUR")
 app.add_typer(lsp_app, name="lsp", help="LSP 集成 - 读取代码诊断信息")
 app.add_typer(search_app, name="search", help="代码搜索 - Sourcegraph 公开代码库搜索")
+app.add_typer(review_app, name="review", help="代码审查 - 智能分析代码变更")
 app.add_typer(server_app, name="server", help="远程 Server - HTTP REST API 服务")
 
 # 代码清理命令
