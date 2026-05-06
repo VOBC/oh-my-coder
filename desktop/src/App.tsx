@@ -527,6 +527,7 @@ export default function App() {
       content: text.trim(),
       timestamp: Date.now(),
     };
+    if (!activeId) { createSession(currentModel); }
     addMessage(userMsg);
     setLoading(true);
 
@@ -690,15 +691,6 @@ export default function App() {
           />
         ) : (
           <>
-            {/* Server toggle */}
-            <div className="sidebar__section">
-              <div className="sidebar__section-title">Server</div>
-              <button className={`server-btn server-btn--${serverStatus}`} onClick={handleServerToggle}>
-                <span className="server-btn__dot" />
-                {serverStatus === 'stopped' ? 'Start Server' : serverStatus === 'starting' ? 'Starting...' : 'Stop Server'}
-              </button>
-            </div>
-
             {/* Tab nav */}
             <div className="sidebar__tabs">
               <button className={`sidebar__tab ${tab === 'chat' ? 'active' : ''}`} onClick={() => setTab('chat')}>Chat</button>

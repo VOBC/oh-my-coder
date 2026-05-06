@@ -122,6 +122,12 @@ function setupIpc() {
       const { execFileSync } = require('child_process');
       const { spawn } = require('child_process');
 
+      // Ensure endpoint ends with /chat/completions (OpenAI-compatible)
+      if (endpoint && !endpoint.endsWith('/chat/completions')) {
+        // Strip trailing slash first to avoid double-slash
+        endpoint = endpoint.replace(/\/$/, '') + '/chat/completions';
+      }
+
       const payload = {
         model,
         messages: [{ role: 'user', content: message }],

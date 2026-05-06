@@ -275,8 +275,9 @@ function ModelDetailPanel({
         <input
           type="text"
           className="settings-detail__input"
-          value={config.base_url ?? ''}
+          value={config.base_url || getDefaultEndpoint(provider)}
           placeholder={getDefaultEndpoint(provider)}
+          data-using-default={!config.base_url ? '1' : '0'}
           onChange={e => handleChange('base_url', e.target.value)}
           autoComplete="off"
           spellCheck={false}
