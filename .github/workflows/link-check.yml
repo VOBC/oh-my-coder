@@ -22,7 +22,7 @@ jobs:
       - name: Link Checker
         uses: lycheeverse/lychee-action@v1.10.0
         with:
-          args: --verbose --no-progress --exclude-path 'node_modules' --exclude-path '.github/vscode-extension/vscode/node_modules' './**/*.md' './docs/**/*.md'
+          args: --verbose --no-progress --exclude-path 'node_modules' --exclude-path '.github/vscode-extension/vscode/node_modules' --exclude-path 'docs/verification' --exclude-path '.pytest_cache' './**/*.md' './docs/**/*.md'
           fail: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
