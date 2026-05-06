@@ -1082,37 +1082,6 @@
 
     </script>
 
-    <!-- Add Custom Model Modal -->
-    <div class="modal-overlay" id="addModelModal" onclick="closeAddModelModal()">
-        <div class="modal" onclick="event.stopPropagation()">
-            <h2>➕ 添加自定义模型</h2>
-            <form id="addModelForm" onsubmit="event.preventDefault();addCustomModel()">
-                <div class="form-group">
-                    <label class="form-label">模型名称 *</label>
-                    <input type="text" class="form-input" id="newModelName" placeholder="例: GPT-4o" required>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">提供商</label>
-                    <input type="text" class="form-input" id="newModelProvider" placeholder="例: OpenAI">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">API 地址 *</label>
-                    <input type="text" class="form-input" id="newModelEndpoint" placeholder="https://api.openai.com/v1/chat/completions" required>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">模型 ID</label>
-                    <input type="text" class="form-input" id="newModelId" placeholder="例: gpt-4o（留空则从 API 地址推断）">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">API Key</label>
-                    <input type="password" class="form-input" id="newModelApiKey" placeholder="sk-xxxxxxxx（可选）">
-                </div>
-                <div class="modal-actions">
-                    <button type="button" class="btn" onclick="closeAddModelModal()">取消</button>
-                    <button type="submit" class="btn btn-primary">添加</button>
-                </div>
-            </form>
-        </div>
-    </div>
+
 </body>
 </html>
