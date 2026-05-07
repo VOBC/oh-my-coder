@@ -946,15 +946,36 @@
                     btn.classList.add('ok');
                     btn.textContent = '✓ 成功';
                     showToastSmall('✅ ' + data.msg);
+                    // Auto-reset after 3 seconds
+                    setTimeout(() => {
+                        if (btn.classList.contains('ok')) {
+                            btn.classList.remove('ok', 'testing');
+                            btn.textContent = '测试';
+                        }
+                    }, 3000);
                 } else {
                     btn.classList.add('err');
                     btn.textContent = '✗ 失败';
                     showToastSmall('❌ ' + data.msg, 'error');
+                    // Auto-reset after 3 seconds
+                    setTimeout(() => {
+                        if (btn.classList.contains('err')) {
+                            btn.classList.remove('err', 'testing');
+                            btn.textContent = '测试';
+                        }
+                    }, 3000);
                 }
             } catch (e) {
                 btn.classList.add('err');
                 btn.textContent = '✗ 失败';
                 showToastSmall('测试失败: ' + e.message, 'error');
+                // Auto-reset after 3 seconds
+                setTimeout(() => {
+                    if (btn.classList.contains('err')) {
+                        btn.classList.remove('err', 'testing');
+                        btn.textContent = '测试';
+                    }
+                }, 3000);
             } finally {
                 btn.disabled = false;
             }
