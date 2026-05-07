@@ -218,6 +218,29 @@
         @media (max-width: 480px) {
             .examples-grid { grid-template-columns: 1fr; }
         }
+
+        /* Target tabs */
+        .target-tab {
+            flex: 1;
+            padding: 8px 12px;
+            border: none;
+            background: none;
+            color: var(--text-secondary);
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+        .target-tab:hover {
+            color: var(--text);
+            background: var(--bg-secondary);
+        }
+        .target-tab.active {
+            color: var(--primary);
+            background: var(--primary-light);
+            font-weight: 600;
+        }
     </style>
 </head>
 <body>
@@ -315,15 +338,33 @@
                 </div>
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="projectPath" class="form-label">项目路径</label>
-                        <input type="text" id="projectPath" class="form-input" placeholder="留空=分析当前目录，或输入项目路径">
-                        <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;">
-                            <button type="button" onclick="setPath('~/Desktop')" style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:6px;padding:3px 10px;font-size:12px;cursor:pointer;color:var(--text-secondary);">📁 桌面</button>
-                            <button type="button" onclick="setPath('~/Documents')" style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:6px;padding:3px 10px;font-size:12px;cursor:pointer;color:var(--text-secondary);">📄 文稿</button>
-                            <button type="button" onclick="setPath('~')" style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:6px;padding:3px 10px;font-size:12px;cursor:pointer;color:var(--text-secondary);">🏠 用户目录</button>
-                            <button type="button" onclick="setPath('.')" style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:6px;padding:3px 10px;font-size:12px;cursor:pointer;color:var(--text-secondary);">📂 当前目录</button>
+                        <label class="form-label">分析目标</label>
+                        <div style="display:flex;gap:0;margin-bottom:8px;background:var(--bg-secondary);border-radius:8px;border:1px solid var(--border);overflow:hidden;">
+                            <button type="button" id="tab-local" class="target-tab active" onclick="switchTargetTab('local')">📂 本地路径</button>
+                            <button type="button" id="tab-github" class="target-tab" onclick="switchTargetTab('github')">🔗 GitHub</button>
+                            <button type="button" id="tab-url" class="target-tab" onclick="switchTargetTab('url')">🌐 网页</button>
                         </div>
-                        <div class="form-hint" style="font-size:12px;color:var(--text-muted);margin-top:4px;">输入你想让 AI 分析的代码项目文件夹路径，或点击上方快捷按钮</div>
+                        <!-- 本地路径 -->
+                        <div id="target-local" class="target-panel">
+                            <input type="text" id="projectPath" class="form-input" placeholder="输入本地文件夹路径，或点击下方快捷按钮">
+                            <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;">
+                                <button type="button" onclick="setPath('~/Desktop')" style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:6px;padding:3px 10px;font-size:12px;cursor:pointer;color:var(--text-secondary);">📁 桌面</button>
+                                <button type="button" onclick="setPath('~/Documents')" style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:6px;padding:3px 10px;font-size:12px;cursor:pointer;color:var(--text-secondary);">📄 文稿</button>
+                                <button type="button" onclick="setPath('~')" style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:6px;padding:3px 10px;font-size:12px;cursor:pointer;color:var(--text-secondary);">🏠 用户目录</button>
+                                <button type="button" onclick="setPath('.')" style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:6px;padding:3px 10px;font-size:12px;cursor:pointer;color:var(--text-secondary);">📂 当前目录</button>
+                            </div>
+                            <div class="form-hint" style="font-size:12px;color:var(--text-muted);margin-top:4px;">你想让 AI 分析哪个代码文件夹？留空则分析当前目录</div>
+                        </div>
+                        <!-- GitHub URL -->
+                        <div id="target-github" class="target-panel" style="display:none;">
+                            <input type="text" id="githubUrl" class="form-input" placeholder="https://github.com/用户名/仓库名">
+                            <div class="form-hint" style="font-size:12px;color:var(--text-muted);margin-top:4px;">粘贴 GitHub 仓库链接，AI 会自动克隆并分析代码</div>
+                        </div>
+                        <!-- 网页 URL -->
+                        <div id="target-url" class="target-panel" style="display:none;">
+                            <input type="text" id="webUrl" class="form-input" placeholder="https://example.com/page">
+                            <div class="form-hint" style="font-size:12px;color:var(--text-muted);margin-top:4px;">粘贴网页链接，AI 会抓取内容作为分析上下文</div>
+                        </div>
                     </div>
                     <div class="form-group">
                         <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
@@ -734,6 +775,30 @@
 
         function setPath(p) { document.getElementById('projectPath').value = p; }
 
+        // ===== Target Tab Switching =====
+        let currentTargetType = 'local';
+        function switchTargetTab(type) {
+            currentTargetType = type;
+            // Update tab styles
+            document.querySelectorAll('.target-tab').forEach(t => t.classList.remove('active'));
+            document.getElementById('tab-' + type).classList.add('active');
+            // Show/hide panels
+            document.querySelectorAll('.target-panel').forEach(p => p.style.display = 'none');
+            document.getElementById('target-' + type).style.display = 'block';
+        }
+        function getTargetInfo() {
+            // Returns { path, target_type }
+            if (currentTargetType === 'github') {
+                const url = document.getElementById('githubUrl').value.trim();
+                return { path: url || '.', target_type: 'github' };
+            } else if (currentTargetType === 'url') {
+                const url = document.getElementById('webUrl').value.trim();
+                return { path: url || '.', target_type: 'url' };
+            } else {
+                return { path: document.getElementById('projectPath').value.trim() || '.', target_type: 'local' };
+            }
+        }
+
         // 任务完成后自动保存报告
         async function autoSaveReport(taskId) {
             try {
@@ -760,12 +825,14 @@
             startRunning(); resetPipeline();
             document.getElementById('responseSection').style.display = 'none';
             try {
+                const target = getTargetInfo();
                 const res = await fetch('/api/execute', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         task,
-                        project_path: document.getElementById('projectPath').value.trim() || '.',
+                        project_path: target.path,
+                        target_type: target.target_type,
                         model: document.getElementById('modelSelect').value,
                         workflow: document.getElementById('workflowSelect').value
                     })

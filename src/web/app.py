@@ -7,11 +7,17 @@ Web 界面入口 - FastAPI 应用
 
 import asyncio
 import json as _json
+import os
+import re
+import shutil
+import subprocess
 import sys
+import tempfile
 import uuid
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Optional
+from urllib.parse import urlparse
 
 import uvicorn
 from fastapi import BackgroundTasks, FastAPI, HTTPException, Request
@@ -38,6 +44,97 @@ try:
 except ImportError as e:
     print(f"导入错误: {e}")
     raise
+
+# ========================================
+# URL / 目标预处理
+# ========================================
+
+def _detect_target_type(target: str) -> str:
+    """自动检测输入类型：github / url / local"""
+    target = target.strip()
+    if not target:
+        return "local"
+    # GitHub URL
+    if re.match(r'https?://(www\.)?github\.com/[^/]+/[^/]+', target):
+        return "github"
+    # Git URL (git@...)
+    if target.startswith("git@"):
+        return "github"
+    # 其他 HTTP URL
+    if target.startswith("http://") or target.startswith("https://"):
+        return "url"
+    return "local"
+
+
+def _preprocess_target(target: str, target_type: str, task_id: str) -> tuple:
+    """
+    预处理分析目标，返回 (project_path, extra_context).
+    - github: clone 到临时目录，返回路径
+    - url: fetch 网页内容，返回 ('.', extra_context)
+    - local: 直接返回原路径
+    """
+    target = target.strip()
+    if not target:
+        return ".", ""
+
+    if target_type == "github":
+        # 规范化 GitHub URL → .git clone URL
+        clone_url = target
+        if not target.endswith(".git"):
+            clone_url = target.rstrip("/") + ".git"
+        if clone_url.startswith("https://github.com") and ".git" not in target:
+            clone_url = target.rstrip("/") + ".git"
+
+        tmp_dir = Path(tempfile.mkdtemp(prefix=f"omc-gh-{task_id[:8]}-"))
+        try:
+            result = subprocess.run(
+                ["git", "clone", "--depth", "1", clone_url, str(tmp_dir)],
+                capture_output=True, text=True, timeout=120,
+            )
+            if result.returncode != 0:
+                shutil.rmtree(tmp_dir, ignore_errors=True)
+                raise RuntimeError(f"git clone 失败: {result.stderr.strip()[:200]}")
+            return str(tmp_dir), f"\n\n## 源代码来源\nGitHub 仓库: {target}\n已克隆到: {tmp_dir}"
+        except Exception as e:
+            shutil.rmtree(tmp_dir, ignore_errors=True)
+            raise
+
+    elif target_type == "url":
+        # Fetch 网页内容
+        try:
+            import urllib.request
+            req = urllib.request.Request(target, headers={
+                "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"
+            })
+            with urllib.request.urlopen(req, timeout=30) as resp:
+                raw = resp.read()
+                # 尝试 utf-8，失败用 latin-1
+                try:
+                    content = raw.decode("utf-8")
+                except UnicodeDecodeError:
+                    content = raw.decode("latin-1")
+            # 简单 HTML → 文本：去标签
+            text = re.sub(r'<script[^>]*>[\s\S]*?</script>', '', content, flags=re.I)
+            text = re.sub(r'<style[^>]*>[\s\S]*?</style>', '', text, flags=re.I)
+            text = re.sub(r'<[^>]+>', ' ', text)
+            text = re.sub(r'\s+', ' ', text).strip()
+            # 截断到 8000 字符避免 token 爆炸
+            if len(text) > 8000:
+                text = text[:8000] + "\n\n... (内容已截断)"
+            return ".", f"\n\n## 网页内容\n来源: {target}\n\n{text}"
+        except Exception as e:
+            raise RuntimeError(f"获取网页失败: {e}")
+
+    else:
+        # 本地路径
+        return target, ""
+
+
+def _cleanup_target(project_path: str, target_type: str):
+    """清理临时目录（GitHub clone）"""
+    if target_type == "github" and project_path.startswith(tempfile.gettempdir()):
+        shutil.rmtree(project_path, ignore_errors=True)
+
 
 # ========================================
 # FastAPI App
@@ -441,9 +538,14 @@ async def execute_task(background: BackgroundTasks, payload: Optional[dict] = No
     project_path = payload.get("project_path", ".")
     model = payload.get("model", "deepseek")
     workflow_name = payload.get("workflow", "build")
+    target_type = payload.get("target_type", "")  # github / url / local / auto
 
     if not task:
         raise HTTPException(status_code=400, detail="Missing 'task' field")
+
+    # 自动检测目标类型
+    if not target_type or target_type == "auto":
+        target_type = _detect_target_type(project_path)
 
     # 创建任务
     task_id = task_manager.create_task(
@@ -451,27 +553,43 @@ async def execute_task(background: BackgroundTasks, payload: Optional[dict] = No
     )
     task_manager._tasks[task_id]["started_at"] = datetime.now().isoformat()
     task_manager._tasks[task_id]["status"] = "running"
+    task_manager._tasks[task_id]["target_type"] = target_type
 
     # 后台执行
-    background.add_task(run_task, task_id, task, project_path, model, workflow_name)
+    background.add_task(run_task, task_id, task, project_path, model, workflow_name, target_type)
 
     return JSONResponse(
         {
             "status": "started",
             "task_id": task_id,
+            "target_type": target_type,
             "message": "任务已启动，请通过 SSE 连接获取进度",
         }
     )
 
 
 async def run_task(
-    task_id: str, task: str, project_path: str, model: str, workflow_name: str
+    task_id: str, task: str, project_path: str, model: str, workflow_name: str,
+    target_type: str = "local",
 ):
     """后台执行任务"""
     import time
 
     start_time = time.time()
     orch = None
+    extra_context = ""
+
+    # 预处理目标（clone GitHub / fetch URL）
+    try:
+        project_path, extra_context = _preprocess_target(project_path, target_type, task_id)
+    except Exception as e:
+        err_type = type(e).__name__
+        task_manager.complete_task(task_id, error=f"目标预处理失败 ({err_type})")
+        history_store.save(task_id, {
+            "task_id": task_id, "task": task, "status": "failed",
+            "error_type": err_type, "started_at": datetime.now().isoformat(),
+        })
+        return
 
     try:
         # 复用全局 orchestrator（与 SSE /api/agent/live 共用同一实例）
@@ -517,7 +635,7 @@ async def run_task(
                 agent = orch.get_agent(agent_name)
                 agent_context = AgentContext(
                     project_path=Path(project_path),
-                    task_description=task,
+                    task_description=task + extra_context,
                     previous_outputs=previous_outputs,
                     override_model=model if model != "deepseek" else None,
                 )
@@ -635,6 +753,10 @@ async def run_task(
             "error_type": type(e).__name__,
         }
         history_store.save(task_id, history_record)
+
+    finally:
+        # 清理临时目录（GitHub clone）
+        _cleanup_target(project_path, target_type)
 
 
 # ===== 同步执行端点（适用于小任务）=====
