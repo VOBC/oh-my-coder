@@ -165,7 +165,7 @@ def test_add():
 
         messages = [Message(role=msg["role"], content=msg["content"]) for msg in prompt]
 
-        response = await self.model_router.route_and_call(
+        response = await self.call_model(
             task_type=TaskType.CODE_GENERATION,
             messages=messages,
             complexity="medium",

@@ -156,7 +156,7 @@ class ExploreAgent(BaseAgent):
         messages = [Message(role=msg["role"], content=msg["content"]) for msg in prompt]
 
         # 使用路由器选择模型
-        response = await self.model_router.route_and_call(
+        response = await self.call_model(
             task_type=TaskType.EXPLORE,
             messages=messages,
             complexity="low",  # Explore 使用 LOW tier

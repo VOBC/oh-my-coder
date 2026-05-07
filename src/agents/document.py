@@ -234,7 +234,7 @@ A: xxx
         messages = [Message(role=msg["role"], content=msg["content"]) for msg in prompt]
 
         # 长文档使用 MEDIUM 路由以获得更好的结构化输出
-        response = await self.model_router.route_and_call(
+        response = await self.call_model(
             task_type=TaskType.SIMPLE_QA,
             messages=messages,
             complexity="medium",

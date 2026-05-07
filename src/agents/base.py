@@ -114,6 +114,7 @@ class BaseAgent(ABC):
         self.config = config or {}
         self.status = AgentStatus.IDLE
         self._output_history: list[AgentOutput] = []
+        self._last_model_response: Optional[Any] = None  # 缓存最后一次 ModelResponse，用于 token 统计
 
         # 初始化工作目录上下文扫描器
         try:
@@ -236,6 +237,15 @@ class BaseAgent(ABC):
             # 后处理
             output = self._post_process(result, context)
 
+            # 填充 token 使用统计（从缓存的 ModelResponse 中提取）
+            if self._last_model_response is not None:
+                usage = self._last_model_response.usage
+                output.usage = {
+                    "prompt_tokens": getattr(usage, "prompt_tokens", 0),
+                    "completion_tokens": getattr(usage, "completion_tokens", 0),
+                    "total_tokens": getattr(usage, "total_tokens", 0),
+                }
+
             output.execution_time = time.time() - start_time
             self.status = AgentStatus.COMPLETED
 
@@ -316,7 +326,7 @@ class BaseAgent(ABC):
 
         所有子类的 _run 应该用此方法代替直接调用 self.model_router.route_and_call()。
         """
-        return await self.model_router.route_and_call(
+        response = await self.model_router.route_and_call(
             task_type=task_type,
             messages=messages,
             complexity=complexity,
@@ -324,6 +334,8 @@ class BaseAgent(ABC):
             override_model=getattr(self, "_override_model", None),
             **kwargs,
         )
+        self._last_model_response = response  # 缓存用于 token 统计
+        return response
 
     def get_last_output(self) -> Optional[AgentOutput]:
         """获取最后一次输出"""

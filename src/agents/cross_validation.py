@@ -287,7 +287,7 @@ PASS / FAIL / NEED_FIX
             msg_objects = [
                 Message(role=m["role"], content=m["content"]) for m in messages
             ]
-            resp = await self.model_router.route_and_call(
+            resp = await self.call_model(
                 task_type="analysis",
                 messages=msg_objects,
                 complexity="high",
