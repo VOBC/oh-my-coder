@@ -64,7 +64,7 @@ def foo(x: Union[Path, str]) -> Optional[ModuleInfo]: ...
 
 **检查方法**：`grep -rn "旧路径" . --include="*.md" --exclude-dir=.git --exclude-dir=node_modules`
 
-**教训**：CONTRIBUTING.md 相对路径断裂阻塞 CI lychee 检查，根因是移动文件后没有 grep 旧路径。
+**教训**：删除 SECURITY.md 后没检查 docs/CODE_REVIEW.md 中的引用，导致 CI lychee 失败。
 
 ### 3. ruff.toml 优先级 > pyproject.toml（2026/04）
 同时存在时只读前者。改 pyproject.toml 的 ruff 配置不生效。

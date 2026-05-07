@@ -17,3 +17,5 @@
 
 ## 推送
 - commit bf16adc: chore: add MEMORY.md and doc-sync rule, remove old boilerplate files
+- **CI 失败**：删除 SECURITY.md 后没检查引用，docs/CODE_REVIEW.md 链接断裂
+- commit 6bc487d: fix: remove SECURITY.md reference from CODE_REVIEW.md
