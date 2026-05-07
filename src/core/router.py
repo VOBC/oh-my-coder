@@ -152,6 +152,44 @@ class RouterConfig:
         self.hunyuan_api_key = self.hunyuan_api_key or os.getenv("HUNYUAN_API_KEY")
         self.doubao_api_key = self.doubao_api_key or os.getenv("DOUBAO_API_KEY")
 
+        # 3) Ollama 配置
+        self.ollama_base_url = self.ollama_base_url or os.getenv(
+            "OLLAMA_BASE_URL", "http://localhost:11434"
+        )
+        self.ollama_model = self.ollama_model or os.getenv("OLLAMA_MODEL", "qwen2:7b")
+        self.prefer_local = os.getenv("PREFER_LOCAL_MODEL", "true").lower() in (
+            "true",
+            "1",
+            "yes",
+        )
+
+        # 4) 默认故障转移顺序（优先本地模型，然后免费/便宜的云端）
+        if not self.fallback_order:
+            if self.prefer_local:
+                self.fallback_order = [
+                    "ollama",  # 本地模型优先（零成本）
+                    "deepseek",  # 免费额度高
+                    "kimi",  # 长上下文
+                    "doubao",  # 性价比高
+                    "minimax",  # MiniMax
+                    "glm",  # 智谱
+                    "tongyi",  # 通义千问
+                    "wenxin",  # 文心一言
+                    "hunyuan",  # 混元
+                ]
+            else:
+                self.fallback_order = [
+                    "deepseek",
+                    "kimi",
+                    "doubao",
+                    "minimax",
+                    "glm",
+                    "tongyi",
+                    "wenxin",
+                    "hunyuan",
+                    "ollama",  # 本地模型作为后备
+                ]
+
     def _load_from_config_file(self) -> None:
         """从 ~/.omc/config.json 读取 API Keys（Web UI 设置保存的目标文件）"""
         config_path = Path.home() / ".omc" / "config.json"
@@ -192,44 +230,6 @@ class RouterConfig:
                         logger.debug(f"从 config.json 加载 {provider} API Key")
         except Exception as e:
             logger.warning(f"读取 ~/.omc/config.json 失败: {e}")
-
-        # Ollama 配置
-        self.ollama_base_url = self.ollama_base_url or os.getenv(
-            "OLLAMA_BASE_URL", "http://localhost:11434"
-        )
-        self.ollama_model = self.ollama_model or os.getenv("OLLAMA_MODEL", "qwen2:7b")
-        self.prefer_local = os.getenv("PREFER_LOCAL_MODEL", "true").lower() in (
-            "true",
-            "1",
-            "yes",
-        )
-
-        # 默认故障转移顺序（优先本地模型，然后免费/便宜的云端）
-        if not self.fallback_order:
-            if self.prefer_local:
-                self.fallback_order = [
-                    "ollama",  # 本地模型优先（零成本）
-                    "deepseek",  # 免费额度高
-                    "kimi",  # 长上下文
-                    "doubao",  # 性价比高
-                    "minimax",  # MiniMax
-                    "glm",  # 智谱
-                    "tongyi",  # 通义千问
-                    "wenxin",  # 文心一言
-                    "hunyuan",  # 混元
-                ]
-            else:
-                self.fallback_order = [
-                    "deepseek",
-                    "kimi",
-                    "doubao",
-                    "minimax",
-                    "glm",
-                    "tongyi",
-                    "wenxin",
-                    "hunyuan",
-                    "ollama",  # 本地模型作为后备
-                ]
 
 
 # ============================================================
