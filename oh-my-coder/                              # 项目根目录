@@ -1,0 +1,255 @@
+├── src/                                  # [核心] Python 后端源码
+│   ├── __init__.py                       # 包初始化
+│   ├── main.py                           # 程序入口
+│   ├── cli.py                            # CLI 主入口
+│   ├── model_discovery.py                # 模型发现工具
+│   │
+│   ├── agents/                           # [核心] 多智能体系统 (30+ Agents)
+│   │   ├── __init__.py
+│   │   ├── base.py                       # Agent 基类
+│   │   ├── planner.py                    # 任务规划器
+│   │   ├── executor.py                   # 任务执行器
+│   │   ├── code_reviewer.py              # 代码审查
+│   │   ├── architect.py                  # 架构师
+│   │   ├── analyst.py                    # 需求分析师
+│   │   ├── explore.py                    # 代码库探索
+│   │   ├── evolution.py                  # 代码演进/优化
+│   │   ├── self_improving.py             # 自我改进
+│   │   ├── vision.py                     # 视觉理解
+│   │   ├── ...                           # 其他 Agent
+│   │   └── persistence/                  # Agent 状态持久化
+│   │
+│   ├── api/                              # API 定义
+│   │   ├── openapi.py                    # OpenAPI 规范
+│   │   └── server_api.py                 # 服务器 API 实现
+│   │
+│   ├── commands/                         # [核心] CLI 命令实现 (40+ 命令)
+│   │   ├── __init__.py
+│   │   ├── cli.py                        # CLI 主命令分发
+│   │   ├── cli_agent.py                  # Agent 交互命令
+│   │   ├── cli_model.py                  # 模型管理命令
+│   │   ├── cli_server.py                 # 服务器管理命令
+│   │   ├── cli_review.py                 # 代码审查命令
+│   │   ├── cli_plan.py                   # 任务规划命令
+│   │   ├── quickstart.py                 # 快速入门命令
+│   │   └── ...                           # 其他命令
+│   │
+│   ├── core/                             # [核心] 核心引擎
+│   │   ├── __init__.py
+│   │   ├── orchestrator.py               # 任务编排器
+│   │   ├── router.py                     # 意图路由器
+│   │   ├── checkpoint.py                 # 检查点系统
+│   │   ├── history.py                    # 历史记录
+│   │   └── summary.py                    # 摘要生成
+│   │
+│   ├── gateway/                          # [核心] AI 模型网关
+│   │   ├── __init__.py
+│   │   ├── base.py                       # 网关基类
+│   │   ├── gateway.py                    # 网关核心逻辑
+│   │   └── platforms/                    # 多平台适配 (Slack, 飞书等)
+│   │
+│   ├── models/                           # [核心] LLM 模型适配器 (10+ 模型)
+│   │   ├── __init__.py
+│   │   ├── base.py                       # 模型基类
+│   │   ├── deepseek.py                   # DeepSeek 适配器
+│   │   ├── ollama.py                     # Ollama 本地模型适配器
+│   │   ├── glm.py                        # 智谱 GLM 适配器
+│   │   ├── wenxin.py                     # 文心一言适配器
+│   │   └── ...                           # 其他模型适配器
+│   │
+│   ├── memory/                           # 记忆系统
+│   │   ├── __init__.py
+│   │   ├── manager.py                    # 记忆管理器
+│   │   ├── short_term.py                 # 短期记忆
+│   │   ├── long_term.py                  # 长期记忆
+│   │   ├── auto_compact.py               # 自动压缩
+│   │   └── skill_manager.py              # 技能管理器
+│   │
+│   ├── web/                              # Web 后端 (Flask/FastAPI)
+│   │   ├── app.py                        # Web 应用主入口
+│   │   ├── dashboard_api.py              # 仪表盘 API
+│   │   ├── history_api.py                # 历史记录 API
+│   │   ├── team_api.py                   # 团队协作 API
+│   │   └── templates/                    # HTML 模板
+│   │
+│   ├── rag/                              # RAG (检索增强生成) 系统
+│   │   ├── __init__.py
+│   │   ├── indexer.py                    # 索引器
+│   │   └── search.py                     # 搜索器
+│   │
+│   ├── quest/                            # 任务/挑战模式
+│   │   ├── __init__.py
+│   │   ├── models.py                     # 数据模型
+│   │   ├── executor.py                   # 挑战执行器
+│   │   ├── manager.py                    # 挑战管理器
+│   │   └── notifications.py              # 通知系统
+│   │
+│   ├── mcp/                              # MCP (Model Context Protocol) 服务器
+│   │   ├── __init__.py
+│   │   ├── server.py                     # MCP 服务器
+│   │   ├── tools.py                      # MCP 工具
+│   │   └── resources.py                  # MCP 资源
+│   │
+│   ├── sandbox/                          # 安全沙箱
+│   │   ├── __init__.py
+│   │   ├── sandbox.py                    # 沙箱实现
+│   │   └── dangerous_command_blocker.py  # 危险命令拦截器
+│   │
+│   ├── security/                         # 安全模块
+│   │   ├── __init__.py
+│   │   └── permissions.py                # 权限管理
+│   │
+│   ├── team/                             # 团队协作
+│   │   ├── __init__.py
+│   │   ├── auth.py                       # 认证
+│   │   ├── notification.py               # 通知
+│   │   ├── statistics.py                 # 统计
+│   │   └── task_sync.py                  # 任务同步
+│   │
+│   ├── capsule/                          # GEP 胶囊 (基因进化协议)
+│   │   ├── __init__.py
+│   │   ├── capsule.py                    # 胶囊实现
+│   │   ├── gene.py                       # 基因定义
+│   │   └── registry.py                   # 胶囊注册表
+│   │
+│   ├── skills/                           # 技能系统
+│   │   ├── __init__.py
+│   │   └── registry.py                   # 技能注册表
+│   │
+│   ├── plugins/                          # 插件系统
+│   │   ├── __init__.py
+│   │   ├── loader.py                     # 插件加载器
+│   │   ├── registry.py                   # 插件注册表
+│   │   └── example_plugin.py             # 示例插件
+│   │
+│   ├── state/                            # 状态管理
+│   │   ├── __init__.py
+│   │   └── task_state.py                 # 任务状态机
+│   │
+│   ├── context/                          # 上下文管理
+│   │   ├── __init__.py
+│   │   ├── browser_context.py            # 浏览器上下文
+│   │   └── workspace_scanner.py          # 工作区扫描器
+│   │
+│   ├── utils/                            # 工具函数
+│   │   ├── __init__.py
+│   │   ├── notify.py                     # 通知工具
+│   │   ├── performance.py                # 性能监控
+│   │   └── safe_executor.py              # 安全执行器
+│   │
+│   ├── wiki/                             # Wiki 生成器
+│   │   ├── __init__.py
+│   │   ├── generator.py                  # 生成器
+│   │   └── parser.py                     # 解析器
+│   │
+│   ├── capabilities/                     # 能力包
+│   │   ├── __init__.py
+│   │   └── package.py                    # 能力包实现
+│   │
+│   ├── multiagent/                       # 多Agent协调
+│   │   ├── __init__.py
+│   │   └── coordinator.py                # 协调器
+│   │
+│   ├── config/                           # 配置管理
+│   │   ├── __init__.py
+│   │   └── agent_config.py               # Agent 配置
+│   │
+│   ├── templates/                        # 模板管理
+│   │   └── __init__.py
+│   │
+│   └── tools/                            # 外部工具集成
+│       ├── __init__.py
+│       └── sourcegraph.py                # Sourcegraph 集成
+│
+├── tests/                                # [测试] 测试套件
+│   ├── __init__.py
+│   ├── conftest.py                       # pytest 配置和 Fixtures
+│   ├── test_basic.py                     # 基础测试
+│   ├── test_cli.py                       # CLI 测试
+│   ├── test_cross_validation.py          # 交叉验证测试
+│   ├── test_error_handling.py            # 错误处理测试
+│   ├── test_router.py                    # 路由器测试
+│   ├── test_orchestrator.py              # 编排器测试
+│   ├── test_memory.py                    # 记忆系统测试
+│   ├── test_rag.py                       # RAG 测试
+│   ├── test_gateway.py                   # 网关测试
+│   ├── test_agents/                      # Agent 专项测试
+│   └── ...                               # 其他测试 (40+ 测试文件)
+│
+├── desktop/                              # [桌面应用] Electron + Tauri
+│   ├── electron/                         # Electron 主进程
+│   │   ├── main.js                       # Electron 入口
+│   │   ├── preload.js                    # 预加载脚本
+│   │   └── api-bridge.js                 # API 桥接
+│   ├── src/                              # React/TypeScript 前端
+│   │   ├── App.tsx                       # 主组件
+│   │   ├── main.tsx                      # 入口文件
+│   │   ├── App.css                       # 样式
+│   │   ├── components/                   # UI 组件
+│   │   ├── hooks/                        # 自定义 Hooks
+│   │   ├── models/                       # 数据模型
+│   │   ├── controllers/                  # 控制器
+│   │   └── settings/                     # 设置页面
+│   ├── src-tauri/                        # Tauri Rust 后端
+│   │   ├── src/
+│   │   ├── Cargo.toml
+│   │   └── tauri.conf.json
+│   ├── index.html
+│   ├── package.json
+│   └── vite.config.ts
+│
+├── docs/                                 # [文档] MkDocs 文档源
+│   ├── index.md                          # 文档首页
+│   ├── API.md                            # API 文档
+│   ├── FAQ.md                            # 常见问题
+│   ├── guide/                            # 用户指南
+│   │   ├── install.md                    # 安装指南
+│   │   ├── quick-start.md                # 快速开始
+│   │   ├── models.md                     # 模型配置
+│   │   ├── memory-system.md              # 记忆系统
+│   │   └── ...                           # 其他指南
+│   ├── features/                         # 功能特性
+│   │   ├── active-learning.md
+│   │   ├── quest-mode.md
+│   │   └── ...
+│   ├── dev/                              # 开发者文档
+│   │   ├── architecture.md               # 架构文档
+│   │   ├── testing.md                    # 测试指南
+│   │   └── ...
+│   ├── zh/                               # 中文文档
+│   └── ...
+│
+├── scripts/                              # [工具] 部署与工具脚本
+│   ├── install.sh                        # Linux/macOS 安装脚本
+│   ├── install.ps1                       # Windows 安装脚本
+│   ├── quickstart.sh                     # 快速启动脚本
+│   ├── check-secrets.sh                  # 密钥检查
+│   ├── security-scan.sh                  # 安全扫描
+│   └── pre-commit.sh                     # Git pre-commit 钩子
+│
+├── projects/                             # 项目模板/示例
+│   └── oh-my-coder/                      # 项目自身模板
+│
+├── web-ui/                               # [Web UI] 轻量级 Web 界面
+│   ├── lib/                              # 前端逻辑
+│   │   ├── chat-store.ts                 # 聊天状态管理
+│   │   ├── models.ts                     # 数据模型
+│   │   └── sse-client.ts                 # SSE 客户端
+│   └── styles/                           # 样式文件
+│
+├── pyproject.toml                        # Python 项目配置
+├── pytest.ini                            # pytest 配置
+├── ruff.toml                             # Ruff Linter 配置
+├── mkdocs.yml                            # MkDocs 文档配置
+├── Dockerfile                            # Docker 镜像构建
+├── README.md                             # 项目主 README
+├── CONTRIBUTING.md                       # 贡献指南
+├── LICENSE                               # 开源许可证
+├── FUNDING.yml                           # 赞助信息
+├── IDENTITY.md                           # 项目标识
+├── SOUL.md                               # 项目灵魂/愿景
+├── MEMORY.md                             # 记忆文档
+├── HEARTBEAT.md                          # 心跳/健康检查
+├── TOOLS.md                              # 工具列表
+├── USER.md                               # 用户手册
+└── AGENTS.md                             # Agent 列表

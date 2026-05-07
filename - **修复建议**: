@@ -1,0 +1,329 @@
+1.  捕获更具体的异常类型，如 `ValueError`, `RuntimeError`, `ModelAPIError` 等。
+    2.  对于非预期的异常，应该允许其向上传播，或者至少记录完整的堆栈信息。
+    3.  区分“业务逻辑异常”（可预期，应返回失败状态）和“系统异常”（不可预期，应记录并抛出）。
+- **重构示例**:
+    ```python:src/agents/base.py
+    import traceback
+    from typing import Any
+    from src.core.exceptions import AgentExecutionError, ModelAPIError
+
+    class BaseAgent:
+        # ... 其他代码 ...
+
+        async def execute(self, task: Task) -> AgentOutput:
+            try:
+                # ... 代理逻辑 ...
+                result = await self._process(task)
+                return AgentOutput(status=AgentStatus.COMPLETED, result=result)
+            except (ValueError, AgentExecutionError) as e:
+                # 可预期的业务逻辑异常，记录并返回失败状态
+                logger.warning(f"Agent {self.name} execution failed due to: {e}")
+                return AgentOutput(status=AgentStatus.FAILED, error=str(e))
+            except ModelAPIError as e:
+                # 模型API错误，可能需要重试
+                logger.error(f"Agent {self.name} model API error: {e}")
+                return AgentOutput(status=AgentStatus.FAILED, error=f"Model error: {e}")
+            except Exception as e:
+                # 未预期的系统异常，记录完整堆栈并重新抛出
+                logger.critical(f"Unexpected error in Agent {self.name}: {traceback.format_exc()}")
+                raise  # 重新抛出，让上层 Orchestrator 处理
+    ```
+
+---
+
+**问题 1.2: `_process` 方法职责过重**
+
+- **严重级别**: Medium
+- **文件位置**: 假设的 `_process` 方法实现处。
+- **问题描述**: 基类中的 `_process` 方法（或类似的核心处理方法）可能承担了过多的职责，如：格式化提示词、调用模型、解析响应、更新内存、调用工具等。这违反了单一职责原则，使得该方法难以测试和扩展。
+- **修复建议**: 将 `_process` 方法拆分为多个更小、更专注的方法，例如：
+    - `_build_prompt(task: Task) -> str`
+    - `_call_model(prompt: str) -> ModelResponse`
+    - `_parse_response(response: ModelResponse) -> Any`
+    - `_update_memory(task: Task, result: Any) -> None`
+- **重构示例**:
+    ```python:src/agents/base.py
+    class BaseAgent:
+        # ... 其他代码 ...
+
+        async def _process(self, task: Task) -> Any:
+            """执行代理的核心处理流程。"""
+            prompt = await self._build_prompt(task)
+            response = await self._call_model(prompt)
+            result = self._parse_response(response)
+            await self._update_memory(task, result)
+            return result
+
+        async def _build_prompt(self, task: Task) -> str:
+            """构建发送给模型的提示词。"""
+            # 子类应重写此方法以提供特定提示词
+            raise NotImplementedError
+
+        async def _call_model(self, prompt: str) -> ModelResponse:
+            """调用底层 LLM 模型。"""
+            # 使用 gateway 或 model 适配器
+            return await self.model_gateway.generate(prompt)
+
+        def _parse_response(self, response: ModelResponse) -> Any:
+            """解析模型返回的响应。"""
+            # 子类应重写此方法以解析特定格式的响应
+            return response.text
+
+        async def _update_memory(self, task: Task, result: Any) -> None:
+            """更新代理的记忆。"""
+            if self.memory_manager:
+                await self.memory_manager.add_entry(task, result)
+    ```
+
+---
+
+#### 2. `src/core/orchestrator.py` 审查
+
+**文件**: `src/core/orchestrator.py` (37.9KB)
+**审查结论**: 核心调度逻辑复杂，存在状态管理和错误恢复方面的潜在风险。
+
+---
+
+**问题 2.1: 任务状态管理依赖文件系统，存在并发风险**
+
+- **严重级别**: High
+- **文件位置**: `save_checkpoint` 和 `load_checkpoint` 方法。
+- **问题描述**: 正如架构师所担忧的，`orchestrator` 可能依赖文件系统（如 JSON 文件）来保存和加载任务状态（checkpoint）。在异步并发场景下，这可能导致数据竞争和状态不一致。如果写入操作不是原子性的，崩溃可能导致数据损坏。
+- **代码片段 (模拟)**:
+    ```python
+    # 假设的 save_checkpoint 方法
+    async def save_checkpoint(self, task_id: str, state: dict):
+        filepath = f".checkpoints/{task_id}.json"
+        # 非原子写入，并发写入可能相互覆盖
+        with open(filepath, 'w') as f:
+            json.dump(state, f)
+    ```
+- **修复建议**:
+    1.  **短期**: 使用 `tempfile` 和 `os.rename()` 实现原子写入。
+    2.  **长期**: 采纳架构师的建议 (ADR-002)，引入 SQLite 数据库来管理状态。使用数据库事务可以保证 ACID 特性。
+- **重构示例 (短期修复)**:
+    ```python:src/core/orchestrator.py
+    import os
+    import tempfile
+    import json
+
+    class Orchestrator:
+        async def save_checkpoint(self, task_id: str, state: dict):
+            dirpath = ".checkpoints"
+            os.makedirs(dirpath, exist_ok=True)
+            filepath = os.path.join(dirpath, f"{task_id}.json")
+            
+            # 使用临时文件进行原子写入
+            with tempfile.NamedTemporaryFile(mode='w', dir=dirpath, delete=False, suffix='.tmp') as tmp_file:
+                json.dump(state, tmp_file)
+                tmp_file_path = tmp_file.name
+            
+            # 原子性地重命名临时文件为目标文件
+            os.replace(tmp_file_path, filepath)
+    ```
+
+---
+
+**问题 2.2: 错误恢复逻辑可能过于简单**
+
+- **严重级别**: Medium
+- **文件位置**: `handle_failure` 或类似的错误处理方法。
+- **问题描述**: 当代理执行失败时，`orchestrator` 可能只是简单地记录错误并重试，或者直接放弃整个任务。缺乏更精细的错误分类和恢复策略（如：对于模型超时错误进行重试，对于业务逻辑错误则直接失败并通知用户）。
+- **修复建议**: 实现一个基于错误类型的重试策略。例如，使用指数退避算法重试网络或模型错误，而对于输入验证错误则直接返回失败。
+- **重构示例**:
+    ```python:src/core/orchestrator.py
+    import asyncio
+    from src.core.exceptions import ModelAPIError, AgentExecutionError
+
+    class Orchestrator:
+        async def execute_with_retry(self, agent: BaseAgent, task: Task, max_retries: int = 3):
+            for attempt in range(max_retries):
+                try:
+                    return await agent.execute(task)
+                except ModelAPIError as e:
+                    # 模型API错误，可能是临时性问题，进行重试
+                    wait_time = 2 ** attempt  # 指数退避
+                    logger.warning(f"Model API error (attempt {attempt+1}), retrying in {wait_time}s: {e}")
+                    await asyncio.sleep(wait_time)
+                except AgentExecutionError as e:
+                    # 业务逻辑错误，直接失败，不重试
+                    logger.error(f"Agent execution failed: {e}")
+                    raise
+                except Exception as e:
+                    # 其他未预期错误，重试一次后放弃
+                    if attempt == max_retries - 1:
+                        logger.critical(f"Max retries reached for task {task.id}")
+                        raise
+                    await asyncio.sleep(1)
+            
+            raise RuntimeError(f"Task {task.id} failed after {max_retries} attempts")
+    ```
+
+---
+
+#### 3. `src/core/router.py` 审查
+
+**文件**: `src/core/router.py` (31.1KB)
+**审查结论**: 路由逻辑清晰，但存在扩展性瓶颈和潜在的性能问题。
+
+---
+
+**问题 3.1: 路由规则硬编码，扩展性差**
+
+- **严重级别**: High
+- **文件位置**: `route` 方法或路由规则定义处。
+- **问题描述**: 代理的路由规则（哪个请求应该发给哪个代理）可能被硬编码在 `router.py` 的 `if-elif-else` 或 `match-case` 语句中。每当新增一个代理，都需要修改此文件，违反了开闭原则。
+- **代码片段 (模拟)**:
+    ```python
+    class Router:
+        def route(self, request: Request) -> BaseAgent:
+            if request.type == "code_review":
+                return CodeReviewerAgent()
+            elif request.type == "plan":
+                return PlannerAgent()
+            elif request.type == "execute":
+                return ExecutorAgent()
+            # ... 更多的 elif ...
+            else:
+                raise ValueError(f"Unknown request type: {request.type}")
+    ```
+- **修复建议**: 实现一个基于注册表的路由模式。代理在初始化时向路由器注册自己，并声明自己能够处理的请求类型。路由器遍历注册表，找到匹配的代理。
+- **重构示例**:
+    ```python:src/core/router.py
+    from typing import Dict, Type
+    from src.agents.base import BaseAgent
+
+    class Router:
+        def __init__(self):
+            self._routes: Dict[str, Type[BaseAgent]] = {}
+
+        def register(self, request_type: str, agent_class: Type[BaseAgent]):
+            """注册一个代理类来处理特定类型的请求。"""
+            if request_type in self._routes:
+                logger.warning(f"Route for '{request_type}' is being overwritten.")
+            self._routes[request_type] = agent_class
+
+        def route(self, request: Request) -> BaseAgent:
+            """根据请求类型找到对应的代理实例。"""
+            agent_class = self._routes.get(request.type)
+            if agent_class is None:
+                raise ValueError(f"No agent registered for request type: {request.type}")
+            return agent_class()  # 实例化代理
+    ```
+
+---
+
+**问题 3.2: 路由决策可能忽略上下文**
+
+- **严重级别**: Low
+- **文件位置**: `route` 方法。
+- **问题描述**: 路由决策可能仅基于 `request.type`，而忽略了其他重要的上下文信息，如用户偏好、任务历史、当前系统负载等。这可能导致次优的代理选择。
+- **修复建议**: 将 `route` 方法的签名扩展为 `route(self, request: Request, context: Context) -> BaseAgent`，并允许路由规则基于 `context` 进行更智能的决策。例如，如果用户偏好“快速模式”，则路由到执行速度更快的代理。
+- **重构示例**:
+    ```python:src/core/router.py
+    from dataclasses import dataclass
+    from typing import Optional
+
+    @dataclass
+    class Context:
+        user_preferences: Optional[dict] = None
+        system_load: float = 0.0
+        task_history: Optional[list] = None
+
+    class Router:
+        # ... 注册逻辑 ...
+        
+        def route(self, request: Request, context: Optional[Context] = None) -> BaseAgent:
+            agent_class = self._routes.get(request.type)
+            if agent_class is None:
+                # 如果没有完全匹配，可以尝试基于上下文的模糊匹配
+                if context and context.user_preferences:
+                    # ... 实现更复杂的匹配逻辑 ...
+                    pass
+                raise ValueError(...)
+            return agent_class()
+    ```
+
+---
+
+#### 4. `src/commands/cli.py` 审查 (抽样)
+
+**文件**: `src/commands/cli.py` (55KB)
+**审查结论**: 确认了架构师的分析，这是一个典型的“上帝模块”，急需重构。
+
+---
+
+**问题 4.1: 文件过大，职责过多**
+
+- **严重级别**: Critical
+- **文件位置**: 整个文件。
+- **问题描述**: 一个 55KB 的 CLI 命令文件包含了数十个命令的定义，从模型管理到代码审查，再到系统配置。这导致：
+    1.  **难以导航**: 查找一个特定命令的实现需要大量滚动。
+    2.  **高耦合**: 不同命令之间可能共享状态或依赖关系，导致修改一个命令时意外影响其他命令。
+    3.  **难以测试**: 测试一个命令需要设置整个 CLI 环境。
+- **修复建议**: 立即启动 ADR-001 计划。将 `cli.py` 拆分为多个子命令模块。例如：
+    - `commands/model_cli.py`: 包含 `model list`, `model add`, `model remove` 等命令。
+    - `commands/review_cli.py`: 包含 `review`, `review list` 等命令。
+    - `commands/agent_cli.py`: 包含 `agent run`, `agent list` 等命令。
+- **重构示例**:
+    ```python:src/commands/cli.py
+    # 重构后的 cli.py 作为主入口，只需导入和注册子命令组
+    import click
+    from src.commands import model_cli, review_cli, agent_cli
+
+    @click.group()
+    def cli():
+        pass
+
+    # 将子命令组添加到主 CLI
+    cli.add_command(model_cli.model_group, 'model')
+    cli.add_command(review_cli.review_group, 'review')
+    cli.add_command(agent_cli.agent_group, 'agent')
+
+    if __name__ == '__main__':
+        cli()
+    ```
+
+    ```python:src/commands/model_cli.py
+    # 示例：model 命令子模块
+    import click
+
+    @click.group()
+    def model_group():
+        """管理 AI 模型的命令。"""
+        pass
+
+    @model_group.command()
+    @click.argument('name')
+    @click.argument('provider')
+    def add(name: str, provider: str):
+        """添加一个新模型。"""
+        click.echo(f"Adding model {name} from provider {provider}...")
+        # ... 具体的实现逻辑 ...
+
+    @model_group.command()
+    def list():
+        """列出所有已配置的模型。"""
+        click.echo("Listing models...")
+        # ... 具体的实现逻辑 ...
+    ```
+
+---
+
+### 总结与后续步骤
+
+本次代码审查揭示了 `oh-my-coder` 项目中从架构设计到具体实现的多个关键问题。
+
+| 文件 | 关键问题 | 严重级别 | 建议 |
+| :--- | :--- | :--- | :--- |
+| `src/agents/base.py` | 异常处理宽泛，核心方法职责过重 | Medium | 精细化异常处理，拆分 `_process` 方法 |
+| `src/core/orchestrator.py` | 状态管理依赖文件系统，有并发风险 | **High** | 短期使用原子写入，长期引入数据库 |
+| `src/core/router.py` | 路由规则硬编码，扩展性差 | **High** | 实现基于注册表的路由模式 |
+| `src/commands/cli.py` | 上帝模块，文件过大，职责过多 | **Critical** | **立即启动** ADR-001，按功能域拆分子模块 |
+
+**下一步行动**:
+
+1.  **最高优先级**: 立即开始重构 `src/commands/cli.py` (ADR-001)。这是我作为工程师可以立即着手并产生最大影响的任务。
+2.  **高优先级**: 着手修改 `src/core/router.py`，引入注册表模式，为未来的代理扩展铺平道路。
+3.  **中优先级**: 优化 `src/core/orchestrator.py` 的状态写入和错误恢复逻辑。
+4.  **持续改进**: 将 `src/agents/base.py` 的重构作为一项持续任务，在开发新代理时逐步应用新的模式。

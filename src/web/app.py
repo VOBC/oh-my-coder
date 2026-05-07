@@ -72,10 +72,15 @@ class TaskManager:
         self._tasks: dict[str, dict[str, Any]] = {}
         self._queues: dict[str, asyncio.Queue] = {}
 
-    def create_task(self) -> str:
+    def create_task(self, task_desc: str = "", model: str = "", workflow: str = "", project_path: str = "") -> str:
         task_id = str(uuid.uuid4())[:8]
         queue = asyncio.Queue()
         self._tasks[task_id] = {
+            "task_id": task_id,
+            "task": task_desc,
+            "model": model,
+            "workflow": workflow,
+            "project_path": project_path,
             "status": "pending",
             "started_at": None,
             "completed_at": None,
@@ -352,6 +357,73 @@ async def api_history():
     return JSONResponse({"records": tasks})
 
 
+@app.post("/api/save-report")
+async def save_report(payload: Optional[dict] = None):
+    """保存任务报告到文件"""
+    if not payload or not payload.get("task_id"):
+        raise HTTPException(status_code=400, detail="task_id required")
+
+    task_id = payload["task_id"]
+    task = task_manager.get_task(task_id)
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+
+    # 默认保存到桌面
+    desktop = Path.home() / "Desktop" / "omc-reports"
+    desktop.mkdir(parents=True, exist_ok=True)
+
+    # 生成文件名
+    ts = task.get("started_at", "").replace(":", "-").replace(" ", "_")[:19]
+    task_desc = task.get("task", "task")[:30].replace("/", "_").replace("\\", "_")
+    filename = f"{ts}_{task_desc}_{task_id[:8]}.md"
+    filepath = desktop / filename
+
+    # 生成报告内容
+    lines = [
+        f"# 任务报告: {task.get('task', '未知任务')}\n",
+        f"- **任务 ID**: {task_id}",
+        f"- **状态**: {task.get('status', 'unknown')}",
+        f"- **开始时间**: {task.get('started_at', '-')}",
+        f"- **模型**: {task.get('model', '-')}",
+        f"- **工作流**: {task.get('workflow', '-')}",
+        f"- **项目路径**: {task.get('project_path', '-')}\n",
+        f"## 统计\n",
+        f"- Tokens: {task.get('stats', {}).get('total_tokens', 0)}",
+        f"- 执行时间: {task.get('stats', {}).get('execution_time', 0)}s",
+        f"- 成本: ¥{task.get('stats', {}).get('total_cost', 0):.4f}",
+        f"- 完成步骤: {task.get('stats', {}).get('steps_completed', [])}",
+        f"- 失败步骤: {task.get('stats', {}).get('steps_failed', [])}\n",
+    ]
+
+    # 各步骤输出
+    step_outputs = task.get("step_outputs", {})
+    if step_outputs:
+        lines.append("## 各步骤输出\n")
+        for step_name, output in step_outputs.items():
+            lines.append(f"### {step_name}\n")
+            lines.append(str(output))
+            lines.append("")
+
+    # 最终结果
+    final = task.get("result", {})
+    if final:
+        lines.append("## 最终结果\n")
+        if isinstance(final, dict):
+            lines.append(f"- 摘要: {final.get('summary', '-')}")
+            lines.append(f"- 耗时: {final.get('execution_time', 0)}s")
+            lines.append(f"- Tokens: {final.get('total_tokens', 0)}\n")
+            for key, val in final.items():
+                if key not in ("summary", "execution_time", "total_tokens"):
+                    lines.append(f"### {key}\n")
+                    lines.append(str(val))
+                    lines.append("")
+        else:
+            lines.append(str(final))
+
+    filepath.write_text("\n".join(lines), encoding="utf-8")
+    return JSONResponse({"path": str(filepath), "status": "saved"})
+
+
 @app.post("/api/execute")
 async def execute_task(background: BackgroundTasks, payload: Optional[dict] = None):
     """
@@ -374,7 +446,9 @@ async def execute_task(background: BackgroundTasks, payload: Optional[dict] = No
         raise HTTPException(status_code=400, detail="Missing 'task' field")
 
     # 创建任务
-    task_id = task_manager.create_task()
+    task_id = task_manager.create_task(
+        task_desc=task, model=model, workflow=workflow_name, project_path=project_path
+    )
     task_manager._tasks[task_id]["started_at"] = datetime.now().isoformat()
     task_manager._tasks[task_id]["status"] = "running"
 
