@@ -780,15 +780,16 @@ async def save_settings(payload: dict):
 @app.post("/api/test-connection")
 async def test_connection(payload: dict):
     """测试 API Key 是否可用。
-    
+
     支持两类模式：
     - provider 模式: { provider, api_key, base_url } → 用已知模型测试指定 provider
     - custom 模式: { url, api_key, model_id } → 用指定 URL 测试自定义模型
-    
+
     返回: { ok: bool, msg: str, latency_ms?: number }
     """
-    import httpx
     import time
+
+    import httpx
 
     provider = payload.get("provider")
     api_key = payload.get("api_key")
