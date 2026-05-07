@@ -429,7 +429,7 @@
                         <span class="toggle-url" onclick="toggleUrl('glm')">⚙️ 修改 Base URL</span>
                         <div class="url-group" id="url-group-glm">
                             <div class="form-group">
-                                <label class="form-label">Base URL</label>
+                                <label class="form-label">Base URL <span style="font-size:11px;color:var(--text-muted)">（API 接口地址，非网页地址）</span></label>
                                 <input type="text" class="form-input" id="url-glm" value="https://open.bigmodel.cn/api/paas/v4">
                             </div>
                         </div>
@@ -821,7 +821,14 @@
                         if (input && m.api_key) { input.value = m.api_key; }
                         else if (input) { input.placeholder = m.api_key_masked || '已配置'; }
                     }
-                    if (m && m.base_url && urlInput) { urlInput.value = m.base_url; }
+                    if (m && m.base_url && urlInput) {
+                        // Validate URL before overwriting HTML default
+                        const badPatterns = ['/apikey/', '/console', '/login', '/register', '/platform'];
+                        const lower = m.base_url.toLowerCase();
+                        const isBad = badPatterns.some(p => lower.includes(p));
+                        if (!isBad) { urlInput.value = m.base_url; }
+                        // else: keep the correct HTML default
+                    }
                 });
                 // Defaults
                 const defaults = data.defaults || {};
@@ -865,12 +872,36 @@
         }
 
         // Save single provider
+        // URL validation: warn if doesn't look like an API endpoint
+        function validateUrl(url, provider) {
+            if (!url) return { ok: true };
+            const badPatterns = ['/apikey/', '/console', '/login', '/register', '/platform'];
+            const lower = url.toLowerCase();
+            for (const p of badPatterns) {
+                if (lower.includes(p)) {
+                    return { ok: false, msg: `这看起来是网页地址，不是 API 端点。API 地址通常包含 /v1、/v4、/api/ 等路径。` };
+                }
+            }
+            if (!lower.startsWith('http://') && !lower.startsWith('https://')) {
+                return { ok: false, msg: 'URL 必须以 http:// 或 https:// 开头' };
+            }
+            return { ok: true };
+        }
+
         async function saveProvider(id) {
             const card = document.getElementById('card-' + id);
             const keyInput = document.getElementById('key-' + id);
             const urlInput = document.getElementById('url-' + id);
             const keyVal = keyInput?.value?.trim();
             const urlVal = urlInput?.value?.trim();
+            // Validate URL before saving
+            if (urlVal) {
+                const v = validateUrl(urlVal, id);
+                if (!v.ok) {
+                    showToastSmall('⚠️ ' + v.msg, 'error');
+                    return;
+                }
+            }
             const conf = {};
             if (keyVal) conf.api_key = keyVal;
             if (urlVal) conf.base_url = urlVal;

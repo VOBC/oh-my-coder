@@ -831,6 +831,10 @@ async def test_connection(payload: dict):
             latency_ms = round((time.time() - start) * 1000)
 
             if resp.status_code == 200:
+                # Check if response is actually JSON (not an HTML page)
+                ct = resp.headers.get("content-type", "")
+                if "html" in ct.lower():
+                    return JSONResponse({"ok": False, "msg": "返回了网页而非 API 响应——请检查 Base URL 是否为 API 接口地址（非网页地址）"})
                 return JSONResponse({"ok": True, "msg": f"连接成功 ({latency_ms}ms)", "latency_ms": latency_ms})
             elif resp.status_code == 401:
                 return JSONResponse({"ok": False, "msg": "API Key 无效（401 Unauthorized）"})
