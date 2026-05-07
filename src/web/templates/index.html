@@ -681,6 +681,37 @@
             closeAddCustomModel();
             showToast('✅ 已添加 ' + name, 'success');
         }
+        async function testCustomModel() {
+            const url = document.getElementById('cm-url').value.trim();
+            const key = document.getElementById('cm-key').value.trim();
+            const modelId = document.getElementById('cm-model-id').value.trim() || document.getElementById('cm-name').value.trim();
+            const msgDiv = document.getElementById('cm-test-msg');
+            const btn = document.getElementById('cm-test-btn');
+            if (!url) { msgDiv.textContent = '⚠️ 请先填写 API 地址'; msgDiv.style.display = 'block'; msgDiv.style.color = 'var(--danger)'; return; }
+            if (!modelId) { msgDiv.textContent = '⚠️ 请填写模型 ID 或模型名称'; msgDiv.style.display = 'block'; msgDiv.style.color = 'var(--danger)'; return; }
+            btn.disabled = true; btn.textContent = '⏳ 测试中...';
+            msgDiv.style.display = 'none';
+            try {
+                const res = await fetch('/api/test-connection', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ base_url: url, api_key: key, model_id: modelId })
+                });
+                const data = await res.json();
+                if (data.ok) {
+                    msgDiv.textContent = '✅ ' + data.msg;
+                    msgDiv.style.color = 'var(--success)';
+                } else {
+                    msgDiv.textContent = '❌ ' + data.msg;
+                    msgDiv.style.color = 'var(--danger)';
+                }
+            } catch (e) {
+                msgDiv.textContent = '❌ 测试失败: ' + e.message;
+                msgDiv.style.color = 'var(--danger)';
+            }
+            msgDiv.style.display = 'block';
+            btn.disabled = false; btn.textContent = '🔗 测试连接';
+        }
         function deleteCustomModel(id) {
             const models = getCustomModels().filter(m => m.id !== id);
             saveCustomModels(models);
@@ -729,9 +760,11 @@
                 <input type="password" class="form-input" id="cm-key" placeholder="本地模型可留空">
             </div>
             <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:24px">
-                <button class="btn btn-secondary" onclick="closeAddCustomModel()">取消</button>
-                <button class="btn btn-primary" onclick="addCustomModel()">添加</button>
+                <button type="button" class="btn btn-secondary" id="cm-test-btn" onclick="testCustomModel()">🔗 测试连接</button>
+                <button type="button" class="btn btn-secondary" onclick="closeAddCustomModel()">取消</button>
+                <button type="button" class="btn btn-primary" onclick="addCustomModel()">添加</button>
             </div>
+            <div id="cm-test-msg" style="margin-top:10px;font-size:13px;display:none;"></div>
         </div>
     </div>
 

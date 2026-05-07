@@ -56,6 +56,7 @@ class AgentContext:
     previous_outputs: dict[str, Any] = field(default_factory=dict)  # 前序 Agent 输出
     metadata: dict[str, Any] = field(default_factory=dict)  # 其他元数据
     skill_context: str = ""  # Tier 0 自动注入：Skill 经验清单（由 Orchestrator 填充）
+    override_model: Optional[str] = None  # 用户指定的模型 ID（如 "glm-4-flash"），来自前端选择
 
 
 @dataclass
@@ -223,6 +224,9 @@ class BaseAgent(ABC):
         self.status = AgentStatus.WORKING
 
         try:
+            # 保存用户指定的模型（供 _run 中 route_and_call 使用）
+            self._override_model = getattr(context, "override_model", None)
+
             # 准备 Prompt
             prompt = self._prepare_prompt(context)
 
@@ -297,6 +301,28 @@ class BaseAgent(ABC):
             agent_name=self.name,
             status=AgentStatus.COMPLETED,
             result=result,
+        )
+
+    async def call_model(
+        self,
+        task_type: str,
+        messages: list[Message],
+        complexity: str = "medium",
+        use_cache: bool = True,
+        **kwargs,
+    ) -> ModelResponse:
+        """
+        调用模型（自动注入用户指定的模型覆盖）
+
+        所有子类的 _run 应该用此方法代替直接调用 self.model_router.route_and_call()。
+        """
+        return await self.model_router.route_and_call(
+            task_type=task_type,
+            messages=messages,
+            complexity=complexity,
+            use_cache=use_cache,
+            override_model=getattr(self, "_override_model", None),
+            **kwargs,
         )
 
     def get_last_output(self) -> Optional[AgentOutput]:

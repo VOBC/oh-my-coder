@@ -416,6 +416,7 @@ async def run_task(
                     project_path=Path(project_path),
                     task_description=task,
                     previous_outputs=previous_outputs,
+                    override_model=model if model != "deepseek" else None,
                 )
 
                 output: AgentOutput = await asyncio.wait_for(
@@ -771,6 +772,109 @@ async def save_settings(payload: dict):
         json.dumps(current, ensure_ascii=False, indent=2), encoding="utf-8"
     )
     return JSONResponse({"status": "ok", "message": "设置已保存"})
+
+
+# ===== 连接测试 =====
+@app.post("/api/test-connection")
+async def test_connection(payload: dict):
+    """测试 API Key 是否可用。
+    
+    支持两类模式：
+    - provider 模式: { provider, api_key, base_url } → 用已知模型测试指定 provider
+    - custom 模式: { url, api_key, model_id } → 用指定 URL 测试自定义模型
+    
+    返回: { ok: bool, msg: str, latency_ms?: number }
+    """
+    import httpx
+    import time
+
+    provider = payload.get("provider")
+    api_key = payload.get("api_key")
+    base_url = payload.get("base_url")
+    model_id = payload.get("model_id")  # 仅 custom 模式
+
+    # ── Provider 模式 ──────────────────────────────────
+    if provider:
+        # 构造最小请求体（不实际发 token 消耗）
+        try:
+            if provider == "glm":
+                url = (base_url or "https://open.bigmodel.cn/api/paas/v4") + "/chat/completions"
+                body = {"model": "glm-4-flash", "messages": [{"role": "user", "content": "Hi"}], "max_tokens": 5}
+            elif provider == "deepseek":
+                url = (base_url or "https://api.deepseek.com/v1") + "/chat/completions"
+                body = {"model": "deepseek-chat", "messages": [{"role": "user", "content": "Hi"}], "max_tokens": 5}
+            elif provider == "kimi":
+                url = (base_url or "https://api.moonshot.cn/v1") + "/chat/completions"
+                body = {"model": "moonshot-v1-8k", "messages": [{"role": "user", "content": "Hi"}], "max_tokens": 5}
+            elif provider == "doubao":
+                url = (base_url or "https://ark.cn-beijing.volces.com/api/v3") + "/chat/completions"
+                body = {"model": "doubao-pro-32k", "messages": [{"role": "user", "content": "Hi"}], "max_tokens": 5}
+            elif provider == "mimo":
+                url = (base_url or "https://api.xiaomimimo.com/v1") + "/chat/completions"
+                body = {"model": "MiMo-V2-Flash", "messages": [{"role": "user", "content": "Hi"}], "max_tokens": 5}
+            elif provider == "tiangong":
+                url = (base_url or "https://model-platform.tiangong.cn/v1") + "/chat/completions"
+                body = {"model": "tiangong", "messages": [{"role": "user", "content": "Hi"}], "max_tokens": 5}
+            elif provider == "baichuan":
+                url = (base_url or "https://api.baichuan-ai.com/v1") + "/chat/completions"
+                body = {"model": "Baichuan4", "messages": [{"role": "user", "content": "Hi"}], "max_tokens": 5}
+            else:
+                return JSONResponse({"ok": False, "msg": f"未知供应商: {provider}"}, status_code=400)
+
+            headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
+            start = time.time()
+            with httpx.Client(timeout=15.0) as client:
+                resp = client.post(url, json=body, headers=headers)
+            latency_ms = round((time.time() - start) * 1000)
+
+            if resp.status_code == 200:
+                return JSONResponse({"ok": True, "msg": f"连接成功 ({latency_ms}ms)", "latency_ms": latency_ms})
+            elif resp.status_code == 401:
+                return JSONResponse({"ok": False, "msg": "API Key 无效（401 Unauthorized）"})
+            elif resp.status_code == 403:
+                return JSONResponse({"ok": False, "msg": "API Key 被拒绝（403 Forbidden）"})
+            else:
+                try:
+                    err = resp.json().get("error", {}).get("message", resp.text[:100])
+                except Exception:
+                    err = resp.text[:100]
+                return JSONResponse({"ok": False, "msg": f"API 错误 {resp.status_code}: {err}"}, status_code=502)
+
+        except httpx.TimeoutException:
+            return JSONResponse({"ok": False, "msg": "连接超时（15s），请检查 Base URL 或网络"})
+        except httpx.ConnectError as e:
+            return JSONResponse({"ok": False, "msg": f"连接失败：{e}"}, status_code=502)
+        except Exception as e:
+            return JSONResponse({"ok": False, "msg": f"测试失败: {e}"}, status_code=500)
+
+    # ── Custom 模式 ──────────────────────────────────
+    if base_url and model_id:
+        if not api_key:
+            return JSONResponse({"ok": False, "msg": "API Key 为空（自定义模型通常需要 Key）"}, status_code=400)
+        try:
+            url = base_url.rstrip("/") + "/chat/completions"
+            body = {"model": model_id, "messages": [{"role": "user", "content": "Hi"}], "max_tokens": 5}
+            headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
+            start = time.time()
+            with httpx.Client(timeout=15.0) as client:
+                resp = client.post(url, json=body, headers=headers)
+            latency_ms = round((time.time() - start) * 1000)
+            if resp.status_code == 200:
+                return JSONResponse({"ok": True, "msg": f"连接成功 ({latency_ms}ms)", "latency_ms": latency_ms})
+            else:
+                try:
+                    err = resp.json().get("error", {}).get("message", resp.text[:100])
+                except Exception:
+                    err = resp.text[:100]
+                return JSONResponse({"ok": False, "msg": f"API 错误 {resp.status_code}: {err}"}, status_code=502)
+        except httpx.TimeoutException:
+            return JSONResponse({"ok": False, "msg": "连接超时（15s）"})
+        except httpx.ConnectError as e:
+            return JSONResponse({"ok": False, "msg": f"连接失败：{e}"}, status_code=502)
+        except Exception as e:
+            return JSONResponse({"ok": False, "msg": f"测试失败: {e}"}, status_code=500)
+
+    return JSONResponse({"ok": False, "msg": "参数不完整（需 provider 或 base_url+model_id）"}, status_code=400)
 
 
 # ===== 健康检查 =====

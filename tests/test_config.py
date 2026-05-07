@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """
 配置管理测试 - 按模型独立配置功能验证
 
@@ -94,28 +96,21 @@ class TestConfigManager:
         """测试2: 按模型独立配置设置和读取"""
         temp_config.set("temperature", 0.7, model="deepseek")
         temp_config.set("api_base_url", "https://api.deepseek.com", model="deepseek")
-
         assert temp_config.get("temperature", model="deepseek") == 0.7
         assert temp_config.get("api_base_url", model="deepseek") == "https://api.deepseek.com"
 
     def test_model_config_isolation(self, temp_config):
-        """测试3: 模型配置隔离（不同模型配置互不影响）"""
+        """测试3: 模型配置隔离"""
         temp_config.set("temperature", 0.7, model="deepseek")
         temp_config.set("temperature", 0.9, model="kimi")
-
         assert temp_config.get("temperature", model="deepseek") == 0.7
         assert temp_config.get("temperature", model="kimi") == 0.9
 
     def test_global_and_model_priority(self, temp_config):
         """测试4: 配置优先级（模型配置 > 全局配置）"""
-        # 设置全局配置
         temp_config.set("temperature", 0.5)
-        # 设置模型配置
         temp_config.set("temperature", 0.8, model="deepseek")
-
-        # 模型配置应优先
         assert temp_config.get("temperature", model="deepseek") == 0.8
-        # 全局配置仍然存在
         assert temp_config.get("temperature") == 0.5
 
     def test_delete_config(self, temp_config):
@@ -129,7 +124,6 @@ class TestConfigManager:
         temp_config.set("temperature", 0.7, model="deepseek")
         temp_config.set("temperature", 0.9, model="kimi")
         temp_config.set("max_tokens", 4096, model="glm")
-
         models = temp_config.list_models()
         assert "deepseek" in models
         assert "kimi" in models

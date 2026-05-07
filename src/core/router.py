@@ -139,7 +139,10 @@ class RouterConfig:
     cache_max_entries: int = 100
 
     def __post_init__(self):
-        # 从环境变量加载 API Keys
+        # 1) 从 ~/.omc/config.json 加载 API Keys（Web UI 设置页写入）
+        self._load_from_config_file()
+
+        # 2) 环境变量覆盖（优先级最高）
         self.deepseek_api_key = self.deepseek_api_key or os.getenv("DEEPSEEK_API_KEY")
         self.wenxin_api_key = self.wenxin_api_key or os.getenv("WENXIN_API_KEY")
         self.tongyi_api_key = self.tongyi_api_key or os.getenv("TONGYI_API_KEY")
@@ -148,6 +151,47 @@ class RouterConfig:
         self.kimi_api_key = self.kimi_api_key or os.getenv("KIMI_API_KEY")
         self.hunyuan_api_key = self.hunyuan_api_key or os.getenv("HUNYUAN_API_KEY")
         self.doubao_api_key = self.doubao_api_key or os.getenv("DOUBAO_API_KEY")
+
+    def _load_from_config_file(self) -> None:
+        """从 ~/.omc/config.json 读取 API Keys（Web UI 设置保存的目标文件）"""
+        config_path = Path.home() / ".omc" / "config.json"
+        if not config_path.exists():
+            return
+        try:
+            import json
+            with open(config_path, encoding="utf-8") as f:
+                data = json.load(f)
+            models = data.get("models", {})
+            if not isinstance(models, dict):
+                return
+            # provider name → RouterConfig field 映射
+            _key_map = {
+                "deepseek": "deepseek_api_key",
+                "glm":      "glm_api_key",
+                "minimax":  "minimax_api_key",   # mimo 也映射到 minimax
+                "mimo":     "minimax_api_key",
+                "kimi":     "kimi_api_key",
+                "doubao":   "doubao_api_key",
+                "tongyi":   "tongyi_api_key",
+                "wenxin":   "wenxin_api_key",
+                "hunyuan":  "hunyuan_api_key",
+                "tiangong": None,    # 暂无对应字段
+                "baichuan": None,    # 暂无对应字段
+            }
+            for provider, field_name in _key_map.items():
+                if not field_name:
+                    continue
+                entry = models.get(provider, {})
+                if not isinstance(entry, dict):
+                    continue
+                key_val = entry.get("api_key", "")
+                if key_val and isinstance(key_val, str) and not key_val.startswith("*"):
+                    current = getattr(self, field_name, None)
+                    if not current:
+                        setattr(self, field_name, key_val)
+                        logger.debug(f"从 config.json 加载 {provider} API Key")
+        except Exception as e:
+            logger.warning(f"读取 ~/.omc/config.json 失败: {e}")
 
         # Ollama 配置
         self.ollama_base_url = self.ollama_base_url or os.getenv(
@@ -744,9 +788,33 @@ class ModelRouter:
         self._total_cost = 0.0
 
 
-# ============================================================
-# Exception
-# ============================================================
+    # 模型 ID → 路由器内部 provider 名称的映射
+    # 前端下拉菜单传的是模型 ID（如 "glm-4-flash"），需要映射到 provider（如 "glm"）
+    _MODEL_ID_TO_PROVIDER: dict[str, str] = {
+        # DeepSeek
+        "deepseek-chat": "deepseek",
+        "deepseek-reasoner": "deepseek",
+        # 智谱 GLM
+        "glm-4-flash": "glm",
+        "glm-4v-flash": "glm",
+        # MiniMax / MiMo
+        "MiniMax-Text-01": "minimax",
+        # Kimi / Moonshot
+        "moonshot-v1-128k": "kimi",
+        # 豆包 / Volcengine
+        "doubao-pro-32k": "doubao",
+        # 天工
+        "tiangong-3": None,  # 路由器暂不支持 tiangong provider
+        # 百川
+        "Baichuan4": None,  # 路由器暂不支持 baichuan provider
+        # 文心
+        "ernie-4.0-8k-latest": "wenxin",
+        # 通义
+        "qwen-plus": "tongyi",
+        # 混元
+        "hunyuan-turbo": "hunyuan",
+    }
+
 class RateLimitError(Exception):
     """429 限流错误，不重试"""
 

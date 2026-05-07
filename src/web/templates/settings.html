@@ -350,6 +350,14 @@
                     .provider-card-footer .btn-sm:hover { background: var(--bg-tertiary); }
                     .provider-card-footer .btn-sm-save { background: var(--primary); color: #fff; border-color: var(--primary); }
                     .provider-card-footer .btn-sm-save:hover { background: var(--primary-dark); }
+                    .provider-card-footer .btn-sm-test { background: var(--bg-secondary); color: var(--primary); border-color: var(--primary); }
+                    .provider-card-footer .btn-sm-test:hover { background: var(--primary-light); }
+                    .provider-card-footer .btn-sm-test.testing { opacity: 0.6; cursor: not-allowed; }
+                    .provider-card-footer .btn-sm-test.ok { background: var(--success); color: #fff; border-color: var(--success); }
+                    .provider-card-footer .btn-sm-test.err { background: var(--danger); color: #fff; border-color: var(--danger); }
+                    .provider-card-footer .test-msg { font-size: 12px; color: var(--text-muted); margin-right: 6px; }
+                    .provider-card-footer .test-msg.ok { color: var(--success); }
+                    .provider-card-footer .test-msg.err { color: var(--danger); }
                     .provider-card-footer .btn-sm-reset { color: var(--text-muted); }
                     .provider-card-footer .btn-sm-reset:hover { color: var(--danger); border-color: var(--danger); }
                     .provider-card-footer .btn-sm-delete { color: var(--text-muted); }
@@ -398,6 +406,7 @@
                     <div class="provider-card-footer">
                         <div class="key-status"><div class="key-dot unset" id="dot-deepseek"></div><span id="status-deepseek">未配置</span></div>
                         <div class="btn-group">
+                            <button class="btn-sm btn-sm-test" id="btn-test-deepseek" onclick="testProvider('deepseek')">测试</button>
                             <button class="btn-sm btn-sm-reset" onclick="resetProvider('deepseek')">重置</button>
                             <button class="btn-sm btn-sm-save" onclick="saveProvider('deepseek')">保存</button>
                         </div>
@@ -432,6 +441,7 @@
                     <div class="provider-card-footer">
                         <div class="key-status"><div class="key-dot unset" id="dot-glm"></div><span id="status-glm">未配置</span></div>
                         <div class="btn-group">
+                            <button class="btn-sm btn-sm-test" id="btn-test-glm" onclick="testProvider('glm')">测试</button>
                             <button class="btn-sm btn-sm-reset" onclick="resetProvider('glm')">重置</button>
                             <button class="btn-sm btn-sm-save" onclick="saveProvider('glm')">保存</button>
                         </div>
@@ -466,6 +476,7 @@
                     <div class="provider-card-footer">
                         <div class="key-status"><div class="key-dot unset" id="dot-mimo"></div><span id="status-mimo">未配置</span></div>
                         <div class="btn-group">
+                            <button class="btn-sm btn-sm-test" id="btn-test-mimo" onclick="testProvider('mimo')">测试</button>
                             <button class="btn-sm btn-sm-reset" onclick="resetProvider('mimo')">重置</button>
                             <button class="btn-sm btn-sm-save" onclick="saveProvider('mimo')">保存</button>
                         </div>
@@ -500,6 +511,7 @@
                     <div class="provider-card-footer">
                         <div class="key-status"><div class="key-dot unset" id="dot-kimi"></div><span id="status-kimi">未配置</span></div>
                         <div class="btn-group">
+                            <button class="btn-sm btn-sm-test" id="btn-test-kimi" onclick="testProvider('kimi')">测试</button>
                             <button class="btn-sm btn-sm-reset" onclick="resetProvider('kimi')">重置</button>
                             <button class="btn-sm btn-sm-save" onclick="saveProvider('kimi')">保存</button>
                         </div>
@@ -534,6 +546,7 @@
                     <div class="provider-card-footer">
                         <div class="key-status"><div class="key-dot unset" id="dot-doubao"></div><span id="status-doubao">未配置</span></div>
                         <div class="btn-group">
+                            <button class="btn-sm btn-sm-test" id="btn-test-doubao" onclick="testProvider('doubao')">测试</button>
                             <button class="btn-sm btn-sm-reset" onclick="resetProvider('doubao')">重置</button>
                             <button class="btn-sm btn-sm-save" onclick="saveProvider('doubao')">保存</button>
                         </div>
@@ -568,6 +581,7 @@
                     <div class="provider-card-footer">
                         <div class="key-status"><div class="key-dot unset" id="dot-tiangong"></div><span id="status-tiangong">未配置</span></div>
                         <div class="btn-group">
+                            <button class="btn-sm btn-sm-test" id="btn-test-tiangong" onclick="testProvider('tiangong')">测试</button>
                             <button class="btn-sm btn-sm-reset" onclick="resetProvider('tiangong')">重置</button>
                             <button class="btn-sm btn-sm-save" onclick="saveProvider('tiangong')">保存</button>
                         </div>
@@ -602,6 +616,7 @@
                     <div class="provider-card-footer">
                         <div class="key-status"><div class="key-dot unset" id="dot-baichuan"></div><span id="status-baichuan">未配置</span></div>
                         <div class="btn-group">
+                            <button class="btn-sm btn-sm-test" id="btn-test-baichuan" onclick="testProvider('baichuan')">测试</button>
                             <button class="btn-sm btn-sm-reset" onclick="resetProvider('baichuan')">重置</button>
                             <button class="btn-sm btn-sm-save" onclick="saveProvider('baichuan')">保存</button>
                         </div>
@@ -902,6 +917,47 @@
             showToastSmall('已重置 ' + id);
         }
 
+        // Test connection for a provider
+        async function testProvider(id) {
+            const btn = document.getElementById('btn-test-' + id);
+            const keyVal = document.getElementById('key-' + id)?.value?.trim();
+            const urlVal = document.getElementById('url-' + id)?.value?.trim();
+            if (!keyVal) {
+                showToastSmall('请先填写 API Key', 'error');
+                return;
+            }
+            // Reset button state immediately (prevents stuck '失败' from previous test)
+            btn.disabled = true;
+            btn.classList.remove('ok', 'err', 'testing');
+            btn.textContent = '测试中...';
+            // Remove any old test-msg
+            const oldMsg = btn.parentElement.querySelector('.test-msg');
+            if (oldMsg) oldMsg.remove();
+            try {
+                const res = await fetch('/api/test-connection', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ provider: id, api_key: keyVal, base_url: urlVal || undefined })
+                });
+                const data = await res.json();
+                if (data.ok) {
+                    btn.classList.add('ok');
+                    btn.textContent = '✓ 成功';
+                    showToastSmall('✅ ' + data.msg);
+                } else {
+                    btn.classList.add('err');
+                    btn.textContent = '✗ 失败';
+                    showToastSmall('❌ ' + data.msg, 'error');
+                }
+            } catch (e) {
+                btn.classList.add('err');
+                btn.textContent = '✗ 失败';
+                showToastSmall('测试失败: ' + e.message, 'error');
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
         // Save all providers at once
         async function saveApiKeys() {
             const keys = {};
@@ -1013,6 +1069,38 @@
             showToastSmall('已重置');
         }
 
+        async function testCustomProvider(id) {
+            const btn = document.getElementById('btn-test-custom-' + id);
+            const keyVal = document.getElementById('key-custom-' + id)?.value?.trim();
+            const urlVal = document.getElementById('url-custom-' + id)?.value?.trim();
+            const modelVal = getCustomProviders().find(p => p.id === id)?.model || '';
+            if (!keyVal) { showToastSmall('请先填写 API Key', 'error'); return; }
+            if (!urlVal) { showToastSmall('请填写 Base URL', 'error'); return; }
+            btn.disabled = true;
+            btn.classList.remove('ok', 'err', 'testing');
+            btn.textContent = '测试中...';
+            try {
+                const res = await fetch('/api/test-connection', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ base_url: urlVal, api_key: keyVal, model_id: modelVal || 'gpt-4o' })
+                });
+                const data = await res.json();
+                if (data.ok) {
+                    btn.classList.add('ok'); btn.textContent = '✓ 成功';
+                    showToastSmall('✅ ' + data.msg);
+                } else {
+                    btn.classList.add('err'); btn.textContent = '✗ 失败';
+                    showToastSmall('❌ ' + data.msg, 'error');
+                }
+            } catch (e) {
+                btn.classList.add('err'); btn.textContent = '✗ 失败';
+                showToastSmall('测试失败: ' + e.message, 'error');
+            } finally {
+                btn.disabled = false; btn.classList.remove('testing');
+            }
+        }
+
         function renderCustomProviders() {
             const container = document.getElementById('customProviderCards');
             const providers = getCustomProviders();
@@ -1042,6 +1130,7 @@
                         <div class="key-status"><div class="key-dot ${p.key ? 'set' : 'unset'}" id="dot-custom-${p.id}"></div><span id="status-custom-${p.id}">${p.key ? '已配置' : '未配置'}</span></div>
                         <div class="btn-group">
                             <button class="btn-sm btn-sm-delete" onclick="deleteCustomProvider('${p.id}')">删除</button>
+                            <button class="btn-sm btn-sm-test" id="btn-test-custom-${p.id}" onclick="testCustomProvider('${p.id}')">测试</button>
                             <button class="btn-sm btn-sm-reset" onclick="resetCustomProvider('${p.id}')">重置</button>
                             <button class="btn-sm btn-sm-save" onclick="saveCustomProvider('${p.id}')">保存</button>
                         </div>
