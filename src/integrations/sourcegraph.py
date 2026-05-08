@@ -163,7 +163,7 @@ class SourcegraphClient:
         if not self.cache_dir.exists():
             return None
 
-        cache_file = self.cache_dir / f"{hashlib.md5(key.encode()).hexdigest()}.json"
+        cache_file = self.cache_dir / f"{hashlib.sha256(key.encode()).hexdigest()}.json"
         if not cache_file.exists():
             return None
 
@@ -178,7 +178,7 @@ class SourcegraphClient:
     def _cache_set(self, key: str, value: Any) -> None:
         """设置缓存"""
         self.cache_dir.mkdir(parents=True, exist_ok=True)
-        cache_file = self.cache_dir / f"{hashlib.md5(key.encode()).hexdigest()}.json"
+        cache_file = self.cache_dir / f"{hashlib.sha256(key.encode()).hexdigest()}.json"
         cache_file.write_text(
             json.dumps({"timestamp": time.time(), "value": value}, ensure_ascii=False),
             encoding="utf-8",
