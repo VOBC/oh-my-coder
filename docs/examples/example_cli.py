@@ -50,7 +50,7 @@ pm/
 
 import json
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from pathlib import Path
 
 import typer
@@ -65,7 +65,7 @@ app = typer.Typer(
 console = Console()
 
 
-class Priority(str, Enum):
+class Priority(StrEnum):
     """任务优先级"""
 
     HIGH = "high"
@@ -73,7 +73,7 @@ class Priority(str, Enum):
     LOW = "low"
 
 
-class Status(str, Enum):
+class Status(StrEnum):
     """任务状态"""
 
     TODO = "todo"

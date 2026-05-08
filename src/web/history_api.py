@@ -326,7 +326,7 @@ async def agent_status_sse():
             try:
                 data = await asyncio.wait_for(queue.get(), timeout=30.0)
                 yield f"data: {json.dumps(data)}\n\n"
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 # 发送心跳
                 yield ": heartbeat\n\n"
 

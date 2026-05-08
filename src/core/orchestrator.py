@@ -657,7 +657,7 @@ class Orchestrator:
                     else:
                         raise Exception(f"Agent {agent_name} 执行失败: {output.error}")
 
-                except asyncio.TimeoutError:
+                except TimeoutError:
                     error = f"Agent {agent_name} 执行超时（>{step.timeout}s）"
                     hc.unregister_agent(agent_name)
 
@@ -826,7 +826,7 @@ class Orchestrator:
                     result.steps_failed.append(step.agent_name)
                     raise Exception(f"Agent {step.agent_name} 执行失败: {output.error}")
 
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 result.steps_failed.append(step.agent_name)
                 raise Exception(f"Agent {step.agent_name} 执行超时")
 

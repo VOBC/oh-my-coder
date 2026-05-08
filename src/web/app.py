@@ -666,7 +666,7 @@ async def run_task(
                         agent_name
                     )
 
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 wf_result.steps_failed.append(agent_name)
                 task_manager.update_step(task_id, agent_name, "failed", "执行超时")
                 task_manager._tasks[task_id]["stats"]["steps_failed"].append(agent_name)
@@ -806,7 +806,7 @@ async def execute_task_sync(req: ExecuteRequest):
                         }
                     )
 
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 return JSONResponse(
                     {
                         "status": "error",
