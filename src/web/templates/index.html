@@ -3,560 +3,224 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Oh My Coder - 多智能体 AI 编程助手</title>
-    <link rel="stylesheet" href="/static/style.css?v=20260506">
+    <title>Oh My Coder</title>
+    <link rel="stylesheet" href="/static/style.css?v=20260508">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
-        /* Pipeline */
-        .pipeline-container {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 32px 0 40px;
-            overflow-x: auto;
-            padding: 8px 0;
-        }
-        .pipeline-step {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 10px;
-            flex-shrink: 0;
-        }
-        .pipeline-icon {
-            width: 60px;
-            height: 60px;
-            border-radius: 14px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 26px;
-            background: var(--primary-light);
-            border: 2px solid var(--text-muted);
-            color: var(--primary);
-            transition: all 0.3s;
-            position: relative;
-        }
-        .pipeline-icon.active {
-            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-            border-color: var(--primary);
-            color: white;
-            box-shadow: 0 8px 32px rgba(99, 102, 241, 0.4);
-            transform: translateY(-4px);
-        }
-        .pipeline-icon.completed {
-            background: linear-gradient(135deg, #10b981, #059669);
-            border-color: #10b981;
-            color: white;
-        }
-        .pipeline-icon.failed {
-            background: linear-gradient(135deg, #ef4444, #dc2626);
-            border-color: #ef4444;
-            color: white;
-        }
-        .pipeline-icon.waiting {
-            opacity: 0.4;
-            background: var(--bg-secondary);
-            border-color: var(--border);
-            color: var(--text-muted);
-        }
-        .pipeline-label { font-size: 12px; font-weight: 600; color: var(--text-secondary); }
-        .pipeline-arrow {
-            padding: 0 12px;
-            color: var(--text-muted);
-            font-size: 18px;
-            flex-shrink: 0;
-        }
-        .pipeline-arrow.active { color: var(--primary); }
-        .step-spinner {
-            width: 20px; height: 20px;
-            border: 2px solid rgba(255,255,255,0.3);
-            border-top-color: white;
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-            display: none;
-        }
-        .pipeline-icon.active .step-spinner { display: block; }
-        .pipeline-icon.active .step-emoji { display: none; }
+        /* ===== Layout ===== */
+        * { margin:0; padding:0; box-sizing:border-box; }
+        html, body { height:100%; overflow:hidden; font-family:'Noto Sans SC',system-ui,sans-serif; }
+        .app-layout { display:flex; height:100vh; }
 
-        /* Task Card */
-        .task-card {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-xl);
-            padding: 32px;
-            box-shadow: var(--shadow);
-            margin-bottom: 40px;
+        /* ===== Sidebar ===== */
+        .sidebar {
+            width:260px; background:var(--bg-secondary); border-right:1px solid var(--border);
+            display:flex; flex-direction:column; flex-shrink:0;
         }
-        .task-header { margin-bottom: 24px; }
-        .task-header h2 { font-size: 20px; font-weight: 600; margin-bottom: 4px; }
-        .task-subtitle { font-size: 14px; color: var(--text-muted); }
+        .sidebar-header { padding:16px; border-bottom:1px solid var(--border); }
+        .sidebar-header h1 { font-size:15px; font-weight:600; margin-bottom:12px; color:var(--text); }
+        .new-chat-btn {
+            width:100%; padding:10px 12px; border-radius:8px; border:1px solid var(--border);
+            background:var(--card); color:var(--text); font-size:13px; cursor:pointer;
+            display:flex; align-items:center; gap:8px; transition:all 0.2s;
+        }
+        .new-chat-btn:hover { background:var(--primary-light); border-color:var(--primary); color:var(--primary); }
+        .session-list { flex:1; overflow-y:auto; padding:8px; }
+        .session-item {
+            padding:10px 12px; border-radius:8px; cursor:pointer; margin-bottom:2px;
+            display:flex; align-items:center; justify-content:space-between;
+            transition:background 0.15s; font-size:13px; color:var(--text-secondary);
+        }
+        .session-item:hover { background:var(--card); }
+        .session-item.active { background:var(--primary-light); color:var(--primary); font-weight:500; }
+        .session-item .session-title { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        .session-item .session-delete {
+            opacity:0; border:none; background:none; color:var(--text-muted); cursor:pointer;
+            font-size:14px; padding:2px 4px; border-radius:4px;
+        }
+        .session-item:hover .session-delete { opacity:1; }
+        .session-item .session-delete:hover { color:#ef4444; background:rgba(239,68,68,0.1); }
+        .sidebar-footer { padding:12px 16px; border-top:1px solid var(--border); }
+        .sidebar-footer a { color:var(--text-muted); font-size:12px; text-decoration:none; }
+        .sidebar-footer a:hover { color:var(--primary); }
 
-        /* ===== Chat Interface ===== */
+        /* ===== Main Area ===== */
+        .main-area { flex:1; display:flex; flex-direction:column; min-width:0; }
+        .main-header {
+            padding:12px 20px; border-bottom:1px solid var(--border);
+            display:flex; align-items:center; justify-content:space-between;
+            background:var(--card); flex-shrink:0;
+        }
+        .main-header h2 { font-size:14px; font-weight:500; color:var(--text); }
+        .main-header .header-actions { display:flex; gap:8px; }
+
+        /* ===== Chat Messages ===== */
         .chat-messages {
-            height: 60vh;
-            min-height: 300px;
-            max-height: 700px;
-            overflow-y: auto;
-            padding: 20px 24px;
-            scroll-behavior: smooth;
+            flex:1; overflow-y:auto; padding:20px 24px; scroll-behavior:smooth;
         }
         .chat-welcome {
-            text-align: center;
-            padding: 60px 20px 40px;
-            color: var(--text-muted);
+            display:flex; flex-direction:column; align-items:center; justify-content:center;
+            height:100%; color:var(--text-muted); text-align:center;
         }
-        .chat-welcome-icon {
-            width: 64px; height: 64px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-            display: flex; align-items: center; justify-content: center;
-            font-size: 32px; margin: 0 auto 16px;
-        }
-        .chat-welcome h3 { font-size: 20px; font-weight: 600; color: var(--text); margin-bottom: 8px; }
-        .chat-welcome p { font-size: 14px; margin: 0; }
-        .chat-msg {
-            display: flex;
-            gap: 12px;
-            margin-bottom: 20px;
-            max-width: 85%;
-            animation: msgFadeIn 0.3s ease;
-        }
-        @keyframes msgFadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-        .chat-msg.user {
-            flex-direction: row-reverse;
-            margin-left: auto;
-        }
+        .chat-welcome-icon { font-size:48px; margin-bottom:16px; opacity:0.6; }
+        .chat-welcome h3 { font-size:18px; font-weight:600; margin-bottom:8px; color:var(--text-secondary); }
+        .chat-welcome p { font-size:14px; }
+        .chat-msg { display:flex; gap:10px; margin-bottom:16px; max-width:85%; }
+        .chat-msg.user { flex-direction:row-reverse; margin-left:auto; }
         .chat-msg-avatar {
-            width: 32px; height: 32px;
-            border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 16px; flex-shrink: 0;
+            width:32px; height:32px; border-radius:50%; display:flex; align-items:center;
+            justify-content:center; font-size:16px; flex-shrink:0;
+            background:linear-gradient(135deg,var(--primary),var(--primary-dark)); color:white;
         }
-        .chat-msg.assistant .chat-msg-avatar {
-            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-        }
-        .chat-msg.user .chat-msg-avatar {
-            background: var(--bg-secondary);
-        }
+        .chat-msg.user .chat-msg-avatar { background:var(--primary-light); color:var(--primary); }
         .chat-msg-bubble {
-            border-radius: 16px;
-            padding: 12px 16px;
-            font-size: 14px;
-            line-height: 1.6;
-            word-break: break-word;
-        }
-        .chat-msg.assistant .chat-msg-bubble {
-            background: var(--card);
-            border: 1px solid var(--border);
-            color: var(--text);
-            border-top-left-radius: 4px;
+            padding:10px 14px; border-radius:12px; font-size:14px; line-height:1.6;
+            word-break:break-word;
         }
         .chat-msg.user .chat-msg-bubble {
-            background: var(--primary);
-            color: #fff;
-            border-top-right-radius: 4px;
+            background:var(--primary); color:white; border-bottom-right-radius:4px;
+        }
+        .chat-msg.assistant .chat-msg-bubble {
+            background:var(--card); border:1px solid var(--border); color:var(--text);
+            border-bottom-left-radius:4px;
         }
         .chat-msg-bubble pre {
-            background: var(--bg-secondary);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 12px;
-            margin: 8px 0;
-            overflow-x: auto;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 13px;
+            background:#1e1e2e; color:#cdd6f4; padding:12px; border-radius:8px;
+            overflow-x:auto; font-family:'JetBrains Mono',monospace; font-size:13px; margin:8px 0 0;
         }
-        .chat-msg-bubble code {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 13px;
+        .chat-msg-bubble code:not(pre code) {
+            background:var(--bg-secondary); padding:2px 6px; border-radius:4px;
+            font-family:'JetBrains Mono',monospace; font-size:13px;
         }
-        .chat-msg-bubble :not(pre) > code {
-            background: var(--bg-secondary);
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-size: 12px;
-        }
-        .chat-msg-bubble ul, .chat-msg-bubble ol {
-            margin: 8px 0;
-            padding-left: 20px;
-        }
-        .chat-msg-bubble li { margin-bottom: 4px; }
-        .chat-msg-loading {
-            display: flex; gap: 4px; padding: 4px 0;
-        }
+        .chat-msg-loading { display:flex; gap:4px; padding:4px 0; }
         .chat-msg-loading span {
-            width: 6px; height: 6px;
-            border-radius: 50%;
-            background: var(--text-muted);
-            animation: loadBounce 1.2s infinite;
+            width:6px; height:6px; background:var(--text-muted); border-radius:50%;
+            animation:typing 1s infinite;
         }
-        .chat-msg-loading span:nth-child(2) { animation-delay: 0.2s; }
-        .chat-msg-loading span:nth-child(3) { animation-delay: 0.4s; }
-        @keyframes loadBounce { 0%,80%,100% { transform: scale(0.6); opacity: 0.4; } 40% { transform: scale(1); opacity: 1; } }
+        .chat-msg-loading span:nth-child(2) { animation-delay:0.2s; }
+        .chat-msg-loading span:nth-child(3) { animation-delay:0.4s; }
+        @keyframes typing { 0%,100%{opacity:0.3;} 50%{opacity:1;} }
 
-        /* Chat Input Area */
+        /* ===== Chat Input ===== */
         .chat-input-area {
-            border-top: 1px solid var(--border);
-            background: var(--card);
-            padding: 12px 16px 12px;
+            padding:12px 20px 16px; border-top:1px solid var(--border); background:var(--card);
+            flex-shrink:0;
         }
-        .chat-input-form {
-            display: flex;
-            align-items: flex-end;
-            gap: 8px;
-            background: var(--bg-secondary);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 8px 8px 8px 16px;
-            transition: border-color 0.2s;
-        }
-        .chat-input-form:focus-within {
-            border-color: var(--primary);
-        }
+        .chat-input-form { display:flex; gap:8px; align-items:flex-end; }
         .chat-input {
-            flex: 1;
-            border: none;
-            background: none;
-            color: var(--text);
-            font-family: inherit;
-            font-size: 14px;
-            line-height: 1.5;
-            resize: none;
-            outline: none;
-            min-height: 24px;
-            max-height: 150px;
-            padding: 4px 0;
+            flex:1; padding:10px 14px; border:1px solid var(--border); border-radius:10px;
+            background:var(--bg-secondary); color:var(--text); font-size:14px;
+            font-family:inherit; resize:none; line-height:1.5; max-height:150px;
+            outline:none; transition:border-color 0.2s;
         }
-        .chat-input::placeholder { color: var(--text-muted); }
+        .chat-input:focus { border-color:var(--primary); }
         .chat-send-btn {
-            width: 36px; height: 36px;
-            border-radius: 8px;
-            border: none;
-            background: var(--primary);
-            color: #fff;
-            cursor: pointer;
-            display: flex; align-items: center; justify-content: center;
-            flex-shrink: 0;
-            transition: opacity 0.2s;
+            width:38px; height:38px; border-radius:50%; border:none;
+            background:var(--primary); color:white; cursor:pointer;
+            display:flex; align-items:center; justify-content:center;
+            transition:all 0.2s; flex-shrink:0;
         }
-        .chat-send-btn:hover { opacity: 0.85; }
-        .chat-send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-        .chat-input-footer {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-top: 8px;
-        }
+        .chat-send-btn:hover { background:var(--primary-dark); transform:scale(1.05); }
+        .chat-send-btn:disabled { opacity:0.5; cursor:not-allowed; transform:none; }
+        .chat-input-footer { display:flex; align-items:center; gap:8px; margin-top:8px; }
         .chat-model-select {
-            padding: 4px 8px;
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            background: var(--bg-secondary);
-            color: var(--text-secondary);
-            font-family: inherit;
-            font-size: 12px;
-            cursor: pointer;
-            outline: none;
+            padding:5px 10px; border:1px solid var(--border); border-radius:6px;
+            background:var(--bg-secondary); color:var(--text-secondary); font-size:12px;
+            cursor:pointer; outline:none;
         }
-        .chat-model-select:hover { border-color: var(--primary); }
         .chat-clear-btn {
-            background: none;
-            border: none;
-            cursor: pointer;
-            font-size: 14px;
-            opacity: 0.5;
-            transition: opacity 0.2s;
-            padding: 4px;
+            border:none; background:none; color:var(--text-muted); cursor:pointer;
+            font-size:14px; padding:4px 6px; border-radius:4px;
         }
-        .chat-clear-btn:hover { opacity: 1; }
+        .chat-clear-btn:hover { color:var(--primary); background:var(--primary-light); }
 
-        /* Response */
-        .response-container { margin-top: 32px; }
-        .response-tabs {
-            display: flex;
-            gap: 4px;
-            margin-bottom: 16px;
-            border-bottom: 1px solid var(--border);
+        /* ===== Task Execution Panel ===== */
+        .task-exec-panel {
+            border-top:1px solid var(--border); background:var(--bg-secondary); flex-shrink:0;
         }
-        .response-tab {
-            padding: 8px 16px;
-            border: none;
-            background: none;
-            color: var(--text-secondary);
-            font-size: 14px;
-            font-weight: 500;
-            cursor: pointer;
-            border-bottom: 2px solid transparent;
-            margin-bottom: -1px;
-            font-family: inherit;
+        .task-exec-header {
+            padding:8px 20px; display:flex; align-items:center; gap:8px;
+            font-size:13px; font-weight:500; color:var(--text-secondary); cursor:pointer;
         }
-        .response-tab.active { color: var(--primary); border-bottom-color: var(--primary); }
-        .response-panel {
-            display: none;
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-lg);
-            padding: 24px;
-            min-height: 200px;
-            max-height: 600px;
-            overflow-y: auto;
+        .task-exec-header:hover { background:var(--card); }
+        .task-exec-icon { font-size:14px; }
+        .task-exec-toggle {
+            margin-left:auto; border:none; background:none; color:var(--text-muted);
+            cursor:pointer; padding:2px; transition:transform 0.2s;
         }
-        .response-panel.active { display: block; }
-
-        /* Model list */
-        .models-section { margin-bottom: 40px; }
-        .models-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-            gap: 12px;
+        .task-exec-toggle.collapsed { transform:rotate(-90deg); }
+        .task-exec-body { padding:0 20px 12px; display:flex; flex-direction:column; gap:8px; }
+        .task-exec-body.hidden { display:none; }
+        .task-exec-label { font-size:12px; color:var(--text-muted); font-weight:500; }
+        .task-exec-textarea {
+            width:100%; padding:8px 10px; border:1px solid var(--border); border-radius:6px;
+            background:var(--card); color:var(--text); font-size:13px; font-family:inherit;
+            resize:vertical; min-height:40px; outline:none;
         }
-        .model-item {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 16px;
-            display: flex;
-            align-items: center;
-            gap: 14px;
-            transition: var(--transition);
-            cursor: default;
+        .task-exec-textarea:focus { border-color:var(--primary); }
+        .task-exec-input {
+            width:100%; padding:6px 10px; border:1px solid var(--border); border-radius:6px;
+            background:var(--card); color:var(--text); font-size:13px; outline:none;
         }
-        .model-item:hover { border-color: var(--border-hover); }
-        .model-item-icon {
-            width: 42px; height: 42px;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
-            background: var(--primary-light);
-            border: 1px solid var(--text-muted);
-            flex-shrink: 0;
-        }
-        .model-item-info { flex: 1; min-width: 0; }
-        .model-item-name {
-            font-size: 14px;
-            font-weight: 600;
-            color: var(--text);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .model-item-provider {
-            font-size: 12px;
-            color: var(--text-muted);
-        }
-        .model-item-status {
-            width: 8px; height: 8px;
-            border-radius: 50%;
-            flex-shrink: 0;
-        }
-        .model-item-status.online { background: var(--success); }
-        .model-item-status.offline { background: var(--text-muted); }
-
-        /* Examples */
-        .examples-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 12px;
-        }
-        .example-card {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 16px 14px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 8px;
-            cursor: pointer;
-            transition: var(--transition);
-            text-align: center;
-            font-family: inherit;
-        }
-        .example-card:hover {
-            border-color: var(--primary);
-            box-shadow: 0 4px 16px rgba(99, 102, 241, 0.1);
-            transform: translateY(-2px);
-        }
-        .example-icon { font-size: 24px; }
-        .example-title { font-size: 13px; font-weight: 600; color: var(--text); }
-        .example-desc { font-size: 11px; color: var(--text-muted); }
-
-        @media (max-width: 768px) {
-            .task-card { padding: 20px; border-radius: var(--radius-lg); }
-            .examples-grid { grid-template-columns: repeat(2, 1fr); }
-            .pipeline-icon { width: 48px; height: 48px; font-size: 20px; }
-            .pipeline-arrow { padding: 0 8px; font-size: 14px; }
-            .models-grid { grid-template-columns: 1fr; }
-        }
-        @media (max-width: 480px) {
-            .examples-grid { grid-template-columns: 1fr; }
+        .task-exec-input:focus { border-color:var(--primary); }
+        .task-exec-actions { display:flex; gap:8px; align-items:center; justify-content:flex-end; }
+        .task-exec-btn {
+            padding:8px 16px !important; font-size:13px !important; white-space:nowrap;
         }
 
-        /* Undo/Redo toolbar */
-        .undo-redo-bar {
-            display: none;
-            justify-content: center;
-            gap: 12px;
-            margin-bottom: 24px;
-            padding: 12px 20px;
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-lg);
+        /* ===== Toast ===== */
+        .toast-container { position:fixed; top:20px; right:20px; z-index:9999; display:flex; flex-direction:column; gap:8px; }
+        .toast {
+            padding:10px 16px; border-radius:8px; font-size:13px; color:white;
+            box-shadow:0 4px 12px rgba(0,0,0,0.3); animation:slideIn 0.3s ease;
+            display:flex; align-items:center; gap:8px;
         }
-        .undo-redo-bar.visible { display: flex; }
-        .undo-btn, .redo-btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 8px 16px;
-            border-radius: 8px;
-            font-size: 13px;
-            font-weight: 500;
-            cursor: pointer;
-            border: 1px solid var(--border);
-            background: var(--bg-secondary);
-            color: var(--text-secondary);
-            transition: var(--transition);
-            font-family: inherit;
-        }
-        .undo-btn:hover:not(:disabled), .redo-btn:hover:not(:disabled) {
-            background: var(--primary-light);
-            border-color: var(--primary);
-            color: var(--primary);
-        }
-        .undo-btn:disabled, .redo-btn:disabled {
-            opacity: 0.4;
-            cursor: not-allowed;
-        }
-        .history-label {
-            font-size: 12px;
-            color: var(--text-muted);
-            display: flex;
-            align-items: center;
-        }
+        .toast.success { background:#10b981; }
+        .toast.error { background:#ef4444; }
+        .toast.info { background:var(--primary); }
+        @keyframes slideIn { from{opacity:0;transform:translateX(20px);} to{opacity:1;transform:translateX(0);} }
 
-            flex: 1;
-            padding: 8px 12px;
-            border: none;
-            background: none;
-            color: var(--text-secondary);
-            font-size: 13px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.2s;
-            font-family: inherit;
+        /* ===== Markdown in chat ===== */
+        .chat-msg-bubble h1,.chat-msg-bubble h2,.chat-msg-bubble h3 { margin:12px 0 6px; font-size:15px; }
+        .chat-msg-bubble ul,.chat-msg-bubble ol { padding-left:20px; margin:6px 0; }
+        .chat-msg-bubble li { margin:2px 0; }
+        .chat-msg-bubble blockquote {
+            border-left:3px solid var(--primary); padding-left:10px; margin:8px 0;
+            color:var(--text-muted); font-style:italic;
         }
-        .target-tab:hover {
-            color: var(--text);
-            background: var(--bg-secondary);
-        }
-        .target-tab.active {
-            color: var(--primary);
-            background: var(--primary-light);
-            font-weight: 600;
-        }
+        .chat-msg-bubble table { border-collapse:collapse; margin:8px 0; width:100%; }
+        .chat-msg-bubble th,.chat-msg-bubble td { border:1px solid var(--border); padding:6px 10px; font-size:13px; }
+        .chat-msg-bubble th { background:var(--bg-secondary); font-weight:600; }
     </style>
 </head>
 <body>
-    <div class="toast-container" id="toastContainer"></div>
-
-    <!-- Nav -->
-    <nav class="nav">
-        <div class="nav-content">
-            <a href="/" class="nav-brand">
-                <span class="nav-brand-icon">🤖</span>
-                <span class="nav-brand-name">Oh My Coder</span>
-            </a>
-            <div class="nav-links" id="navLinks">
-                <a href="/" class="nav-link active">首页</a>
-                <a href="/dashboard" class="nav-link">仪表板</a>
-                <a href="/history" class="nav-link">历史</a>
-                <a href="/docs" class="nav-link">文档</a>
-                <a href="/settings" class="nav-link">设置</a>
-            </div>
-            <div class="nav-actions">
-                <div class="nav-toggle" id="themeToggle" title="切换主题">☀️</div>
-                <button class="nav-hamburger" id="navHamburger">☰</button>
-            </div>
-        </div>
-    </nav>
-
-    <!-- App Layout: Sidebar + Main -->
     <div class="app-layout">
-        <!-- Left Sidebar -->
-        <aside class="sidebar" id="sidebar">
+        <!-- ===== Sidebar ===== -->
+        <div class="sidebar">
             <div class="sidebar-header">
-                <button type="button" class="btn btn-primary btn-sm" onclick="newSession()" style="width:100%;padding:10px;">
-                    📝 新建会话
+                <h1>🤖 Oh My Coder</h1>
+                <button class="new-chat-btn" onclick="createNewSession()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    新建对话
                 </button>
-            </div>
-            <div class="sidebar-search">
-                <input type="text" id="sessionSearch" placeholder="🔍 搜索会话..." oninput="filterSessions(this.value)" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:8px;background:var(--bg-secondary);color:var(--text);font-size:13px;font-family:inherit;">
             </div>
             <div class="session-list" id="sessionList">
                 <!-- 动态加载 -->
             </div>
-        </aside>
-
-        <!-- Main Content -->
-        <main class="main-content">
-            <!-- Hero -->
-            <section class="hero">
-            <div class="hero-badge">
-                <span class="badge-dot"></span>
-                <span>Powered by GLM-4-Flash · 零成本智能编程</span>
+            <div class="sidebar-footer">
+                <a href="/docs" target="_blank">📄 API 文档</a>
             </div>
-            <h1 class="hero-title">让 AI 团队帮你写代码</h1>
-            <p class="hero-desc">多智能体协作，自动完成从需求分析到代码实现的完整流程。像指挥一个专业的工程团队一样，指挥多个 AI 智能体协作开发。</p>
-        </section>
+        </div>
 
-        <!-- Model List -->
-        <section class="models-section">
-            <h3 style="font-size:18px;font-weight:600;text-align:center;margin-bottom:20px;">🖥️ 可用模型</h3>
-            <div class="models-grid" id="modelsGrid">
-                <!-- 动态加载 -->
-            </div>
-        </section>
-
-
-
-        <!-- Chat Interface (Default View) -->
-        <div class="task-card" id="chatCard" style="padding:0;overflow:hidden;">
-            <!-- Chat Messages Area -->
-            <div id="chatMessages" class="chat-messages">
-                <div class="chat-welcome">
-                    <div class="chat-welcome-icon">🤖</div>
-                    <h3>Oh My Coder</h3>
-                    <p>你好！我是 AI 编程助手，请告诉我你想做什么。</p>
-                </div>
-            </div>
-            
-            <!-- Task Confirmation Panel (hidden by default) -->
-            <div id="taskConfirmPanel" style="display:none;background:var(--primary-light);border-top:1px solid var(--primary);padding:16px 20px;">
-                <h4 style="margin:0 0 10px;color:var(--primary);font-size:14px;">📋 任务确认</h4>
-                <div id="taskSummary" style="background:var(--card);border-radius:8px;padding:12px;margin-bottom:12px;font-size:14px;"></div>
-                <div style="display:flex;gap:8px;justify-content:flex-end;">
-                    <button type="button" class="btn btn-secondary btn-sm" onclick="cancelTask()">取消</button>
-                    <button type="button" class="btn btn-primary btn-sm" onclick="confirmAndExecute()">✅ 确认执行</button>
-                </div>
-            </div>
-            
-            <!-- Chat Input Area -->
-            <div class="chat-input-area">
-                <form id="chatForm" class="chat-input-form">
-                    <textarea id="chatInput" class="chat-input" placeholder="输入消息..." rows="1" required></textarea>
-                    <button type="submit" class="chat-send-btn" id="chatSubmitBtn" title="发送">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
-                    </button>
-                </form>
-                <div class="chat-input-footer">
-                    <select id="chatModelSelect" class="chat-model-select">
+        <!-- ===== Main Area ===== -->
+        <div class="main-area">
+            <div class="main-header">
+                <h2 id="chatTitle">新对话</h2>
+                <div class="header-actions">
+                    <select id="headerModelSelect" class="chat-model-select">
                         <option value="deepseek-chat" selected>DeepSeek V4</option>
                         <option value="deepseek-reasoner">DeepSeek R1</option>
                         <option value="glm-4-flash">GLM-4-Flash</option>
@@ -567,1360 +231,384 @@
                         <option value="tiangong-3">天工 3.0</option>
                         <option value="Baichuan4">百川 4</option>
                     </select>
-                    <button type="button" class="chat-clear-btn" onclick="clearChat()" title="清空对话">🗑️</button>
                 </div>
             </div>
-        </div>
 
-        <!-- Task Form (Hidden by Default) -->
-        <div class="task-card" id="taskFormCard" style="display:none;">
-            <div class="task-header">
-                <h2>🚀 开始新任务（表单模式）</h2>
-                <p class="task-subtitle">💡 建议使用聊天模式，AI 会帮你梳理需求 | <a href="javascript:void(0)" onclick="setMode('chat')" style="color:var(--primary);text-decoration:underline;">切换到聊天</a></p>
-            </div>
-            <form id="taskForm">
-                <div class="form-group">
-                    <label for="taskInput" class="form-label">任务描述</label>
-                    <textarea id="taskInput" class="form-textarea" placeholder="例如：实现一个用户认证系统，包括注册、登录、JWT 令牌、密码重置等功能" rows="4" required></textarea>
-                    <div class="form-hint">💡 越详细的需求描述，AI 团队的理解和实现效果越好</div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label class="form-label">分析目标</label>
-                        <div style="display:flex;gap:0;margin-bottom:8px;background:var(--bg-secondary);border-radius:8px;border:1px solid var(--border);overflow:hidden;">
-                            <button type="button" id="tab-local" class="target-tab active" onclick="switchTargetTab('local')">📂 本地路径</button>
-                            <button type="button" id="tab-github" class="target-tab" onclick="switchTargetTab('github')">🔗 GitHub</button>
-                            <button type="button" id="tab-url" class="target-tab" onclick="switchTargetTab('url')">🌐 网页</button>
-                        </div>
-                        <!-- 本地路径 -->
-                        <div id="target-local" class="target-panel">
-                            <input type="text" id="projectPath" class="form-input" placeholder="输入本地文件夹路径，或点击下方快捷按钮">
-                            <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;">
-                                <button type="button" onclick="setPath('~/Desktop')" style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:6px;padding:3px 10px;font-size:12px;cursor:pointer;color:var(--text-secondary);">📁 桌面</button>
-                                <button type="button" onclick="setPath('~/Documents')" style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:6px;padding:3px 10px;font-size:12px;cursor:pointer;color:var(--text-secondary);">📄 文稿</button>
-                                <button type="button" onclick="setPath('~')" style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:6px;padding:3px 10px;font-size:12px;cursor:pointer;color:var(--text-secondary);">🏠 用户目录</button>
-                                <button type="button" onclick="setPath('.')" style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:6px;padding:3px 10px;font-size:12px;cursor:pointer;color:var(--text-secondary);">📂 当前目录</button>
-                            </div>
-                            <div class="form-hint" style="font-size:12px;color:var(--text-muted);margin-top:4px;">你想让 AI 分析哪个代码文件夹？留空则分析当前目录</div>
-                        </div>
-                        <!-- GitHub URL -->
-                        <div id="target-github" class="target-panel" style="display:none;">
-                            <input type="text" id="githubUrl" class="form-input" placeholder="https://github.com/用户名/仓库名">
-                            <div class="form-hint" style="font-size:12px;color:var(--text-muted);margin-top:4px;">粘贴 GitHub 仓库链接，AI 会自动克隆并分析代码</div>
-                        </div>
-                        <!-- 网页 URL -->
-                        <div id="target-url" class="target-panel" style="display:none;">
-                            <input type="text" id="webUrl" class="form-input" placeholder="https://example.com/page">
-                            <div class="form-hint" style="font-size:12px;color:var(--text-muted);margin-top:4px;">粘贴网页链接，AI 会抓取内容作为分析上下文</div>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-                            <label for="modelSelect" class="form-label" style="margin-bottom:0">模型选择</label>
-                            <button type="button" onclick="openAddCustomModel()" style="background:var(--primary);color:white;border:none;border-radius:6px;padding:4px 12px;font-size:13px;cursor:pointer;transition:all 0.2s" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">+ 自定义模型</button>
-                            <button type="button" onclick="openCustomModelsPanel()" style="background:var(--bg-tertiary);color:var(--text-secondary);border:1px solid var(--border);border-radius:6px;padding:4px 12px;font-size:13px;cursor:pointer">⚙️ 管理</button>
-                        </div>
-                        <select id="modelSelect" class="form-select">
-                            <option value="deepseek" selected>DeepSeek V4 (推荐·低成本)</option>
-                            <option value="deepseek-reasoner">DeepSeek R1 (深度推理)</option>
-                            <option value="glm-4-flash">GLM-4-Flash (免费)</option>
-                            <option value="glm-4v-flash">GLM-4V-Flash (免费·视觉)</option>
-                            <option value="MiniMax-Text-01">MiMo V2 Flash (免费)</option>
-                            <option value="moonshot-v1-128k">Kimi 128K (低成本)</option>
-                            <option value="doubao-pro-32k">Doubao-Pro (低成本)</option>
-                            <option value="tiangong-3">天工 3.0 (低成本)</option>
-                            <option value="Baichuan4">百川 4 (低成本)</option>
-                            <!-- Custom models injected by JS -->
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="workflowSelect" class="form-label">工作流</label>
-                        <select id="workflowSelect" class="form-select">
-                            <option value="build" selected>🚀 完整开发</option>
-                            <option value="review">🔍 代码审查</option>
-                            <option value="debug">🐛 调试修复</option>
-                            <option value="test">🧪 测试用例</option>
-                        </select>
-                    </div>
-                </div>
-                <button type="submit" class="btn btn-primary btn-submit" id="submitBtn">
-                    <span class="btn-text">▶ 启动 AI 团队</span>
-                    <div class="btn-spinner"></div>
-                </button>
-            </form>
-        </div>
-
-        <!-- Dynamic Step Progress (for non-standard workflows) -->
-        <div id="stepProgress" style="display:none;margin-bottom:16px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px 20px;">
-            <div id="stepProgressInner" style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;"></div>
-        </div>
-
-        <div class="undo-redo-bar" id="undoRedoBar">
-            <button class="undo-btn" id="undoBtn" onclick="undoState()" disabled>↩️ 撤销</button>
-            <span class="history-label" id="historyLabel"></span>
-            <button class="redo-btn" id="redoBtn" onclick="redoState()" disabled>↪️ 重做</button>
-        </div>
-
-        <!-- Response (hidden) -->
-        <div id="responseSection" class="response-container" style="display:none;">
-            <div class="response-tabs">
-                <button class="response-tab active" data-tab="result">📋 执行结果</button>
-                <button class="response-tab" data-tab="explore">🔍 Explore</button>
-                <button class="response-tab" data-tab="analyst">🧠 Analyst</button>
-                <button class="response-tab" data-tab="architect">🏗️ Architect</button>
-                <button class="response-tab" data-tab="executor">💻 Executor</button>
-                <button class="response-tab" data-tab="stats">📊 统计</button>
-            </div>
-            <div class="response-panel active" data-panel="result" id="panel-result"></div>
-            <div class="response-panel" data-panel="explore" id="panel-explore"></div>
-            <div class="response-panel" data-panel="analyst" id="panel-analyst"></div>
-            <div class="response-panel" data-panel="architect" id="panel-architect"></div>
-            <div class="response-panel" data-panel="executor" id="panel-executor"></div>
-            <div class="response-panel" data-panel="stats" id="panel-stats"></div>
-        </div>
-        </main>
-    </div><!-- /app-layout -->
-
-    <!-- Bottom Status Bar (Agent Pipeline) -->
-    <div class="status-bar" id="statusBar">
-        <div class="status-bar-inner">
-            <div class="status-agent">
-                <span class="status-dot" id="statusDot"></span>
-                <span id="statusAgentName">就绪</span>
-            </div>
-            <div class="pipeline-container" style="margin:0;">
-                <div class="pipeline-step"><div class="pipeline-icon waiting" id="step-explore" data-step="explore"><span class="step-emoji">🔍</span><div class="step-spinner"></div></div><span class="pipeline-label">探索</span></div>
-                <div class="pipeline-arrow" id="arrow-1">→</div>
-                <div class="pipeline-step"><div class="pipeline-icon waiting" id="step-analyst" data-step="analyst"><span class="step-emoji">🧠</span><div class="step-spinner"></div></div><span class="pipeline-label">分析</span></div>
-                <div class="pipeline-arrow" id="arrow-2">→</div>
-                <div class="pipeline-step"><div class="pipeline-icon waiting" id="step-architect" data-step="architect"><span class="step-emoji">🏗️</span><div class="step-spinner"></div></div><span class="pipeline-label">设计</span></div>
-                <div class="pipeline-arrow" id="arrow-3">→</div>
-                <div class="pipeline-step"><div class="pipeline-icon waiting" id="step-executor" data-step="executor"><span class="step-emoji">💻</span><div class="step-spinner"></div></div><span class="pipeline-label">实现</span></div>
-                <div class="pipeline-arrow" id="arrow-4">→</div>
-                <div class="pipeline-step"><div class="pipeline-icon waiting" id="step-verifier" data-step="verifier"><span class="step-emoji">✅</span><div class="step-spinner"></div></div><span class="pipeline-label">验证</span></div>
-            </div>
-            <div class="status-time" id="statusTime"></div>
-        </div>
-    </div>
-
-    <footer class="footer" style="display:none;">
-        <p>Made with ❤️ by Oh My Coder · Powered by DeepSeek & Multi-Agent Architecture</p>
-    </footer>
-
-    <script>
-        // ===== State =====
-        const state = { isRunning: false, currentTask: null, result: null, stepStatus: {}, stepOutputs: {} };
-
-        // ===== Toast =====
-        function showToast(msg, type = 'info', ms = 4000) {
-            const icons = { success: '✅', error: '❌', info: 'ℹ️' };
-            const t = document.createElement('div');
-            t.className = `toast ${type}`;
-            t.innerHTML = `<span>${icons[type]}</span><span>${msg}</span>`;
-            document.getElementById('toastContainer').appendChild(t);
-            setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translateX(20px)'; setTimeout(() => t.remove(), 300); }, ms);
-        }
-
-        // ===== Theme =====
-        function loadTheme() {
-            const saved = localStorage.getItem('theme');
-            const theme = saved || 'dark';
-            document.documentElement.setAttribute('data-theme', theme);
-            document.getElementById('themeToggle').textContent = theme === 'dark' ? '☀️' : '🌙';
-        }
-        document.getElementById('themeToggle').addEventListener('click', () => {
-            const cur = document.documentElement.getAttribute('data-theme');
-            const next = cur === 'dark' ? 'light' : 'dark';
-            document.documentElement.setAttribute('data-theme', next);
-            document.getElementById('themeToggle').textContent = next === 'dark' ? '☀️' : '🌙';
-            localStorage.setItem('theme', next);
-        });
-        loadTheme();
-
-        // ===== Mobile Nav =====
-        document.getElementById('navHamburger').addEventListener('click', () => {
-            document.getElementById('navLinks').classList.toggle('open');
-        });
-
-        // ===== Load Models =====
-        async function loadModels() {
-            const grid = document.getElementById('modelsGrid');
-            const cloudModels = [
-                { name: 'DeepSeek V4', provider: 'DeepSeek', icon: '🟢', badge: '低成本', online: true },
-                { name: 'DeepSeek R1', provider: 'DeepSeek', icon: '🟢', badge: '低成本', online: true },
-                { name: 'GLM-4-Flash', provider: '智谱', icon: '🔵', badge: '免费', online: true },
-                { name: 'GLM-4V-Flash', provider: '智谱', icon: '🔵', badge: '免费', online: true },
-                { name: 'MiMo V2 Flash', provider: '小米 Xiaomi', icon: '⚡', badge: '免费', online: true },
-                { name: 'Kimi 128K', provider: '月之暗面', icon: '🟣', badge: '低成本', online: true },
-                { name: 'Doubao-Pro', provider: '字节跳动', icon: '🟡', badge: '低成本', online: true },
-                { name: '天工 3.0', provider: '天工', icon: '⚪', badge: '低成本', online: true },
-                { name: '百川 4', provider: '百川智能', icon: '🟤', badge: '低成本', online: true },
-            ];
-
-            // 尝试加载本地模型
-            let localModels = [];
-            try {
-                const res = await fetch('/api/local-models/status');
-                const data = await res.json();
-                if (data.available && data.models) {
-                    localModels = data.models.map(m => ({
-                        name: m.name, provider: 'Ollama (本地)', icon: '🖥️', badge: '本地', online: true
-                    }));
-                }
-            } catch (e) {}
-
-            const all = [...localModels, ...cloudModels];
-
-            // Load custom models from settings
-            try {
-                const custom = JSON.parse(localStorage.getItem('omc-custom-models') || '[]');
-                custom.forEach(m => {
-                    all.push({ name: m.name, provider: m.provider || '自定义', icon: '🔧', badge: '自定义', online: true });
-                });
-            } catch {}
-
-            grid.innerHTML = all.map(m => `
-                <div class="model-item">
-                    <div class="model-item-icon">${m.icon}</div>
-                    <div class="model-item-info">
-                        <div class="model-item-name">${m.name}</div>
-                        <div class="model-item-provider">${m.provider} · <span class="badge badge-${m.badge === '免费' ? 'success' : m.badge === '本地' ? 'primary' : 'warning'}" style="font-size:11px;">${m.badge}</span></div>
-                    </div>
-                    <div class="model-item-status ${m.online ? 'online' : 'offline'}"></div>
-                </div>
-            `).join('');
-
-            // Inject custom models into dropdown
-            const sel = document.getElementById('modelSelect');
-            if (sel) {
-                sel.querySelectorAll('option[data-custom]').forEach(o => o.remove());
-                try {
-                    const custom = JSON.parse(localStorage.getItem('omc-custom-models') || '[]');
-                    custom.forEach(m => {
-                        const opt = document.createElement('option');
-                        opt.value = 'custom:' + m.id;
-                        opt.textContent = m.name + ' (自定义)';
-                        opt.setAttribute('data-custom', '1');
-                        sel.appendChild(opt);
-                    });
-                } catch {}
-            }
-        }
-        loadModels();
-
-        // ===== Pipeline =====
-        function setStepStatus(step, status) {
-            state.stepStatus[step] = status;
-            const el = document.getElementById(`step-${step}`);
-            if (el) el.className = `pipeline-icon ${status}`;
-            const arrows = { explore: 1, analyst: 2, architect: 3, executor: 4 };
-            if (arrows[step]) {
-                const a = document.getElementById(`arrow-${arrows[step]}`);
-                if (a) a.className = (status === 'active' || status === 'completed') ? 'pipeline-arrow active' : 'pipeline-arrow';
-            }
-        }
-        function resetPipeline() {
-            ['explore','analyst','architect','executor','verifier'].forEach(s => {
-                state.stepStatus[s] = 'waiting'; state.stepOutputs[s] = ''; setStepStatus(s, 'waiting');
-            });
-            // 清空动态步骤进度
-            const dsi = document.getElementById('stepProgressInner');
-            if (dsi) dsi.innerHTML = '';
-        }
-        function advancePipeline(step) {
-            const steps = ['explore','analyst','architect','executor','verifier'];
-            const i = steps.indexOf(step);
-            if (i >= 0) { setStepStatus(steps[i], 'completed'); if (i+1 < steps.length) setStepStatus(steps[i+1], 'active'); }
-        }
-
-        // ===== Tabs =====
-        document.querySelectorAll('.response-tab').forEach(tab => {
-            tab.addEventListener('click', () => {
-                document.querySelectorAll('.response-tab').forEach(t => t.classList.remove('active'));
-                document.querySelectorAll('.response-panel').forEach(p => p.classList.remove('active'));
-                tab.classList.add('active');
-                document.querySelector(`[data-panel="${tab.dataset.tab}"]`).classList.add('active');
-            });
-        });
-
-        // ===== Examples =====
-        document.querySelectorAll('.example-card').forEach(c => {
-            c.addEventListener('click', () => {
-                // Switch to form mode first
-                setMode('form');
-                // Fill form fields
-                document.getElementById('taskInput').value = c.dataset.task;
-                document.getElementById('workflowSelect').value = c.dataset.workflow;
-                // Scroll to form
-                document.getElementById('taskFormCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
-                document.getElementById('taskInput').focus();
-            });
-        });
-
-        // ===== Markdown =====
-        marked.setOptions({ breaks: true, gfm: true });
-        function md(t) { return t ? marked.parse(t) : '<p style="color:var(--text-muted)">暂无输出</p>'; }
-
-        // ===== SSE =====
-        let es = null;
-        function startSSE(id) {
-            if (es) es.close();
-            es = new EventSource(`/sse/execute/${id}`);
-            es.onmessage = e => { try { handleSSE(JSON.parse(e.data)); } catch(err) {} };
-            es.onerror = () => { es.close(); };
-        }
-        // 动态步骤名称映射
-        const STEP_LABELS = {
-            'explore': '🔍 探索', 'analyst': '🧠 分析', 'architect': '🏗️ 设计',
-            'executor': '💻 实现', 'verifier': '✅ 验证',
-            'code-reviewer': '🔍 代码审查', 'security-reviewer': '🛡️ 安全审查',
-            'code-simplifier': '✂️ 代码简化', 'planner': '📋 规划',
-            'critic': '🔎 批判分析', 'writer': '📝 文档',
-            'performance': '⚡ 性能分析', 'database': '🗄️ 数据库审查',
-        };
-        function getStepLabel(step) { return STEP_LABELS[step] || `🤖 ${step}`; }
-
-        function updateDynamicStep(step, status) {
-            const el = document.getElementById('stepProgressInner');
-            if (!el) return;
-            // 找到或创建这个步骤的标签
-            let tag = el.querySelector(`[data-step="${step}"]`);
-            if (!tag) {
-                tag = document.createElement('span');
-                tag.setAttribute('data-step', step);
-                tag.style.cssText = 'display:inline-flex;align-items:center;gap:4px;padding:4px 12px;border-radius:20px;font-size:13px;font-weight:500;transition:all 0.3s;';
-                el.appendChild(tag);
-            }
-            tag.textContent = getStepLabel(step);
-            if (status === 'active') {
-                tag.style.background = 'var(--primary-light)'; tag.style.color = 'var(--primary)'; tag.style.border = '1px solid var(--primary)';
-                tag.innerHTML = getStepLabel(step) + ' <span style="width:14px;height:14px;border:2px solid var(--primary);border-top-color:transparent;border-radius:50%;animation:spin 0.8s linear infinite;display:inline-block;"></span>';
-            } else if (status === 'completed') {
-                tag.style.background = 'rgba(16,185,129,0.1)'; tag.style.color = '#10b981'; tag.style.border = '1px solid #10b981';
-                tag.textContent = '✅ ' + getStepLabel(step).replace(/^[^\s]+ /, '');
-            } else if (status === 'failed') {
-                tag.style.background = 'rgba(239,68,68,0.1)'; tag.style.color = '#ef4444'; tag.style.border = '1px solid #ef4444';
-                tag.textContent = '❌ ' + getStepLabel(step).replace(/^[^\s]+ /, '');
-            }
-        }
-
-        function handleSSE(d) {
-            const { type, step, content, stats } = d;
-            if (type === 'step_active') {
-                setStepStatus(step, 'active');
-                updateDynamicStep(step, 'active');
-                // 确保响应区域可见
-                if (document.getElementById('responseSection').style.display === 'none') {
-                    document.getElementById('responseSection').style.display = 'block';
-                    document.getElementById('stepProgress').style.display = 'block';
-                }
-                // 自动切换到当前步骤的面板
-                const panel = document.getElementById(`panel-${step}`);
-                if (panel) {
-                    document.querySelectorAll('.response-tab').forEach(t => t.classList.remove('active'));
-                    document.querySelectorAll('.response-panel').forEach(p => p.classList.remove('active'));
-                    // 尝试点击对应的tab
-                    const tab = document.querySelector(`[data-tab="${step}"]`);
-                    if (tab) { tab.classList.add('active'); panel.classList.add('active'); }
-                    else { document.querySelector('[data-tab="result"]').classList.add('active'); document.getElementById('panel-result').classList.add('active'); }
-                }
-            }
-            else if (type === 'step_completed') {
-                state.stepOutputs[step] = content || '';
-                advancePipeline(step);
-                updateDynamicStep(step, 'completed');
-                // 实时更新面板内容
-                const panel = document.getElementById(`panel-${step}`);
-                if (panel) panel.innerHTML = `<div class="markdown-body">${md(content || '')}</div>`;
-            }
-            else if (type === 'step_failed') {
-                setStepStatus(step, 'failed');
-                updateDynamicStep(step, 'failed');
-                showToast(`❌ ${step} 失败: ${content || '未知错误'}`, 'error');
-                // 在面板显示错误
-                const panel = document.getElementById(`panel-${step}`);
-                if (panel) panel.innerHTML = `<div style="color:var(--danger);padding:16px;">❌ <b>${step}</b> 执行失败:<br><pre style="margin-top:8px;white-space:pre-wrap;font-size:13px;">${content || '未知错误'}</pre></div>`;
-            }
-            else if (type === 'complete') { state.result = d.result || d; renderResult(); autoSaveReport(taskId); }
-            else if (type === 'error') { showToast(`执行失败: ${content}`, 'error'); stopRunning(); }
-        }
-
-        // ===== Render =====
-        function renderResult() {
-            document.getElementById('responseSection').style.display = 'block';
-            document.getElementById('stepProgress').style.display = 'block';
-            stopRunning();
-            const r = state.result;
-            const stats = r?.stats;
-            const hasFailures = stats?.steps_failed?.length > 0;
-            const allFailed = stats?.steps_failed?.length > 0 && stats?.steps_completed?.length === 0;
-
-            // 主结果面板
-            let resultHtml = '';
-            if (allFailed) {
-                resultHtml = `<div style="text-align:center;padding:40px 20px;">
-                    <div style="font-size:48px;margin-bottom:16px;">❌</div>
-                    <h3 style="color:var(--danger);margin-bottom:8px;">任务执行失败</h3>
-                    <p style="color:var(--text-muted);">所有步骤均失败，请检查 API 配置后重试</p>
-                    ${stats?.steps_failed?.map(s => `<div style="margin-top:12px;padding:8px 16px;background:var(--bg-secondary);border-radius:8px;display:inline-block;font-size:13px;">❌ ${s}: ${state.stepOutputs[s] || '未知错误'}</div>`).join('')}
-                </div>`;
-            } else if (hasFailures) {
-                resultHtml = `<div class="markdown-body">${md(r?.result || '')}</div>
-                    <div style="margin-top:16px;padding:12px 16px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:8px;">
-                        <b style="color:var(--danger);">⚠️ 部分步骤失败：</b>
-                        ${stats?.steps_failed?.map(s => `<div style="margin-top:6px;font-size:13px;">❌ <b>${s}</b>: ${state.stepOutputs[s] || '未知错误'}</div>`).join('')}
-                    </div>`;
-            } else {
-                resultHtml = `<div class="markdown-body">${md(r?.result || r)}</div>`;
-            }
-            document.getElementById('panel-result').innerHTML = resultHtml;
-
-            // 各步骤面板
-            ['explore','analyst','architect','executor','verifier'].forEach(s => {
-                const p = document.getElementById(`panel-${s}`);
-                if (p && !p.querySelector('pre')) { // 不覆盖已有的错误信息
-                    p.innerHTML = `<div class="markdown-body">${md(state.stepOutputs[s] || r?.outputs?.[s]?.result)}</div>`;
-                }
-            });
-
-            renderStats(stats);
-            document.querySelector('[data-tab="result"]').click();
-            if (allFailed) {
-                showToast('❌ 任务执行失败，请检查 API 配置', 'error');
-            } else if (hasFailures) {
-                showToast('⚠️ 任务完成，部分步骤失败', 'error');
-            } else {
-                showToast('执行完成！🎉', 'success');
-            }
-        }
-        function renderStats(stats) {
-            const p = document.getElementById('panel-stats');
-            if (!stats) { p.innerHTML = '<div class="empty-state"><span class="empty-state-icon">📊</span><p>暂无统计信息</p></div>'; return; }
-            p.innerHTML = `
-                <div class="stats-grid" style="margin-bottom:24px;">
-                    <div class="stat-card"><div class="stat-value">${stats.total_tokens||0}</div><div class="stat-label">Tokens</div></div>
-                    <div class="stat-card"><div class="stat-value">${stats.execution_time||0}s</div><div class="stat-label">执行时间</div></div>
-                    <div class="stat-card"><div class="stat-value">¥${(stats.total_cost||0).toFixed(4)}</div><div class="stat-label">估算成本</div></div>
-                    <div class="stat-card"><div class="stat-value">${(stats.steps_completed||[]).length}/${stats.steps_total||5}</div><div class="stat-label">完成步骤</div></div>
-                </div>
-                <div style="text-align:right;margin-top:8px;">
-                    <button class="btn btn-ghost btn-sm" onclick="deleteCurrentTask()" style="color:var(--danger);font-size:13px;">🗑️ 删除此任务</button>
-                    <a href="/history" class="btn btn-ghost btn-sm" style="font-size:13px;margin-left:8px;">📋 查看全部历史</a>
-                </div>`;
-        }
-        async function deleteCurrentTask() {
-            if (!state.currentTask) return;
-            if (!confirm('确定要删除这个任务吗？')) return;
-            try {
-                await fetch(`/api/tasks/${state.currentTask}`, { method: 'DELETE' });
-                document.getElementById('responseSection').style.display = 'none';
-                showToast('已删除', 'info');
-            } catch (e) {}
-        }
-
-        function setPath(p) { document.getElementById('projectPath').value = p; }
-
-        // ===== Target Tab Switching =====
-        let currentTargetType = 'local';
-        function switchTargetTab(type) {
-            currentTargetType = type;
-            // Update tab styles
-            document.querySelectorAll('.target-tab').forEach(t => t.classList.remove('active'));
-            document.getElementById('tab-' + type).classList.add('active');
-            // Show/hide panels
-            document.querySelectorAll('.target-panel').forEach(p => p.style.display = 'none');
-            document.getElementById('target-' + type).style.display = 'block';
-        }
-        function getTargetInfo() {
-            // Returns { path, target_type }
-            if (currentTargetType === 'github') {
-                const url = document.getElementById('githubUrl').value.trim();
-                return { path: url || '.', target_type: 'github' };
-            } else if (currentTargetType === 'url') {
-                const url = document.getElementById('webUrl').value.trim();
-                return { path: url || '.', target_type: 'url' };
-            } else {
-                return { path: document.getElementById('projectPath').value.trim() || '.', target_type: 'local' };
-            }
-        }
-
-        // 任务完成后自动保存报告
-        async function autoSaveReport(taskId) {
-            try {
-                const res = await fetch(`/api/tasks/${taskId}`);
-                const task = await res.json();
-                const saveRes = await fetch('/api/save-report', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ task_id: taskId })
-                });
-                const data = await saveRes.json();
-                if (data.path) {
-                    showToast(`📄 报告已保存: ${data.path}`, 'success', 5000);
-                }
-            } catch (e) { console.error('自动保存报告失败:', e); }
-        }
-
-        // ===== Mode Toggle =====
-        function setMode(mode) {
-            const chatCard = document.getElementById('chatCard');
-            const taskFormCard = document.getElementById('taskFormCard');
-            const chatBtn = document.getElementById('mode-chat-btn');
-            const formBtn = document.getElementById('mode-form-btn');
-            
-            if (mode === 'chat') {
-                chatCard.style.display = 'block';
-                taskFormCard.style.display = 'none';
-                chatBtn.className = 'btn btn-primary btn-sm';
-                formBtn.className = 'btn btn-ghost btn-sm';
-                localStorage.setItem('omc-ui-mode', 'chat');
-            } else {
-                chatCard.style.display = 'none';
-                taskFormCard.style.display = 'block';
-                chatBtn.className = 'btn btn-ghost btn-sm';
-                formBtn.className = 'btn btn-primary btn-sm';
-                localStorage.setItem('omc-ui-mode', 'form');
-            }
-        }
-        
-        // ===== Session Management =====
-        let currentSessionId = null;
-        let sessions = [];
-
-        async function loadSessions() {
-            try {
-                const res = await fetch('/api/sessions');
-                if (res.ok) {
-                    sessions = await res.json();
-                    renderSessionList();
-                }
-            } catch (e) { console.log('Session load failed:', e); }
-        }
-
-        function renderSessionList() {
-            const list = document.getElementById('sessionList');
-            if (!list) return;
-            list.innerHTML = sessions.map(s => `
-                <div class="session-item ${s.id === currentSessionId ? 'active' : ''}" onclick="selectSession('${s.id}')">
-                    <span class="session-item-title">${escHtml(s.title || '新会话')}</span>
-                    <span class="session-item-time">${formatTime(s.updated_at || s.created_at)}</span>
-                    <span class="session-item-delete" onclick="event.stopPropagation();deleteSession('${s.id}')">🗑️</span>
-                </div>
-            `).join('');
-        }
-
-        function escHtml(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
-        function formatTime(t) {
-            if (!t) return '';
-            const d = new Date(t);
-            const now = new Date();
-            const diff = (now - d) / 1000;
-            if (diff < 60) return '刚刚';
-            if (diff < 3600) return Math.floor(diff/60) + '分钟前';
-            if (diff < 86400) return Math.floor(diff/3600) + '小时前';
-            return d.toLocaleDateString('zh-CN');
-        }
-
-        async function newSession() {
-            try {
-                const res = await fetch('/api/sessions', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ title: '新会话' })
-                });
-                if (res.ok) {
-                    const s = await res.json();
-                    currentSessionId = s.id;
-                    sessions.unshift(s);
-                    renderSessionList();
-                    clearChat();
-                    showToast('新会话已创建', 'success');
-                }
-            } catch (e) { showToast('创建失败', 'error'); }
-        }
-
-        async function selectSession(id) {
-            currentSessionId = id;
-            renderSessionList();
-            try {
-                const res = await fetch(`/api/sessions/${id}`);
-                if (res.ok) {
-                    const s = await res.json();
-                    // Restore messages
-                    const container = document.getElementById('chatMessages');
-                    container.innerHTML = '';
-                    if (s.messages && s.messages.length > 0) {
-                        s.messages.forEach(m => addChatMessage(m.role, m.content, false));
-                    } else {
-                        addChatMessage('assistant', '你好！我是 Oh My Coder 的 AI 编程助手。请告诉我你想做什么。', false);
-                    }
-                }
-            } catch (e) { showToast('加载失败', 'error'); }
-        }
-
-        async function deleteSession(id) {
-            if (!confirm('确定删除这个会话？')) return;
-            try {
-                await fetch(`/api/sessions/${id}`, { method: 'DELETE' });
-                sessions = sessions.filter(s => s.id !== id);
-                if (currentSessionId === id) currentSessionId = null;
-                renderSessionList();
-                showToast('已删除', 'success');
-            } catch (e) { showToast('删除失败', 'error'); }
-        }
-
-        function filterSessions(q) {
-            const items = document.querySelectorAll('.session-item');
-            q = q.toLowerCase();
-            items.forEach(item => {
-                const title = item.querySelector('.session-item-title').textContent.toLowerCase();
-                item.style.display = title.includes(q) ? '' : 'none';
-            });
-        }
-
-        // Restore saved mode and chat history on page load
-        document.addEventListener('DOMContentLoaded', () => {
-            // Load sessions
-            loadSessions();
-            
-            // Restore chat history from localStorage
-            const chatHistory = chatState.messages.filter(m => m.role !== 'system');
-            if (chatHistory.length > 0) {
-                const container = document.getElementById('chatMessages');
-                container.innerHTML = '';
-                chatHistory.forEach(m => {
-                    addChatMessage(m.role, m.content, false);
-                });
-            }
-            
-            // Textarea auto-resize
-            const chatInput = document.getElementById('chatInput');
-            if (chatInput) {
-                chatInput.addEventListener('input', function() {
-                    this.style.height = 'auto';
-                    this.style.height = Math.min(this.scrollHeight, 150) + 'px';
-                });
-                // Submit on Enter (Shift+Enter for newline)
-                chatInput.addEventListener('keydown', function(e) {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault();
-                        document.getElementById('chatForm').dispatchEvent(new Event('submit'));
-                    }
-                });
-            }
-        });
-
-        // ===== Chat Interface =====
-        const CHAT_SYSTEM_MSG = '你是 Oh My Coder 的 AI 编程助手。你可以帮助用户分析代码、编写代码、调试问题、回答技术问题。当用户的需求可以转化为一个编程任务时，建议他们切换到表单模式执行。请用中文回复。';
-        
-        function loadChatState() {
-            try {
-                const saved = localStorage.getItem('omc-chat-history');
-                if (saved) {
-                    const parsed = JSON.parse(saved);
-                    if (Array.isArray(parsed) && parsed.length > 0) {
-                        return { messages: parsed, pendingTask: null, isWaiting: false };
-                    }
-                }
-            } catch {}
-            return { messages: [{ role: 'system', content: CHAT_SYSTEM_MSG }], pendingTask: null, isWaiting: false };
-        }
-        function saveChatState() {
-            try {
-                // Save only user/assistant messages (skip system)
-                const toSave = chatState.messages.filter(m => m.role !== 'system');
-                localStorage.setItem('omc-chat-history', JSON.stringify(toSave));
-            } catch {}
-        }
-        let chatState = loadChatState();
-
-        function addChatMessage(role, content, isHtml = false) {
-            const container = document.getElementById('chatMessages');
-            // Remove welcome screen if present
-            const welcome = container.querySelector('.chat-welcome');
-            if (welcome) welcome.remove();
-            
-            const msgDiv = document.createElement('div');
-            msgDiv.className = `chat-msg ${role}`;
-            
-            const avatar = role === 'user' ? '👤' : '🤖';
-            
-            msgDiv.innerHTML = `
-                <div class="chat-msg-avatar">${avatar}</div>
-                <div class="chat-msg-bubble">
-                    ${isHtml ? content : `<p style="margin:0;white-space:pre-wrap;">${content}</p>`}
-                </div>
-            `;
-            container.appendChild(msgDiv);
-            container.scrollTop = container.scrollHeight;
-            
-            chatState.messages.push({ role, content });
-            if (role !== 'system') saveChatState();
-        }
-
-        function showTypingIndicator() {
-            const container = document.getElementById('chatMessages');
-            const welcome = container.querySelector('.chat-welcome');
-            if (welcome) welcome.remove();
-            
-            const typingDiv = document.createElement('div');
-            typingDiv.id = 'typingIndicator';
-            typingDiv.className = 'chat-msg assistant';
-            typingDiv.innerHTML = `
-                <div class="chat-msg-avatar">🤖</div>
-                <div class="chat-msg-bubble">
-                    <div class="chat-msg-loading"><span></span><span></span><span></span></div>
-                </div>
-            `;
-            container.appendChild(typingDiv);
-            container.scrollTop = container.scrollHeight;
-        }
-
-        function hideTypingIndicator() {
-            const typing = document.getElementById('typingIndicator');
-            if (typing) typing.remove();
-        }
-
-        async function handleChatSubmit(e) {
-            e.preventDefault();
-            if (chatState.isWaiting) return;
-            
-            const input = document.getElementById('chatInput');
-            const message = input.value.trim();
-            if (!message) return;
-            
-            // Add user message
-            addChatMessage('user', message);
-            input.value = '';
-            
-            chatState.isWaiting = true;
-            document.getElementById('chatSubmitBtn').disabled = true;
-            showTypingIndicator();
-            
-            try {
-                // Call the real AI chat endpoint with SSE streaming
-                const res = await fetch('/api/chat/completions', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        messages: chatState.messages.map(m => ({ role: m.role, content: m.content })),
-                        model: document.getElementById('chatModelSelect').value,
-                        stream: true
-                    })
-                });
-                
-                if (!res.ok) {
-                    hideTypingIndicator();
-                    const errData = await res.json().catch(() => ({}));
-                    addChatMessage('assistant', '❌ 请求失败: ' + (errData.detail || res.status));
-                    return;
-                }
-                
-                hideTypingIndicator();
-                
-                if (res.headers.get('content-type')?.includes('text/event-stream')) {
-                    // SSE streaming
-                    const reader = res.body.getReader();
-                    const decoder = new TextDecoder();
-                    let fullContent = '';
-                    const assistantMsgDiv = createAssistantMessageDiv();
-                    const contentSpan = assistantMsgDiv.querySelector('.msg-content');
-                    
-                    while (true) {
-                        const { done, value } = await reader.read();
-                        if (done) break;
-                        const text = decoder.decode(value);
-                        const lines = text.split('\n');
-                        for (const line of lines) {
-                            if (line.startsWith('data: ')) {
-                                try {
-                                    const data = JSON.parse(line.slice(6));
-                                    if (data.done) break;
-                                    fullContent += data.content || '';
-                                    contentSpan.innerHTML = marked.parse(fullContent);
-                                    scrollChatToBottom();
-                                } catch {}
-                            }
-                        }
-                    }
-                    // Update the stored message with full content
-                    if (chatState.messages.length > 0) {
-                        chatState.messages[chatState.messages.length - 1].content = fullContent;
-                        saveChatState();
-                    }
-                } else {
-                    // Non-streaming response
-                    const data = await res.json();
-                    addChatMessage('assistant', data.content || '（无回复）');
-                saveChatState();
-                }
-            } catch (err) {
-                hideTypingIndicator();
-                addChatMessage('assistant', '❌ 连接失败: ' + err.message);
-            } finally {
-                chatState.isWaiting = false;
-                document.getElementById('chatSubmitBtn').disabled = false;
-            }
-        }
-        
-        function createAssistantMessageDiv() {
-            const container = document.getElementById('chatMessages');
-            const msgDiv = document.createElement('div');
-            msgDiv.className = 'chat-message assistant';
-            msgDiv.style.cssText = 'display:flex;gap:12px;margin-bottom:16px;animation:fadeIn 0.3s ease;';
-            msgDiv.innerHTML = `
-                <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--primary-dark));display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">🤖</div>
-                <div style="flex:1;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 16px;">
-                    <div class="msg-content" style="color:var(--text);"></div>
-                </div>
-            `;
-            container.appendChild(msgDiv);
-            // Add empty message to state (will be updated with full content)
-            chatState.messages.push({ role: 'assistant', content: '' });
-            saveChatState();
-            scrollChatToBottom();
-            return msgDiv;
-        }
-        
-        function scrollChatToBottom() {
-            const container = document.getElementById('chatMessages');
-            container.scrollTop = container.scrollHeight;
-        }
-        
-        function clearChat() {
-            chatState.messages = [{ role: 'system', content: CHAT_SYSTEM_MSG }];
-            chatState.pendingTask = null;
-            localStorage.removeItem('omc-chat-history');
-            const container = document.getElementById('chatMessages');
-            container.innerHTML = `
+            <!-- Chat Messages -->
+            <div class="chat-messages" id="chatMessages">
                 <div class="chat-welcome">
                     <div class="chat-welcome-icon">🤖</div>
                     <h3>Oh My Coder</h3>
                     <p>你好！我是 AI 编程助手，请告诉我你想做什么。</p>
                 </div>
-            `;
-            document.getElementById('taskConfirmPanel').style.display = 'none';
-            showToast('聊天已清空', 'info', 2000);
-        }
+            </div>
 
-        function showTaskConfirmPanel(task) {
-            const panel = document.getElementById('taskConfirmPanel');
-            const summary = document.getElementById('taskSummary');
-            
-            summary.innerHTML = `
-                <div style="margin-bottom:8px;"><b>📝 任务描述：</b>${task.description}</div>
-                <div style="margin-bottom:8px;"><b>🎯 工作流：</b>${task.workflow}</div>
-                <div style="margin-bottom:8px;"><b>🤖 模型：</b>${task.model}</div>
-                <div><b>📂 目标：</b>${task.target_type === 'local' ? task.project_path : task.target_type === 'github' ? 'GitHub: ' + task.project_path : '网页: ' + task.project_path}</div>
-            `;
-            
-            panel.style.display = 'block';
-            panel.scrollIntoView({ behavior: 'smooth' });
-        }
+            <!-- Chat Input -->
+            <div class="chat-input-area">
+                <form id="chatForm" class="chat-input-form">
+                    <textarea id="chatInput" class="chat-input" placeholder="描述你想做的事情..." rows="1" required></textarea>
+                    <button type="submit" class="chat-send-btn" id="chatSubmitBtn" title="发送">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+                    </button>
+                </form>
+                <div class="chat-input-footer">
+                    <button type="button" class="chat-clear-btn" onclick="clearCurrentChat()" title="清空当前对话">🗑️ 清空</button>
+                </div>
+            </div>
 
-        function cancelTask() {
-            document.getElementById('taskConfirmPanel').style.display = 'none';
-            chatState.pendingTask = null;
-            addChatMessage('assistant', '已取消。如果你需要修改需求，请继续告诉我。');
-        }
-
-        async function confirmAndExecute() {
-            if (!chatState.pendingTask) return;
-            
-            document.getElementById('taskConfirmPanel').style.display = 'none';
-            addChatMessage('assistant', '好的，正在启动 AI 团队执行任务...', true);
-            
-            // Switch to task form and execute
-            const task = chatState.pendingTask;
-            document.getElementById('taskInput').value = task.description;
-            document.getElementById('modelSelect').value = task.model;
-            document.getElementById('workflowSelect').value = task.workflow;
-            
-            // Set target
-            if (task.target_type === 'github') {
-                switchTargetTab('github');
-                document.getElementById('githubUrl').value = task.project_path;
-            } else if (task.target_type === 'url') {
-                switchTargetTab('url');
-                document.getElementById('webUrl').value = task.project_path;
-            } else {
-                switchTargetTab('local');
-                document.getElementById('projectPath').value = task.project_path;
-            }
-            
-            // Execute task
-            await executeTask(task);
-            chatState.pendingTask = null;
-        }
-
-        async function executeTask(task) {
-            startRunning(); 
-            resetPipeline();
-            document.getElementById('responseSection').style.display = 'none';
-            
-            try {
-                const res = await fetch('/api/execute', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        task: task.description,
-                        project_path: task.project_path,
-                        target_type: task.target_type,
-                        model: task.model,
-                        workflow: task.workflow
-                    })
-                });
-                const data = await res.json();
-                if (data.status === 'started') { 
-                    state.currentTask = data.task_id; 
-                    showToast('任务已启动', 'info', 2000); 
-                    startSSE(data.task_id); 
-                }
-                else if (data.status === 'success') { 
-                    state.result = data.result; 
-                    renderResult(); 
-                }
-                else { 
-                    showToast(data.message || '执行失败', 'error'); 
-                    stopRunning(); 
-                }
-            } catch (err) { 
-                showToast(`网络错误: ${err.message}`, 'error'); 
-                stopRunning(); 
-            }
-        }
-
-        document.getElementById('chatForm').addEventListener('submit', handleChatSubmit);
-
-        // ===== Original Form Submit (for backward compatibility) =====
-        async function handleSubmit(e) {
-            e.preventDefault();
-            if (state.isRunning) return;
-            const task = document.getElementById('taskInput').value.trim();
-            if (!task) { showToast('请输入任务描述', 'error'); return; }
-            
-            const target = getTargetInfo();
-            await executeTask({
-                description: task,
-                project_path: target.path,
-                target_type: target.target_type,
-                model: document.getElementById('modelSelect').value,
-                workflow: document.getElementById('workflowSelect').value
-            });
-        }
-        
-        function startRunning() {
-            state.isRunning = true;
-            const btn = document.getElementById('submitBtn');
-            if (btn) {
-                btn.classList.add('loading'); 
-                btn.disabled = true;
-            }
-            const taskInput = document.getElementById('taskInput');
-            if (taskInput) taskInput.disabled = true;
-        }
-        
-        function stopRunning() {
-            state.isRunning = false;
-            const btn = document.getElementById('submitBtn');
-            if (btn) {
-                btn.classList.remove('loading'); 
-                btn.disabled = false;
-            }
-            const taskInput = document.getElementById('taskInput');
-            if (taskInput) taskInput.disabled = false;
-            if (es) { es.close(); es = null; }
-        }
-        
-        document.getElementById('taskForm').addEventListener('submit', handleSubmit);
-
-        // Add typing animation style
-        const style = document.createElement('style');
-        style.textContent = `
-            @keyframes typing {
-                0%, 100% { transform: translateY(0); }
-                50% { transform: translateY(-4px); }
-            }
-            @keyframes fadeIn {
-                from { opacity: 0; transform: translateY(10px); }
-                to { opacity: 1; transform: translateY(0); }
-            }
-        `;
-        document.head.appendChild(style);
-
-        // ===== Health Check =====
-        fetch('/health').catch(() => showToast('后端服务未连接', 'error'));
-    
-        // Custom model management
-        const CUSTOM_MODELS_KEY = 'omc-custom-models';
-        function getCustomModels() { try { return JSON.parse(localStorage.getItem(CUSTOM_MODELS_KEY) || '[]'); } catch { return []; } }
-        function saveCustomModels(models) { localStorage.setItem(CUSTOM_MODELS_KEY, JSON.stringify(models)); }
-        let editingModelIndex = -1;
-        function openEditCustomModel(index) {
-            const models = getCustomModels();
-            const m = models[index];
-            if (!m) return;
-            editingModelIndex = index;
-            document.getElementById('cm-name').value = m.name || '';
-            document.getElementById('cm-provider').value = m.provider || '';
-            document.getElementById('cm-url').value = m.url || '';
-            document.getElementById('cm-key').value = m.key || '';
-            document.getElementById('cm-model-id').value = m.modelId || '';
-            document.getElementById('cm-modal-title').textContent = '编辑自定义模型';
-            document.getElementById('cm-submit-btn').textContent = '💾 保存修改';
-            document.getElementById('addCustomModelModal').style.display = 'flex';
-        }
-        function confirmDeleteCustomModel(index) {
-            const models = getCustomModels();
-            const m = models[index];
-            if (!m) return;
-            if (confirm('确定删除自定义模型 "' + m.name + '"？')) {
-                const updated = models.filter((_, i) => i !== index);
-                saveCustomModels(updated);
-                injectCustomModels();
-                showToast('已删除 "' + m.name + '"', 'info');
-            }
-        }
-        function resetModalState() {
-            editingModelIndex = -1;
-            document.getElementById('cm-modal-title').textContent = '添加自定义模型';
-            document.getElementById('cm-submit-btn').textContent = '✅ 添加';
-        }
-
-        function openAddCustomModel() {
-            document.getElementById('addCustomModelModal').style.display = 'flex';
-        }
-        function closeAddCustomModel() {
-            document.getElementById('addCustomModelModal').style.display = 'none';
-            ['cm-name', 'cm-provider', 'cm-url', 'cm-key', 'cm-model-id'].forEach(id => {
-                const el = document.getElementById(id);
-                if (el) el.value = '';
-            });
-            resetModalState();
-        }
-        function addCustomModel() {
-            const name = document.getElementById('cm-name').value.trim();
-            const url = document.getElementById('cm-url').value.trim();
-            if (!name || !url) { showToast('请填写模型名称和 API 地址', 'error'); return; }
-            const model = {
-                id: editingModelIndex >= 0 ? getCustomModels()[editingModelIndex].id : 'cm-' + Date.now(),
-                name: name,
-                provider: document.getElementById('cm-provider').value.trim() || '自定义',
-                url: url,
-                key: document.getElementById('cm-key').value.trim(),
-                modelId: document.getElementById('cm-model-id').value.trim() || name
-            };
-            const models = getCustomModels();
-            if (editingModelIndex >= 0) {
-                models[editingModelIndex] = model;
-                showToast('✅ 已保存 "' + name + '"', 'success');
-            } else {
-                models.push(model);
-                showToast('✅ 已添加 "' + name + '"', 'success');
-            }
-            saveCustomModels(models);
-            injectCustomModels();
-            resetModalState();
-            closeAddCustomModel();
-        }
-        async function testCustomModel() {
-            const url = document.getElementById('cm-url').value.trim();
-            const key = document.getElementById('cm-key').value.trim();
-            const modelId = document.getElementById('cm-model-id').value.trim() || document.getElementById('cm-name').value.trim();
-            const msgDiv = document.getElementById('cm-test-msg');
-            const btn = document.getElementById('cm-test-btn');
-            if (!url) { msgDiv.textContent = '⚠️ 请先填写 API 地址'; msgDiv.style.display = 'block'; msgDiv.style.color = 'var(--danger)'; return; }
-            if (!modelId) { msgDiv.textContent = '⚠️ 请填写模型 ID 或模型名称'; msgDiv.style.display = 'block'; msgDiv.style.color = 'var(--danger)'; return; }
-            btn.disabled = true; btn.textContent = '⏳ 测试中...';
-            msgDiv.style.display = 'none';
-            try {
-                const res = await fetch('/api/test-connection', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ base_url: url, api_key: key, model_id: modelId })
-                });
-                const data = await res.json();
-                if (data.ok) {
-                    msgDiv.textContent = '✅ ' + data.msg;
-                    msgDiv.style.color = 'var(--success)';
-                } else {
-                    msgDiv.textContent = '❌ ' + data.msg;
-                    msgDiv.style.color = 'var(--danger)';
-                }
-            } catch (e) {
-                msgDiv.textContent = '❌ 测试失败: ' + e.message;
-                msgDiv.style.color = 'var(--danger)';
-            }
-            msgDiv.style.display = 'block';
-            btn.disabled = false; btn.textContent = '🔗 测试连接';
-        }
-        function deleteCustomModel(id) {
-            const models = getCustomModels().filter(m => m.id !== id);
-            saveCustomModels(models);
-            injectCustomModels();
-            showToast('已删除', 'info');
-        }
-        function injectCustomModels() {
-            const sel = document.getElementById('modelSelect');
-            if (!sel) return;
-            sel.querySelectorAll('option[data-custom]').forEach(o => o.remove());
-            const models = getCustomModels();
-            models.forEach(m => {
-                const opt = document.createElement('option');
-                opt.value = 'custom:' + m.id;
-                opt.textContent = m.name + ' (自定义)';
-                opt.setAttribute('data-custom', '1');
-                sel.appendChild(opt);
-            });
-        }
-        injectCustomModels();
-
-        // ===== Undo/Redo =====
-        // History stack: array of page snapshots
-        // Each snapshot stores: { responseVisible, panelStates, stepOutputs, stepStatus, result }
-        const historyStack = [];
-        let historyIndex = -1; // -1 = empty (no task done yet)
-        let redoStack = []; // redo stack holds snapshots after undo
-
-        function saveSnapshot() {
-            // Discard any redo entries when a new task is done
-            redoStack = [];
-
-            const snapshot = {
-                responseVisible: document.getElementById('responseSection').style.display !== 'none',
-                stepStatus: JSON.parse(JSON.stringify(state.stepStatus)),
-                stepOutputs: JSON.parse(JSON.stringify(state.stepOutputs)),
-                result: state.result ? JSON.parse(JSON.stringify(state.result)) : null,
-                currentTask: state.currentTask,
-                // Also save which tab is active
-                activePanel: document.querySelector('.response-panel.active')?.dataset.panel || 'result',
-                activeTab: document.querySelector('.response-tab.active')?.dataset.tab || 'result',
-            };
-
-            // Truncate future history if we've undone some steps, then push new snapshot
-            if (historyIndex < historyStack.length - 1) {
-                historyStack.length = historyIndex + 1;
-            }
-            historyStack.push(snapshot);
-            historyIndex = historyStack.length - 1;
-
-            updateUndoRedoButtons();
-        }
-
-        function updateUndoRedoButtons() {
-            const undoBtn = document.getElementById('undoBtn');
-            const redoBtn = document.getElementById('redoBtn');
-            const bar = document.getElementById('undoRedoBar');
-            const label = document.getElementById('historyLabel');
-
-            const canUndo = historyIndex > 0;
-            const canRedo = redoStack.length > 0;
-
-            undoBtn.disabled = !canUndo;
-            redoBtn.disabled = !canRedo;
-
-            // Show bar only when there's at least one completed task
-            if (historyIndex >= 1) {
-                bar.classList.add('visible');
-            } else {
-                bar.classList.remove('visible');
-            }
-
-            // Update label
-            if (historyIndex >= 1) {
-                label.textContent = `${historyIndex} / ${historyStack.length - 1} 条`;
-            } else {
-                label.textContent = '';
-            }
-        }
-
-        function undoState() {
-            if (historyIndex <= 0) return;
-
-            // Save current state to redo stack before undoing
-            const currentSnapshot = {
-                responseVisible: document.getElementById('responseSection').style.display !== 'none',
-                stepStatus: JSON.parse(JSON.stringify(state.stepStatus)),
-                stepOutputs: JSON.parse(JSON.stringify(state.stepOutputs)),
-                result: state.result ? JSON.parse(JSON.stringify(state.result)) : null,
-                currentTask: state.currentTask,
-                activeTab: document.querySelector('.response-tab.active')?.dataset.tab || 'result',
-            };
-            redoStack.push(currentSnapshot);
-
-            // Restore previous snapshot
-            historyIndex--;
-            const snap = historyStack[historyIndex];
-            restoreSnapshot(snap);
-            updateUndoRedoButtons();
-            showToast('↩️ 已撤销', 'info');
-        }
-
-        function redoState() {
-            if (redoStack.length === 0) return;
-
-            const snap = redoStack.pop();
-            historyIndex++;
-
-            // Save current state back to history stack
-            const currentSnapshot = {
-                responseVisible: document.getElementById('responseSection').style.display !== 'none',
-                stepStatus: JSON.parse(JSON.stringify(state.stepStatus)),
-                stepOutputs: JSON.parse(JSON.stringify(state.stepOutputs)),
-                result: state.result ? JSON.parse(JSON.stringify(state.result)) : null,
-                currentTask: state.currentTask,
-                activeTab: document.querySelector('.response-tab.active')?.dataset.tab || 'result',
-            };
-            if (historyIndex < historyStack.length) {
-                historyStack[historyIndex] = currentSnapshot;
-            }
-
-            // Restore redo snapshot
-            restoreSnapshot(snap);
-            updateUndoRedoButtons();
-            showToast('↪️ 已重做', 'info');
-        }
-
-        function restoreSnapshot(snap) {
-            // Restore step status
-            Object.assign(state.stepStatus, snap.stepStatus || {});
-            Object.assign(state.stepOutputs, snap.stepOutputs || {});
-            state.result = snap.result;
-            state.currentTask = snap.currentTask;
-
-            // Restore pipeline icons
-            ['explore','analyst','architect','executor','verifier'].forEach(s => {
-                const el = document.getElementById(`step-${s}`);
-                if (el) el.className = `pipeline-icon ${state.stepStatus[s] || 'waiting'}`;
-            });
-
-            // Restore response section visibility
-            if (snap.responseVisible) {
-                document.getElementById('responseSection').style.display = 'block';
-                document.getElementById('stepProgress').style.display = 'block';
-                document.getElementById('undoRedoBar').classList.add('visible');
-
-                // Restore panel contents
-                ['explore','analyst','architect','executor','verifier'].forEach(s => {
-                    const p = document.getElementById(`panel-${s}`);
-                    const content = state.stepOutputs[s] || '';
-                    if (p) p.innerHTML = `<div class="markdown-body">${md(content)}</div>`;
-                });
-
-                // Restore active tab
-                if (snap.activeTab) {
-                    document.querySelectorAll('.response-tab').forEach(t => t.classList.remove('active'));
-                    document.querySelectorAll('.response-panel').forEach(p => p.classList.remove('active'));
-                    const tab = document.querySelector(`[data-tab="${snap.activeTab}"]`);
-                    const panel = document.querySelector(`[data-panel="${snap.activeTab}"]`);
-                    if (tab) tab.classList.add('active');
-                    if (panel) panel.classList.add('active');
-                }
-
-                // Restore result panel
-                const r = state.result;
-                if (r) {
-                    const stats = r?.stats;
-                    const hasFailures = stats?.steps_failed?.length > 0;
-                    const allFailed = hasFailures && (stats?.steps_completed?.length === 0);
-                    let resultHtml = '';
-                    if (allFailed) {
-                        resultHtml = `<div style="text-align:center;padding:40px 20px;">
-                            <div style="font-size:48px;margin-bottom:16px;">❌</div>
-                            <h3 style="color:var(--danger);margin-bottom:8px;">任务执行失败</h3>
-                            <p style="color:var(--text-muted);">所有步骤均失败，请检查 API 配置后重试</p>
-                        </div>`;
-                    } else {
-                        resultHtml = `<div class="markdown-body">${md(r?.result || '')}</div>`;
-                        if (hasFailures) {
-                            resultHtml += `<div style="margin-top:16px;padding:12px 16px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:8px;">
-                                <b style="color:var(--danger);">⚠️ 部分步骤失败：</b>
-                                ${stats?.steps_failed?.map(s => `<div style="margin-top:6px;font-size:13px;">❌ <b>${s}</b></div>`).join('')}
-                            </div>`;
-                        }
-                    }
-                    document.getElementById('panel-result').innerHTML = resultHtml;
-
-                    // Restore stats
-                    renderStats(stats);
-                }
-            } else {
-                // Clear result view (undo to pre-task state)
-                document.getElementById('responseSection').style.display = 'none';
-                document.getElementById('stepProgress').style.display = 'none';
-            }
-        }
-
-        // After task completes, save snapshot
-        const _origRenderResult = renderResult;
-        renderResult = function() {
-            _origRenderResult.apply(this, arguments);
-            saveSnapshot();
-        };
-
-    </script>
-
-    <!-- Custom Models Management Panel -->
-    <div id="customModelsPanel" style="display:none;background:var(--bg-secondary);border:1px solid var(--border);border-radius:12px;padding:20px;margin-top:16px">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-            <span style="font-size:14px;font-weight:600;color:var(--text-secondary)">已配置的自定义模型</span>
-            <button class="btn btn-sm btn-ghost" onclick="closeCustomModelsPanel()" style="font-size:13px">收起 ▲</button>
+            <!-- Task Execution Panel -->
+            <div class="task-exec-panel" id="taskExecPanel">
+                <div class="task-exec-header" onclick="toggleTaskPanel()">
+                    <span class="task-exec-icon">🚀</span>
+                    <span>任务执行</span>
+                    <button type="button" class="task-exec-toggle" id="taskExecToggle">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+                    </button>
+                </div>
+                <div class="task-exec-body" id="taskExecBody">
+                    <div>
+                        <label class="task-exec-label">📝 任务描述</label>
+                        <textarea id="taskExecDesc" class="task-exec-textarea" placeholder="从对话中提炼任务，或直接输入..." rows="2"></textarea>
+                    </div>
+                    <div>
+                        <label class="task-exec-label">📂 项目路径</label>
+                        <input type="text" id="taskExecPath" class="task-exec-input" placeholder="~/Desktop 或 GitHub URL">
+                    </div>
+                    <div class="task-exec-actions">
+                        <button type="button" class="btn btn-primary btn-sm task-exec-btn" onclick="launchTask()">
+                            🚀 启动任务团队
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div id="cm-list"></div>
-        <div id="cm-empty-msg" style="text-align:center;color:var(--text-muted);font-size:13px;padding:16px 0;display:none">暂无自定义模型</div>
     </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
     <script>
-        function openCustomModelsPanel() {
-            renderCustomModelsList();
-            document.getElementById('customModelsPanel').style.display = 'block';
+    // ===== Config =====
+    const API_BASE = '';
+    const SYSTEM_PROMPT = '你是 Oh My Coder 的 AI 编程助手。你可以帮助用户分析代码、编写代码、调试问题、回答技术问题。请用中文回复。';
+
+    // ===== State =====
+    let currentSessionId = null;
+    let sessions = [];
+    let messages = []; // current session messages (excluding system)
+    let isWaiting = false;
+
+    // ===== Toast =====
+    function showToast(msg, type='info', duration=3000) {
+        const c = document.getElementById('toastContainer');
+        const t = document.createElement('div');
+        t.className = `toast ${type}`;
+        t.textContent = msg;
+        c.appendChild(t);
+        setTimeout(() => { t.style.opacity='0'; t.style.transition='opacity 0.3s'; setTimeout(()=>t.remove(),300); }, duration);
+    }
+
+    // ===== Session Management =====
+    async function loadSessions() {
+        try {
+            const res = await fetch(`${API_BASE}/api/sessions`);
+            const data = await res.json();
+            sessions = data.sessions || [];
+            renderSessionList();
+        } catch(e) { console.error('Failed to load sessions:', e); }
+    }
+
+    function renderSessionList() {
+        const list = document.getElementById('sessionList');
+        if (sessions.length === 0) {
+            list.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-muted);font-size:13px;">暂无对话<br>点击上方"新建对话"开始</div>';
+            return;
         }
-        function closeCustomModelsPanel() {
-            document.getElementById('customModelsPanel').style.display = 'none';
+        list.innerHTML = sessions.map(s => `
+            <div class="session-item ${s.id === currentSessionId ? 'active' : ''}" onclick="switchSession('${s.id}')">
+                <span class="session-title">${escapeHtml(s.title)}</span>
+                <button class="session-delete" onclick="event.stopPropagation();deleteSession('${s.id}')" title="删除">×</button>
+            </div>
+        `).join('');
+    }
+
+    async function createNewSession() {
+        try {
+            const res = await fetch(`${API_BASE}/api/sessions`, {
+                method: 'POST',
+                headers: {'Content-Type':'application/json'},
+                body: JSON.stringify({title: '新对话'})
+            });
+            const data = await res.json();
+            if (data.status === 'ok') {
+                currentSessionId = data.session.id;
+                messages = [];
+                await loadSessions();
+                renderChatMessages();
+                document.getElementById('chatTitle').textContent = '新对话';
+                document.getElementById('chatInput').focus();
+            }
+        } catch(e) { showToast('创建对话失败', 'error'); }
+    }
+
+    async function switchSession(sessionId) {
+        if (sessionId === currentSessionId) return;
+        currentSessionId = sessionId;
+        try {
+            const res = await fetch(`${API_BASE}/api/sessions/${sessionId}`);
+            const data = await res.json();
+            messages = (data.messages || []).filter(m => m.role !== 'system');
+            document.getElementById('chatTitle').textContent = data.title || '对话';
+            renderChatMessages();
+            renderSessionList();
+        } catch(e) { showToast('加载对话失败', 'error'); }
+    }
+
+    async function deleteSession(sessionId) {
+        if (!confirm('确定删除这个对话吗？')) return;
+        try {
+            await fetch(`${API_BASE}/api/sessions/${sessionId}`, {method:'DELETE'});
+            if (currentSessionId === sessionId) {
+                currentSessionId = null;
+                messages = [];
+                renderChatMessages();
+                document.getElementById('chatTitle').textContent = '新对话';
+            }
+            await loadSessions();
+            showToast('已删除', 'info', 1500);
+        } catch(e) { showToast('删除失败', 'error'); }
+    }
+
+    async function saveCurrentSession() {
+        if (!currentSessionId) return;
+        try {
+            await fetch(`${API_BASE}/api/sessions/${currentSessionId}`, {
+                method: 'PUT',
+                headers: {'Content-Type':'application/json'},
+                body: JSON.stringify({messages: [{role:'system',content:SYSTEM_PROMPT}, ...messages]})
+            });
+        } catch(e) { console.error('Save failed:', e); }
+    }
+
+    async function updateSessionTitle(sessionId, title) {
+        try {
+            await fetch(`${API_BASE}/api/sessions/${sessionId}`, {
+                method: 'PUT',
+                headers: {'Content-Type':'application/json'},
+                body: JSON.stringify({title})
+            });
+            await loadSessions();
+        } catch(e) {}
+    }
+
+    // ===== Chat Rendering =====
+    function renderChatMessages() {
+        const container = document.getElementById('chatMessages');
+        if (messages.length === 0) {
+            container.innerHTML = `
+                <div class="chat-welcome">
+                    <div class="chat-welcome-icon">🤖</div>
+                    <h3>Oh My Coder</h3>
+                    <p>你好！我是 AI 编程助手，请告诉我你想做什么。</p>
+                </div>`;
+            return;
         }
-        function renderCustomModelsList() {
-            const list = document.getElementById('cm-list');
-            const emptyMsg = document.getElementById('cm-empty-msg');
-            const models = getCustomModels();
-            if (!models.length) { list.innerHTML = ''; emptyMsg.style.display = 'block'; return; }
-            emptyMsg.style.display = 'none';
-            list.innerHTML = models.map((m, i) => '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)"><div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + m.name + '</div><div style="font-size:12px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + (m.url || '') + '</div></div><div style="display:flex;gap:6px;flex-shrink:0;margin-left:12px"><button class="btn btn-sm btn-ghost" onclick="openEditCustomModel(' + i + ')" title="编辑">✏️</button><button class="btn btn-sm btn-ghost" onclick="confirmDeleteCustomModel(' + i + ')" title="删除" style="color:var(--danger)">🗑️</button></div></div>').join('');
+        container.innerHTML = messages.map(m => createMessageHtml(m.role, m.content)).join('');
+        container.scrollTop = container.scrollHeight;
+    }
+
+    function createMessageHtml(role, content) {
+        const avatar = role === 'user' ? '👤' : '🤖';
+        const rendered = role === 'assistant' ? renderMarkdown(content) : escapeHtml(content);
+        return `<div class="chat-msg ${role}">
+            <div class="chat-msg-avatar">${avatar}</div>
+            <div class="chat-msg-bubble">${rendered}</div>
+        </div>`;
+    }
+
+    function appendMessage(role, content) {
+        const container = document.getElementById('chatMessages');
+        const welcome = container.querySelector('.chat-welcome');
+        if (welcome) welcome.remove();
+        container.insertAdjacentHTML('beforeend', createMessageHtml(role, content));
+        container.scrollTop = container.scrollHeight;
+    }
+
+    function showLoading() {
+        const container = document.getElementById('chatMessages');
+        const welcome = container.querySelector('.chat-welcome');
+        if (welcome) welcome.remove();
+        container.insertAdjacentHTML('beforeend', `
+            <div class="chat-msg assistant" id="loadingMsg">
+                <div class="chat-msg-avatar">🤖</div>
+                <div class="chat-msg-bubble"><div class="chat-msg-loading"><span></span><span></span><span></span></div></div>
+            </div>`);
+        container.scrollTop = container.scrollHeight;
+    }
+
+    function removeLoading() {
+        const el = document.getElementById('loadingMsg');
+        if (el) el.remove();
+    }
+
+    // ===== Markdown =====
+    function renderMarkdown(text) {
+        if (!text) return '';
+        try { return marked.parse(text); } catch(e) { return escapeHtml(text); }
+    }
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        const d = document.createElement('div');
+        d.textContent = text;
+        return d.innerHTML;
+    }
+
+    // ===== Chat Submit =====
+    document.getElementById('chatForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        if (isWaiting) return;
+
+        const input = document.getElementById('chatInput');
+        const text = input.value.trim();
+        if (!text) return;
+
+        // Auto-create session if none
+        if (!currentSessionId) {
+            await createNewSession();
         }
-        // Render the panel when page loads
-        setTimeout(renderCustomModelsList, 500);
+
+        // Add user message
+        messages.push({role:'user', content:text});
+        appendMessage('user', text);
+        input.value = '';
+        input.style.height = 'auto';
+
+        // Auto-title: use first user message as title
+        if (messages.length === 1) {
+            const title = text.length > 30 ? text.substring(0,30)+'...' : text;
+            updateSessionTitle(currentSessionId, title);
+            document.getElementById('chatTitle').textContent = title;
+        }
+
+        // Show loading
+        isWaiting = true;
+        document.getElementById('chatSubmitBtn').disabled = true;
+        showLoading();
+
+        try {
+            const model = document.getElementById('headerModelSelect').value;
+            const res = await fetch(`${API_BASE}/api/chat/completions`, {
+                method: 'POST',
+                headers: {'Content-Type':'application/json'},
+                body: JSON.stringify({
+                    messages: [{role:'system',content:SYSTEM_PROMPT}, ...messages],
+                    model: model,
+                    stream: false
+                })
+            });
+
+            removeLoading();
+
+            if (!res.ok) {
+                const err = await res.json().catch(()=>({}));
+                const errMsg = err.detail || `请求失败 (${res.status})`;
+                messages.push({role:'assistant', content:'❌ '+errMsg});
+                appendMessage('assistant', '❌ '+errMsg);
+            } else {
+                const data = await res.json();
+                const reply = data.choices?.[0]?.message?.content || data.content || '（无回复）';
+                messages.push({role:'assistant', content:reply});
+                appendMessage('assistant', reply);
+
+                // Auto-fill task description from first AI reply
+                if (messages.length <= 2) {
+                    document.getElementById('taskExecDesc').value = text;
+                }
+            }
+
+            await saveCurrentSession();
+        } catch(err) {
+            removeLoading();
+            const errMsg = '网络错误: ' + err.message;
+            messages.push({role:'assistant', content:'❌ '+errMsg});
+            appendMessage('assistant', '❌ '+errMsg);
+        } finally {
+            isWaiting = false;
+            document.getElementById('chatSubmitBtn').disabled = false;
+        }
+    });
+
+    // ===== Textarea Auto-resize =====
+    document.getElementById('chatInput').addEventListener('input', function() {
+        this.style.height = 'auto';
+        this.style.height = Math.min(this.scrollHeight, 150) + 'px';
+    });
+
+    // Enter to send, Shift+Enter for newline
+    document.getElementById('chatInput').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            document.getElementById('chatForm').dispatchEvent(new Event('submit'));
+        }
+    });
+
+    // ===== Task Panel =====
+    function toggleTaskPanel() {
+        const body = document.getElementById('taskExecBody');
+        const toggle = document.getElementById('taskExecToggle');
+        body.classList.toggle('hidden');
+        toggle.classList.toggle('collapsed');
+    }
+
+    async function launchTask() {
+        const desc = document.getElementById('taskExecDesc').value.trim();
+        if (!desc) { showToast('请输入任务描述', 'error'); return; }
+
+        const model = document.getElementById('headerModelSelect').value;
+        const path = document.getElementById('taskExecPath').value.trim() || '~';
+
+        showToast('任务已启动', 'success', 2000);
+
+        try {
+            const res = await fetch(`${API_BASE}/api/execute`, {
+                method: 'POST',
+                headers: {'Content-Type':'application/json'},
+                body: JSON.stringify({
+                    task: desc,
+                    model: model,
+                    project_path: path,
+                    session_id: currentSessionId
+                })
+            });
+            const data = await res.json();
+            if (data.task_id) {
+                showToast(`任务 ${data.task_id} 已提交`, 'success', 2000);
+                // Could add SSE listener here for progress
+            }
+        } catch(e) {
+            showToast('启动失败: ' + e.message, 'error');
+        }
+    }
+
+    // ===== Clear Chat =====
+    function clearCurrentChat() {
+        if (messages.length > 0 && !confirm('确定清空当前对话吗？')) return;
+        messages = [];
+        renderChatMessages();
+        if (currentSessionId) {
+            saveCurrentSession();
+        }
+    }
+
+    // ===== Init =====
+    document.addEventListener('DOMContentLoaded', async function() {
+        await loadSessions();
+        // Auto-select first session if available
+        if (sessions.length > 0 && !currentSessionId) {
+            await switchSession(sessions[0].id);
+        }
+    });
     </script>
-
-    <!-- Add Custom Model Modal -->
-    <div id="addCustomModelModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:9999;justify-content:center;align-items:center" onclick="closeAddCustomModel()">
-        <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:16px;padding:32px;width:480px;max-width:90vw" onclick="event.stopPropagation()">
-            <h3 id="cm-modal-title" style="margin:0 0 24px;font-size:18px">添加自定义模型</h3>
-            <div class="form-group">
-                <label class="form-label">模型名称 <span style="color:var(--danger)">*</span></label>
-                <input type="text" class="form-input" id="cm-name" placeholder="例如：我的 Qwen Coder">
-            </div>
-            <div class="form-group">
-                <label class="form-label">供应商</label>
-                <input type="text" class="form-input" id="cm-provider" placeholder="例如：通义千问、本地 Ollama">
-            </div>
-            <div class="form-group">
-                <label class="form-label">API 地址 <span style="color:var(--danger)">*</span></label>
-                <input type="text" class="form-input" id="cm-url" placeholder="https://api.example.com/v1/chat/completions">
-            </div>
-            <div class="form-group">
-                <label class="form-label">模型 ID</label>
-                <input type="text" class="form-input" id="cm-model-id" placeholder="qwen2.5-coder-32b（留空则用模型名称）">
-            </div>
-            <div class="form-group">
-                <label class="form-label">API Key</label>
-                <input type="password" class="form-input" id="cm-key" placeholder="本地模型可留空">
-            </div>
-            <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:24px">
-                <button type="button" class="btn btn-secondary" id="cm-test-btn" onclick="testCustomModel()">🔗 测试连接</button>
-                <button type="button" class="btn btn-secondary" onclick="closeAddCustomModel()">取消</button>
-                <button type="button" class="btn btn-primary" id="cm-submit-btn" onclick="addCustomModel()">✅ 添加</button>
-            </div>
-            <div id="cm-test-msg" style="margin-top:10px;font-size:13px;display:none;"></div>
-        </div>
-    </div>
-
 </body>
 </html>
