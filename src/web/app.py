@@ -520,6 +520,279 @@ async def save_report(payload: Optional[dict] = None):
     return JSONResponse({"path": str(filepath), "status": "saved"})
 
 
+# ========================================
+# Chat API - 对话式任务创建
+# ========================================
+
+class ChatMessage(BaseModel):
+    role: str
+    content: str
+
+class ChatRequest(BaseModel):
+    message: str
+    history: list[ChatMessage] = []
+
+class ChatResponse(BaseModel):
+    reply: str
+    ready_to_execute: bool = False
+    summary: str = ""
+    task: dict | None = None
+
+
+# 工作流关键词映射
+WORKFLOW_KEYWORDS = {
+    "review": ["审查", "review", "检查", "代码质量", "安全漏洞", "security", "quality"],
+    "debug": ["调试", "debug", "修复", "fix", "bug", "错误", "error", "问题"],
+    "test": ["测试", "test", "单元测试", "unittest", "coverage", "覆盖率"],
+    "build": ["开发", "实现", "build", "create", "写", "添加", "开发"]
+}
+
+# 模型关键词映射
+MODEL_KEYWORDS = {
+    "deepseek": ["deepseek", "v4", "便宜", "低成本"],
+    "deepseek-reasoner": ["r1", "reasoner", "推理", "深度思考"],
+    "glm-4-flash": ["glm", "flash", "免费", "智谱"],
+    "glm-4v-flash": ["glm-4v", "视觉", "image", "图片"],
+    "MiniMax-Text-01": ["mimo", "小米", "minimax"],
+    "moonshot-v1-128k": ["kimi", "月之暗面", "128k"],
+    "doubao-pro-32k": ["doubao", "豆包", "字节"],
+    "tiangong-3": ["tiangong", "天工"],
+    "Baichuan4": ["baichuan", "百川"]
+}
+
+
+def _detect_workflow(message: str) -> str:
+    """根据消息内容检测工作流类型"""
+    message_lower = message.lower()
+    scores = {}
+    for workflow, keywords in WORKFLOW_KEYWORDS.items():
+        score = sum(1 for kw in keywords if kw.lower() in message_lower)
+        if score > 0:
+            scores[workflow] = score
+    return max(scores, key=scores.get) if scores else "build"
+
+
+def _detect_model(message: str) -> str:
+    """根据消息内容检测模型偏好"""
+    message_lower = message.lower()
+    scores = {}
+    for model, keywords in MODEL_KEYWORDS.items():
+        score = sum(1 for kw in keywords if kw.lower() in message_lower)
+        if score > 0:
+            scores[model] = score
+    return max(scores, key=scores.get) if scores else "deepseek"
+
+
+def _detect_target_type_from_message(message: str) -> tuple[str, str]:
+    """检测目标类型和路径"""
+    # GitHub URL
+    github_match = re.search(r'github\.com/[^/\s]+/[^/\s]+', message)
+    if github_match:
+        return "github", f"https://{github_match.group(0)}"
+    
+    # HTTP URL
+    url_match = re.search(r'https?://[^\s<>"\']+', message)
+    if url_match:
+        url = url_match.group(0)
+        if "github.com" in url:
+            return "github", url
+        return "url", url
+    
+    # 本地路径（简单检测）
+    path_match = re.search(r'[~./][^\s<>"\']*', message)
+    if path_match:
+        path = path_match.group(0)
+        if path.startswith((".", "~/", "/")):
+            return "local", path
+    
+    return "local", "."
+
+
+def _generate_task_summary(task: dict) -> str:
+    """生成任务摘要"""
+    workflow_names = {
+        "build": "完整开发",
+        "review": "代码审查",
+        "debug": "调试修复",
+        "test": "测试用例"
+    }
+    model_names = {
+        "deepseek": "DeepSeek V4",
+        "deepseek-reasoner": "DeepSeek R1",
+        "glm-4-flash": "GLM-4-Flash",
+        "glm-4v-flash": "GLM-4V-Flash",
+        "MiniMax-Text-01": "MiMo V2 Flash",
+        "moonshot-v1-128k": "Kimi 128K",
+        "doubao-pro-32k": "Doubao-Pro",
+        "tiangong-3": "天工 3.0",
+        "Baichuan4": "百川 4"
+    }
+    
+    wf_name = workflow_names.get(task["workflow"], task["workflow"])
+    model_name = model_names.get(task["model"], task["model"])
+    
+    target_desc = task["project_path"]
+    if task["target_type"] == "github":
+        target_desc = f"GitHub 仓库 {task['project_path']}"
+    elif task["target_type"] == "url":
+        target_desc = f"网页 {task['project_path']}"
+    
+    return f"{wf_name} · {model_name} · {target_desc}"
+
+
+@app.post("/api/chat")
+async def chat_endpoint(request: ChatRequest):
+    """
+    对话式任务创建 API
+    
+    理解用户意图，收集必要信息，最终生成可执行的任务配置
+    """
+    message = request.message.strip()
+    history = request.history
+    
+    # 检测意图
+    workflow = _detect_workflow(message)
+    model = _detect_model(message)
+    target_type, target_path = _detect_target_type_from_message(message)
+    
+    # 检查是否需要更多信息
+    # 简单启发式：如果消息很短（<10字），可能需要更多信息
+    if len(message) < 10 and len(history) < 2:
+        return ChatResponse(
+            reply="请详细描述你的需求，比如：\n• 你想实现什么功能？\n• 需要审查/修复什么代码？\n• 目标代码在哪里（本地路径/GitHub链接）？",
+            ready_to_execute=False
+        )
+    
+    # 构建任务配置
+    task_config = {
+        "description": message,
+        "workflow": workflow,
+        "model": model,
+        "target_type": target_type,
+        "project_path": target_path
+    }
+    
+    summary = _generate_task_summary(task_config)
+    
+    # 生成确认回复
+    workflow_desc = {
+        "build": "开发新功能",
+        "review": "审查代码质量",
+        "debug": "调试修复问题",
+        "test": "生成测试用例"
+    }
+    
+    reply = f"好的，我理解了！让我确认一下：\n\n"
+    reply += f"**任务类型：** {workflow_desc.get(workflow, workflow)}\n"
+    reply += f"**使用模型：** {model}\n"
+    reply += f"**目标：** {target_path if target_type == 'local' else target_path}\n\n"
+    reply += "确认无误后，我将启动 AI 团队开始执行。"
+    
+    return ChatResponse(
+        reply=reply,
+        ready_to_execute=True,
+        summary=summary,
+        task=task_config
+    )
+
+
+class ChatCompletionRequest(BaseModel):
+    """AI 聊天补全请求"""
+    messages: list[dict]  # [{role: "user"|"assistant", content: "..."}]
+    model: str = "deepseek"  # 模型 ID
+    stream: bool = False  # 是否流式返回
+
+
+class ChatCompletionResponse(BaseModel):
+    """AI 聊天补全响应"""
+    content: str
+    model: str
+    usage: dict = {}
+
+
+@app.post("/api/chat/completions")
+async def chat_completion_endpoint(request: ChatCompletionRequest):
+    """
+    真正的 AI 聊天接口 — 调用模型路由器生成回复
+
+    支持流式 (SSE) 和非流式两种模式。
+    """
+    orch = get_orchestrator()
+    router = orch.model_router
+
+    # 构建消息列表
+    from src.models.base import Message as BaseMessage
+    base_messages = [
+        BaseMessage(role=m["role"], content=m["content"])
+        for m in request.messages
+    ]
+
+    if request.stream:
+        # 流式响应：使用 SSE
+        async def event_stream():
+            try:
+                response = await router.route_and_call(
+                    task_type="chat",
+                    messages=base_messages,
+                    complexity="medium",
+                    use_cache=False,
+                    override_model=request.model,
+                )
+                content = response.content or ""
+                # 分块发送（模拟流式）
+                chunk_size = max(1, len(content) // 20)
+                for i in range(0, len(content), chunk_size):
+                    chunk = content[i:i + chunk_size]
+                    data = _json.dumps({"content": chunk, "done": False})
+                    yield f"data: {data}\n\n"
+                    await asyncio.sleep(0.02)
+                # 发送完成信号
+                done_data = _json.dumps({
+                    "content": "",
+                    "done": True,
+                    "usage": {
+                        "prompt_tokens": response.usage.prompt_tokens,
+                        "completion_tokens": response.usage.completion_tokens,
+                        "total_tokens": response.usage.total_tokens,
+                    },
+                    "model": response.model,
+                })
+                yield f"data: {done_data}\n\n"
+            except Exception as e:
+                err_data = _json.dumps({"content": f"\n\n❌ 模型调用失败: {type(e).__name__}", "done": True, "error": True})
+                yield f"data: {err_data}\n\n"
+
+        return StreamingResponse(
+            event_stream(),
+            media_type="text/event-stream",
+            headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+        )
+    else:
+        # 非流式响应
+        try:
+            response = await router.route_and_call(
+                task_type="chat",
+                messages=base_messages,
+                complexity="medium",
+                use_cache=False,
+                override_model=request.model,
+            )
+            return ChatCompletionResponse(
+                content=response.content or "",
+                model=response.model,
+                usage={
+                    "prompt_tokens": response.usage.prompt_tokens,
+                    "completion_tokens": response.usage.completion_tokens,
+                    "total_tokens": response.usage.total_tokens,
+                },
+            )
+        except Exception as e:
+            return ChatCompletionResponse(
+                content=f"❌ 模型调用失败: {type(e).__name__}",
+                model=request.model,
+            )
+
+
 @app.post("/api/execute")
 async def execute_task(background: BackgroundTasks, payload: Optional[dict] = None):
     """
@@ -1194,6 +1467,110 @@ async def delete_workflow(name: str):
     except Exception:
         return JSONResponse({"error": f"工作流 '{name}' 删除失败"}, status_code=400)
 
+
+
+# ========================================
+# Session API - 会话管理
+# ========================================
+
+SESSIONS_DIR = Path.home() / ".omc" / "sessions"
+SESSIONS_DIR.mkdir(parents=True, exist_ok=True)
+
+
+class SessionCreate(BaseModel):
+    title: str = "新会话"
+
+
+class SessionUpdate(BaseModel):
+    title: Optional[str] = None
+    messages: Optional[list] = None
+
+
+@app.get("/api/sessions")
+async def list_sessions():
+    """获取所有会话列表"""
+    sessions = []
+    for f in sorted(SESSIONS_DIR.glob("*.json"), key=lambda p: p.stat().st_mtime, reverse=True):
+        try:
+            data = _json.loads(f.read_text(encoding="utf-8"))
+            sessions.append({
+                "id": data.get("id", f.stem),
+                "title": data.get("title", "新会话"),
+                "created_at": data.get("created_at", ""),
+                "updated_at": data.get("updated_at", ""),
+                "message_count": len(data.get("messages", [])),
+            })
+        except Exception:
+            pass
+    return JSONResponse({"sessions": sessions})
+
+
+@app.post("/api/sessions")
+async def create_session(req: SessionCreate):
+    """创建新会话"""
+    session_id = str(uuid.uuid4())[:12]
+    now = datetime.now().isoformat()
+    session_data = {
+        "id": session_id,
+        "title": req.title,
+        "messages": [],
+        "created_at": now,
+        "updated_at": now,
+    }
+    filepath = SESSIONS_DIR / f"{session_id}.json"
+    filepath.write_text(_json.dumps(session_data, ensure_ascii=False, indent=2), encoding="utf-8")
+    return JSONResponse({"status": "ok", "session": {
+        "id": session_id,
+        "title": req.title,
+        "created_at": now,
+        "updated_at": now,
+        "message_count": 0,
+    }})
+
+
+@app.get("/api/sessions/{session_id}")
+async def get_session(session_id: str):
+    """获取单个会话详情"""
+    filepath = SESSIONS_DIR / f"{session_id}.json"
+    if not filepath.exists():
+        raise HTTPException(status_code=404, detail="Session not found")
+    try:
+        data = _json.loads(filepath.read_text(encoding="utf-8"))
+        return JSONResponse(data)
+    except Exception:
+        raise HTTPException(status_code=500, detail="Failed to read session")
+
+
+@app.put("/api/sessions/{session_id}")
+async def update_session(session_id: str, req: SessionUpdate):
+    """更新会话（标题或消息）"""
+    filepath = SESSIONS_DIR / f"{session_id}.json"
+    if not filepath.exists():
+        raise HTTPException(status_code=404, detail="Session not found")
+    try:
+        data = _json.loads(filepath.read_text(encoding="utf-8"))
+        if req.title is not None:
+            data["title"] = req.title
+        if req.messages is not None:
+            data["messages"] = req.messages
+        data["updated_at"] = datetime.now().isoformat()
+        filepath.write_text(_json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+        return JSONResponse({"status": "ok", "updated_at": data["updated_at"]})
+    except Exception:
+        raise HTTPException(status_code=500, detail="Failed to update session")
+
+
+@app.delete("/api/sessions/{session_id}")
+async def delete_session(session_id: str):
+    """删除会话"""
+    filepath = SESSIONS_DIR / f"{session_id}.json"
+    if not filepath.exists():
+        raise HTTPException(status_code=404, detail="Session not found")
+    try:
+        filepath.unlink()
+        return JSONResponse({"status": "ok"})
+    except Exception:
+        raise HTTPException(status_code=500, detail="Failed to delete session")
 
 
 # ===== 健康检查 =====

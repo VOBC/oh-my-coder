@@ -308,9 +308,27 @@
         </div>
     </nav>
 
-    <main class="container">
-        <!-- Hero -->
-        <section class="hero">
+    <!-- App Layout: Sidebar + Main -->
+    <div class="app-layout">
+        <!-- Left Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <button type="button" class="btn btn-primary btn-sm" onclick="newSession()" style="width:100%;padding:10px;">
+                    📝 新建会话
+                </button>
+            </div>
+            <div class="sidebar-search">
+                <input type="text" id="sessionSearch" placeholder="🔍 搜索会话..." oninput="filterSessions(this.value)" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:8px;background:var(--bg-secondary);color:var(--text);font-size:13px;font-family:inherit;">
+            </div>
+            <div class="session-list" id="sessionList">
+                <!-- 动态加载 -->
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Hero -->
+            <section class="hero">
             <div class="hero-badge">
                 <span class="badge-dot"></span>
                 <span>Powered by GLM-4-Flash · 零成本智能编程</span>
@@ -327,49 +345,71 @@
             </div>
         </section>
 
-        <!-- Agent Pipeline -->
-        <div class="pipeline-container">
-            <div class="pipeline-step">
-                <div class="pipeline-icon waiting" id="step-explore" data-step="explore">
-                    <span class="step-emoji">🔍</span><div class="step-spinner"></div>
-                </div>
-                <span class="pipeline-label">探索</span>
-            </div>
-            <div class="pipeline-arrow" id="arrow-1">→</div>
-            <div class="pipeline-step">
-                <div class="pipeline-icon waiting" id="step-analyst" data-step="analyst">
-                    <span class="step-emoji">🧠</span><div class="step-spinner"></div>
-                </div>
-                <span class="pipeline-label">分析</span>
-            </div>
-            <div class="pipeline-arrow" id="arrow-2">→</div>
-            <div class="pipeline-step">
-                <div class="pipeline-icon waiting" id="step-architect" data-step="architect">
-                    <span class="step-emoji">🏗️</span><div class="step-spinner"></div>
-                </div>
-                <span class="pipeline-label">设计</span>
-            </div>
-            <div class="pipeline-arrow" id="arrow-3">→</div>
-            <div class="pipeline-step">
-                <div class="pipeline-icon waiting" id="step-executor" data-step="executor">
-                    <span class="step-emoji">💻</span><div class="step-spinner"></div>
-                </div>
-                <span class="pipeline-label">实现</span>
-            </div>
-            <div class="pipeline-arrow" id="arrow-4">→</div>
-            <div class="pipeline-step">
-                <div class="pipeline-icon waiting" id="step-verifier" data-step="verifier">
-                    <span class="step-emoji">✅</span><div class="step-spinner"></div>
-                </div>
-                <span class="pipeline-label">验证</span>
-            </div>
+
+
+        <!-- Mode Toggle -->
+        <div style="display:flex;justify-content:center;gap:8px;margin-bottom:24px;">
+            <button type="button" id="mode-chat-btn" class="btn btn-primary btn-sm" onclick="setMode('chat')" style="padding:8px 20px;font-size:14px;">💬 聊天模式</button>
+            <button type="button" id="mode-form-btn" class="btn btn-ghost btn-sm" onclick="setMode('form')" style="padding:8px 20px;font-size:14px;">📝 表单模式</button>
         </div>
 
-        <!-- Task Form -->
-        <div class="task-card">
+        <!-- Chat Interface (Default View) -->
+        <div class="task-card" id="chatCard">
             <div class="task-header">
-                <h2>🚀 开始新任务</h2>
-                <p class="task-subtitle">描述你的需求，AI 团队将自动协作完成</p>
+                <h2>💬 聊天任务助手</h2>
+                <p class="task-subtitle">用自然语言描述你的需求，AI 会帮你梳理和确认后再执行 <button type="button" onclick="clearChat()" style="background:none;border:1px solid var(--border);border-radius:6px;padding:2px 10px;font-size:12px;cursor:pointer;color:var(--text-muted);margin-left:8px;" onmouseover="this.style.borderColor='var(--danger)';this.style.color='var(--danger)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text-muted)'">🗑️ 清空</button></p>
+            </div>
+            
+            <!-- Chat Messages Area -->
+            <div id="chatMessages" style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:20px;min-height:200px;max-height:400px;overflow-y:auto;">
+                <div class="chat-message assistant" style="display:flex;gap:12px;margin-bottom:16px;">
+                    <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--primary-dark));display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">🤖</div>
+                    <div style="flex:1;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 16px;">
+                        <p style="margin:0;color:var(--text);">你好！我是 Oh My Coder 的 AI 助手。请告诉我你想做什么，比如：</p>
+                        <ul style="margin:8px 0 0;padding-left:20px;color:var(--text-secondary);font-size:14px;">
+                            <li>"帮我实现一个用户登录系统"</li>
+                            <li>"审查一下这个项目的代码质量"</li>
+                            <li>"修复这个 bug：点击按钮没反应"</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Task Confirmation Panel (hidden by default) -->
+            <div id="taskConfirmPanel" style="display:none;background:var(--primary-light);border:1px solid var(--primary);border-radius:12px;padding:20px;margin-bottom:20px;">
+                <h4 style="margin:0 0 12px;color:var(--primary);font-size:16px;">📋 任务确认</h4>
+                <div id="taskSummary" style="background:var(--card);border-radius:8px;padding:12px;margin-bottom:16px;"></div>
+                <div style="display:flex;gap:10px;justify-content:flex-end;">
+                    <button type="button" class="btn btn-secondary" onclick="cancelTask()">取消</button>
+                    <button type="button" class="btn btn-primary" onclick="confirmAndExecute()">✅ 确认执行</button>
+                </div>
+            </div>
+            
+            <!-- Chat Input -->
+            <form id="chatForm" style="display:flex;gap:12px;align-items:flex-end;">
+                <select id="chatModelSelect" style="flex-shrink:0;padding:8px;border:1px solid var(--border);border-radius:8px;background:var(--card);color:var(--text);font-family:inherit;font-size:13px;">
+                    <option value="deepseek-chat" selected>DeepSeek V4 (推荐)</option>
+                    <option value="deepseek-reasoner">DeepSeek R1 (推理)</option>
+                    <option value="glm-4-flash">GLM-4-Flash (免费)</option>
+                    <option value="glm-4v-flash">GLM-4V-Flash (视觉)</option>
+                    <option value="MiniMax-Text-01">MiMo V2 Flash (免费)</option>
+                    <option value="moonshot-v1-128k">Kimi 128K</option>
+                    <option value="doubao-pro-32k">Doubao-Pro</option>
+                    <option value="tiangong-3">天工 3.0</option>
+                    <option value="Baichuan4">百川 4</option>
+                </select>
+                <textarea id="chatInput" class="form-textarea" placeholder="描述你的需求..." rows="2" style="flex:1;margin-bottom:0;" required></textarea>
+                <button type="submit" class="btn btn-primary" id="chatSubmitBtn" style="height:48px;padding:0 20px;">
+                    <span>发送</span>
+                </button>
+            </form>
+        </div>
+
+        <!-- Task Form (Hidden by Default) -->
+        <div class="task-card" id="taskFormCard" style="display:none;">
+            <div class="task-header">
+                <h2>🚀 开始新任务（表单模式）</h2>
+                <p class="task-subtitle">💡 建议使用聊天模式，AI 会帮你梳理需求 | <a href="javascript:void(0)" onclick="setMode('chat')" style="color:var(--primary);text-decoration:underline;">切换到聊天</a></p>
             </div>
             <form id="taskForm">
                 <div class="form-group">
@@ -510,9 +550,32 @@
                 <div class="feature-card"><span class="feature-icon">🔄</span><h4>全流程覆盖</h4><p>从探索分析到代码实现、测试验证</p></div>
             </div>
         </section>
-    </main>
+        </main>
+    </div><!-- /app-layout -->
 
-    <footer class="footer">
+    <!-- Bottom Status Bar (Agent Pipeline) -->
+    <div class="status-bar" id="statusBar">
+        <div class="status-bar-inner">
+            <div class="status-agent">
+                <span class="status-dot" id="statusDot"></span>
+                <span id="statusAgentName">就绪</span>
+            </div>
+            <div class="pipeline-container" style="margin:0;">
+                <div class="pipeline-step"><div class="pipeline-icon waiting" id="step-explore" data-step="explore"><span class="step-emoji">🔍</span><div class="step-spinner"></div></div><span class="pipeline-label">探索</span></div>
+                <div class="pipeline-arrow" id="arrow-1">→</div>
+                <div class="pipeline-step"><div class="pipeline-icon waiting" id="step-analyst" data-step="analyst"><span class="step-emoji">🧠</span><div class="step-spinner"></div></div><span class="pipeline-label">分析</span></div>
+                <div class="pipeline-arrow" id="arrow-2">→</div>
+                <div class="pipeline-step"><div class="pipeline-icon waiting" id="step-architect" data-step="architect"><span class="step-emoji">🏗️</span><div class="step-spinner"></div></div><span class="pipeline-label">设计</span></div>
+                <div class="pipeline-arrow" id="arrow-3">→</div>
+                <div class="pipeline-step"><div class="pipeline-icon waiting" id="step-executor" data-step="executor"><span class="step-emoji">💻</span><div class="step-spinner"></div></div><span class="pipeline-label">实现</span></div>
+                <div class="pipeline-arrow" id="arrow-4">→</div>
+                <div class="pipeline-step"><div class="pipeline-icon waiting" id="step-verifier" data-step="verifier"><span class="step-emoji">✅</span><div class="step-spinner"></div></div><span class="pipeline-label">验证</span></div>
+            </div>
+            <div class="status-time" id="statusTime"></div>
+        </div>
+    </div>
+
+    <footer class="footer" style="display:none;">
         <p>Made with ❤️ by Oh My Coder · Powered by DeepSeek & Multi-Agent Architecture</p>
     </footer>
 
@@ -655,8 +718,13 @@
         // ===== Examples =====
         document.querySelectorAll('.example-card').forEach(c => {
             c.addEventListener('click', () => {
+                // Switch to form mode first
+                setMode('form');
+                // Fill form fields
                 document.getElementById('taskInput').value = c.dataset.task;
                 document.getElementById('workflowSelect').value = c.dataset.workflow;
+                // Scroll to form
+                document.getElementById('taskFormCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
                 document.getElementById('taskInput').focus();
             });
         });
@@ -865,47 +933,473 @@
             } catch (e) { console.error('自动保存报告失败:', e); }
         }
 
-        // ===== Form Submit =====
+        // ===== Mode Toggle =====
+        function setMode(mode) {
+            const chatCard = document.getElementById('chatCard');
+            const taskFormCard = document.getElementById('taskFormCard');
+            const chatBtn = document.getElementById('mode-chat-btn');
+            const formBtn = document.getElementById('mode-form-btn');
+            
+            if (mode === 'chat') {
+                chatCard.style.display = 'block';
+                taskFormCard.style.display = 'none';
+                chatBtn.className = 'btn btn-primary btn-sm';
+                formBtn.className = 'btn btn-ghost btn-sm';
+                localStorage.setItem('omc-ui-mode', 'chat');
+            } else {
+                chatCard.style.display = 'none';
+                taskFormCard.style.display = 'block';
+                chatBtn.className = 'btn btn-ghost btn-sm';
+                formBtn.className = 'btn btn-primary btn-sm';
+                localStorage.setItem('omc-ui-mode', 'form');
+            }
+        }
+        
+        // ===== Session Management =====
+        let currentSessionId = null;
+        let sessions = [];
+
+        async function loadSessions() {
+            try {
+                const res = await fetch('/api/sessions');
+                if (res.ok) {
+                    sessions = await res.json();
+                    renderSessionList();
+                }
+            } catch (e) { console.log('Session load failed:', e); }
+        }
+
+        function renderSessionList() {
+            const list = document.getElementById('sessionList');
+            if (!list) return;
+            list.innerHTML = sessions.map(s => `
+                <div class="session-item ${s.id === currentSessionId ? 'active' : ''}" onclick="selectSession('${s.id}')">
+                    <span class="session-item-title">${escHtml(s.title || '新会话')}</span>
+                    <span class="session-item-time">${formatTime(s.updated_at || s.created_at)}</span>
+                    <span class="session-item-delete" onclick="event.stopPropagation();deleteSession('${s.id}')">🗑️</span>
+                </div>
+            `).join('');
+        }
+
+        function escHtml(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+        function formatTime(t) {
+            if (!t) return '';
+            const d = new Date(t);
+            const now = new Date();
+            const diff = (now - d) / 1000;
+            if (diff < 60) return '刚刚';
+            if (diff < 3600) return Math.floor(diff/60) + '分钟前';
+            if (diff < 86400) return Math.floor(diff/3600) + '小时前';
+            return d.toLocaleDateString('zh-CN');
+        }
+
+        async function newSession() {
+            try {
+                const res = await fetch('/api/sessions', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ title: '新会话' })
+                });
+                if (res.ok) {
+                    const s = await res.json();
+                    currentSessionId = s.id;
+                    sessions.unshift(s);
+                    renderSessionList();
+                    clearChat();
+                    showToast('新会话已创建', 'success');
+                }
+            } catch (e) { showToast('创建失败', 'error'); }
+        }
+
+        async function selectSession(id) {
+            currentSessionId = id;
+            renderSessionList();
+            try {
+                const res = await fetch(`/api/sessions/${id}`);
+                if (res.ok) {
+                    const s = await res.json();
+                    // Restore messages
+                    const container = document.getElementById('chatMessages');
+                    container.innerHTML = '';
+                    if (s.messages && s.messages.length > 0) {
+                        s.messages.forEach(m => addChatMessage(m.role, m.content, false));
+                    } else {
+                        addChatMessage('assistant', '你好！我是 Oh My Coder 的 AI 编程助手。请告诉我你想做什么。', false);
+                    }
+                }
+            } catch (e) { showToast('加载失败', 'error'); }
+        }
+
+        async function deleteSession(id) {
+            if (!confirm('确定删除这个会话？')) return;
+            try {
+                await fetch(`/api/sessions/${id}`, { method: 'DELETE' });
+                sessions = sessions.filter(s => s.id !== id);
+                if (currentSessionId === id) currentSessionId = null;
+                renderSessionList();
+                showToast('已删除', 'success');
+            } catch (e) { showToast('删除失败', 'error'); }
+        }
+
+        function filterSessions(q) {
+            const items = document.querySelectorAll('.session-item');
+            q = q.toLowerCase();
+            items.forEach(item => {
+                const title = item.querySelector('.session-item-title').textContent.toLowerCase();
+                item.style.display = title.includes(q) ? '' : 'none';
+            });
+        }
+
+        // Restore saved mode and chat history on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            const saved = localStorage.getItem('omc-ui-mode');
+            if (saved === 'form') setMode('form');
+            
+            // Load sessions
+            loadSessions();
+            
+            // Restore chat history from localStorage
+            const chatHistory = chatState.messages.filter(m => m.role !== 'system');
+            if (chatHistory.length > 0) {
+                const container = document.getElementById('chatMessages');
+                container.innerHTML = '';
+                chatHistory.forEach(m => {
+                    addChatMessage(m.role, m.content, false);
+                });
+            }
+        });
+
+        // ===== Chat Interface =====
+        const CHAT_SYSTEM_MSG = '你是 Oh My Coder 的 AI 编程助手。你可以帮助用户分析代码、编写代码、调试问题、回答技术问题。当用户的需求可以转化为一个编程任务时，建议他们切换到表单模式执行。请用中文回复。';
+        
+        function loadChatState() {
+            try {
+                const saved = localStorage.getItem('omc-chat-history');
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    if (Array.isArray(parsed) && parsed.length > 0) {
+                        return { messages: parsed, pendingTask: null, isWaiting: false };
+                    }
+                }
+            } catch {}
+            return { messages: [{ role: 'system', content: CHAT_SYSTEM_MSG }], pendingTask: null, isWaiting: false };
+        }
+        function saveChatState() {
+            try {
+                // Save only user/assistant messages (skip system)
+                const toSave = chatState.messages.filter(m => m.role !== 'system');
+                localStorage.setItem('omc-chat-history', JSON.stringify(toSave));
+            } catch {}
+        }
+        let chatState = loadChatState();
+
+        function addChatMessage(role, content, isHtml = false) {
+            const container = document.getElementById('chatMessages');
+            const msgDiv = document.createElement('div');
+            msgDiv.className = `chat-message ${role}`;
+            msgDiv.style.cssText = 'display:flex;gap:12px;margin-bottom:16px;animation:fadeIn 0.3s ease;';
+            
+            const avatar = role === 'user' ? '👤' : '🤖';
+            const bgStyle = role === 'user' 
+                ? 'background:var(--primary-light);border-color:var(--primary);' 
+                : 'background:var(--card);border-color:var(--border);';
+            
+            msgDiv.innerHTML = `
+                <div style="width:36px;height:36px;border-radius:50%;background:${role === 'user' ? 'var(--primary)' : 'linear-gradient(135deg,var(--primary),var(--primary-dark))'};display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;color:white;">${avatar}</div>
+                <div style="flex:1;${bgStyle}border:1px solid;border-radius:12px;padding:12px 16px;">
+                    ${isHtml ? content : `<p style="margin:0;color:var(--text);white-space:pre-wrap;">${content}</p>`}
+                </div>
+            `;
+            container.appendChild(msgDiv);
+            container.scrollTop = container.scrollHeight;
+            
+            chatState.messages.push({ role, content });
+            if (role !== 'system') saveChatState();
+        }
+
+        function showTypingIndicator() {
+            const container = document.getElementById('chatMessages');
+            const typingDiv = document.createElement('div');
+            typingDiv.id = 'typingIndicator';
+            typingDiv.style.cssText = 'display:flex;gap:12px;margin-bottom:16px;';
+            typingDiv.innerHTML = `
+                <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--primary-dark));display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">🤖</div>
+                <div style="flex:1;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 16px;display:flex;align-items:center;gap:4px;">
+                    <span style="width:8px;height:8px;background:var(--text-muted);border-radius:50%;animation:typing 1s infinite;"></span>
+                    <span style="width:8px;height:8px;background:var(--text-muted);border-radius:50%;animation:typing 1s infinite 0.2s;"></span>
+                    <span style="width:8px;height:8px;background:var(--text-muted);border-radius:50%;animation:typing 1s infinite 0.4s;"></span>
+                </div>
+            `;
+            container.appendChild(typingDiv);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function hideTypingIndicator() {
+            const typing = document.getElementById('typingIndicator');
+            if (typing) typing.remove();
+        }
+
+        async function handleChatSubmit(e) {
+            e.preventDefault();
+            if (chatState.isWaiting) return;
+            
+            const input = document.getElementById('chatInput');
+            const message = input.value.trim();
+            if (!message) return;
+            
+            // Add user message
+            addChatMessage('user', message);
+            input.value = '';
+            
+            chatState.isWaiting = true;
+            document.getElementById('chatSubmitBtn').disabled = true;
+            showTypingIndicator();
+            
+            try {
+                // Call the real AI chat endpoint with SSE streaming
+                const res = await fetch('/api/chat/completions', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        messages: chatState.messages.map(m => ({ role: m.role, content: m.content })),
+                        model: document.getElementById('chatModelSelect').value,
+                        stream: true
+                    })
+                });
+                
+                if (!res.ok) {
+                    hideTypingIndicator();
+                    const errData = await res.json().catch(() => ({}));
+                    addChatMessage('assistant', '❌ 请求失败: ' + (errData.detail || res.status));
+                    return;
+                }
+                
+                hideTypingIndicator();
+                
+                if (res.headers.get('content-type')?.includes('text/event-stream')) {
+                    // SSE streaming
+                    const reader = res.body.getReader();
+                    const decoder = new TextDecoder();
+                    let fullContent = '';
+                    const assistantMsgDiv = createAssistantMessageDiv();
+                    const contentSpan = assistantMsgDiv.querySelector('.msg-content');
+                    
+                    while (true) {
+                        const { done, value } = await reader.read();
+                        if (done) break;
+                        const text = decoder.decode(value);
+                        const lines = text.split('\n');
+                        for (const line of lines) {
+                            if (line.startsWith('data: ')) {
+                                try {
+                                    const data = JSON.parse(line.slice(6));
+                                    if (data.done) break;
+                                    fullContent += data.content || '';
+                                    contentSpan.innerHTML = marked.parse(fullContent);
+                                    scrollChatToBottom();
+                                } catch {}
+                            }
+                        }
+                    }
+                    // Update the stored message with full content
+                    if (chatState.messages.length > 0) {
+                        chatState.messages[chatState.messages.length - 1].content = fullContent;
+                        saveChatState();
+                    }
+                } else {
+                    // Non-streaming response
+                    const data = await res.json();
+                    addChatMessage('assistant', data.content || '（无回复）');
+                saveChatState();
+                }
+            } catch (err) {
+                hideTypingIndicator();
+                addChatMessage('assistant', '❌ 连接失败: ' + err.message);
+            } finally {
+                chatState.isWaiting = false;
+                document.getElementById('chatSubmitBtn').disabled = false;
+            }
+        }
+        
+        function createAssistantMessageDiv() {
+            const container = document.getElementById('chatMessages');
+            const msgDiv = document.createElement('div');
+            msgDiv.className = 'chat-message assistant';
+            msgDiv.style.cssText = 'display:flex;gap:12px;margin-bottom:16px;animation:fadeIn 0.3s ease;';
+            msgDiv.innerHTML = `
+                <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--primary-dark));display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">🤖</div>
+                <div style="flex:1;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 16px;">
+                    <div class="msg-content" style="color:var(--text);"></div>
+                </div>
+            `;
+            container.appendChild(msgDiv);
+            // Add empty message to state (will be updated with full content)
+            chatState.messages.push({ role: 'assistant', content: '' });
+            saveChatState();
+            scrollChatToBottom();
+            return msgDiv;
+        }
+        
+        function scrollChatToBottom() {
+            const container = document.getElementById('chatMessages');
+            container.scrollTop = container.scrollHeight;
+        }
+        
+        function clearChat() {
+            chatState.messages = [{ role: 'system', content: CHAT_SYSTEM_MSG }];
+            chatState.pendingTask = null;
+            localStorage.removeItem('omc-chat-history');
+            const container = document.getElementById('chatMessages');
+            container.innerHTML = '';
+            addChatMessage('assistant', '你好！我是 Oh My Coder 的 AI 助手。请告诉我你想做什么，比如：\n\n- 帮我实现一个用户登录系统\n- 审查一下这个项目的代码质量\n- 修复这个 bug：点击按钮没反应', true);
+            document.getElementById('taskConfirmPanel').style.display = 'none';
+            showToast('聊天已清空', 'info', 2000);
+        }
+
+        function showTaskConfirmPanel(task) {
+            const panel = document.getElementById('taskConfirmPanel');
+            const summary = document.getElementById('taskSummary');
+            
+            summary.innerHTML = `
+                <div style="margin-bottom:8px;"><b>📝 任务描述：</b>${task.description}</div>
+                <div style="margin-bottom:8px;"><b>🎯 工作流：</b>${task.workflow}</div>
+                <div style="margin-bottom:8px;"><b>🤖 模型：</b>${task.model}</div>
+                <div><b>📂 目标：</b>${task.target_type === 'local' ? task.project_path : task.target_type === 'github' ? 'GitHub: ' + task.project_path : '网页: ' + task.project_path}</div>
+            `;
+            
+            panel.style.display = 'block';
+            panel.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function cancelTask() {
+            document.getElementById('taskConfirmPanel').style.display = 'none';
+            chatState.pendingTask = null;
+            addChatMessage('assistant', '已取消。如果你需要修改需求，请继续告诉我。');
+        }
+
+        async function confirmAndExecute() {
+            if (!chatState.pendingTask) return;
+            
+            document.getElementById('taskConfirmPanel').style.display = 'none';
+            addChatMessage('assistant', '好的，正在启动 AI 团队执行任务...', true);
+            
+            // Switch to task form and execute
+            const task = chatState.pendingTask;
+            document.getElementById('taskInput').value = task.description;
+            document.getElementById('modelSelect').value = task.model;
+            document.getElementById('workflowSelect').value = task.workflow;
+            
+            // Set target
+            if (task.target_type === 'github') {
+                switchTargetTab('github');
+                document.getElementById('githubUrl').value = task.project_path;
+            } else if (task.target_type === 'url') {
+                switchTargetTab('url');
+                document.getElementById('webUrl').value = task.project_path;
+            } else {
+                switchTargetTab('local');
+                document.getElementById('projectPath').value = task.project_path;
+            }
+            
+            // Execute task
+            await executeTask(task);
+            chatState.pendingTask = null;
+        }
+
+        async function executeTask(task) {
+            startRunning(); 
+            resetPipeline();
+            document.getElementById('responseSection').style.display = 'none';
+            
+            try {
+                const res = await fetch('/api/execute', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        task: task.description,
+                        project_path: task.project_path,
+                        target_type: task.target_type,
+                        model: task.model,
+                        workflow: task.workflow
+                    })
+                });
+                const data = await res.json();
+                if (data.status === 'started') { 
+                    state.currentTask = data.task_id; 
+                    showToast('任务已启动', 'info', 2000); 
+                    startSSE(data.task_id); 
+                }
+                else if (data.status === 'success') { 
+                    state.result = data.result; 
+                    renderResult(); 
+                }
+                else { 
+                    showToast(data.message || '执行失败', 'error'); 
+                    stopRunning(); 
+                }
+            } catch (err) { 
+                showToast(`网络错误: ${err.message}`, 'error'); 
+                stopRunning(); 
+            }
+        }
+
+        document.getElementById('chatForm').addEventListener('submit', handleChatSubmit);
+
+        // ===== Original Form Submit (for backward compatibility) =====
         async function handleSubmit(e) {
             e.preventDefault();
             if (state.isRunning) return;
             const task = document.getElementById('taskInput').value.trim();
             if (!task) { showToast('请输入任务描述', 'error'); return; }
-            startRunning(); resetPipeline();
-            document.getElementById('responseSection').style.display = 'none';
-            try {
-                const target = getTargetInfo();
-                const res = await fetch('/api/execute', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        task,
-                        project_path: target.path,
-                        target_type: target.target_type,
-                        model: document.getElementById('modelSelect').value,
-                        workflow: document.getElementById('workflowSelect').value
-                    })
-                });
-                const data = await res.json();
-                if (data.status === 'started') { state.currentTask = data.task_id; showToast('任务已启动', 'info', 2000); startSSE(data.task_id); }
-                else if (data.status === 'success') { state.result = data.result; renderResult(); }
-                else { showToast(data.message || '执行失败', 'error'); stopRunning(); }
-            } catch (err) { showToast(`网络错误: ${err.message}`, 'error'); stopRunning(); }
+            
+            const target = getTargetInfo();
+            await executeTask({
+                description: task,
+                project_path: target.path,
+                target_type: target.target_type,
+                model: document.getElementById('modelSelect').value,
+                workflow: document.getElementById('workflowSelect').value
+            });
         }
+        
         function startRunning() {
             state.isRunning = true;
             const btn = document.getElementById('submitBtn');
-            btn.classList.add('loading'); btn.disabled = true;
-            document.getElementById('taskInput').disabled = true;
+            if (btn) {
+                btn.classList.add('loading'); 
+                btn.disabled = true;
+            }
+            const taskInput = document.getElementById('taskInput');
+            if (taskInput) taskInput.disabled = true;
         }
+        
         function stopRunning() {
             state.isRunning = false;
             const btn = document.getElementById('submitBtn');
-            btn.classList.remove('loading'); btn.disabled = false;
-            document.getElementById('taskInput').disabled = false;
+            if (btn) {
+                btn.classList.remove('loading'); 
+                btn.disabled = false;
+            }
+            const taskInput = document.getElementById('taskInput');
+            if (taskInput) taskInput.disabled = false;
             if (es) { es.close(); es = null; }
         }
+        
         document.getElementById('taskForm').addEventListener('submit', handleSubmit);
+
+        // Add typing animation style
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes typing {
+                0%, 100% { transform: translateY(0); }
+                50% { transform: translateY(-4px); }
+            }
+            @keyframes fadeIn {
+                from { opacity: 0; transform: translateY(10px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+        `;
+        document.head.appendChild(style);
 
         // ===== Health Check =====
         fetch('/health').catch(() => showToast('后端服务未连接', 'error'));
