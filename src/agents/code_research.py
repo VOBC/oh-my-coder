@@ -21,7 +21,6 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, Optional
 
-from ..core.router import TaskType
 from ..integrations.sourcegraph import SourcegraphClient
 from .base import (
     AgentContext,

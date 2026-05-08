@@ -14,7 +14,7 @@ import json
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Iterator, Optional
+from typing import Any, Optional
 
 import httpx
 
@@ -529,7 +529,7 @@ class SourcegraphClient:
             self._client.close()
             self._client = None
 
-    def __enter__(self) -> "SourcegraphClient":
+    def __enter__(self) -> SourcegraphClient:
         return self
 
     def __exit__(self, *args: Any) -> None:
