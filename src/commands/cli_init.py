@@ -1,12 +1,19 @@
-from __future__ import annotations
-
 """
 Init CLI - 交互式初始化引导
 
 命令：
 - omc init  # 交互式引导新用户完成首次配置
+
+流程：
+1. 欢迎界面
+2. 选择模型
+3. 输入 API Key
+4. 设置工作目录
+5. 配置验证
+6. 完成提示
 """
 
+from __future__ import annotations
 
 import json
 import os
@@ -18,63 +25,110 @@ from rich.panel import Panel
 from rich.prompt import Confirm, Prompt
 from rich.table import Table
 
-from src.core.monorepo import detect_monorepo, list_subprojects
-from src.tools.sourcegraph import check_status
-
 console = Console()
 
 app = typer.Typer(
     name="init",
-    help="初始化引导 - 交互式配置 oh-my-coder",
+    help="交互式初始化引导 - 帮助新用户完成首次配置",
     add_completion=False,
 )
 
-# 配置文件路径（与 cli_model.py 一致）
+# 配置文件路径
 CONFIG_DIR = Path.home() / ".config" / "oh-my-coder"
 CONFIG_FILE = CONFIG_DIR / "config.json"
 
-# 版本号（与 cli.py 一致）
-__version__ = "0.2.0"
-
-# ── 可选模型列表 ──────────────────────────────────────────────
-
-MODEL_CHOICES = [
-    ("deepseek", "DeepSeek", "高性价比，推荐首选", "low"),
-    ("glm", "智谱 GLM", "GLM-4-Flash 免费使用", "low"),
-    ("tongyi", "通义千问", "阿里云出品", "medium"),
-    ("wenxin", "文心一言", "百度出品", "medium"),
-    ("doubao", "字节豆包", "字节跳动出品", "medium"),
-    ("hunyuan", "腾讯混元", "腾讯出品", "medium"),
-    ("kimi", "Kimi", "月之暗面出品", "medium"),
-    ("minimax", "MiniMax", "高性价比", "medium"),
-    ("spark", "讯飞星火", "科大讯飞出品", "medium"),
-    ("baichuan", "百川智能", "百川出品", "medium"),
-    ("tiangong", "天工 AI", "天工出品", "medium"),
-    ("mimo", "小米 MiMo", "小米出品", "medium"),
-]
-
-# API Key 环境变量映射
-API_KEY_ENV_MAP = {
-    "deepseek": "DEEPSEEK_API_KEY",
-    "glm": "ZHIPU_API_KEY",
-    "tongyi": "DASHSCOPE_API_KEY",
-    "wenxin": "QIANFAN_API_KEY",
-    "doubao": "ARK_API_KEY",
-    "hunyuan": "HUNYUAN_API_KEY",
-    "kimi": "MOONSHOT_API_KEY",
-    "minimax": "MINIMAX_API_KEY",
-    "spark": "SPARK_API_KEY",
-    "baichuan": "BAICHUAN_API_KEY",
-    "tiangong": "TIANGONG_API_KEY",
-    "mimo": "MIMO_API_KEY",
+# 支持的模型列表（参考 cli_model.py）
+SUPPORTED_MODELS = {
+    "deepseek": {
+        "name": "DeepSeek",
+        "tier": "low",
+        "note": "高性价比，推荐",
+        "api_key_env": "DEEPSEEK_API_KEY",
+    },
+    "glm": {
+        "name": "智谱 GLM",
+        "tier": "low",
+        "note": "GLM-4-Flash 免费使用",
+        "api_key_env": "ZHIPU_API_KEY",
+    },
+    "wenxin": {
+        "name": "文心一言",
+        "tier": "medium",
+        "note": "百度",
+        "api_key_env": "ERNIE_API_KEY",
+    },
+    "tongyi": {
+        "name": "通义千问",
+        "tier": "medium",
+        "note": "阿里",
+        "api_key_env": "DASHSCOPE_API_KEY",
+    },
+    "minimax": {
+        "name": "MiniMax",
+        "tier": "medium",
+        "note": "",
+        "api_key_env": "MINIMAX_API_KEY",
+    },
+    "kimi": {
+        "name": "Kimi",
+        "tier": "medium",
+        "note": "月之暗面",
+        "api_key_env": "KIMI_API_KEY",
+    },
+    "hunyuan": {
+        "name": "腾讯混元",
+        "tier": "medium",
+        "note": "腾讯",
+        "api_key_env": "HUNYUAN_API_KEY",
+    },
+    "doubao": {
+        "name": "字节豆包",
+        "tier": "medium",
+        "note": "字节跳动",
+        "api_key_env": "DOUBAO_API_KEY",
+    },
+    "tiangong": {
+        "name": "天工 AI",
+        "tier": "medium",
+        "note": "",
+        "api_key_env": "TIANGONG_API_KEY",
+    },
+    "spark": {
+        "name": "讯飞星火",
+        "tier": "medium",
+        "note": "",
+        "api_key_env": "SPARK_API_KEY",
+    },
+    "baichuan": {
+        "name": "百川智能",
+        "tier": "medium",
+        "note": "",
+        "api_key_env": "BAICHUAN_API_KEY",
+    },
+    "mimo": {
+        "name": "小米 MiMo",
+        "tier": "medium",
+        "note": "小米",
+        "api_key_env": "MIMO_API_KEY",
+    },
 }
 
+# 版本号（从 cli.py 同步）
+__version__ = "0.2.0"
 
-# ── 工具函数 ──────────────────────────────────────────────────
+
+# =============================================================================
+# 工具函数
+# =============================================================================
+
+
+def _ensure_config_dir() -> None:
+    """确保配置目录存在"""
+    CONFIG_DIR.mkdir(parents=True, exist_ok=True)
 
 
 def _load_config() -> dict:
-    """加载现有配置"""
+    """加载配置文件"""
     if CONFIG_FILE.exists():
         try:
             with open(CONFIG_FILE, encoding="utf-8") as f:
@@ -86,356 +140,334 @@ def _load_config() -> dict:
 
 def _save_config(config: dict) -> None:
     """保存配置文件"""
-    CONFIG_DIR.mkdir(parents=True, exist_ok=True)
+    _ensure_config_dir()
     with open(CONFIG_FILE, "w", encoding="utf-8") as f:
         json.dump(config, f, indent=2, ensure_ascii=False)
 
 
-def _get_env_file() -> Path:
-    """获取 .env 文件路径"""
-    return Path.home() / ".omc" / ".env"
+def _mask_api_key(key: str) -> str:
+    """脱敏显示 API Key"""
+    if not key:
+        return ""
+    if len(key) <= 8:
+        return "****"
+    return key[:4] + "****" + key[-4:]
 
 
-def _save_api_key(model_id: str, api_key: str) -> None:
-    """保存 API Key 到 .env 文件"""
-    env_var = API_KEY_ENV_MAP.get(model_id, f"{model_id.upper()}_API_KEY")
-    env_file = _get_env_file()
-    env_file.parent.mkdir(parents=True, exist_ok=True)
-
-    lines: list[str] = []
-    if env_file.exists():
-        with open(env_file, encoding="utf-8") as f:
-            lines = f.readlines()
-
-    # 更新或追加
-    found = False
-    for i, line in enumerate(lines):
-        if line.strip().startswith(f"{env_var}="):
-            lines[i] = f"{env_var}={api_key}\n"
-            found = True
-            break
-    if not found:
-        lines.append(f"{env_var}={api_key}\n")
-
-    with open(env_file, "w", encoding="utf-8") as f:
-        f.writelines(lines)
+def _tier_style(tier: str) -> str:
+    """根据 tier 返回颜色"""
+    return {"free": "green", "low": "cyan", "medium": "yellow", "high": "red"}.get(
+        tier, "white"
+    )
 
 
-# ── 主命令 ────────────────────────────────────────────────────
+# =============================================================================
+# 主命令
+# =============================================================================
 
 
 @app.callback(invoke_without_command=True)
 def init_wizard(
     ctx: typer.Context,
-    monorepo: bool = typer.Option(
-        False,
-        "--monorepo",
-        "-m",
-        help="在 Monorepo 根目录初始化，自动检测子项目",
-    ),
 ) -> None:
-    """交互式初始化引导 - 首次使用推荐运行"""
+    """
+    交互式初始化引导 - 帮助新用户完成首次配置
+
+    流程：
+    1. 欢迎界面
+    2. 选择默认模型
+    3. 输入 API Key
+    4. 设置工作目录
+    5. 确认配置
+    6. 完成
+    """
     if ctx.invoked_subcommand is not None:
         return
 
-    # ── Step 0: Monorepo 检测 ──
-    monorepo_info = None
-    if monorepo:
-        monorepo_info = detect_monorepo(Path.cwd())
-        if monorepo_info is None:
-            console.print(
-                "[yellow]⚠[/yellow] 当前目录不是 Monorepo 根目录"
-            )
-            console.print(
-                "[dim]支持的配置: pnpm-workspace.yaml, lerna.json, nx.json, turbo.json[/dim]"
-            )
-            if not Confirm.ask("是否继续普通初始化？", default=True):
-                raise typer.Exit(0)
-        else:
-            console.print()
-            console.print(
-                Panel.fit(
-                    f"[bold cyan]📦 检测到 Monorepo: {monorepo_info.type}[/bold cyan]\n"
-                    f"[dim]根目录: {monorepo_info.root}[/dim]\n"
-                    f"[dim]子项目数: {len(monorepo_info.packages)}[/dim]",
-                    title="Monorepo 模式",
-                    border_style="cyan",
-                )
-            )
-            console.print()
-
-    # ── Step 1: 欢迎界面 ──
+    # ============================================================
+    # 步骤 1: 欢迎界面
+    # ============================================================
     console.print()
     console.print(
         Panel.fit(
-            f"[bold cyan]🚀 欢迎使用 Oh My Coder v{__version__}[/bold cyan]\n\n"
-            "[dim]多智能体 AI 编程助手 · 31个专业 Agent · 12种国产模型[/dim]\n"
-            "[dim]不用翻墙，国内网络直接用[/dim]\n\n"
-            "[bold]接下来只需 3 步即可开始使用：[/bold]",
-            title="✨ 初始化向导",
+            f"[bold cyan]🎉 欢迎使用 Oh My Coder![/bold cyan]\n\n"
+            f"[dim]版本: v{__version__}[/dim]\n"
+            f"[dim]多智能体 AI 编程助手[/dim]\n\n"
+            f"[yellow]让我们开始配置您的开发环境吧！[/yellow]",
+            title="🚀 初始化向导",
             border_style="cyan",
         )
     )
     console.print()
 
-    # ── Step 2: 选择模型 ──
-    console.print("[bold yellow]📋 Step 1/3: 选择默认模型[/bold yellow]")
-    console.print()
-
-    model_table = Table(show_header=True, header_style="bold cyan", expand=True)
-    model_table.add_column("#", style="dim", width=4)
-    model_table.add_column("模型 ID", style="green")
-    model_table.add_column("名称", style="white")
-    model_table.add_column("说明")
-    model_table.add_column("成本", style="dim")
-
-    for i, (mid, name, note, tier) in enumerate(MODEL_CHOICES, 1):
-        tier_label = "🟢 免费/低成本" if tier == "low" else "🟡 中等"
-        model_table.add_row(str(i), mid, name, note, tier_label)
-
-    console.print(model_table)
-    console.print()
-
-    # 加载现有配置作为默认值
-    existing_config = _load_config()
-    current_default = existing_config.get("default_model", "deepseek")
-
-    model_choice = Prompt.ask(
-        "选择默认模型",
-        choices=[m[0] for m in MODEL_CHOICES],
-        default=current_default,
+    # ============================================================
+    # 步骤 2: 选择模型
+    # ============================================================
+    console.print("[bold]📋 步骤 1/4: 选择默认模型[/bold]")
+    console.print(
+        "[dim]请选择您要使用的 AI 模型作为默认模型[/dim]"
     )
-    console.print(f"  ✅ 已选择: [bold green]{model_choice}[/bold green]")
     console.print()
 
-    # ── Step 3: 输入 API Key ──
-    console.print("[bold yellow]🔑 Step 2/3: 配置 API Key[/bold yellow]")
+    # 显示模型列表
+    table = Table(title="可用模型", show_header=True)
+    table.add_column("#", style="dim", width=3)
+    table.add_column("模型 ID", style="cyan")
+    table.add_column("名称", style="green")
+    table.add_column("层级", style="yellow")
+    table.add_column("推荐", style="magenta")
+    table.add_column("备注", style="dim")
+
+    # 按推荐程度排序：free > low > medium
+    tier_order = {"free": 0, "low": 1, "medium": 2, "high": 3}
+    sorted_models = sorted(
+        SUPPORTED_MODELS.items(),
+        key=lambda x: tier_order.get(x[1]["tier"], 99),
+    )
+
+    for i, (model_id, info) in enumerate(sorted_models, 1):
+        tier = info["tier"]
+        tier_color = _tier_style(tier)
+        recommend = "⭐ 推荐" if tier in ("free", "low") else ""
+        table.add_row(
+            str(i),
+            model_id,
+            info["name"],
+            f"[{tier_color}]{tier}[/{tier_color}]",
+            recommend,
+            info.get("note", ""),
+        )
+
+    console.print(table)
     console.print()
 
-    env_var = API_KEY_ENV_MAP.get(model_choice, f"{model_choice.upper()}_API_KEY")
-    existing_key = os.getenv(env_var, "")
+    # 用户选择模型
+    model_choices = [str(i) for i in range(1, len(sorted_models) + 1)]
+    model_id_choices = [m[0] for m in sorted_models]
+
+    while True:
+        choice = Prompt.ask(
+            "[bold]请输入序号选择模型[/bold]",
+            default="1",
+        )
+        if choice in model_choices:
+            idx = int(choice) - 1
+            selected_model_id = model_id_choices[idx]
+            selected_model_info = sorted_models[idx][1]
+            break
+        else:
+            console.print(f"[red]无效选择: {choice}，请输入 1-{len(sorted_models)}[/red]")
+
+    console.print()
+    console.print(
+        f"[green]✓ 已选择: {selected_model_info['name']} ({selected_model_id})[/green]"
+    )
+    console.print()
+
+    # ============================================================
+    # 步骤 3: 输入 API Key
+    # ============================================================
+    console.print("[bold]🔑 步骤 2/4: 配置 API Key[/bold]")
+
+    # 检查环境变量中是否已有 API Key
+    api_key_env = selected_model_info["api_key_env"]
+    existing_key = os.getenv(api_key_env)
 
     if existing_key:
-        console.print(f"  检测到已有 [cyan]{env_var}[/cyan]，按 Enter 跳过")
-        api_key = Prompt.ask(
-            f"输入 {env_var}",
-            password=True,
-            default="",
+        console.print(
+            f"[dim]检测到环境变量 {api_key_env} 已设置[/dim]"
         )
-        if api_key == "":
-            api_key = existing_key
-            console.print("  ✅ 保留已有 Key")
-    else:
-        console.print(f"  环境变量: [cyan]{env_var}[/cyan]")
-        api_key = Prompt.ask(
-            f"输入 {env_var}",
-            password=True,
-        )
-
-    if api_key and api_key != existing_key:
-        _save_api_key(model_choice, api_key)
-        console.print("  ✅ API Key 已保存")
-    console.print()
-
-    # ── Step 4: 设置工作目录 ──
-    console.print("[bold yellow]📁 Step 3/3: 设置工作目录[/bold yellow]")
-    console.print()
-
-    current_dir = existing_config.get("work_dir", str(Path.cwd()))
-    work_dir = Prompt.ask(
-        "工作目录路径",
-        default=current_dir,
-    )
-    console.print(f"  ✅ 工作目录: [bold green]{work_dir}[/bold green]")
-    console.print()
-
-    # ── Step 4: Sourcegraph 配置（可选）──
-    console.print("[bold yellow]🔍 Step 4/4: Sourcegraph 搜索增强（可选）[/bold yellow]")
-    console.print()
-
-    sg_status = check_status()
-    has_api = sg_status["api"]["available"]
-    has_cli = sg_status["cli"]["available"]
-
-    # 检查环境变量中是否已有配置
-    existing_sg_key = os.getenv("SOURCEGRAPH_API_KEY", "")
-    existing_sg_endpoint = os.getenv("SOURCEGRAPH_ENDPOINT", "https://sourcegraph.com")
-
-    if has_api:
-        console.print("  [green]✓[/green] Sourcegraph API 已配置")
-        use_sg = Confirm.ask("是否启用 Sourcegraph 搜索增强？", default=True)
-    elif has_cli:
-        console.print("  [green]✓[/green] src CLI 已安装")
-        use_sg = Confirm.ask(
-            "是否启用 Sourcegraph 搜索增强？（已有 src CLI）",
+        use_existing = Confirm.ask(
+            "是否使用现有的 API Key？",
             default=True,
         )
+        if use_existing:
+            api_key = existing_key
+            console.print(f"[green]✓ 使用现有 API Key: {_mask_api_key(api_key)}[/green]")
+        else:
+            api_key = Prompt.ask(
+                f"请输入新的 {selected_model_info['name']} API Key",
+                password=True,
+            )
     else:
-        console.print("  Sourcegraph 可以让你的需求分析 Agent 搜索公开代码库")
-        console.print("  [dim]参考: https://sourcegraph.com 获取免费 API Key[/dim]")
-        use_sg = Confirm.ask(
-            "是否配置 Sourcegraph？",
-            default=False,
+        console.print(
+            f"[dim]请输入 {selected_model_info['name']} 的 API Key[/dim]"
+        )
+        console.print(
+            "[dim]提示: API Key 不会显示在屏幕上[/dim]"
+        )
+        api_key = Prompt.ask(
+            "API Key",
+            password=True,
         )
 
-    if use_sg and not has_api:
-        console.print()
-        # 询问 API Endpoint
-        sg_endpoint = Prompt.ask(
-            "Sourcegraph API Endpoint",
-            default=existing_sg_endpoint,
-        )
-        console.print(f"  使用 Endpoint: [cyan]{sg_endpoint}[/cyan]")
-
-        # 询问 API Key
-        if existing_sg_key:
-            console.print("  检测到已有 [cyan]SOURCEGRAPH_API_KEY[/cyan]，按 Enter 保留")
-            sg_api_key = Prompt.ask(
-                "输入 Sourcegraph API Key",
-                password=True,
-                default="",
-            )
-            if sg_api_key == "":
-                sg_api_key = existing_sg_key
-                console.print("  ✅ 保留已有 Key")
-        else:
-            console.print("  环境变量: [cyan]SOURCEGRAPH_API_KEY[/cyan]")
-            sg_api_key = Prompt.ask(
-                "输入 Sourcegraph API Key",
-                password=True,
-            )
-
-        if sg_api_key:
-            # 保存 API Key 和 Endpoint
-            env_file = _get_env_file()
-            env_file.parent.mkdir(parents=True, exist_ok=True)
-
-            lines: list[str] = []
-            if env_file.exists():
-                with open(env_file, encoding="utf-8") as f:
-                    lines = f.readlines()
-
-            # 更新或追加 SOURCEGRAPH_API_KEY
-            found_key = False
-            for i, line in enumerate(lines):
-                if line.strip().startswith("SOURCEGRAPH_API_KEY="):
-                    lines[i] = f"SOURCEGRAPH_API_KEY={sg_api_key}\n"
-                    found_key = True
-                    break
-            if not found_key:
-                lines.append(f"SOURCEGRAPH_API_KEY={sg_api_key}\n")
-
-            # 更新或追加 SOURCEGRAPH_ENDPOINT（如果不是默认值）
-            if sg_endpoint != "https://sourcegraph.com":
-                found_endpoint = False
-                for i, line in enumerate(lines):
-                    if line.strip().startswith("SOURCEGRAPH_ENDPOINT="):
-                        lines[i] = f"SOURCEGRAPH_ENDPOINT={sg_endpoint}\n"
-                        found_endpoint = True
-                        break
-                if not found_endpoint:
-                    lines.append(f"SOURCEGRAPH_ENDPOINT={sg_endpoint}\n")
-
-            with open(env_file, "w", encoding="utf-8") as f:
-                f.writelines(lines)
-
-            console.print("  ✅ Sourcegraph 配置已保存")
+    if not api_key:
+        console.print("[yellow]⚠ 未输入 API Key，配置将保存但不包含密钥[/yellow]")
+        api_key = ""
 
     console.print()
 
-    # ── Step 5: Monorepo 子项目配置（可选）──
-    if monorepo_info is not None:
-        console.print("[bold yellow]📦 Step 4/4: Monorepo 子项目[/bold yellow]")
-        console.print()
-
-        subprojects = list_subprojects(monorepo_info)
-        if subprojects:
-            from rich.table import Table as RichTable
-            pkg_table = RichTable(show_header=True, header_style="bold cyan")
-            pkg_table.add_column("#", style="dim", width=4)
-            pkg_table.add_column("项目", style="green")
-            pkg_table.add_column("语言", style="yellow")
-            pkg_table.add_column("框架", style="cyan")
-            pkg_table.add_column("Agent", style="dim")
-
-            for i, sp in enumerate(subprojects, 1):
-                agent_status = "✓" if sp.has_agent_config else "-"
-                pkg_table.add_row(
-                    str(i), sp.name, sp.language, sp.framework, agent_status
-                )
-
-            console.print(pkg_table)
-            console.print()
-            console.print(
-                f"[dim]共 {len(subprojects)} 个子项目，"
-                f"{sum(1 for sp in subprojects if sp.has_agent_config)} 个已配置 Agent[/dim]"
-            )
-            console.print()
-        else:
-            console.print("[dim]未检测到子项目[/dim]")
-            console.print()
-
-    # ── Step 6: 配置验证 ──
-    console.print("[bold yellow]📋 确认配置[/bold yellow]")
-    console.print()
-
-    summary_table = Table.grid(padding=(0, 2))
-    summary_table.add_column(style="bold", justify="right")
-    summary_table.add_column()
-    summary_table.add_row("默认模型:", f"[green]{model_choice}[/green]")
-    summary_table.add_row(
-        "API Key:", "[dim]已配置 ✓[/dim]" if api_key else "[yellow]未配置[/yellow]"
+    # ============================================================
+    # 步骤 4: 设置工作目录
+    # ============================================================
+    console.print("[bold]📁 步骤 3/4: 设置工作目录[/bold]")
+    console.print(
+        "[dim]工作目录是 Oh My Coder 默认的项目路径[/dim]"
     )
-    summary_table.add_row("工作目录:", work_dir)
-    sg_configured = has_api or has_cli or (use_sg if 'use_sg' in locals() else False)
-    summary_table.add_row("Sourcegraph:", "[dim]已配置 ✓[/dim]" if sg_configured else "[dim]未配置[/dim]")
-    if monorepo_info is not None:
-        summary_table.add_row("Monorepo:", f"[cyan]{monorepo_info.type}[/cyan]")
-        summary_table.add_row("子项目:", str(len(monorepo_info.packages)))
-    summary_table.add_row("配置文件:", str(CONFIG_FILE))
 
-    console.print(Panel(summary_table, title="配置摘要", border_style="cyan"))
+    current_dir = str(Path.cwd())
+    work_dir = Prompt.ask(
+        "请输入工作目录路径",
+        default=current_dir,
+    )
+
+    # 验证路径
+    work_path = Path(work_dir).expanduser().resolve()
+    if not work_path.exists():
+        create_dir = Confirm.ask(
+            f"目录 {work_path} 不存在，是否创建？",
+            default=True,
+        )
+        if create_dir:
+            try:
+                work_path.mkdir(parents=True, exist_ok=True)
+                console.print(f"[green]✓ 已创建目录: {work_path}[/green]")
+            except Exception as e:
+                console.print(f"[red]✗ 创建目录失败: {e}[/red]")
+                work_path = Path.cwd()
+                console.print(f"[yellow]使用当前目录: {work_path}[/yellow]")
+    else:
+        console.print(f"[green]✓ 工作目录: {work_path}[/green]")
+
     console.print()
 
-    if not Confirm.ask("确认以上配置？", default=True):
-        console.print("[yellow]已取消，可重新运行 omc init[/yellow]")
+    # ============================================================
+    # 步骤 5: 配置验证
+    # ============================================================
+    console.print("[bold]✅ 步骤 4/4: 确认配置[/bold]")
+    console.print()
+
+    # 汇总显示
+    summary_table = Table(title="配置汇总", show_header=False)
+    summary_table.add_column("项目", style="cyan")
+    summary_table.add_column("值", style="green")
+
+    summary_table.add_row("默认模型", f"{selected_model_info['name']} ({selected_model_id})")
+    summary_table.add_row("API Key", _mask_api_key(api_key) if api_key else "[yellow]未设置[/yellow]")
+    summary_table.add_row("工作目录", str(work_path))
+    summary_table.add_row("配置文件", str(CONFIG_FILE))
+
+    console.print(summary_table)
+    console.print()
+
+    # 确认
+    confirm = Confirm.ask(
+        "[bold]确认保存以上配置？[/bold]",
+        default=True,
+    )
+
+    if not confirm:
+        console.print("[yellow]❌ 配置已取消[/yellow]")
         raise typer.Exit(0)
 
-    # ── Step 7: 保存并完成 ──
-    config = existing_config.copy()
-    config["default_model"] = model_choice
-    config["work_dir"] = work_dir
-    config["initialized"] = True
-    if monorepo_info is not None:
-        config["monorepo"] = {
-            "type": monorepo_info.type,
-            "root": str(monorepo_info.root),
-            "packages": [str(p) for p in monorepo_info.packages],
-        }
+    # ============================================================
+    # 保存配置
+    # ============================================================
+    config = _load_config()
+    config["default_model"] = selected_model_id
+    config["work_dir"] = str(work_path)
+
+    # 保存 API Key 到配置（如果用户输入了新的）
+    if api_key and api_key != existing_key:
+        api_keys = config.get("api_keys", {})
+        api_keys[selected_model_id] = api_key
+        config["api_keys"] = api_keys
+
     _save_config(config)
 
-    console.print()
-    success_msg = (
-        "[bold green]✅ 配置完成！[/bold green]\n\n"
-        "[bold]接下来试试：[/bold]\n"
-        "  [cyan]omc agents list[/cyan]       查看可用 Agent\n"
-        "  [cyan]omc model list[/cyan]        查看所有模型\n"
-        "  [cyan]omc models --recommend[/cyan] 获取模型推荐\n"
-        "  [cyan]omc run <任务>[/cyan]        开始编程\n"
-    )
-    if monorepo_info is not None:
-        success_msg += (
-            "  [cyan]omc agents list --monorepo[/cyan]  查看 Monorepo 子项目\n"
-        )
-    success_msg += (
-        "\n[dim]配置文件: ~/.config/oh-my-coder/config.json[/dim]\n"
-        "[dim]API Key: ~/.omc/.env[/dim]"
-    )
+    # 同时设置环境变量（当前会话生效）
+    if api_key:
+        os.environ[api_key_env] = api_key
 
+    # ============================================================
+    # 步骤 6: 完成提示
+    # ============================================================
+    console.print()
     console.print(
         Panel.fit(
-            success_msg,
-            title="🎉 初始化成功",
+            "[bold green]✅ 配置完成！[/bold green]\n\n"
+            f"[dim]配置已保存到: {CONFIG_FILE}[/dim]\n\n"
+            "[bold]🚀 下一步:[/bold]\n"
+            "  [cyan]omc agent list[/cyan]     查看可用 Agent\n"
+            "  [cyan]omc model list[/cyan]      查看所有模型\n"
+            "  [cyan]omc run \"<task>\"[/cyan]   执行任务\n"
+            "  [cyan]omc --help[/cyan]          查看所有命令\n\n"
+            "[dim]提示: 使用 [cyan]omc model switch <name>[/cyan] 可随时切换模型[/dim]",
+            title="🎉 初始化完成",
             border_style="green",
         )
     )
+    console.print()
+
+
+@app.command("reset")
+def reset_config() -> None:
+    """重置配置（删除配置文件）"""
+    if not CONFIG_FILE.exists():
+        console.print("[yellow]配置文件不存在，无需重置[/yellow]")
+        return
+
+    confirm = Confirm.ask(
+        f"[bold red]确定要删除配置文件 {CONFIG_FILE}？[/bold red]",
+        default=False,
+    )
+
+    if confirm:
+        CONFIG_FILE.unlink()
+        console.print(f"[green]✓ 已删除配置文件: {CONFIG_FILE}[/green]")
+        console.print("[dim]运行 [cyan]omc init[/cyan] 重新配置[/dim]")
+    else:
+        console.print("[dim]已取消[/dim]")
+
+
+@app.command("show")
+def show_config() -> None:
+    """显示当前配置"""
+    if not CONFIG_FILE.exists():
+        console.print("[yellow]配置文件不存在，请先运行 [cyan]omc init[/cyan][/yellow]")
+        raise typer.Exit(1)
+
+    config = _load_config()
+    if not config:
+        console.print("[yellow]配置文件为空，请先运行 [cyan]omc init[/cyan][/yellow]")
+        raise typer.Exit(1)
+
+    console.print()
+    console.print(f"[bold cyan]配置文件: {CONFIG_FILE}[/bold cyan]")
+    console.print()
+
+    table = Table(show_header=False)
+    table.add_column("项目", style="cyan")
+    table.add_column("值", style="green")
+
+    # 显示主要配置项
+    if "default_model" in config:
+        model_id = config["default_model"]
+        model_info = SUPPORTED_MODELS.get(model_id, {})
+        model_name = model_info.get("name", model_id)
+        table.add_row("默认模型", f"{model_name} ({model_id})")
+
+    if "work_dir" in config:
+        table.add_row("工作目录", config["work_dir"])
+
+    # API Keys（脱敏显示）
+    if "api_keys" in config:
+        for model_id, key in config["api_keys"].items():
+            table.add_row(f"{model_id} API Key", _mask_api_key(key))
+
+    console.print(table)
+    console.print()
+
+
+if __name__ == "__main__":
+    app()
