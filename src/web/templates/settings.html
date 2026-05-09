@@ -268,7 +268,6 @@
             <button class="settings-nav-item" data-panel="apikeys">🔑 API Keys</button>
             <button class="settings-nav-item" data-panel="preferences">⚙️ 偏好设置</button>
             <button class="settings-nav-item" data-panel="workflows">🔄 工作流</button>
-            <button class="settings-nav-item" data-panel="custom-models">➕ 自定义模型</button>
         </aside>
 
         <!-- Content -->
@@ -745,25 +744,7 @@
                 <div id="wfList"><div class="wf-loading">加载中...</div></div>
             </div>
 
-            <!-- Custom Models Panel -->
-            <div class="settings-panel" id="panel-custom-models">
-                <h1 class="page-title">自定义模型</h1>
-                <p class="page-desc">添加你自己的模型，支持任何兼容 OpenAI API 的服务。</p>
 
-                <div class="card" style="margin-bottom: 20px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <div>
-                            <div class="card-title">📦 我的模型</div>
-                            <div style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">添加的模型会自动出现在首页模型下拉框中</div>
-                        </div>
-                        <button class="btn btn-primary" onclick="openAddCustomModelModal()">➕ 添加模型</button>
-                    </div>
-                </div>
-
-                <div id="customModelsList">
-                    <div class="wf-loading">加载中...</div>
-                </div>
-            </div>
 
             <!-- Preferences Panel -->
             <div class="settings-panel" id="panel-preferences">
@@ -892,55 +873,7 @@ steps:
         </div>
     </div>
 
-    <!-- Custom Model Modal -->
-    <div class="modal-overlay" id="customModelModal" onclick="closeCustomModelModal(event)">
-        <div class="modal" onclick="event.stopPropagation()">
-            <h2 id="cmModalTitle">➕ 添加自定义模型</h2>
-            <div class="form-group">
-                <label class="form-label">模型名称 <span style="color:var(--danger)">*</span></label>
-                <input type="text" class="form-input" id="cmName" placeholder="例如：GPT-4o">
-            </div>
-            <div class="form-group">
-                <label class="form-label">模型 ID <span style="color:var(--danger)">*</span> <span style="font-size:12px;color:var(--text-muted)">（API 调用时使用的 ID）</span></label>
-                <input type="text" class="form-input" id="cmModelId" placeholder="例如：gpt-4o">
-            </div>
-            <div class="form-group">
-                <label class="form-label">API 地址 <span style="color:var(--danger)">*</span></label>
-                <input type="text" class="form-input" id="cmUrl" placeholder="https://api.example.com/v1">
-            </div>
-            <div class="form-group">
-                <label class="form-label">API Key <span style="font-size:12px;color:var(--text-muted)">（可选）</span></label>
-                <input type="password" class="form-input" id="cmKey" placeholder="sk-xxxxxxxx">
-            </div>
-            <div class="form-group">
-                <label class="form-label">供应商名称 <span style="font-size:12px;color:var(--text-muted)">（可选，用于分组显示）</span></label>
-                <input type="text" class="form-input" id="cmProvider" placeholder="例如：OpenAI">
-            </div>
-            <div style="display:flex;gap:12px;justify-content:space-between;margin-top:20px;">
-                <button class="btn btn-secondary" id="cmTestBtn" onclick="testCustomModelConnection()">🔗 测试连接</button>
-                <div class="modal-actions" style="margin-top:0;">
-                    <button class="btn btn-secondary" onclick="closeCustomModelModal()">取消</button>
-                    <button class="btn btn-primary" onclick="saveCustomModel()">保存</button>
-                </div>
-            </div>
-            <div id="cmTestResult" style="margin-top:12px;font-size:13px;display:none;"></div>
-            <input type="hidden" id="cmEditId" value="">
-        </div>
-    </div>
 
-    <!-- Confirm Delete Custom Model Modal -->
-    <div class="modal-overlay" id="deleteCustomModelModal" onclick="closeDeleteCustomModelModal(event)">
-        <div class="modal" style="width:400px" onclick="event.stopPropagation()">
-            <h2>⚠️ 确认删除</h2>
-            <p style="color:var(--text-muted);margin-bottom:8px;">确定要删除模型</p>
-            <p style="font-weight:600;font-size:16px;margin-bottom:20px" id="deleteCmName"></p>
-            <p style="color:var(--danger);font-size:13px;margin-bottom:20px">⚠️ 此操作不可撤销，首页下拉框中的该模型也会被移除</p>
-            <div class="modal-actions">
-                <button class="btn btn-secondary" onclick="closeDeleteCustomModelModal()">取消</button>
-                <button class="btn" style="background:var(--danger);color:#fff;border-color:var(--danger)" onclick="confirmDeleteCustomModel()">确认删除</button>
-            </div>
-        </div>
-    </div>
 
     <footer class="footer">
         <p>Made with ❤️ by Oh My Coder</p>
@@ -981,10 +914,6 @@ steps:
                 // Load workflows when switching to workflows tab
                 if (btn.dataset.panel === 'workflows') {
                     loadWorkflows();
-                }
-                // Load custom models when switching to custom-models tab
-                if (btn.dataset.panel === 'custom-models') {
-                    renderCustomModels();
                 }
             });
         });
@@ -1867,19 +1796,6 @@ steps:
             btn.disabled = false;
             btn.textContent = '🔗 测试连接';
         }
-
-        // Auto-load custom models when the tab is opened
-        document.addEventListener('DOMContentLoaded', () => {
-            if (document.getElementById('panel-custom-models')) {
-                const obs = new MutationObserver(() => {
-                    const panel = document.getElementById('panel-custom-models');
-                    if (panel && panel.classList.contains('active')) renderCustomModels();
-                });
-                obs.observe(document.getElementById('panel-custom-models'), { attributes: true, attributeFilter: ['class'] });
-                // If already on custom models tab on load, load immediately
-                if (document.getElementById('panel-custom-models').classList.contains('active')) renderCustomModels();
-            }
-        });
 
         // Auto-load workflows when the workflows tab is opened (via MutationObserver)
         document.addEventListener('DOMContentLoaded', () => {
