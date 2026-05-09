@@ -454,6 +454,45 @@ async def api_history():
     return JSONResponse({"records": tasks})
 
 
+@app.get("/api/dashboard/stats")
+async def dashboard_stats():
+    """仪表板统计数据 — 返回真实的任务统计"""
+    stats = history_store.get_stats()
+    return JSONResponse(stats)
+
+
+@app.get("/api/dashboard/files")
+async def dashboard_files():
+    """仪表板项目文件列表 — 从最近任务获取项目路径并列出文件"""
+    # 从最近任务获取项目路径
+    records = history_store.list_all(limit=10)
+    project_path = "."
+
+    for r in records:
+        if r.get("project_path") and Path(r.get("project_path", ".")).exists():
+            project_path = r.get("project_path", ".")
+            break
+
+    # 如果没有历史任务，使用当前工作目录
+    if project_path == "." and project_root.exists():
+        project_path = str(project_root)
+
+    # 列出文件
+    files = []
+    try:
+        p = Path(project_path)
+        if p.exists() and p.is_dir():
+            for f in sorted(p.iterdir(), key=lambda x: x.stat().st_mtime, reverse=True)[:30]:
+                if f.is_file() and not f.name.startswith("."):
+                    size = f.stat().st_size
+                    size_str = f"{size//1024}KB" if size >= 1024 else f"{size}B"
+                    files.append({"name": f.name, "size": size_str, "path": str(f)})
+    except Exception:
+        pass
+
+    return JSONResponse({"files": files, "project_path": project_path})
+
+
 @app.post("/api/save-report")
 async def save_report(payload: Optional[dict] = None):
     """保存任务报告到文件"""

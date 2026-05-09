@@ -71,6 +71,26 @@
         }
         .btn-delete-task:hover { opacity: 1; background: rgba(239,68,68,0.1); }
 
+        /* Modal styles */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center;
+            z-index: 1000; opacity: 0; visibility: hidden; transition: all 0.2s;
+        }
+        .modal-overlay.active { opacity: 1; visibility: visible; }
+        .modal-content {
+            background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+            max-width: 800px; width: 90%; max-height: 80vh; overflow: auto;
+            padding: 24px; transform: scale(0.95); transition: transform 0.2s;
+        }
+        .modal-overlay.active .modal-content { transform: scale(1); }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+        .modal-title { font-size: 18px; font-weight: 600; }
+        .modal-close { background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-muted); }
+        .modal-body { font-size: 14px; line-height: 1.6; }
+        .modal-body pre { background: var(--bg-secondary); padding: 12px; border-radius: 8px; overflow-x: auto; white-space: pre-wrap; }
+        .modal-actions { display: flex; gap: 12px; margin-top: 20px; justify-content: flex-end; }
+
         @media (max-width: 768px) {
             .history-item-title { max-width: 100%; }
             .history-item-meta { flex-wrap: wrap; gap: 8px; }
@@ -118,6 +138,23 @@
         </div>
     </main>
 
+    <!-- Task Detail Modal -->
+    <div class="modal-overlay" id="taskModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="modalTitle">任务详情</h2>
+                <button class="modal-close" onclick="closeModal()">×</button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                加载中...
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-ghost" onclick="closeModal()">关闭</button>
+                <button class="btn btn-primary" id="saveReportBtn" onclick="saveReportToDesktop()">📄 保存报告到桌面</button>
+            </div>
+        </div>
+    </div>
+
     <footer class="footer"><p>Made with ❤️ by Oh My Coder</p></footer>
 
     <script>
@@ -161,7 +198,7 @@
                             ? '<span class="badge badge-danger">失败</span>'
                             : '<span class="badge badge-muted">' + status + '</span>';
                     return `
-                        <div class="history-item" data-task-id="${r.task_id}">
+                        <div class="history-item" data-task-id="${r.task_id}" onclick="showTaskDetail('${r.task_id}')">
                             <div class="history-item-header">
                                 <span class="history-item-title">${r.task || r.task_id}</span>
                                 <div style="display:flex;align-items:center;gap:8px;">
@@ -225,6 +262,95 @@
                 alert('清除失败: ' + e.message);
             }
         }
+
+        // Current task for modal
+        let currentTaskId = null;
+
+        // Show task detail modal
+        async function showTaskDetail(taskId) {
+            currentTaskId = taskId;
+            const modal = document.getElementById('taskModal');
+            const modalTitle = document.getElementById('modalTitle');
+            const modalBody = document.getElementById('modalBody');
+            
+            modal.classList.add('active');
+            modalTitle.textContent = '任务详情';
+            modalBody.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted)">加载中...</div>';
+
+            try {
+                const res = await fetch(`/api/history/${taskId}`);
+                if (!res.ok) throw new Error('任务不存在');
+                const task = await res.json();
+
+                modalTitle.textContent = task.task || '任务详情';
+                
+                // Build detail HTML
+                let html = `<div style="margin-bottom:16px;">\n                    <p><strong>状态：</strong>${task.status === 'completed' ? '✅ 成功' : '❌ 失败'}</p>\n                    <p><strong>工作流：</strong>${task.workflow || '-'}</p>\n                    <p><strong>模型：</strong>${task.model || '-'}</p>\n                    <p><strong>项目路径：</strong>${task.project_path || '-'}</p>\n                    <p><strong>开始时间：</strong>${task.started_at || '-'}</p>\n                    <p><strong>完成时间：</strong>${task.completed_at || '-'}</p>\n                </div>`;
+
+                // Stats
+                if (task.stats) {
+                    html += `<h3 style="margin:16px 0 8px;font-size:15px;">📊 统计</h3>\n                    <p>Tokens: ${(task.stats.total_tokens || 0).toLocaleString()}</p>\n                    <p>执行时间: ${task.stats.execution_time || 0}s</p>\n                    <p>完成步骤: ${(task.stats.steps_completed || []).join(', ') || '-'}</p>`;
+                }
+
+                // Result
+                if (task.result) {
+                    html += `<h3 style="margin:16px 0 8px;font-size:15px;">📝 结果</h3>`;
+                    if (typeof task.result === 'object') {
+                        html += `<pre>${JSON.stringify(task.result, null, 2)}</pre>`;
+                    } else {
+                        html += `<pre>${task.result}</pre>`;
+                    }
+                }
+
+                // Error
+                if (task.error) {
+                    html += `<h3 style="margin:16px 0 8px;font-size:15px;color:var(--danger)">⚠️ 错误</h3>\n                    <pre style="color:var(--danger)">${task.error}</pre>`;
+                }
+
+                modalBody.innerHTML = html;
+            } catch (e) {
+                modalBody.innerHTML = `<div style="color:var(--danger)">加载失败: ${e.message}</div>`;
+            }
+        }
+
+        // Close modal
+        function closeModal() {
+            document.getElementById('taskModal').classList.remove('active');
+            currentTaskId = null;
+        }
+
+        // Save report to desktop
+        async function saveReportToDesktop() {
+            if (!currentTaskId) return;
+            
+            const btn = document.getElementById('saveReportBtn');
+            btn.disabled = true;
+            btn.textContent = '保存中...';
+
+            try {
+                const res = await fetch('/api/save-report', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ task_id: currentTaskId })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    btn.textContent = '✅ 已保存';
+                    alert(`报告已保存到: ${data.path}`);
+                } else {
+                    throw new Error(data.detail || '保存失败');
+                }
+            } catch (e) {
+                btn.textContent = '📄 保存报告到桌面';
+                btn.disabled = false;
+                alert('保存失败: ' + e.message);
+            }
+        }
+
+        // Close modal on overlay click
+        document.getElementById('taskModal').addEventListener('click', (e) => {
+            if (e.target.id === 'taskModal') closeModal();
+        });
     </script>
 </body>
 </html>
