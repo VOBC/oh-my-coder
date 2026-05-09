@@ -1,5 +1,4 @@
 from __future__ import annotations
-from dataclasses import asdict
 
 """
 Web 界面入口 - FastAPI 应用
@@ -14,6 +13,7 @@ import subprocess
 import sys
 import tempfile
 import uuid
+from dataclasses import asdict
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Optional
