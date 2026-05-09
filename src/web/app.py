@@ -16,6 +16,7 @@ import uuid
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Optional
+from urllib.parse import urlparse
 
 import uvicorn
 from fastapi import BackgroundTasks, FastAPI, HTTPException, Request
@@ -589,22 +590,22 @@ def _detect_target_type_from_message(message: str) -> tuple[str, str]:
     github_match = re.search(r'github\.com/[^/\s]+/[^/\s]+', message)
     if github_match:
         return "github", f"https://{github_match.group(0)}"
-    
+
     # HTTP URL
     url_match = re.search(r'https?://[^\s<>"\']+', message)
     if url_match:
-        url = url_match.group(0)
-        if "github.com" in url:
-            return "github", url
-        return "url", url
-    
+        parsed = urlparse(url_match.group(0))
+        if parsed.netloc == "github.com":
+            return "github", parsed.geturl()
+        return "url", parsed.geturl()
+
     # 本地路径（简单检测）
     path_match = re.search(r'[~./][^\s<>"\']*', message)
     if path_match:
         path = path_match.group(0)
         if path.startswith((".", "~/", "/")):
             return "local", path
-    
+
     return "local", "."
 
 
@@ -627,16 +628,16 @@ def _generate_task_summary(task: dict) -> str:
         "tiangong-3": "天工 3.0",
         "Baichuan4": "百川 4"
     }
-    
+
     wf_name = workflow_names.get(task["workflow"], task["workflow"])
     model_name = model_names.get(task["model"], task["model"])
-    
+
     target_desc = task["project_path"]
     if task["target_type"] == "github":
         target_desc = f"GitHub 仓库 {task['project_path']}"
     elif task["target_type"] == "url":
         target_desc = f"网页 {task['project_path']}"
-    
+
     return f"{wf_name} · {model_name} · {target_desc}"
 
 
@@ -644,17 +645,17 @@ def _generate_task_summary(task: dict) -> str:
 async def chat_endpoint(request: ChatRequest):
     """
     对话式任务创建 API
-    
+
     理解用户意图，收集必要信息，最终生成可执行的任务配置
     """
     message = request.message.strip()
     history = request.history
-    
+
     # 检测意图
     workflow = _detect_workflow(message)
     model = _detect_model(message)
     target_type, target_path = _detect_target_type_from_message(message)
-    
+
     # 检查是否需要更多信息
     # 简单启发式：如果消息很短（<10字），可能需要更多信息
     if len(message) < 10 and len(history) < 2:
@@ -662,7 +663,7 @@ async def chat_endpoint(request: ChatRequest):
             reply="请详细描述你的需求，比如：\n• 你想实现什么功能？\n• 需要审查/修复什么代码？\n• 目标代码在哪里（本地路径/GitHub链接）？",
             ready_to_execute=False
         )
-    
+
     # 构建任务配置
     task_config = {
         "description": message,
@@ -671,9 +672,9 @@ async def chat_endpoint(request: ChatRequest):
         "target_type": target_type,
         "project_path": target_path
     }
-    
+
     summary = _generate_task_summary(task_config)
-    
+
     # 生成确认回复
     workflow_desc = {
         "build": "开发新功能",
@@ -681,13 +682,13 @@ async def chat_endpoint(request: ChatRequest):
         "debug": "调试修复问题",
         "test": "生成测试用例"
     }
-    
-    reply = f"好的，我理解了！让我确认一下：\n\n"
+
+    reply = "好的，我理解了！让我确认一下：\n\n"
     reply += f"**任务类型：** {workflow_desc.get(workflow, workflow)}\n"
     reply += f"**使用模型：** {model}\n"
     reply += f"**目标：** {target_path if target_type == 'local' else target_path}\n\n"
     reply += "确认无误后，我将启动 AI 团队开始执行。"
-    
+
     return ChatResponse(
         reply=reply,
         ready_to_execute=True,
