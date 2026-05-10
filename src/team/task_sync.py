@@ -11,7 +11,7 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Optional
+from typing import Any, Optional, cast
 
 try:
     import redis.asyncio as redis
@@ -213,12 +213,16 @@ class TaskSync:
             self._tasks_cache[task_id] = task
         else:
             # 存储任务
-            await self._redis.hset(
+            assert self._redis is not None, "Redis client not initialized"
+            # redis-py returns Union[Awaitable[int], int]; cast to satisfy mypy
+            _hset_result: int = await cast(Any, self._redis).hset(
                 self._get_task_key(task_id),
                 mapping={"data": json.dumps(task.to_dict())},
             )
             # 添加到团队任务列表
-            await self._redis.sadd(self._get_team_tasks_key(team_id), task_id)
+            _sadd_result: int = await cast(Any, self._redis).sadd(
+                self._get_team_tasks_key(team_id), task_id
+            )
 
         # 发布创建事件
         await self._publish_event("task_created", task.to_dict())
@@ -267,7 +271,8 @@ class TaskSync:
         if self._use_memory:
             self._tasks_cache[task_id] = task
         else:
-            await self._redis.hset(
+            assert self._redis is not None, "Redis client not initialized"
+            _hset_result: int = await cast(Any, self._redis).hset(
                 self._get_task_key(task_id),
                 mapping={"data": json.dumps(task.to_dict())},
             )
@@ -290,9 +295,12 @@ class TaskSync:
         if self._use_memory:
             return self._tasks_cache.get(task_id)
 
-        data = await self._redis.hget(self._get_task_key(task_id), "data")
-        if data:
-            return TeamTask.from_dict(json.loads(data))
+        assert self._redis is not None, "Redis client not initialized"
+        _hget_result: Any = await cast(Any, self._redis).hget(
+            self._get_task_key(task_id), "data"
+        )
+        if _hget_result:
+            return TeamTask.from_dict(json.loads(_hget_result))
         return None
 
     async def get_team_tasks(self, team_id: str) -> list[TeamTask]:
@@ -308,10 +316,15 @@ class TaskSync:
         if self._use_memory:
             return [t for t in self._tasks_cache.values() if t.team_id == team_id]
 
-        task_ids = await self._redis.smembers(self._get_team_tasks_key(team_id))
+        assert self._redis is not None, "Redis client not initialized"
+        _smembers_result: Any = await cast(Any, self._redis).smembers(
+            self._get_team_tasks_key(team_id)
+        )
+        # _smembers_result is a set of bytes (from Redis)
+        task_ids: set[Any] = set(_smembers_result)
         tasks = []
         for tid in task_ids:
-            task = await self.get_task(tid.decode())
+            task = await self.get_task(tid.decode() if isinstance(tid, bytes) else str(tid))
             if task:
                 tasks.append(task)
         return tasks
@@ -336,7 +349,8 @@ class TaskSync:
             if self._use_memory:
                 self._tasks_cache[task_id] = task
             else:
-                await self._redis.hset(
+                assert self._redis is not None, "Redis client not initialized"
+                _hset_result: int = await cast(Any, self._redis).hset(
                     self._get_task_key(task_id),
                     mapping={"data": json.dumps(task.to_dict())},
                 )
@@ -363,7 +377,8 @@ class TaskSync:
             if self._use_memory:
                 self._tasks_cache[task_id] = task
             else:
-                await self._redis.hset(
+                assert self._redis is not None, "Redis client not initialized"
+                _hset_result: int = await cast(Any, self._redis).hset(
                     self._get_task_key(task_id),
                     mapping={"data": json.dumps(task.to_dict())},
                 )
@@ -387,8 +402,13 @@ class TaskSync:
         if self._use_memory:
             del self._tasks_cache[task_id]
         else:
-            await self._redis.delete(self._get_task_key(task_id))
-            await self._redis.srem(self._get_team_tasks_key(task.team_id), task_id)
+            assert self._redis is not None, "Redis client not initialized"
+            _delete_result: int = await cast(Any, self._redis).delete(
+                self._get_task_key(task_id)
+            )
+            _srem_result: int = await cast(Any, self._redis).srem(
+                self._get_team_tasks_key(task.team_id), task_id
+            )
 
         await self._publish_event("task_deleted", {"task_id": task_id})
 
@@ -403,6 +423,7 @@ class TaskSync:
         }
 
         if not self._use_memory and self._redis:
+            assert self._redis is not None
             await self._redis.publish("task_updates", json.dumps(event))
 
     async def listen_updates(self, callback: Callable[[dict[str, Any]], None]) -> None:
@@ -422,7 +443,7 @@ class TaskSync:
                     await callback(event)
                 except Exception as e:
                     print(f"处理消息失败: {e}")
-
+        return None
 
 # 全局实例
 task_sync = TaskSync()
