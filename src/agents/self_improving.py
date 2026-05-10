@@ -463,7 +463,7 @@ class SelfImprovingAgent(BaseAgent):
             ).fetchall()
             return [row[0] for row in rows]
 
-    async def run_command(self, task: str) -> AgentOutput:  # type: ignore[override]
+    async def _run(self, task: str) -> AgentOutput:  # type: ignore[override]
         """执行自我改进任务"""
         import json
 
@@ -502,7 +502,7 @@ class SelfImprovingAgent(BaseAgent):
             data = self.report()
 
         return AgentOutput(
-            agent_name="self-improving",
+            agent_name=self.name,
             status=AgentStatus.SUCCESS,
             result=json.dumps(data, ensure_ascii=False, indent=2),
         )
