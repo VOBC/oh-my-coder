@@ -89,11 +89,40 @@ ruff 的 `--unsafe-fixes` 会把 `Optional[str]` 改成 `str | None`，这是 Py
 
 **教训**：删除 SECURITY.md 后没检查 docs/CODE_REVIEW.md 中的引用，导致 CI lychee 失败。
 
-### 3. ruff.toml 优先级 > pyproject.toml（2026/04）
+### 4. ruff.toml 优先级 > pyproject.toml（2026/04）
 同时存在时只读前者。改 pyproject.toml 的 ruff 配置不生效。
 
-### 4. Desktop UI 组件必须有 fallback（2026/04）
+### 5. Desktop UI 组件必须有 fallback（2026/04）
 `window.omc` API 在 Vite dev 模式不存在，所有组件必须提供 fallback 数据。
+
+### 6. 任务完成汇报机制（2026/05/08）⭐⭐⭐
+每完成一个任务（包括子任务），**必须立即向主会话汇报**，不能静默完成。
+
+**汇报方式**：使用 `sessions_send` 工具发消息给主会话。
+
+**汇报原则**：
+- **立即汇报**：任务完成后立刻发送，不要等
+- **简洁**：1-3 句话总结结果，不要长篇大论
+- **包含关键信息**：改了哪些文件、测试是否通过、commit hash
+- **如有阻塞**：说明原因，不要假装完成了
+
+### 7. 里程碑即时存档（2026/05/08）⭐⭐
+每完成一个重要里程碑，**立即保存进度**，不等最后一起写。
+
+**存档路径**：
+| 内容 | 保存位置 |
+|------|---------|
+| 技术架构文档 | `docs/ARCHITECTURE.md` |
+| 核心代码模块 | `src/` 对应目录 |
+| 进度记录 | `.learnings/PROGRESS.md`（每 2 小时更新一次） |
+
+**进度记录格式（.learnings/PROGRESS.md）**：
+```
+## [时间] 完成内容
+- 已完成：xxx
+- 下一步：xxx
+- 阻塞：xxx（如有）
+```
 
 ---
 
@@ -101,8 +130,9 @@ ruff 的 `--unsafe-fixes` 会把 `Optional[str]` 改成 `str | None`，这是 Py
 
 ### oh-my-coder (CLI)
 https://github.com/VOBC/oh-my-coder
+- **最新 HEAD**: `916abe7e` (2026-05-09)
 - **测试**: 1120 passed, 52 skipped, 17 warnings
-- **完成**: P2-7 社区模板、P2-8 Monorepo、ShellCheck 全绿、Python 3.9 兼容性
+- **完成**: P2-7 社区模板、P2-8 Monorepo、ShellCheck 全绿、Python 3.9 兼容性、Web UI 布局修复
 - **待完成**: P2-1 自动测试增强、P2-2 成本优化建议（`omc cost`）
 
 ### 桌面端 (oh-my-coder/desktop)
@@ -111,4 +141,4 @@ https://github.com/VOBC/oh-my-coder
 
 ---
 
-_最后更新：2026-05-07 更新教训 + 项目进度_
+_最后更新：2026-05-10 整合多日教训 + 更新项目进度_
