@@ -49,8 +49,8 @@ from .cli_memory import app as memory_app
 from .cli_migrate import app as migrate_app
 from .cli_multiagent import app as multiagent_app
 from .cli_package_manager import app as pkg_app
-from .cli_review import app as review_app
 from .cli_quality import app as quality_app
+from .cli_review import app as review_app
 from .cli_search import app as search_app
 from .cli_security import app as security_app
 from .cli_self_config import app as self_config_app
