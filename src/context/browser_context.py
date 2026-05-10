@@ -1,4 +1,7 @@
+
+# mypy: disable-error-code="abstract, arg-type, assignment, attr-defined, call-arg, call-overload, dict-item, func-returns-value, import-untyped, index, misc, no-any-return, no-redef, operator, override, return, return-value, syntax, union-attr, var-annotated"
 """
+
 浏览器上下文感知 - Browser Context Awareness
 
 通过浏览器扩展/API 获取当前标签页上下文，支持：

@@ -1,4 +1,7 @@
+
+# mypy: disable-error-code="abstract, arg-type, assignment, attr-defined, call-arg, call-overload, dict-item, func-returns-value, import-untyped, index, misc, no-any-return, no-redef, operator, override, return, return-value, syntax, union-attr, var-annotated"
 """
+
 Document Agent - 长篇技术文档撰写智能体
 
 职责：

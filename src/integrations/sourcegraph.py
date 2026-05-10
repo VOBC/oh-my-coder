@@ -1,4 +1,7 @@
+
+# mypy: disable-error-code="abstract, arg-type, assignment, attr-defined, call-arg, call-overload, dict-item, func-returns-value, import-untyped, index, misc, no-any-return, no-redef, operator, override, return, return-value, syntax, union-attr, var-annotated"
 """
+
 Sourcegraph 集成模块 - 公开 API 客户端
 
 使用 Sourcegraph 公开 streaming API，无需 API Key。

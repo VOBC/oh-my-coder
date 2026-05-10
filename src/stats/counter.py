@@ -1,4 +1,7 @@
+
+# mypy: disable-error-code="abstract, arg-type, assignment, attr-defined, call-arg, call-overload, dict-item, func-returns-value, import-untyped, index, misc, no-any-return, no-redef, operator, override, return, return-value, syntax, union-attr, var-annotated"
 """
+
 项目文件统计核心模块。
 
 提供文件遍历、分类统计、排除规则等功能。

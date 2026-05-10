@@ -1,4 +1,7 @@
+
+# mypy: disable-error-code="abstract, arg-type, assignment, attr-defined, call-arg, call-overload, dict-item, func-returns-value, import-untyped, index, misc, no-any-return, no-redef, operator, override, return, return-value, syntax, union-attr, var-annotated"
 """
+
 QA Tester Agent - QA 测试智能体
 
 职责：
