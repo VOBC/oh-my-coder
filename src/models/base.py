@@ -201,19 +201,44 @@ class BaseModel(ABC):
         return None
 
     async def _execute_with_retry(self, func, *args, **kwargs):
-        """带重试的执行"""
-        last_error = None
+        """
+        带重试的执行（使用 tenacity 指数退避）
+        仅重试网络超时类错误，其他异常直接抛出。
+        """
+        import httpx
+        from tenacity import (
+            AsyncRetrying,
+            retry_if_exception,
+            stop_after_attempt,
+            wait_exponential,
+        )
 
-        for attempt in range(self.config.max_retries):
-            try:
+        # 可重试的异常类型
+        retryable_exceptions = (
+            httpx.ReadTimeout,
+            httpx.ConnectTimeout,
+            httpx.PoolTimeout,
+            httpx.RemoteProtocolError,
+            httpx.ReadError,
+            httpx.ConnectError,
+            ConnectionError,
+            TimeoutError,
+            OSError,
+        )
+
+        def _should_retry(exc: Exception) -> bool:
+            return isinstance(exc, retryable_exceptions)
+
+        async for attempt in AsyncRetrying(
+            stop=stop_after_attempt(self.config.max_retries),
+            wait=wait_exponential(
+                multiplier=self.config.retry_delay,
+                max=self.config.retry_delay * 8,
+            ),
+            retry=retry_if_exception(_should_retry),
+            reraise=True,
+        ):
+            with attempt:
                 return await func(*args, **kwargs)
-            except Exception as e:
-                last_error = e
-                if attempt < self.config.max_retries - 1:
-                    await asyncio.sleep(self.config.retry_delay * (attempt + 1))
 
-        raise last_error
-
-
-# 导入 asyncio（用于重试逻辑）
-import asyncio
+        return None  # unreachable

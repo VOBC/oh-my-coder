@@ -171,12 +171,18 @@ class DeepSeekModel(BaseModel):
 
         start_time = time.time()
 
-        try:
+        async def _do_request():
+            """核心请求逻辑，供重试机制调用"""
             response = await client.post(
                 "/chat/completions",
                 json=request_body,
             )
             response.raise_for_status()
+            return response
+
+        try:
+            # 使用基类的重试机制
+            response = await self._execute_with_retry(_do_request)
 
             data = response.json()
             latency_ms = (time.time() - start_time) * 1000
