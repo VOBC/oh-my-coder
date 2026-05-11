@@ -5,6 +5,8 @@
 exclude = [
     # RealPython sometimes times out
     "https://realpython.com/python-debugging-pdb/",
+    # star-history API sometimes returns 503
+    "https://api.star-history.com/.*",
 ]
 
 # Timeout for each URL (in seconds)
