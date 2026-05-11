@@ -29,6 +29,7 @@ from pathlib import Path
 from typing import Any, Optional
 
 from ..core.router import TaskType
+from ..core.dependency_resolver import DependencyResolver
 from .base import (
     AgentContext,
     AgentLane,
@@ -316,16 +317,25 @@ def test_add():
             except Exception as e:
                 errors.append(f"保存 {file_path} 失败: {e}")
 
-        # 3. 尝试格式化代码（如果可用）
+        # 3. 尝试安装依赖（Python 包）
+        dep_result = None
+        if saved_files:
+            dep_result = self._resolve_dependencies(
+                context.project_path, saved_files
+            )
+
+        # 4. 尝试格式化代码（如果可用）
         self._try_format_code(context.project_path, saved_files)
 
-        # 4. 尝试运行测试（如果写了测试）
+        # 5. 尝试运行测试（如果写了测试）
         test_result = self._try_run_tests(context.project_path, saved_files)
 
-        # 5. 构建推荐后续步骤
+        # 6. 构建推荐后续步骤
         recommendations = []
         if saved_files:
             recommendations.append(f"已保存 {len(saved_files)} 个代码文件")
+        if dep_result and dep_result.installed:
+            recommendations.append(f"📦 已安装依赖: {', '.join(dep_result.installed)}")
         if test_result["ran"]:
             if test_result["passed"]:
                 recommendations.append("✅ 所有测试通过")
@@ -415,6 +425,43 @@ def test_add():
             i += 1
 
         return blocks
+
+    def _resolve_dependencies(
+        self, project_path: Path, saved_files: list[str]
+    ) -> Optional[DependencyResolver]:
+        """解析并安装 Python 依赖"""
+        try:
+            resolver = DependencyResolver()
+            python_files = [
+                project_path / f for f in saved_files if f.endswith(".py")
+            ]
+            if not python_files:
+                return None
+
+            # 读取所有 Python 文件的代码
+            all_code = ""
+            for py_file in python_files:
+                if py_file.exists():
+                    all_code += py_file.read_text(encoding="utf-8") + "\n"
+
+            # 解析依赖
+            result = resolver.resolve(all_code)
+
+            if result.missing:
+                print(f"📦 发现缺失依赖: {result.missing}")
+                install_result = resolver.install_dependencies(result.missing)
+                if install_result["installed"]:
+                    print(f"✅ 已安装: {install_result['installed']}")
+                if install_result["failed"]:
+                    print(f"⚠️ 安装失败: {install_result['failed']}")
+                return result
+            else:
+                print("✅ 所有依赖已满足")
+                return result
+
+        except Exception as e:
+            print(f"⚠️ 依赖解析失败: {e}")
+            return None
 
     def _try_format_code(
         self, project_path: Path, saved_files: list[str]

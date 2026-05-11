@@ -104,7 +104,8 @@ def _preprocess_target(target: str, target_type: str, task_id: str) -> tuple:
                 shutil.rmtree(tmp_dir, ignore_errors=True)
                 raise RuntimeError(f"git clone 失败: {result.stderr.strip()[:200]}")
             return str(tmp_dir), f"\n\n## 源代码来源\nGitHub 仓库: {target}\n已克隆到: {tmp_dir}"
-        except Exception:
+        except Exception as e:
+            print(f"[ERROR] Git clone failed: {e}")
             shutil.rmtree(tmp_dir, ignore_errors=True)
             raise
 
@@ -224,8 +225,8 @@ class TaskManager:
             data = {"type": f"step_{status}", "step": step, "content": content}
             try:
                 queue.put_nowait(data)
-            except Exception:
-                pass  # Queue full, skip
+            except Exception as e:
+                print(f"[WARNING] Queue full, skipping step event: {e}")
 
     def complete_task(self, task_id: str, result: Any = None, error: Optional[str] = None):
         if task_id not in self._tasks:
@@ -247,8 +248,8 @@ class TaskManager:
             try:
                 queue.put_nowait(data)
                 queue.put_nowait(None)  # Sentinel to close SSE
-            except Exception:
-                pass  # Queue full, skip
+            except Exception as e:
+                print(f"[WARNING] Queue full, skipping complete event: {e}")
 
     def delete_task(self, task_id: str) -> bool:
         if task_id not in self._tasks:
@@ -258,8 +259,8 @@ class TaskManager:
         if queue:
             try:
                 queue.put_nowait(None)  # Sentinel to close SSE
-            except Exception:
-                pass
+            except Exception as e:
+                print(f"[WARNING] Queue full, skipping delete event: {e}")
         del self._tasks[task_id]
         return True
 
@@ -325,8 +326,8 @@ def create_orchestrator(router: ModelRouter) -> Orchestrator:
             agent_cls = get_agent(name)
             if agent_cls:
                 orch.register_agent(agent_cls(router))
-        except Exception:
-            pass
+        except Exception as e:
+            print(f"[WARNING] Failed to register agent {name}: {e}")
 
     return orch
 
@@ -377,7 +378,8 @@ async def agent_live_stream():
                 state = orch.get_current_state()
                 yield f"data: {json_dumps(state)}\n\n"
                 await asyncio.sleep(2)
-            except Exception:
+            except Exception as e:
+                print(f"[WARNING] Failed to get orchestrator state: {e}")
                 error_state = {
                     "error": "服务端状态获取失败",
                     "timestamp": datetime.now().isoformat(),
@@ -499,8 +501,8 @@ async def dashboard_files():
                     size = f.stat().st_size
                     size_str = f"{size//1024}KB" if size >= 1024 else f"{size}B"
                     files.append({"name": f.name, "size": size_str, "path": str(f)})
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"[WARNING] Failed to list project files: {e}")
 
     return JSONResponse({"files": files, "project_path": project_path})
 
@@ -1204,7 +1206,8 @@ async def execute_task_sync(req: ExecuteRequest):
             }
         )
 
-    except Exception:
+    except Exception as e:
+        print(f"[ERROR] API endpoint error: {e}")
         return JSONResponse(
             {
                 "status": "error",
@@ -1265,7 +1268,8 @@ def _read_settings() -> dict[str, Any]:
         import json
 
         raw = json.loads(SETTINGS_FILE.read_text(encoding="utf-8"))
-    except Exception:
+    except Exception as e:
+        print(f"[WARNING] Failed to parse settings JSON: {e}")
         return (
             _read_settings.__wrapped__()
             if hasattr(_read_settings, "__wrapped__")
@@ -1454,7 +1458,8 @@ async def test_connection(payload: dict):
             else:
                 try:
                     err = resp.json().get("error", {}).get("message", resp.text[:100])
-                except Exception:
+                except Exception as e:
+                    print(f"[WARNING] Failed to parse error JSON: {e}")
                     err = resp.text[:100]
                 return JSONResponse({"ok": False, "msg": f"API 错误 {resp.status_code}: {err}"}, status_code=502)
 
@@ -1482,7 +1487,8 @@ async def test_connection(payload: dict):
             else:
                 try:
                     err = resp.json().get("error", {}).get("message", resp.text[:100])
-                except Exception:
+                except Exception as e:
+                    print(f"[WARNING] Failed to parse error JSON: {e}")
                     err = resp.text[:100]
                 return JSONResponse({"ok": False, "msg": f"API 错误 {resp.status_code}: {err}"}, status_code=502)
         except httpx.TimeoutException:
@@ -1564,7 +1570,8 @@ async def delete_workflow(name: str):
         return JSONResponse({"status": "ok", "message": f"工作流 '{name}' 已删除"})
     except FileNotFoundError:
         return JSONResponse({"error": f"工作流 '{name}' 不存在"}, status_code=404)
-    except Exception:
+    except Exception as e:
+        print(f"[ERROR] Failed to delete workflow '{name}': {e}")
         return JSONResponse({"error": f"工作流 '{name}' 删除失败"}, status_code=400)
 
 
@@ -1600,8 +1607,8 @@ async def list_sessions():
                 "updated_at": data.get("updated_at", ""),
                 "message_count": len(data.get("messages", [])),
             })
-        except Exception:
-            pass
+        except Exception as e:
+            print(f"[WARNING] Failed to load session {f.name}: {e}")
     return JSONResponse({"sessions": sessions})
 
 
@@ -1637,7 +1644,8 @@ async def get_session(session_id: str):
     try:
         data = _json.loads(filepath.read_text(encoding="utf-8"))
         return JSONResponse(data)
-    except Exception:
+    except Exception as e:
+        print(f"[WARNING] Failed to read session {session_id}: {e}")
         raise HTTPException(status_code=500, detail="Failed to read session")
 
 
@@ -1656,7 +1664,8 @@ async def update_session(session_id: str, req: SessionUpdate):
         data["updated_at"] = datetime.now().isoformat()
         filepath.write_text(_json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
         return JSONResponse({"status": "ok", "updated_at": data["updated_at"]})
-    except Exception:
+    except Exception as e:
+        print(f"[WARNING] Failed to update session {session_id}: {e}")
         raise HTTPException(status_code=500, detail="Failed to update session")
 
 
@@ -1669,7 +1678,8 @@ async def delete_session(session_id: str):
     try:
         filepath.unlink()
         return JSONResponse({"status": "ok"})
-    except Exception:
+    except Exception as e:
+        print(f"[WARNING] Failed to delete session {session_id}: {e}")
         raise HTTPException(status_code=500, detail="Failed to delete session")
 
 
