@@ -10,6 +10,13 @@ Core 模块 - 核心功能
 - 上下文管理
 """
 
+from .dependency_resolver import (
+    DependencyInfo,
+    DependencyResolver,
+    ResolutionResult,
+    get_resolver,
+    resolve_dependencies,
+)
 from .history import (
     HistoryManager,
     StepExecution,
@@ -24,6 +31,12 @@ from .orchestrator import Orchestrator, WorkflowResult, WorkflowStep
 from .router import ModelRouter, TaskType
 
 __all__ = [
+    # Dependency Resolver
+    "DependencyResolver",
+    "DependencyInfo",
+    "ResolutionResult",
+    "get_resolver",
+    "resolve_dependencies",
     # Router
     "ModelRouter",
     "TaskType",
