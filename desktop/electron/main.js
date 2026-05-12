@@ -391,7 +391,11 @@ function createWindow() {
     mainWindow.loadFile(path.join(__dirname, '..', 'dist', 'index.html'));
   }
 
-  mainWindow.once('ready-to-show', () => mainWindow.show());
+  mainWindow.once('ready-to-show', () => { mainWindow.show(); });
+  mainWindow.webContents.on('console-message', (event, level, message, line, sourceId) => {
+    const levels = ['verbose','info','warning','error'];
+    console.log(`[renderer:${levels[level] || level}] ${message} (${sourceId}:${line})`);
+  });
   mainWindow.on('closed', () => { mainWindow = null; });
 }
 
