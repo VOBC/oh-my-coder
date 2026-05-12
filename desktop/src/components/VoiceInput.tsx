@@ -28,7 +28,9 @@ export const VoiceInput: React.FC<VoiceInputProps> = ({
     ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window);
 
   // Check if actually available (Electron may have the API but not the service)
-  const [actuallyAvailable, setActuallyAvailable] = useState(isSupported);
+  // TODO: 语音输入待集成 Whisper.cpp，暂时隐藏按钮
+  const VOICE_ENABLED = false;
+  const [actuallyAvailable, setActuallyAvailable] = useState(isSupported && VOICE_ENABLED);
 
   useEffect(() => {
     return () => {
@@ -121,6 +123,8 @@ export const VoiceInput: React.FC<VoiceInputProps> = ({
     recognitionRef.current = recognition;
     recognition.start();
   }, [isListening, isSupported, actuallyAvailable, lang, onResult]);
+
+  if (!VOICE_ENABLED) return null;
 
   return (
     <div className="voice-input" title={isListening ? '点击停止' : (actuallyAvailable ? '语音输入' : '语音输入仅支持浏览器版本')}>
