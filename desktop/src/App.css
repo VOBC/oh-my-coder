@@ -2931,3 +2931,7 @@ html, body, #root {
   font-weight: 400;
   font-size: 10px;
 }
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
