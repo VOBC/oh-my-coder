@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>常见问题 - Oh My Coder</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0e1a;
+            --bg-secondary: #111827;
+            --bg-card: #1a1f2e;
+            --text-primary: #f0f4f8;
+            --text-secondary: #94a3b8;
+            --accent-amber: #f59e0b;
+            --accent-cyan: #06b6d4;
+            --border: #1e293b;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        /* Header */
+        .header {
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border);
+            padding: 1rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--accent-amber);
+            text-decoration: none;
+        }
+        .back-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.875rem;
+            transition: color 0.2s;
+        }
+        .back-link:hover { color: var(--accent-cyan); }
+
+        /* Main Content */
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 3rem 2rem;
+        }
+
+        .page-title {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, var(--accent-amber), var(--accent-cyan));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .page-subtitle {
+            color: var(--text-secondary);
+            margin-bottom: 3rem;
+            font-size: 1.1rem;
+        }
+
+        /* Category Tabs */
+        .category-tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+        .tab-btn {
+            padding: 0.5rem 1rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-size: 0.875rem;
+            transition: all 0.2s;
+        }
+        .tab-btn:hover, .tab-btn.active {
+            background: var(--accent-amber);
+            color: #000;
+            border-color: var(--accent-amber);
+        }
+
+        /* FAQ Items */
+        .faq-category {
+            margin-bottom: 3rem;
+        }
+        .category-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            color: var(--accent-cyan);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .faq-item {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 0.75rem;
+            margin-bottom: 1rem;
+            overflow: hidden;
+            transition: border-color 0.2s;
+        }
+        .faq-item:hover {
+            border-color: var(--accent-amber);
+        }
+
+        .faq-question {
+            padding: 1.25rem;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+            transition: color 0.2s;
+        }
+        .faq-question:hover {
+            color: var(--accent-amber);
+        }
+        .faq-icon {
+            font-size: 1.25rem;
+            transition: transform 0.3s;
+            color: var(--accent-amber);
+        }
+        .faq-item.active .faq-icon {
+            transform: rotate(45deg);
+        }
+
+        .faq-answer {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+        .faq-item.active .faq-answer {
+            max-height: 2000px;
+        }
+        .faq-answer-content {
+            padding: 0 1.25rem 1.25rem;
+            color: var(--text-secondary);
+        }
+        .faq-answer-content p {
+            margin-bottom: 0.75rem;
+        }
+        .faq-answer-content code {
+            background: var(--bg-primary);
+            padding: 0.2rem 0.4rem;
+            border-radius: 0.25rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.875rem;
+            color: var(--accent-cyan);
+        }
+        .faq-answer-content pre {
+            background: var(--bg-primary);
+            padding: 1rem;
+            border-radius: 0.5rem;
+            overflow-x: auto;
+            margin: 0.75rem 0;
+            border: 1px solid var(--border);
+        }
+        .faq-answer-content pre code {
+            background: none;
+            padding: 0;
+            color: var(--text-primary);
+        }
+        .faq-answer-content ul, .faq-answer-content ol {
+            margin-left: 1.5rem;
+            margin-bottom: 0.75rem;
+        }
+        .faq-answer-content li {
+            margin-bottom: 0.4rem;
+        }
+        .faq-answer-content strong {
+            color: var(--text-primary);
+        }
+        .faq-answer-content a {
+            color: var(--accent-cyan);
+            text-decoration: none;
+        }
+        .faq-answer-content a:hover {
+            text-decoration: underline;
+        }
+
+        /* Highlight box */
+        .tip-box {
+            background: rgba(245, 158, 11, 0.1);
+            border-left: 3px solid var(--accent-amber);
+            padding: 1rem;
+            border-radius: 0 0.5rem 0.5rem 0;
+            margin: 1rem 0;
+        }
+        .tip-box-title {
+            color: var(--accent-amber);
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 3rem 2rem;
+            border-top: 1px solid var(--border);
+            color: var(--text-secondary);
+            margin-top: 3rem;
+        }
+        .footer a {
+            color: var(--accent-cyan);
+            text-decoration: none;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .page-title { font-size: 1.75rem; }
+            .container { padding: 2rem 1rem; }
+            .category-tabs { gap: 0.4rem; }
+            .tab-btn { padding: 0.4rem 0.8rem; font-size: 0.8rem; }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <a href="index.html" class="logo">⚡ Oh My Coder</a>
+            <a href="index.html" class="back-link">← 返回首页</a>
+        </div>
+    </header>
+
+    <div class="container">
+        <h1 class="page-title">常见问题</h1>
+        <p class="page-subtitle">快速找到答案，开始使用 Oh My Coder</p>
+
+        <!-- Category Tabs -->
+        <div class="category-tabs">
+            <button class="tab-btn active" onclick="filterCategory('all')">全部</button>
+            <button class="tab-btn" onclick="filterCategory('install')">安装配置</button>
+            <button class="tab-btn" onclick="filterCategory('usage')">使用教程</button>
+            <button class="tab-btn" onclick="filterCategory('model')">模型选择</button>
+            <button class="tab-btn" onclick="filterCategory('trouble')">故障排查</button>
+            <button class="tab-btn" onclick="filterCategory('advanced')">高级功能</button>
+        </div>
+
+        <!-- 安装配置 -->
+        <div class="faq-category" data-category="install">
+            <h2 class="category-title">📦 安装配置</h2>
+
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                    <span>如何安装 Oh My Coder？</span>
+                    <span class="faq-icon">+</span>
+                </div>
+                <div class="faq-answer">
+                    <div class="faq-answer-content">
+                        <p>提供三种安装方式，推荐第一种：</p>
+                        <pre><code># 方式1: 源码安装（推荐）
+git clone https://github.com/VOBC/oh-my-coder.git
+cd oh-my-coder
+pip install -e '.[dev]'
+
+# 方式2: 使用 requirements.txt
+pip install -r requirements.txt
+
+# 方式3: Docker
+docker compose up -d</code></pre>
+                        <div class="tip-box">
+                            <div class="tip-box-title">💡 提示</div>
+                            <p>需要 Python 3.9+，推荐 Python 3.10</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                    <span>如何配置 API Key？</span>
+                    <span class="faq-icon">+</span>
+                </div>
+                <div class="faq-answer">
+                    <div class="faq-answer-content">
+                        <p>三种配置方式，推荐环境变量：</p>
+                        <pre><code># 方式1: 环境变量（推荐）
+export DEEPSEEK_API_KEY=your_key_here
+
+# 方式2: .env 文件
+cp examples/.env.example .env
+# 编辑 .env 填入 Key
+
+# 方式3: CLI 配置
+omc config set -k DEEPSEEK_API_KEY -v "your_key"</code></pre>
+                        <p><strong>获取 API Key：</strong></p>
+                        <ul>
+                            <li><a href="https://platform.deepseek.com/" target="_blank">DeepSeek</a> - 推荐首选，代码能力强</li>
+                            <li><a href="https://open.bigmodel.cn/" target="_blank">智谱 GLM</a> - 完全免费</li>
+                            <li><a href="https://platform.moonshot.cn/" target="_blank">Kimi</a> - 128K 长上下文</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                    <span>安装后如何验证是否成功？</span>
+                    <span class="faq-icon">+</span>
+                </div>
+                <div class="faq-answer">
+                    <div class="faq-answer-content">
+                        <pre><code># 1. 验证 CLI
+omc --version
+
+# 2. 运行测试
+pytest tests/ -v
+
+# 3. 启动 Web 界面
+python -m src.web.app
+# 浏览器打开: http://localhost:8000</code></pre>
+                        <p>如果以上命令都能正常执行，说明安装成功。</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 使用教程 -->
+        <div class="faq-category" data-category="usage">
+            <h2 class="category-title">🚀 使用教程</h2>
+
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                    <span>第一次使用应该做什么？</span>
+                    <span class="faq-icon">+</span>
+                </div>
+                <div class="faq-answer">
+                    <div class="faq-answer-content">
+                        <p>推荐按以下流程开始：</p>
+                        <ol>
+                            <li><strong>探索项目</strong> - 了解代码库结构
+                                <pre><code>omc explore .</code></pre>
+                            </li>
+                            <li><strong>查看可用 Agent</strong>
+                                <pre><code>omc agents</code></pre>
+                            </li>
+                            <li><strong>执行简单任务测试</strong>
+                                <pre><code>omc run "为 utils.py 添加类型注解"</code></pre>
+                            </li>
+                            <li><strong>查看系统状态</strong>
+                                <pre><code>omc status</code></pre>
+                            </li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                    <span>CLI 和 Web 界面有什么区别？</span>
+                    <span class="faq-icon">+</span>
+                </div>
+                <div class="faq-answer">
+                    <div class="faq-answer-content">
+                        <table style="width:100%; border-collapse: collapse; margin: 1rem 0;">
+                            <tr style="background: var(--bg-primary);">
+                                <th style="padding: 0.75rem; text-align: left; border: 1px solid var(--border);">特性</th>
+                                <th style="padding: 0.75rem; text-align: left; border: 1px solid var(--border);">CLI</th>
+                                <th style="padding: 0.75rem; text-align: left; border: 1px solid var(--border);">Web</th>
+                            </tr>
+                            <tr>
+                                <td style="padding: 0.75rem; border: 1px solid var(--border);">适用场景</td>
+                                <td style="padding: 0.75rem; border: 1px solid var(--border);">快速操作、脚本集成</td>
+                                <td style="padding: 0.75rem; border: 1px solid var(--border);">可视化、调试、演示</td>
+                            </tr>
+                            <tr style="background: var(--bg-primary);">
+                                <td style="padding: 0.75rem; border: 1px solid var(--border);">实时反馈</td>
+                                <td style="padding: 0.75rem; border: 1px solid var(--border);">文本流</td>
+                                <td style="padding: 0.75rem; border: 1px solid var(--border);">SSE 动画</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 0.75rem; border: 1px solid var(--border);">学习曲线</td>
+                                <td style="padding: 0.75rem; border: 1px solid var(--border);">需熟悉命令</td>
+                                <td style="padding: 0.75rem; border: 1px solid var(--border);">图形化友好</td>
+                            </tr>
+                        </table>
+                        <div class="tip-box">
+                            <div class="tip-box-title">💡 建议</div>
+                            <p>新手推荐 Web 界面，开发者推荐 CLI</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                    <span>如何选择合适的工作流？</span>
+                    <span class="faq-icon">+</span>
+                </div>
+                <div class="faq-answer">
+                    <div class="faq-answer-content">
+                        <table style="width:100%; border-collapse: collapse; margin: 1rem 0;">
+                            <tr style="background: var(--bg-primary);">
+                                <th style="padding: 0.75rem; text-align: left; border: 1px solid var(--border);">任务类型</th>
+                                <th style="padding: 0.75rem; text-align: left; border: 1px solid var(--border);">推荐工作流</th>
+                                <th style="padding: 0.75rem; text-align: left; border: 1px solid var(--border);">说明</th>
+                            </tr>
+                            <tr>
+                                <td style="padding: 0.75rem; border: 1px solid var(--border);">新功能开发</td>
+                                <td style="padding: 0.75rem; border: 1px solid var(--border);"><code>build</code></td>
+                                <td style="padding: 0.75rem; border: 1px solid var(--border);">完整流程</td>
+                            </tr>
+                            <tr style="background: var(--bg-primary);">
+                                <td style="padding: 0.75rem; border: 1px solid var(--border);">代码审查</td>
+                                <td style="padding: 0.75rem; border: 1px solid var(--border);"><code>review</code></td>
+                                <td style="padding: 0.75rem; border: 1px solid var(--border);">质量+安全</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 0.75rem; border: 1px solid var(--border);">Bug 修复</td>
+                                <td style="padding: 0.75rem; border: 1px solid var(--border);"><code>debug</code></td>
+                                <td style="padding: 0.75rem; border: 1px solid var(--border);">定位→修复</td>
+                            </tr>
+                            <tr style="background: var(--bg-primary);">
+                                <td style="padding: 0.75rem; border: 1px solid var(--border);">测试生成</td>
+                                <td style="padding: 0.75rem; border: 1px solid var(--border);"><code>test</code></td>
+                                <td style="padding: 0.75rem; border: 1px solid var(--border);">自动生成</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                    <span>任务执行时间过长怎么办？</span>
+                    <span class="faq-icon">+</span>
+                </div>
+                <div class="faq-answer">
+                    <div class="faq-answer-content">
+                        <p><strong>优化建议：</strong></p>
+                        <ol>
+                            <li><strong>缩小任务范围</strong>
+                                <pre><code># 不好的例子
+omc run "重构整个项目"
+
+# 好的例子
+omc run "重构 src/api 模块，使其符合 RESTful 规范"</code></pre>
+                            </li>
+                            <li><strong>使用更快的模型</strong>
+                                <pre><code>export DEEPSEEK_MODEL=deepseek-chat  # 比 reasoner 更快</code></pre>
+                            </li>
+                            <li><strong>分步执行</strong>
+                                <pre><code>omc explore .
+omc run "第一步：提取公共函数"
+omc run "第二步：添加单元测试"</code></pre>
+                            </li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 模型选择 -->
+        <div class="faq-category" data-category="model">
+            <h2 class="category-title">🤖 模型选择</h2>
+
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                    <span>应该选择哪个模型？</span>
+                    <span class="faq-icon">+</span>
+                </div>
+                <div class="faq-answer">
+                    <div class="faq-answer-content">
+                        <div class="tip-box">
+                            <div class="tip-box-title">🎯 零成本首选</div>
+                            <p><strong>智谱 GLM-4.7-Flash</strong> - 完全免费，200K 上下文，中文优化最强</p>
+                        </div>
+                        <div class="tip-box">
+                            <div class="tip-box-title">💻 代码能力首选</div>
+                            <p><strong>DeepSeek V4</strong> - 代码 SOTA，64K 上下文，新用户赠送余额</p>
+                        </div>
+                        <p><strong>模型对比：</strong></p>
+                        <table style="width:100%; border-collapse: collapse; margin: 1rem 0;">
+                            <tr style="background: var(--bg-primary);">
+                                <th style="padding: 0.75rem; border: 1px solid var(--border);">特性</th>
+                                <th style="padding: 0.75rem; border: 1px solid var(--border);">DeepSeek</th>
+                                <th style="padding: 0.75rem; border: 1px solid var(--border);">GLM</th>
+                            </tr>
+                            <tr>
+                                <td style="padding: 0.75rem; border: 1px solid var(--border);">费用</td>
+                                <td style="padding: 0.75rem; border: 1px solid var(--border);">1元/百万tokens</td>
+                                <td style="padding: 0.75rem; border: 1px solid var(--border);"><strong>免费</strong></td>
+                            </tr>
+                            <tr style="background: var(--bg-primary);">
+                                <td style="padding: 0.75rem; border: 1px solid var(--border);">上下文</td>
+                                <td style="padding: 0.75rem; border: 1px solid var(--border);">64K</td>
+                                <td style="padding: 0.75rem; border: 1px solid var(--border);"><strong>200K</strong></td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 0.75rem; border: 1px solid var(--border);">代码能力</td>
+                                <td style="padding: 0.75rem; border: 1px solid var(--border);">⭐⭐⭐⭐⭐</td>
+                                <td style="padding: 0.75rem; border: 1px solid var(--border);">⭐⭐⭐⭐</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                    <span>可以同时配置多个 API Key 吗？</span>
+                    <span class="faq-icon">+</span>
+                </div>
+                <div class="faq-answer">
+                    <div class="faq-answer-content">
+                        <p>可以，系统会自动选择最优模型：</p>
+                        <pre><code># 配置多个 Key
+export DEEPSEEK_API_KEY=sk_xxx
+export GLM_API_KEY=sk_yyy
+export KIMI_API_KEY=sk_zzz</code></pre>
+                        <p><strong>自动选择优先级：</strong></p>
+                        <ol>
+                            <li>成本最低的可用模型</li>
+                            <li>响应速度最快的模型</li>
+                            <li>任务类型匹配的模型</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                    <span>API Key 泄露了怎么办？</span>
+                    <span class="faq-icon">+</span>
+                </div>
+                <div class="faq-answer">
+                    <div class="faq-answer-content">
+                        <p><strong>立即执行：</strong></p>
+                        <ol>
+                            <li>登录对应平台，<strong>撤销旧 Key</strong></li>
+                            <li>生成新 Key</li>
+                            <li>更新本地配置</li>
+                            <li>检查异常调用记录</li>
+                        </ol>
+                        <div class="tip-box">
+                            <div class="tip-box-title">🛡️ 预防措施</div>
+                            <ul>
+                                <li>不要将 Key 提交到 Git（使用 <code>.gitignore</code>）</li>
+                                <li>使用 <code>.env</code> 文件管理密钥</li>
+                                <li>定期轮换 API Key</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 故障排查 -->
+        <div class="faq-category" data-category="trouble">
+            <h2 class="category-title">🔧 故障排查</h2>
+
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                    <span>提示 "API Key 未配置" 怎么办？</span>
+                    <span class="faq-icon">+</span>
+                </div>
+                <div class="faq-answer">
+                    <div class="faq-answer-content">
+                        <p><strong>检查步骤：</strong></p>
+                        <pre><code># 1. 检查环境变量
+echo $DEEPSEEK_API_KEY
+
+# 2. 检查 .env 文件
+cat .env
+
+# 3. 验证配置
+omc status</code></pre>
+                        <p><strong>常见原因：</strong></p>
+                        <ul>
+                            <li>Key 名称拼写错误（注意大小写）</li>
+                            <li>未重启终端/IDE（环境变量需重新加载）</li>
+                            <li>.env 文件路径错误（应在项目根目录）</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                    <span>模型调用超时怎么办？</span>
+                    <span class="faq-icon">+</span>
+                </div>
+                <div class="faq-answer">
+                    <div class="faq-answer-content">
+                        <p><strong>排查步骤：</strong></p>
+                        <ol>
+                            <li><strong>检查网络</strong>
+                                <pre><code>ping api.deepseek.com</code></pre>
+                            </li>
+                            <li><strong>增加超时时间</strong>
+                                <pre><code>export REQUEST_TIMEOUT=120  # 秒</code></pre>
+                            </li>
+                            <li><strong>切换备用模型</strong>
+                                <pre><code># 使用 GLM（完全免费）
+omc config set -k DEFAULT_MODEL -v "glm"</code></pre>
+                            </li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                    <span>生成的代码有语法错误怎么办？</span>
+                    <span class="faq-icon">+</span>
+                </div>
+                <div class="faq-answer">
+                    <div class="faq-answer-content">
+                        <p><strong>处理流程：</strong></p>
+                        <ol>
+                            <li><strong>使用 VerifierAgent 验证</strong>
+                                <pre><code>omc run "验证生成的代码" -w test</code></pre>
+                            </li>
+                            <li><strong>请求修复</strong>
+                                <pre><code>omc run "修复以下代码的语法错误" --file generated.py</code></pre>
+                            </li>
+                            <li><strong>使用安全审查</strong>
+                                <pre><code>omc run "审查代码质量" -w review</code></pre>
+                            </li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 高级功能 -->
+        <div class="faq-category" data-category="advanced">
+            <h2 class="category-title">⚡ 高级功能</h2>
+
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                    <span>如何添加自定义 Agent？</span>
+                    <span class="faq-icon">+</span>
+                </div>
+                <div class="faq-answer">
+                    <div class="faq-answer-content">
+                        <p>三步完成自定义 Agent：</p>
+                        <pre><code># 1. 创建 Agent 类
+# src/agents/my_agent.py
+from src.agents.base import BaseAgent, AgentResult, AgentContext
+
+class MyAgent(BaseAgent):
+    name = "my_agent"
+    description = "自定义 Agent"
+    default_tier = "medium"
+
+    async def execute(self, context: AgentContext) -> AgentResult:
+        result = await self.generate(prompt)
+        return AgentResult(
+            agent=self.name,
+            status="completed",
+            result=result
+        )
+
+# 2. 注册到 __init__.py
+from .my_agent import MyAgent
+
+# 3. 使用
+omc run "使用 my_agent 处理任务"</code></pre>
+                    </div>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                    <span>如何集成到 CI/CD？</span>
+                    <span class="faq-icon">+</span>
+                </div>
+                <div class="faq-answer">
+                    <div class="faq-answer-content">
+                        <p>GitHub Action 示例：</p>
+                        <pre><code>name: AI Code Review
+on: [pull_request]
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+      
+      - name: Install OMC
+        run: |
+          pip install -e '.[dev]'
+      
+      - name: AI Review
+        env:
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+        run: |
+          omc run "审查本次 PR 的代码变更" -w review > review_report.md
+      
+      - uses: actions/upload-artifact@v4
+        with:
+          name: review-report
+          path: review_report.md</code></pre>
+                    </div>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                    <span>如何导出执行报告？</span>
+                    <span class="faq-icon">+</span>
+                </div>
+                <div class="faq-answer">
+                    <div class="faq-answer-content">
+                        <pre><code>from src.core.summary import generate_summary, save_summary
+
+# 任务完成后生成报告
+summary = generate_summary(
+    task="任务描述",
+    workflow="build",
+    completed_steps=steps
+)
+
+# 导出多种格式
+save_summary(summary, format="html")  # HTML 报告
+save_summary(summary, format="json")  # JSON 数据
+save_summary(summary, format="txt")   # 纯文本</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <p>还没找到答案？</p>
+        <p style="margin-top: 0.5rem;">
+            📖 <a href="https://github.com/VOBC/oh-my-coder/tree/main/docs">查看完整文档</a> · 
+            🐛 <a href="https://github.com/VOBC/oh-my-coder/issues">提交 Issue</a> · 
+            💬 <a href="https://github.com/VOBC/oh-my-coder/discussions">参与讨论</a>
+        </p>
+        <p style="margin-top: 1.5rem; font-size: 0.875rem;">
+            开源项目 · <a href="https://github.com/vobc/oh-my-coder">GitHub</a> · MIT 协议
+        </p>
+    </footer>
+
+    <script>
+        // Toggle FAQ
+        function toggleFaq(element) {
+            const item = element.parentElement;
+            const wasActive = item.classList.contains('active');
+            
+            // Close all
+            document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('active'));
+            
+            // Open clicked if wasn't active
+            if (!wasActive) {
+                item.classList.add('active');
+            }
+        }
+
+        // Filter by category
+        function filterCategory(category) {
+            // Update tabs
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+
+            // Show/hide categories
+            document.querySelectorAll('.faq-category').forEach(cat => {
+                if (category === 'all' || cat.dataset.category === category) {
+                    cat.style.display = 'block';
+                } else {
+                    cat.style.display = 'none';
+                }
+            });
+        }
+    </script>
+</body>
+</html>

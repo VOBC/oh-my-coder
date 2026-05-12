@@ -57,9 +57,11 @@ from .cli_run import (
 from .cli_search import app as search_app
 from .cli_security import app as security_app
 from .cli_self_config import app as self_config_app
+from .cli_profile import app as profile_app
 from .cli_server import app as server_app
 from .cli_skill import app as skill_app
 from .cli_task import app as task_app
+from .cli_thought import app as thought_app
 from .cli_trace import app as trace_app
 from .cli_tui import app as tui_app
 
@@ -110,7 +112,15 @@ app.add_typer(lsp_app, name="lsp", help="LSP 集成 - 读取代码诊断信息")
 app.add_typer(search_app, name="search", help="代码搜索 - Sourcegraph 公开代码库搜索")
 app.add_typer(review_app, name="review", help="代码审查 - 智能分析代码变更")
 app.add_typer(quality_app, name="quality", help="代码质量检查 - ruff/black 集成")
+app.add_typer(
+    profile_app, name="profile",
+    help="Profile 隔离 - 子 Agent 上下文管理"
+)
 app.add_typer(server_app, name="server", help="远程 Server - HTTP REST API 服务")
+app.add_typer(
+    thought_app, name="thought",
+    help="思维链 - 记录和可视化 Agent 推理过程"
+)
 
 # 代码清理命令
 try:
@@ -158,6 +168,14 @@ try:
     app.add_typer(gateway_app, name="gateway", help="多平台网关 - Telegram / Discord")
 except Exception:
     pass  # gateway 依赖缺失时跳过
+
+# doc 子命令 - 文档管理
+try:
+    from .cli_doc import app as doc_app  # noqa: E402
+
+    app.add_typer(doc_app, name="doc", help="文档管理 - 生成、验证、同步项目文档")
+except Exception:
+    pass
 
 # agent 子命令 - Agent 配置管理与自进化
 try:

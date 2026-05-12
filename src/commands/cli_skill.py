@@ -172,5 +172,102 @@ SKILL = Skill(
         console.print(f"[dim]Custom skills dir already exists:[/dim] {skill_dir}")
 
 
+# ===== Skill 沉淀闭环 =====
+
+@app.command("propose")
+def propose_skill(
+    task: str = typer.Argument(..., help="任务描述"),
+    steps: str = typer.Option("", "--steps", "-s", help="执行步骤（逗号分隔）"),
+    reflections: str = typer.Option(
+        "", "--reflections", "-r", help="反思记录（逗号分隔）"
+    ),
+):
+    """从任务中提取 Skill 提议"""
+    from src.core.skill_extractor import (
+        extract_skill_from_task,
+        save_proposal,
+    )
+
+    steps_list = [s.strip() for s in steps.split(",") if s.strip()]
+    reflections_list = [r.strip() for r in reflections.split(",") if r.strip()]
+
+    proposal = extract_skill_from_task(task, steps_list, reflections_list)
+
+    if not proposal:
+        console.print(
+            "[yellow]⚠️ 不值得提取（步骤太少或不够通用）[/yellow]"
+        )
+        raise typer.Exit(0)
+
+    filepath = save_proposal(proposal)
+
+    console.print("[green]✅ Skill 提议已生成[/green]")
+    console.print(f"[dim]ID: {proposal.id}[/dim]")
+    console.print(f"[bold]{proposal.title}[/bold]")
+    console.print(f"触发: {proposal.trigger}")
+    console.print("\n步骤:")
+    for i, step in enumerate(proposal.steps, 1):
+        console.print(f"  {i}. {step}")
+    console.print(f"\n[dim]保存到: {filepath}[/dim]")
+    console.print("[dim]运行 'omc skill review' 查看待处理提议[/dim]")
+
+
+@app.command("review")
+def review_proposals():
+    """查看待处理的 Skill 提议"""
+    from src.core.skill_extractor import list_proposals
+
+    proposals = list_proposals()
+    pending = [p for p in proposals if p.status == "pending"]
+
+    if not pending:
+        console.print("[dim]没有待处理的 Skill 提议[/dim]")
+        return
+
+    console.print(f"[bold]📋 待处理的 Skill 提议 ({len(pending)})\n[/bold]")
+
+    for i, p in enumerate(pending, 1):
+        console.print(
+            Panel(
+                f"[bold]{i}. {p.title}[/bold]\n"
+                f"[dim]ID: {p.id}[/dim]\n"
+                f"触发: {p.trigger}\n"
+                f"步骤数: {len(p.steps)}\n"
+                f"来源: {p.source_task[:60]}...",
+                expand=False,
+            )
+        )
+
+    console.print("\n[dim]使用以下命令处理:[/dim]")
+    console.print("  omc skill accept <id>  # 接受并生成 SKILL.md")
+    console.print("  omc skill reject <id>  # 拒绝")
+
+
+@app.command("accept")
+def accept_skill_proposal(proposal_id: str):
+    """接受 Skill 提议"""
+    from src.core.skill_extractor import accept_proposal
+
+    skill_path = accept_proposal(proposal_id)
+    if skill_path:
+        console.print("[green]✅ Skill 已接受[/green]")
+        console.print(f"[dim]生成文件: {skill_path}[/dim]")
+    else:
+        console.print(f"[red]❌ 未找到提议: {proposal_id}[/red]")
+        raise typer.Exit(1)
+
+
+@app.command("reject")
+def reject_skill_proposal(proposal_id: str):
+    """拒绝 Skill 提议"""
+    from src.core.skill_extractor import reject_proposal
+
+    if reject_proposal(proposal_id):
+        console.print(f"[green]✅ 已拒绝提议: {proposal_id}[/green]")
+    else:
+        console.print(f"[red]❌ 未找到提议: {proposal_id}[/red]")
+        raise typer.Exit(1)
+
+
 if __name__ == "__main__":
     app()

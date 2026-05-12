@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>测试覆盖率 - Oh My Coder</title>
+    <link rel="stylesheet" href="/static/style.css?v=20260506">
+    <style>
+        .coverage-container { max-width: 1200px; margin: 0 auto; padding: 24px; }
+        .coverage-header { margin-bottom: 32px; }
+        .coverage-header h1 { font-size: 28px; margin-bottom: 8px; }
+        .coverage-header p { color: var(--text-secondary); }
+
+        .coverage-overview {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+        .coverage-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+        }
+        .coverage-card .value {
+            font-size: 36px;
+            font-weight: 700;
+            margin: 8px 0;
+        }
+        .coverage-card .label {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .coverage-bar-container {
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            height: 32px;
+            overflow: hidden;
+            position: relative;
+            margin: 4px 0;
+        }
+        .coverage-bar {
+            height: 100%;
+            border-radius: 8px;
+            transition: width 0.6s ease;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            color: white;
+            min-width: 40px;
+        }
+
+        .file-list {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        .file-list-header {
+            display: grid;
+            grid-template-columns: 1fr 100px 100px 80px;
+            gap: 12px;
+            padding: 12px 16px;
+            background: var(--bg-tertiary);
+            font-weight: 600;
+            font-size: 14px;
+        }
+        .file-item {
+            display: grid;
+            grid-template-columns: 1fr 100px 100px 80px;
+            gap: 12px;
+            padding: 10px 16px;
+            border-top: 1px solid var(--border);
+            align-items: center;
+            font-size: 13px;
+        }
+        .file-item:hover { background: var(--bg-tertiary); }
+        .file-path { font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+        .file-coverage { text-align: right; font-weight: 600; }
+
+        .run-btn {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-bottom: 24px;
+        }
+        .run-btn:hover { opacity: 0.9; }
+        .run-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .loading { text-align: center; padding: 40px; color: var(--text-secondary); }
+        .error { background: #fef2f2; border: 1px solid #fecaca; color: #dc2626; padding: 16px; border-radius: 8px; margin-bottom: 16px; }
+        [data-theme="dark"] .error { background: #450a0a; border-color: #7f1d1d; color: #fca5a5; }
+
+        .sort-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 12px;
+            padding: 2px 6px;
+        }
+        .sort-btn:hover { color: var(--primary); }
+    </style>
+</head>
+<body>
+    <nav class="nav">
+        <div class="nav-content">
+            <a href="/" class="nav-brand">
+                <span class="nav-brand-icon">🤖</span>
+                <span class="nav-brand-name">Oh My Coder</span>
+            </a>
+            <div class="nav-links">
+                <a href="/" class="nav-link">首页</a>
+                <a href="/dashboard" class="nav-link">仪表板</a>
+                <a href="/history" class="nav-link">历史</a>
+                <a href="/coverage" class="nav-link active">覆盖率</a>
+                <a href="/docs" class="nav-link">文档</a>
+                <a href="/settings" class="nav-link">设置</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="coverage-container">
+        <div class="coverage-header">
+            <h1>📊 测试覆盖率</h1>
+            <p>查看代码测试覆盖情况，识别未覆盖的代码区域</p>
+        </div>
+
+        <button class="run-btn" id="runBtn" onclick="runCoverage()">
+            🔄 重新分析
+        </button>
+
+        <div id="content">
+            <div class="loading">加载中...</div>
+        </div>
+    </div>
+
+    <script>
+        let currentData = null;
+        let sortField = 'coverage';
+        let sortAsc = true;
+
+        async function loadCoverage() {
+            const content = document.getElementById('content');
+            try {
+                const res = await fetch('/api/coverage');
+                const data = await res.json();
+                currentData = data;
+                render(data);
+            } catch (e) {
+                content.innerHTML = `<div class="error">加载失败: ${e.message}</div>`;
+            }
+        }
+
+        async function runCoverage() {
+            const btn = document.getElementById('runBtn');
+            btn.disabled = true;
+            btn.textContent = '⏳ 分析中...';
+            const content = document.getElementById('content');
+            content.innerHTML = '<div class="loading">运行测试并收集覆盖率数据，请稍候...</div>';
+
+            try {
+                const res = await fetch('/api/coverage/run', { method: 'POST' });
+                const data = await res.json();
+                currentData = data;
+                render(data);
+            } catch (e) {
+                content.innerHTML = `<div class="error">分析失败: ${e.message}</div>`;
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '🔄 重新分析';
+            }
+        }
+
+        function render(data) {
+            const content = document.getElementById('content');
+            if (data.error) {
+                content.innerHTML = `<div class="error">${data.error}</div>`;
+                return;
+            }
+
+            const o = data.overall;
+            const files = data.files || [];
+
+            let html = `
+                <div class="coverage-overview">
+                    <div class="coverage-card">
+                        <div class="label">总体覆盖率</div>
+                        <div class="value" style="color: ${o.color}">${o.coverage}%</div>
+                    </div>
+                    <div class="coverage-card">
+                        <div class="label">文件数</div>
+                        <div class="value">${o.total_files}</div>
+                    </div>
+                    <div class="coverage-card">
+                        <div class="label">语句总数</div>
+                        <div class="value">${o.total_statements}</div>
+                    </div>
+                    <div class="coverage-card">
+                        <div class="label">未覆盖语句</div>
+                        <div class="value" style="color: #ef4444">${o.total_missing}</div>
+                    </div>
+                </div>
+
+                <div class="coverage-bar-container" style="margin-bottom: 32px; height: 40px;">
+                    <div class="coverage-bar" style="width: ${o.coverage}%; background: ${o.color};">
+                        ${o.coverage}%
+                    </div>
+                </div>
+
+                <h3 style="margin-bottom: 16px;">文件详情
+                    <button class="sort-btn" onclick="toggleSort('path')">文件 ↕</button>
+                    <button class="sort-btn" onclick="toggleSort('coverage')">覆盖率 ↕</button>
+                </h3>
+                <div class="file-list">
+                    <div class="file-list-header">
+                        <div>文件路径</div>
+                        <div style="text-align:right">语句</div>
+                        <div style="text-align:right">缺失</div>
+                        <div style="text-align:right">覆盖率</div>
+                    </div>
+            `;
+
+            const sortedFiles = [...files].sort((a, b) => {
+                let va = a[sortField], vb = b[sortField];
+                if (sortField === 'path') {
+                    va = va.toLowerCase();
+                    vb = vb.toLowerCase();
+                }
+                return sortAsc ? (va > vb ? 1 : -1) : (va < vb ? 1 : -1);
+            });
+
+            for (const f of sortedFiles) {
+                html += `
+                    <div class="file-item">
+                        <div class="file-path" title="${f.path}">${f.path}</div>
+                        <div style="text-align:right">${f.statements}</div>
+                        <div style="text-align:right; color: ${f.missing > 0 ? '#ef4444' : 'inherit'}">${f.missing}</div>
+                        <div class="file-coverage" style="color: ${f.color}">${f.coverage}%</div>
+                    </div>
+                    <div style="padding: 0 16px 8px;">
+                        <div class="coverage-bar-container" style="height: 6px;">
+                            <div class="coverage-bar" style="width: ${f.coverage}%; background: ${f.color}; min-width: 0; padding: 0;"></div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            html += '</div>';
+            content.innerHTML = html;
+        }
+
+        function toggleSort(field) {
+            if (sortField === field) {
+                sortAsc = !sortAsc;
+            } else {
+                sortField = field;
+                sortAsc = true;
+            }
+            if (currentData) render(currentData);
+        }
+
+        loadCoverage();
+    </script>
+</body>
+</html>

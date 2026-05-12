@@ -12,6 +12,9 @@ import { InlineInputPanel } from './components/InlineInputPanel';
 import SettingsPanel from './components/SettingsPanel';
 import { PRODUCTION_MODELS as FALLBACK_MODELS } from './models/productionModels';
 import WelcomeScreen from './components/WelcomeScreen';
+import { TaskProgress } from './components/TaskProgress';
+import { AgentSteps } from './components/AgentSteps';
+import { LiveLog } from './components/LiveLog';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface Model { id: string; name: string; provider: string; tier: string; context?: number; endpoint?: string; pricing?: Record<string, number>; features?: string[]; }
@@ -367,6 +370,32 @@ export default function App() {
   const [serverStatus, setServerStatus] = useState<'stopped' | 'starting' | 'running'>('stopped');
   const [tab, setTab] = useState<'chat' | 'models'>('chat');
   const [agentState, setAgentState] = useState<AgentState>({ name: 'Idle', status: '待机中', color: '#71717a', icon: '💤' });
+  
+  // Task progress state
+  const [taskStages, setTaskStages] = useState([
+    { name: '需求分析', status: 'pending' as const },
+    { name: '方案设计', status: 'pending' as const },
+    { name: '代码编写', status: 'pending' as const },
+    { name: '代码审查', status: 'pending' as const },
+    { name: '测试执行', status: 'pending' as const },
+  ]);
+  const [currentStage, setCurrentStage] = useState(0);
+  
+  // Agent steps state
+  const [agentSteps, setAgentSteps] = useState<Array<{
+    agent: string;
+    action: string;
+    detail: string;
+    timestamp: number;
+    status: 'running' | 'completed' | 'error';
+  }>>([]);
+  
+  // Live log state
+  const [liveLogs, setLiveLogs] = useState<Array<{
+    level: 'info' | 'warn' | 'error' | 'success';
+    message: string;
+    timestamp: number;
+  }>>([]);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -537,6 +566,9 @@ export default function App() {
   useEffect(() => {
     if (!loading) {
       setAgentState({ name: 'Idle', status: '待机中', color: '#71717a', icon: '💤' });
+      // Reset task progress
+      setTaskStages(prev => prev.map((s, i) => ({ ...s, status: i === 0 ? 'pending' : 'pending' })));
+      setCurrentStage(0);
       return;
     }
 
@@ -547,12 +579,48 @@ export default function App() {
     const startAgent = agents[0];
     const startCfg = AGENT_CONFIG[startAgent];
     setAgentState({ name: startAgent, status: startCfg.statuses[0], color: startCfg.color, icon: startCfg.icon });
+    
+    // Update task progress - mark first stage active
+    setTaskStages(prev => prev.map((s, i) => ({ ...s, status: i === 0 ? 'active' : 'pending' })));
+    setCurrentStage(0);
+    
+    // Add initial log
+    setLiveLogs(prev => [...prev, {
+      level: 'info',
+      message: '任务开始执行...',
+      timestamp: Date.now(),
+    }]);
 
     const interval = setInterval(() => {
       idx = (idx + 1) % agents.length;
       const name = agents[idx];
       const cfg = AGENT_CONFIG[name];
       setAgentState({ name, status: cfg.statuses[0], color: cfg.color, icon: cfg.icon });
+      
+      // Update task progress
+      const stageIdx = Math.min(idx, taskStages.length - 1);
+      setTaskStages(prev => prev.map((s, i) => ({
+        ...s,
+        status: i < stageIdx ? 'completed' : i === stageIdx ? 'active' : 'pending'
+      })));
+      setCurrentStage(stageIdx);
+      
+      // Add agent step
+      const actions = ['分析需求', '编写代码', '审查代码', '执行测试'];
+      setAgentSteps(prev => [...prev, {
+        agent: name,
+        action: actions[idx % actions.length],
+        detail: `${name} 正在${actions[idx % actions.length]}...`,
+        timestamp: Date.now(),
+        status: 'running',
+      }]);
+      
+      // Add log
+      setLiveLogs(prev => [...prev, {
+        level: 'info',
+        message: `${name} ${actions[idx % actions.length]}`,
+        timestamp: Date.now(),
+      }]);
     }, 2500);
 
     return () => clearInterval(interval);
@@ -855,6 +923,15 @@ export default function App() {
 
         {/* Agent Status Bar */}
         <AgentStatusBar agent={agentState} loading={loading} />
+
+        {/* Task Progress */}
+        {loading && <TaskProgress stages={taskStages} currentStage={currentStage} />}
+
+        {/* Agent Steps */}
+        {loading && <AgentSteps steps={agentSteps} />}
+
+        {/* Live Log */}
+        {loading && <LiveLog logs={liveLogs} />}
 
         {/* Messages */}
         <div className="messages">

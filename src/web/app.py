@@ -47,6 +47,7 @@ try:
         history_store,
         verify_api_token,
     )
+    from src.web.coverage_api import format_coverage_report, run_coverage_analysis
     from src.web.local_models_api import router as local_models_router
     from src.web.share_api import router as share_router
     from src.web.team_api import router as team_router
@@ -1683,11 +1684,47 @@ async def delete_session(session_id: str):
         raise HTTPException(status_code=500, detail="Failed to delete session")
 
 
+# ===== 覆盖率 API =====
+@app.get("/api/coverage")
+async def get_coverage():
+    """获取测试覆盖率数据"""
+    try:
+        summary = run_coverage_analysis(project_root)
+        report = format_coverage_report(summary)
+        return JSONResponse(report)
+    except Exception as e:
+        return JSONResponse(
+            {"error": str(e), "overall": {"coverage": 0, "color": "#ef4444"}},
+            status_code=500,
+        )
+
+
+@app.post("/api/coverage/run")
+async def run_coverage():
+    """重新运行覆盖率分析"""
+    try:
+        summary = run_coverage_analysis(project_root)
+        report = format_coverage_report(summary)
+        return JSONResponse(report)
+    except Exception as e:
+        return JSONResponse(
+            {"error": str(e), "overall": {"coverage": 0, "color": "#ef4444"}},
+            status_code=500,
+        )
+
+
 # ===== 健康检查 =====
 @app.get("/health")
 async def health_check():
     """健康检查"""
     return JSONResponse({"status": "healthy", "version": "0.1.0"})
+
+
+# ===== 覆盖率页面 =====
+@app.get("/coverage", response_class=HTMLResponse)
+async def coverage_page(request: Request):
+    """测试覆盖率页面"""
+    return templates.TemplateResponse(request, "coverage.html")
 
 
 # ===== API 文档覆盖 =====

@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Oh My Coder - AI 多 Agent 协作编程助手</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0e1a;
+            --bg-secondary: #111827;
+            --bg-card: #1a1f2e;
+            --text-primary: #f0f4f8;
+            --text-secondary: #94a3b8;
+            --accent-amber: #f59e0b;
+            --accent-cyan: #06b6d4;
+            --accent-green: #10b981;
+            --accent-purple: #8b5cf6;
+            --border: #1e293b;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Hero Section */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 2rem;
+            position: relative;
+            background: 
+                radial-gradient(ellipse 80% 50% at 50% -20%, rgba(6, 182, 212, 0.15), transparent),
+                radial-gradient(ellipse 60% 40% at 80% 80%, rgba(245, 158, 11, 0.1), transparent);
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: rgba(6, 182, 212, 0.1);
+            border: 1px solid rgba(6, 182, 212, 0.3);
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            color: var(--accent-cyan);
+            margin-bottom: 2rem;
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        .hero-badge::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            background: var(--accent-cyan);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        .hero h1 {
+            font-size: clamp(2.5rem, 6vw, 4.5rem);
+            font-weight: 800;
+            line-height: 1.1;
+            margin-bottom: 1.5rem;
+            animation: fadeInUp 0.6s ease-out 0.1s both;
+        }
+
+        .hero h1 .highlight {
+            background: linear-gradient(135deg, var(--accent-amber), var(--accent-cyan));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-subtitle {
+            font-size: clamp(1rem, 2vw, 1.25rem);
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin-bottom: 2.5rem;
+            animation: fadeInUp 0.6s ease-out 0.2s both;
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            justify-content: center;
+            animation: fadeInUp 0.6s ease-out 0.3s both;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.875rem 1.75rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.2s;
+            cursor: pointer;
+            border: none;
+            font-size: 1rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-amber), #d97706);
+            color: #000;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 40px rgba(245, 158, 11, 0.3);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255,255,255,0.05);
+            border-color: var(--accent-cyan);
+        }
+
+        /* Terminal Demo */
+        .terminal-demo {
+            max-width: 800px;
+            width: 100%;
+            margin: 3rem auto 0;
+            background: var(--bg-secondary);
+            border-radius: 0.75rem;
+            border: 1px solid var(--border);
+            overflow: hidden;
+            animation: fadeInUp 0.6s ease-out 0.4s both;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        .terminal-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1rem;
+            background: rgba(0,0,0,0.3);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .terminal-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .terminal-dot.red { background: #ef4444; }
+        .terminal-dot.yellow { background: #eab308; }
+        .terminal-dot.green { background: #22c55e; }
+
+        .terminal-title {
+            margin-left: 0.5rem;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .terminal-body {
+            padding: 1.5rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.875rem;
+            line-height: 1.8;
+        }
+
+        .terminal-line {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            margin-bottom: 0.5rem;
+            opacity: 0;
+            animation: typeIn 0.3s ease-out forwards;
+        }
+
+        .terminal-prompt {
+            color: var(--accent-green);
+            flex-shrink: 0;
+        }
+
+        .terminal-command {
+            color: var(--text-primary);
+        }
+
+        .terminal-output {
+            color: var(--text-secondary);
+            padding-left: 1.5rem;
+        }
+
+        .terminal-agent {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.125rem 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-right: 0.5rem;
+        }
+
+        .agent-planner { background: rgba(59, 130, 246, 0.2); color: #60a5fa; }
+        .agent-coder { background: rgba(16, 185, 129, 0.2); color: #4ade80; }
+        .agent-reviewer { background: rgba(139, 92, 246, 0.2); color: #c084fc; }
+        .agent-executor { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
+
+        /* Stats Bar */
+        .stats-bar {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 2rem;
+            margin-top: 3rem;
+            padding: 1.5rem 3rem;
+            background: rgba(245, 158, 11, 0.1);
+            border: 1px solid rgba(245, 158, 11, 0.2);
+            border-radius: 1rem;
+            animation: fadeInUp 0.6s ease-out 0.5s both;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--accent-amber);
+            line-height: 1;
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-top: 0.25rem;
+        }
+
+        .stat-divider {
+            width: 1px;
+            height: 40px;
+            background: var(--border);
+        }
+
+        @media (max-width: 768px) {
+            .stats-bar {
+                flex-wrap: wrap;
+                gap: 1rem;
+                padding: 1rem;
+            }
+            .stat-divider {
+                display: none;
+            }
+            .stat-item {
+                min-width: 80px;
+            }
+        }
+
+        /* Features */
+        .features {
+            padding: 6rem 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+
+        .section-subtitle {
+            text-align: center;
+            color: var(--text-secondary);
+            margin-bottom: 4rem;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .feature-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 0.75rem;
+            padding: 2rem;
+            transition: all 0.3s;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--accent-cyan);
+            box-shadow: 0 20px 40px rgba(6, 182, 212, 0.1);
+        }
+
+        .feature-icon {
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 0.5rem;
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .feature-card h3 {
+            font-size: 1.25rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .feature-card p {
+            color: var(--text-secondary);
+            font-size: 0.9375rem;
+        }
+
+        /* Agents */
+        .agents-section {
+            padding: 6rem 2rem;
+            background: var(--bg-secondary);
+        }
+
+        .agents-container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .agents-visual {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            flex-wrap: wrap;
+            margin-top: 3rem;
+        }
+
+        .agent-node {
+            text-align: center;
+            padding: 2rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 1rem;
+            min-width: 180px;
+            transition: all 0.3s;
+        }
+
+        .agent-node:hover {
+            transform: scale(1.05);
+        }
+
+        .agent-node.planner:hover { border-color: #60a5fa; box-shadow: 0 0 30px rgba(96, 165, 250, 0.2); }
+        .agent-node.coder:hover { border-color: #4ade80; box-shadow: 0 0 30px rgba(74, 222, 128, 0.2); }
+        .agent-node.reviewer:hover { border-color: #c084fc; box-shadow: 0 0 30px rgba(192, 132, 252, 0.2); }
+        .agent-node.executor:hover { border-color: #fbbf24; box-shadow: 0 0 30px rgba(251, 191, 36, 0.2); }
+
+        .agent-avatar {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            margin: 0 auto 1rem;
+        }
+
+        .agent-node.planner .agent-avatar { background: rgba(96, 165, 250, 0.2); }
+        .agent-node.coder .agent-avatar { background: rgba(74, 222, 128, 0.2); }
+        .agent-node.reviewer .agent-avatar { background: rgba(192, 132, 252, 0.2); }
+        .agent-node.executor .agent-avatar { background: rgba(251, 191, 36, 0.2); }
+
+        .agent-node h4 {
+            font-size: 1.125rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .agent-node p {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        .agent-arrow {
+            display: flex;
+            align-items: center;
+            color: var(--text-secondary);
+            font-size: 1.5rem;
+        }
+
+        /* Quick Start */
+        .quickstart {
+            padding: 6rem 2rem;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        /* Trust Banner */
+        .trust-banner {
+            padding: 6rem 2rem;
+            background: linear-gradient(180deg, var(--bg-secondary) 0%, var(--bg-primary) 100%);
+            border-top: 1px solid var(--border);
+        }
+
+        .trust-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .trust-title {
+            text-align: center;
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 3rem;
+            color: var(--accent-amber);
+        }
+
+        .trust-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .trust-item {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 1rem;
+            padding: 2rem;
+            transition: all 0.3s;
+        }
+
+        .trust-item:hover {
+            border-color: var(--accent-amber);
+            transform: translateY(-4px);
+        }
+
+        .trust-icon {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .trust-item h3 {
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            color: var(--text-primary);
+        }
+
+        .trust-item p {
+            color: var(--text-secondary);
+            font-size: 0.9375rem;
+            line-height: 1.6;
+        }
+
+        .trust-item strong {
+            color: var(--accent-amber);
+        }
+
+        /* FAQ Preview */
+        .faq-preview {
+            padding: 6rem 2rem;
+            background: var(--bg-secondary);
+        }
+
+        .faq-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1.5rem;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .faq-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 1rem;
+            padding: 2rem;
+            text-align: center;
+            text-decoration: none;
+            color: var(--text-primary);
+            transition: all 0.3s;
+        }
+
+        .faq-card:hover {
+            border-color: var(--accent-amber);
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px rgba(245, 158, 11, 0.1);
+        }
+
+        .faq-icon-large {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .faq-card h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .faq-card p {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        .code-block {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 0.75rem;
+            overflow: hidden;
+            margin: 1.5rem 0;
+        }
+
+        .code-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.75rem 1rem;
+            background: rgba(0,0,0,0.3);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .code-lang {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .copy-btn {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 0.875rem;
+            transition: color 0.2s;
+        }
+
+        .copy-btn:hover {
+            color: var(--text-primary);
+        }
+
+        .code-content {
+            padding: 1.5rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.875rem;
+            overflow-x: auto;
+        }
+
+        .code-content .comment { color: #6b7280; }
+        .code-content .keyword { color: #c084fc; }
+        .code-content .string { color: #4ade80; }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 3rem 2rem;
+            border-top: 1px solid var(--border);
+            color: var(--text-secondary);
+        }
+
+        footer a {
+            color: var(--accent-cyan);
+            text-decoration: none;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        @keyframes typeIn {
+            from { opacity: 0; transform: translateX(-10px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2rem;
+            }
+            
+            .agents-visual {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .agent-arrow {
+                transform: rotate(90deg);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Hero -->
+    <section class="hero">
+        <div class="hero-badge">🛡️ 国产替代方案 · 本地运行 · 数据不出境</div>
+        <h1>
+            国产首个<br>
+            <span class="highlight">多 Agent 协作编程框架</span>
+        </h1>
+        <p class="hero-subtitle">
+            <strong>31 个专业 Agent</strong> · <strong>12 家国产大模型</strong> · <strong>完全本地运行</strong><br>
+            代码不上传云端，数据不出境，中小企业合规首选
+        </p>
+        <div class="hero-buttons">
+            <a href="#quickstart" class="btn btn-primary">
+                <span>⚡</span> 3 分钟上手
+            </a>
+            <a href="https://github.com/vobc/oh-my-coder" class="btn btn-secondary" target="_blank">
+                <span>⭐</span> GitHub Star
+            </a>
+        </div>
+
+        <!-- Stats Bar -->
+        <div class="stats-bar">
+            <div class="stat-item">
+                <div class="stat-number">31</div>
+                <div class="stat-label">专业 Agent</div>
+            </div>
+            <div class="stat-divider"></div>
+            <div class="stat-item">
+                <div class="stat-number">12+</div>
+                <div class="stat-label">国产模型</div>
+            </div>
+            <div class="stat-divider"></div>
+            <div class="stat-item">
+                <div class="stat-number">0</div>
+                <div class="stat-label">元起步</div>
+            </div>
+            <div class="stat-divider"></div>
+            <div class="stat-item">
+                <div class="stat-number">100%</div>
+                <div class="stat-label">本地运行</div>
+            </div>
+        </div>
+
+        <!-- Terminal Demo -->
+        <div class="terminal-demo">
+            <div class="terminal-header">
+                <div class="terminal-dot red"></div>
+                <div class="terminal-dot yellow"></div>
+                <div class="terminal-dot green"></div>
+                <span class="terminal-title">omc run "实现用户登录功能"</span>
+            </div>
+            <div class="terminal-body">
+                <div class="terminal-line" style="animation-delay: 0.5s">
+                    <span class="terminal-prompt">$</span>
+                    <span class="terminal-command">omc run "实现用户登录功能"</span>
+                </div>
+                <div class="terminal-line" style="animation-delay: 1s">
+                    <span class="terminal-output">
+                        <span class="terminal-agent agent-planner">📋 Planner</span>
+                        分析需求：需要 JWT 认证 + 密码哈希 + 数据库模型
+                    </span>
+                </div>
+                <div class="terminal-line" style="animation-delay: 1.5s">
+                    <span class="terminal-output">
+                        <span class="terminal-agent agent-coder">💻 Coder</span>
+                        生成代码：auth.py, models.py, routes.py (156 行)
+                    </span>
+                </div>
+                <div class="terminal-line" style="animation-delay: 2s">
+                    <span class="terminal-output">
+                        <span class="terminal-agent agent-reviewer">👀 Reviewer</span>
+                        代码审查：发现 2 处安全问题，已修复
+                    </span>
+                </div>
+                <div class="terminal-line" style="animation-delay: 2.5s">
+                    <span class="terminal-output">
+                        <span class="terminal-agent agent-executor">⚡ Executor</span>
+                        运行测试：✅ 12/12 通过
+                    </span>
+                </div>
+                <div class="terminal-line" style="animation-delay: 3s">
+                    <span class="terminal-output" style="color: var(--accent-green)">
+                        ✅ 任务完成！代码已保存到 src/auth/
+                    </span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Trust Banner -->
+    <section class="trust-banner">
+        <div class="trust-container">
+            <h2 class="trust-title">🔒 企业级安全合规</h2>
+            <div class="trust-grid">
+                <div class="trust-item">
+                    <div class="trust-icon">🏠</div>
+                    <h3>完全本地运行</h3>
+                    <p>代码在本地处理，<strong>不上传任何云端服务器</strong>，源代码不会离开你的机器</p>
+                </div>
+                <div class="trust-item">
+                    <div class="trust-icon">🔐</div>
+                    <h3>密钥本地存储</h3>
+                    <p>API Key 仅保存在本地环境变量，<strong>不存储在第三方服务器</strong>，企业数据自主可控</p>
+                </div>
+                <div class="trust-item">
+                    <div class="trust-icon">✅</div>
+                    <h3>国产模型直连</h3>
+                    <p>支持 DeepSeek、智谱 GLM、Kimi 等 <strong>12 家国产大模型</strong>，无需翻墙，合规使用</p>
+                </div>
+                <div class="trust-item">
+                    <div class="trust-icon">🛡️</div>
+                    <h3>自动安全审查</h3>
+                    <p>内置 SecurityReviewerAgent，<strong>自动扫描漏洞</strong>：SQL 注入、XSS、硬编码密钥等</p>
+                </div>
+                <div class="trust-item">
+                    <div class="trust-icon">📋</div>
+                    <h3>Diff 预览确认</h3>
+                    <p>修改文件前<strong>预览变更内容</strong>，GitMasterAgent 管理版本，避免误操作</p>
+                </div>
+                <div class="trust-item">
+                    <div class="trust-icon">🔓</div>
+                    <h3>开源可审计</h3>
+                    <p><strong>MIT 开源协议</strong>，代码完全透明，支持私有化部署、二次开发、安全审计</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features -->
+    <section class="features">
+        <h2 class="section-title">核心特性</h2>
+        <p class="section-subtitle">31 个专业 Agent，覆盖完整开发流程</p>
+        
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon" style="background: rgba(96, 165, 250, 0.2)">🚀</div>
+                <h3>构建通道（9 Agent）</h3>
+                <p>Explore → Analyst → Planner → Architect → Executor → Verifier → Debugger → Tracer → Performance</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon" style="background: rgba(239, 68, 68, 0.2)">🔍</div>
+                <h3>审查通道（2 Agent）</h3>
+                <p>CodeReviewer + SecurityReviewer 双重审查，质量+安全双重保障</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon" style="background: rgba(74, 222, 128, 0.2)">🎯</div>
+                <h3>领域通道（16 Agent）</h3>
+                <p>测试、设计、视觉、Git、数据库、API、DevOps、UML、迁移、数据处理等专业 Agent</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon" style="background: rgba(192, 132, 252, 0.2)">🧙</div>
+                <h3>协调通道（4 Agent）</h3>
+                <p>Prompt 优化、自我改进、Skill 沉淀、批判分析，系统越用越聪明</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon" style="background: rgba(6, 182, 212, 0.2)">🧠</div>
+                <h3>智能路由</h3>
+                <p>三层模型路由自动选择性价比最高的模型，低成本任务用免费模型，复杂任务用高级模型</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon" style="background: rgba(251, 191, 36, 0.2)">💰</div>
+                <h3>零成本起步</h3>
+                <p>GLM-4.7-Flash <strong>完全免费</strong>，DeepSeek 新用户赠送余额，无需信用卡</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Agents -->
+    <section class="agents-section">
+        <div class="agents-container">
+            <h2 class="section-title">Agent 工作流</h2>
+            <p class="section-subtitle">像团队一样协作，比一个人更高效</p>
+            
+            <div class="agents-visual">
+                <div class="agent-node planner">
+                    <div class="agent-avatar">📋</div>
+                    <h4>Planner</h4>
+                    <p>分析需求<br>制定计划</p>
+                </div>
+                <div class="agent-arrow">→</div>
+                <div class="agent-node coder">
+                    <div class="agent-avatar">💻</div>
+                    <h4>Coder</h4>
+                    <p>编写代码<br>生成测试</p>
+                </div>
+                <div class="agent-arrow">→</div>
+                <div class="agent-node reviewer">
+                    <div class="agent-avatar">👀</div>
+                    <h4>Reviewer</h4>
+                    <p>代码审查<br>安全检查</p>
+                </div>
+                <div class="agent-arrow">→</div>
+                <div class="agent-node executor">
+                    <div class="agent-avatar">⚡</div>
+                    <h4>Executor</h4>
+                    <p>运行测试<br>部署执行</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Quick Start -->
+    <section class="quickstart" id="quickstart">
+        <h2 class="section-title">快速开始</h2>
+        <p class="section-subtitle">3 分钟上手，零配置体验</p>
+
+        <div class="code-block">
+            <div class="code-header">
+                <span class="code-lang">bash</span>
+                <button class="copy-btn" onclick="copyCode(this)">复制</button>
+            </div>
+            <div class="code-content">
+                <span class="comment"># 1. 安装</span><br>
+                pip install oh-my-coder<br><br>
+                <span class="comment"># 2. 配置 API Key（免费模型可跳过）</span><br>
+                omc config set glm_api_key <span class="string">"your-key"</span><br><br>
+                <span class="comment"># 3. 运行任务</span><br>
+                omc run <span class="string">"实现用户登录功能"</span>
+            </div>
+        </div>
+
+        <div class="code-block">
+            <div class="code-header">
+                <span class="code-lang">bash</span>
+                <button class="copy-btn" onclick="copyCode(this)">复制</button>
+            </div>
+            <div class="code-content">
+                <span class="comment"># Web 界面</span><br>
+                omc web<br><br>
+                <span class="comment"># 桌面端</span><br>
+                git clone https://github.com/vobc/oh-my-coder.git<br>
+                cd oh-my-coder/desktop && npm install && npm start
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ Preview -->
+    <section class="faq-preview" id="faq">
+        <h2 class="section-title">常见问题</h2>
+        <p class="section-subtitle">快速找到答案，开始使用</p>
+
+        <div class="faq-grid">
+            <a href="faq.html#install" class="faq-card">
+                <div class="faq-icon-large">📦</div>
+                <h3>安装配置</h3>
+                <p>如何安装、配置 API Key、验证安装</p>
+            </a>
+            <a href="faq.html#usage" class="faq-card">
+                <div class="faq-icon-large">🚀</div>
+                <h3>使用教程</h3>
+                <p>第一次使用、CLI vs Web、工作流选择</p>
+            </a>
+            <a href="faq.html#model" class="faq-card">
+                <div class="faq-icon-large">🤖</div>
+                <h3>模型选择</h3>
+                <p>选哪个模型、多 Key 配置、Key 泄露处理</p>
+            </a>
+            <a href="faq.html#trouble" class="faq-card">
+                <div class="faq-icon-large">🔧</div>
+                <h3>故障排查</h3>
+                <p>Key 未配置、超时、代码错误修复</p>
+            </a>
+        </div>
+
+        <div style="text-align: center; margin-top: 2rem;">
+            <a href="faq.html" class="btn btn-secondary">查看全部 15+ 个问题 →</a>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <p>开源项目 · <a href="https://github.com/vobc/oh-my-coder">GitHub</a> · MIT 协议</p>
+        <p style="margin-top: 0.5rem; font-size: 0.875rem;">Made with ❤️ by VOBC</p>
+    </footer>
+
+    <script>
+        // Copy code
+        function copyCode(btn) {
+            const code = btn.closest('.code-block').querySelector('.code-content').innerText;
+            navigator.clipboard.writeText(code).then(() => {
+                btn.textContent = '已复制!';
+                setTimeout(() => btn.textContent = '复制', 2000);
+            });
+        }
+
+        // Animate terminal lines on scroll
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.querySelectorAll('.terminal-line').forEach((line, i) => {
+                        line.style.animationDelay = `${i * 0.5}s`;
+                    });
+                }
+            });
+        });
+
+        document.querySelectorAll('.terminal-demo').forEach(demo => observer.observe(demo));
+    </script>
+</body>
+</html>
