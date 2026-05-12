@@ -784,6 +784,11 @@ export default function App() {
     await handleSendMessage(text);
   }, [input, loading, handleSendMessage]);
 
+  const handleExampleClick = useCallback(async (task: string) => {
+    if (loading) return;
+    await handleSendMessage(task);
+  }, [loading, handleSendMessage]);
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); }
   };
