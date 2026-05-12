@@ -63,7 +63,7 @@ def run_coverage_analysis(project_root: Path) -> CoverageSummary:
     except subprocess.TimeoutExpired:
         summary.overall_coverage = -1.0
         return summary
-    except Exception as e:
+    except Exception:
         summary.overall_coverage = -1.0
         return summary
 

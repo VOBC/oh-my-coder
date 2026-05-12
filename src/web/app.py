@@ -40,6 +40,7 @@ try:
     from src.config.workflow_loader import WorkflowLoader
     from src.core.orchestrator import WORKFLOW_TEMPLATES, Orchestrator
     from src.core.router import ModelRouter, RouterConfig
+    from src.web.coverage_api import format_coverage_report, run_coverage_analysis
     from src.web.dashboard_api import router as dashboard_router
     from src.web.history_api import (
         agent_router,
@@ -47,7 +48,6 @@ try:
         history_store,
         verify_api_token,
     )
-    from src.web.coverage_api import format_coverage_report, run_coverage_analysis
     from src.web.local_models_api import router as local_models_router
     from src.web.share_api import router as share_router
     from src.web.team_api import router as team_router
@@ -1694,7 +1694,7 @@ async def get_coverage():
         return JSONResponse(report)
     except Exception as e:
         return JSONResponse(
-            {"error": str(e), "overall": {"coverage": 0, "color": "#ef4444"}},
+            {"error": f"覆盖率分析失败: {type(e).__name__}", "overall": {"coverage": 0, "color": "#ef4444"}},
             status_code=500,
         )
 
@@ -1708,7 +1708,7 @@ async def run_coverage():
         return JSONResponse(report)
     except Exception as e:
         return JSONResponse(
-            {"error": str(e), "overall": {"coverage": 0, "color": "#ef4444"}},
+            {"error": f"覆盖率分析失败: {type(e).__name__}", "overall": {"coverage": 0, "color": "#ef4444"}},
             status_code=500,
         )
 
