@@ -6,7 +6,6 @@ interface VoiceInputProps {
   lang?: string;
 }
 
-// Web Speech API type declarations
 interface SpeechRecognitionEvent extends Event {
   results: SpeechRecognitionResultList;
   resultIndex: number;
@@ -23,9 +22,13 @@ export const VoiceInput: React.FC<VoiceInputProps> = ({
 }) => {
   const [isListening, setIsListening] = useState(false);
   const [interimText, setInterimText] = useState('');
+  const [errorMsg, setErrorMsg] = useState('');
   const recognitionRef = useRef<any>(null);
   const isSupported = typeof window !== 'undefined' && 
     ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window);
+
+  // Check if actually available (Electron may have the API but not the service)
+  const [actuallyAvailable, setActuallyAvailable] = useState(isSupported);
 
   useEffect(() => {
     return () => {
@@ -35,14 +38,20 @@ export const VoiceInput: React.FC<VoiceInputProps> = ({
     };
   }, []);
 
+  // Clear error after 4s
+  useEffect(() => {
+    if (!errorMsg) return;
+    const t = setTimeout(() => setErrorMsg(''), 4000);
+    return () => clearTimeout(t);
+  }, [errorMsg]);
+
   const toggleListening = useCallback(() => {
-    if (!isSupported) {
-      alert('语音输入不可用。请确保使用最新版 Chrome 或 Electron。');
+    if (!isSupported || !actuallyAvailable) {
+      setErrorMsg('语音输入仅支持浏览器版本，桌面端暂不可用');
       return;
     }
 
     if (isListening) {
-      // Stop listening
       if (recognitionRef.current) {
         recognitionRef.current.stop();
       }
@@ -51,7 +60,6 @@ export const VoiceInput: React.FC<VoiceInputProps> = ({
       return;
     }
 
-    // Start listening
     const SpeechRecognition = (window as any).SpeechRecognition || 
                               (window as any).webkitSpeechRecognition;
     const recognition = new SpeechRecognition();
@@ -64,6 +72,7 @@ export const VoiceInput: React.FC<VoiceInputProps> = ({
     recognition.onstart = () => {
       setIsListening(true);
       setInterimText('');
+      setErrorMsg('');
     };
 
     recognition.onresult = (event: SpeechRecognitionEvent) => {
@@ -93,11 +102,14 @@ export const VoiceInput: React.FC<VoiceInputProps> = ({
       setInterimText('');
       
       if (event.error === 'not-allowed') {
-        alert('请允许麦克风权限后重试。');
+        setErrorMsg('请在系统设置中允许麦克风权限');
+      } else if (event.error === 'network' || event.error === 'service-not-available') {
+        setActuallyAvailable(false);
+        setErrorMsg('语音输入仅支持浏览器版本，桌面端暂不可用');
       } else if (event.error === 'no-speech') {
         // Silent - user just didn't speak
       } else if (event.error !== 'aborted') {
-        alert(`语音识别出错: ${event.error}`);
+        setErrorMsg(`语音识别出错: ${event.error}`);
       }
     };
 
@@ -108,12 +120,12 @@ export const VoiceInput: React.FC<VoiceInputProps> = ({
 
     recognitionRef.current = recognition;
     recognition.start();
-  }, [isListening, isSupported, lang, onResult]);
+  }, [isListening, isSupported, actuallyAvailable, lang, onResult]);
 
   return (
-    <div className="voice-input" title={isListening ? '点击停止' : '语音输入'}>
+    <div className="voice-input" title={isListening ? '点击停止' : (actuallyAvailable ? '语音输入' : '语音输入仅支持浏览器版本')}>
       <button
-        className={`voice-input__btn ${isListening ? 'voice-input__btn--active' : ''}`}
+        className={`voice-input__btn ${isListening ? 'voice-input__btn--active' : ''} ${!actuallyAvailable ? 'voice-input__btn--disabled' : ''}`}
         onClick={toggleListening}
         disabled={disabled}
         type="button"
@@ -136,6 +148,9 @@ export const VoiceInput: React.FC<VoiceInputProps> = ({
           <span className="voice-input__dot"></span>
           {interimText && <span className="voice-input__interim">{interimText}</span>}
         </div>
+      )}
+      {errorMsg && (
+        <div className="voice-input__error">{errorMsg}</div>
       )}
     </div>
   );
