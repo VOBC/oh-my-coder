@@ -51,6 +51,9 @@ contextBridge.exposeInMainWorld('omc', {
     return () => ipcRenderer.removeListener('navigate', h);
   },
 
-  // Model Config Test
+  // Model Config Persistence
+  modelConfigList: () => ipcRenderer.invoke('omc:model:config:list'),
+  modelConfigSet: (modelId, config) => ipcRenderer.invoke('omc:model:config:set', { modelId, config }),
+  modelConfigDelete: (modelId) => ipcRenderer.invoke('omc:model:config:delete', modelId),
   modelConfigTest: (modelId, config) => ipcRenderer.invoke('omc:model:config:test', { modelId, config }),
 });

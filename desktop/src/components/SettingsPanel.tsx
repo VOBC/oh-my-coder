@@ -361,9 +361,6 @@ export default function SettingsPanel({ onClose }: { onClose: () => void }) {
   useEffect(() => {
     const load = async () => {
       try {
-        // Load from localStorage (encrypted) first
-        const localConfigs = loadEncryptedConfig();
-        
         let modelList: ModelInfo[] = [];
         let cfgData: ModelConfig = {};
         
@@ -375,8 +372,15 @@ export default function SettingsPanel({ onClose }: { onClose: () => void }) {
           modelList = FALLBACK_MODELS;
         }
         
-        // Merge: API configs take precedence, but fill gaps from localStorage
+        // Priority: IPC configs (persisted) > localStorage (legacy)
+        const localConfigs = loadEncryptedConfig();
         const mergedConfigs = { ...localConfigs, ...cfgData };
+        
+        // If IPC configs exist, clear legacy localStorage to avoid future confusion
+        if (Object.keys(cfgData).length > 0 && Object.keys(localConfigs).length > 0) {
+          clearEncryptedConfig();
+          console.log('[Settings] Migrated from localStorage to IPC persistence');
+        }
         
         setModels(modelList);
         setConfigs(mergedConfigs);
@@ -413,16 +417,23 @@ export default function SettingsPanel({ onClose }: { onClose: () => void }) {
   }, []);
 
   const handleConfigSave = useCallback(async (modelId: string, cfg: ModelConfigEntry) => {
-    // Save to localStorage (encrypted)
+    // Try to save via IPC first (persistent storage in ~/.omc/config.json)
+    let savedViaIPC = false;
+    try {
+      const result = await (window.omc as any).modelConfigSet(modelId, cfg);
+      savedViaIPC = result?.ok;
+    } catch {
+      // IPC not available, will use localStorage fallback
+    }
+    
+    // Update local state
     const updatedConfigs = { ...configs, [modelId]: cfg };
-    saveEncryptedConfig(updatedConfigs);
     setConfigs(updatedConfigs);
     
-    // Also try to save via API
-    try {
-      await (window.omc as any).modelConfigSet(modelId, cfg);
-    } catch {
-      // API might not be available, localStorage is the fallback
+    // Fallback to localStorage if IPC failed
+    if (!savedViaIPC) {
+      saveEncryptedConfig(updatedConfigs);
+      console.warn('[Settings] IPC save failed, using localStorage fallback');
     }
   }, [configs]);
 
@@ -456,14 +467,21 @@ export default function SettingsPanel({ onClose }: { onClose: () => void }) {
         if (typeof imported !== 'object') throw new Error('Invalid format');
         const merged = { ...configs };
         const entries = Object.entries(imported) as [string, ModelConfigEntry][];
+        
+        let ipcAvailable = false;
         for (const [mid, cfg] of entries) {
           merged[mid] = cfg;
           try {
             await (window.omc as any).modelConfigSet(mid, cfg);
-          } catch { /* skip per-key errors */ }
+            ipcAvailable = true;
+          } catch { /* IPC not available */ }
         }
-        // Save encrypted to localStorage
-        saveEncryptedConfig(merged);
+        
+        // Only use localStorage if IPC is not available
+        if (!ipcAvailable) {
+          saveEncryptedConfig(merged);
+        }
+        
         setConfigs(merged);
         setImportError(null);
       } catch (err: unknown) {
@@ -476,8 +494,20 @@ export default function SettingsPanel({ onClose }: { onClose: () => void }) {
     e.target.value = '';
   };
 
-  const handleResetAll = () => {
+  const handleResetAll = async () => {
+    // Clear localStorage
     clearEncryptedConfig();
+    
+    // Clear IPC persisted configs
+    try {
+      const allConfigs = await (window.omc as any).modelConfigList();
+      for (const modelId of Object.keys(allConfigs || {})) {
+        try {
+          await (window.omc as any).modelConfigDelete(modelId);
+        } catch { /* ignore */ }
+      }
+    } catch { /* IPC not available */ }
+    
     setConfigs({});
     setShowResetConfirm(false);
     // Reload page to reset all state

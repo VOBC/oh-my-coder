@@ -308,6 +308,74 @@ function setupIpc() {
     }
   });
 
+  // Model Config Persistence (read/write ~/.omc/config.json)
+  ipcMain.handle('omc:model:config:list', async () => {
+    try {
+      const configPath = path.join(os.homedir(), '.omc', 'config.json');
+      if (!fs.existsSync(configPath)) return {};
+      const content = fs.readFileSync(configPath, 'utf-8');
+      const config = JSON.parse(content);
+      return config.models || {};
+    } catch (e) {
+      log('Failed to read model configs:', e.message);
+      return {};
+    }
+  });
+
+  ipcMain.handle('omc:model:config:set', async (_, { modelId, config }) => {
+    try {
+      const omcDir = path.join(os.homedir(), '.omc');
+      const configPath = path.join(omcDir, 'config.json');
+      
+      // Ensure directory exists
+      if (!fs.existsSync(omcDir)) {
+        fs.mkdirSync(omcDir, { recursive: true });
+      }
+      
+      // Read existing config or create new
+      let fullConfig = { models: {}, defaults: {} };
+      if (fs.existsSync(configPath)) {
+        const content = fs.readFileSync(configPath, 'utf-8');
+        fullConfig = JSON.parse(content);
+      }
+      
+      // Update model config
+      if (!fullConfig.models) fullConfig.models = {};
+      fullConfig.models[modelId] = {
+        ...(fullConfig.models[modelId] || {}),
+        ...config,
+        updated_at: new Date().toISOString(),
+      };
+      
+      // Write back
+      fs.writeFileSync(configPath, JSON.stringify(fullConfig, null, 4), 'utf-8');
+      log('Model config saved:', modelId);
+      return { ok: true };
+    } catch (e) {
+      log('Failed to save model config:', e.message);
+      return { ok: false, error: e.message };
+    }
+  });
+
+  ipcMain.handle('omc:model:config:delete', async (_, modelId) => {
+    try {
+      const configPath = path.join(os.homedir(), '.omc', 'config.json');
+      if (!fs.existsSync(configPath)) return { ok: true };
+      
+      const content = fs.readFileSync(configPath, 'utf-8');
+      const fullConfig = JSON.parse(content);
+      
+      if (fullConfig.models && fullConfig.models[modelId]) {
+        delete fullConfig.models[modelId];
+        fs.writeFileSync(configPath, JSON.stringify(fullConfig, null, 4), 'utf-8');
+        log('Model config deleted:', modelId);
+      }
+      return { ok: true };
+    } catch (e) {
+      return { ok: false, error: e.message };
+    }
+  });
+
   // Model Config Test
   ipcMain.handle('omc:model:config:test', async (_, { modelId, config }) => {
     try {
