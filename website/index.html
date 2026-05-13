@@ -1090,20 +1090,16 @@
         </div>
 
         <div class="screenshots-content hidden" id="tab-cli">
-            <div class="screenshot-placeholder">
-                <div class="placeholder-icon">💻</div>
-                <h3>CLI 命令行截图</h3>
-                <p>终端界面截图即将添加</p>
-                <p class="placeholder-note">支持彩色输出、进度条、交互式确认</p>
+            <div class="screenshot-single">
+                <img src="https://raw.githubusercontent.com/vobc/oh-my-coder/main/docs/screenshots/cli-agents.jpg" alt="CLI 命令行 - Agent 列表">
+                <p class="screenshot-caption">终端运行 <code>omc agents</code> 查看 30+ 智能体</p>
             </div>
         </div>
 
         <div class="screenshots-content hidden" id="tab-desktop">
-            <div class="screenshot-placeholder">
-                <div class="placeholder-icon">🖥️</div>
-                <h3>Desktop 桌面端截图</h3>
-                <p>桌面应用截图即将添加</p>
-                <p class="placeholder-note">基于 Electron，支持语音输入、多 Agent 状态指示器</p>
+            <div class="screenshot-single">
+                <img src="https://raw.githubusercontent.com/vobc/oh-my-coder/main/docs/screenshots/desktop-chat.jpg" alt="Desktop 桌面端 - 多 Agent 协作">
+                <p class="screenshot-caption">Electron 桌面应用，支持多 Agent 状态指示器和语音输入</p>
             </div>
         </div>
     </section>
@@ -1190,6 +1186,36 @@
             border: 2px dashed var(--border);
             max-width: 600px;
             margin: 0 auto;
+        }
+
+        .screenshot-single {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: var(--bg-card);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+
+        .screenshot-single img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .screenshot-caption {
+            padding: 1.5rem;
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+
+        .screenshot-caption code {
+            background: rgba(6, 182, 212, 0.1);
+            color: var(--accent-cyan);
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-family: 'JetBrains Mono', monospace;
         }
 
         .placeholder-icon {
