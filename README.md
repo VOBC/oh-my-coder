@@ -638,7 +638,7 @@ omc context browser
 |---------|------|--------|--------|------|
 | `deepseek-chat` | DeepSeek V4 | DeepSeek | 64K | ✅ production |
 | `deepseek-reasoner` | DeepSeek R1 | DeepSeek | 64K | ✅ production |
-| `glm-4-flash` | GLM-4-Flash | 智谱 | 128K | ✅ production |
+| `glm-4-flash` | GLM-4.7-Flash | 智谱 | 128K | ✅ production |
 | `glm-4v-flash` | GLM-4V-Flash（视觉） | 智谱 | 128K | ✅ production |
 | `MiniMax-Text-01` | MiMo V2 Flash | 小米 | 200K | ✅ production |
 | `moonshot-v1-128k` | Kimi 128K | Moonshot | 128K | ✅ production |
@@ -663,7 +663,7 @@ omc context browser
 | 变量名 | 必填 | 说明 |
 |--------|------|------|
 | `DEEPSEEK_API_KEY` | 推荐 | [DeepSeek 平台](https://platform.deepseek.com/)，新用户赠送余额 |
-| `GLM_API_KEY` | 推荐 | [智谱平台](https://open.bigmodel.cn/)，GLM-4-Flash 完全免费 |
+| `GLM_API_KEY` | 推荐 | [智谱平台](https://open.bigmodel.cn/)，GLM-4.7-Flash 完全免费 |
 | `QWEN_API_KEY` | 可选 | [阿里云百炼](https://dashscope.console.aliyun.com/) |
 | `KIMI_API_KEY` | 可选 | [Moonshot](https://platform.moonshot.cn/) |
 | `DOUBAO_API_KEY` | 可选 | [火山引擎](https://console.volcengine.com/) |

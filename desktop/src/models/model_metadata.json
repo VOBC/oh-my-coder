@@ -2,7 +2,7 @@
   "production": [
     { "id": "deepseek-chat", "provider": "DeepSeek", "name": "DeepSeek V4" },
     { "id": "deepseek-reasoner", "provider": "DeepSeek", "name": "DeepSeek R1" },
-    { "id": "glm-4-flash", "provider": "Zhipu", "name": "GLM-4-Flash" },
+    { "id": "glm-4-flash", "provider": "Zhipu", "name": "GLM-4.7-Flash" },
     { "id": "glm-4v-flash", "provider": "Zhipu", "name": "GLM-4V-Flash" },
     { "id": "qwen-plus", "provider": "Alibaba", "name": "Qwen2.5-72B" },
     { "id": "qwen-vl-plus", "provider": "Alibaba", "name": "Qwen2.5-VL-72B" },
