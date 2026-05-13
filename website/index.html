@@ -1221,6 +1221,101 @@
             padding-top: 1rem;
             border-top: 1px solid var(--border);
         }
+
+        /* Floating Contact Buttons */
+        .contact-float {
+            position: fixed;
+            right: 24px;
+            bottom: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            z-index: 999;
+        }
+
+        .contact-btn {
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+            transition: all 0.3s ease;
+            border: none;
+            position: relative;
+        }
+
+        .contact-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 24px rgba(0, 0, 0, 0.25);
+        }
+
+        .contact-btn-wechat {
+            background: #07C160;
+            color: white;
+        }
+
+        .contact-btn-email {
+            background: var(--accent-cyan);
+            color: white;
+        }
+
+        .contact-popup {
+            position: absolute;
+            right: 64px;
+            bottom: 0;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+            padding: 12px;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(8px);
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .contact-btn:hover .contact-popup {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .contact-popup img {
+            width: 160px;
+            height: 160px;
+            border-radius: 8px;
+            display: block;
+        }
+
+        .contact-popup-text {
+            padding: 8px 12px;
+            font-size: 0.9rem;
+            color: var(--text-primary);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        @media (max-width: 768px) {
+            .contact-float {
+                right: 16px;
+                bottom: 16px;
+            }
+            .contact-btn {
+                width: 44px;
+                height: 44px;
+                font-size: 20px;
+            }
+            .contact-popup {
+                right: 56px;
+            }
+            .contact-popup img {
+                width: 130px;
+                height: 130px;
+            }
+        }
     </style>
 
     <script>
@@ -1273,6 +1368,22 @@
     </section>
 
     <!-- Footer -->
+    <!-- Floating Contact -->
+    <div class="contact-float">
+        <div class="contact-btn contact-btn-wechat" title="微信联系">
+            💬
+            <div class="contact-popup">
+                <img src="wechat-qr.jpg" alt="微信二维码">
+            </div>
+        </div>
+        <div class="contact-btn contact-btn-email" title="邮箱联系">
+            ✉️
+            <div class="contact-popup">
+                <div class="contact-popup-text">vobc@foxmail.com</div>
+            </div>
+        </div>
+    </div>
+
     <footer>
         <p>开源项目 · <a href="https://github.com/vobc/oh-my-coder">GitHub</a> · MIT 协议</p>
         <p style="margin-top: 0.5rem; font-size: 0.875rem;">Made with ❤️ by VOBC</p>
