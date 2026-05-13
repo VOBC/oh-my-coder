@@ -783,7 +783,7 @@
                 <a href="#security">安全合规</a>
                 <a href="#features">核心特性</a>
                 <a href="#agents">Agent 工作流</a>
-                <a href="#preview">界面预览</a>
+                <a href="#screenshots">界面预览</a>
                 <a href="#quickstart">快速开始</a>
                 <a href="#faq">常见问题</a>
                 <a href="blog.html">博客</a>
@@ -1019,6 +1019,57 @@
         </div>
     </section>
 
+    <!-- Screenshots Preview -->
+    <section class="screenshots-section" id="screenshots">
+        <h2 class="section-title">界面预览</h2>
+        <p class="section-subtitle">CLI 命令行、Web 界面、Desktop 桌面端三种使用方式</p>
+
+        <div class="screenshots-tabs">
+            <button class="tab-btn active" onclick="switchTab('cli')">💻 CLI 命令行</button>
+            <button class="tab-btn" onclick="switchTab('web')">🌐 Web 界面</button>
+            <button class="tab-btn" onclick="switchTab('desktop')">🖥️ Desktop 桌面端</button>
+        </div>
+
+        <div class="screenshots-content hidden" id="tab-cli">
+            <div class="screenshot-single">
+                <img src="https://raw.githubusercontent.com/vobc/oh-my-coder/main/docs/screenshots/cli-agents.jpg" alt="CLI 命令行 - Agent 列表">
+                <p class="screenshot-caption">终端运行 <code>omc agents</code> 查看 30+ 智能体</p>
+            </div>
+        </div>
+
+        <div class="screenshots-content" id="tab-web">
+            <div class="screenshots-grid">
+                <div class="screenshot-card">
+                    <img src="https://raw.githubusercontent.com/vobc/oh-my-coder/main/docs/screenshots/screenshot-homepage.jpg" alt="Web 首页">
+                    <p>🏠 首页 — 模型选择与工作流</p>
+                </div>
+                <div class="screenshot-card">
+                    <img src="https://raw.githubusercontent.com/vobc/oh-my-coder/main/docs/screenshots/screenshot-task-create.jpg" alt="任务创建">
+                    <p>📝 任务创建 — 三种分析模式</p>
+                </div>
+                <div class="screenshot-card">
+                    <img src="https://raw.githubusercontent.com/vobc/oh-my-coder/main/docs/screenshots/screenshot-task-full.jpg" alt="完整任务创建">
+                    <p>🚀 完整任务创建页面</p>
+                </div>
+                <div class="screenshot-card">
+                    <img src="https://raw.githubusercontent.com/vobc/oh-my-coder/main/docs/screenshots/screenshot-api-keys.jpg" alt="API Keys">
+                    <p>🔑 API Keys 管理 — 多供应商配置</p>
+                </div>
+                <div class="screenshot-card">
+                    <img src="https://raw.githubusercontent.com/vobc/oh-my-coder/main/docs/screenshots/screenshot-history.jpg" alt="任务历史">
+                    <p>📋 任务历史 — 执行记录追踪</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="screenshots-content hidden" id="tab-desktop">
+            <div class="screenshot-single">
+                <img src="https://raw.githubusercontent.com/vobc/oh-my-coder/main/docs/screenshots/desktop-chat.jpg" alt="Desktop 桌面端 - 多 Agent 协作">
+                <p class="screenshot-caption">Electron 桌面应用，支持多 Agent 状态指示器和实时日志面板</p>
+            </div>
+        </div>
+    </section>
+
     <!-- Quick Start -->
     <section class="quickstart" id="quickstart">
         <h2 class="section-title">快速开始</h2>
@@ -1050,57 +1101,6 @@
                 <span class="comment"># 桌面端</span><br>
                 git clone https://github.com/vobc/oh-my-coder.git<br>
                 cd oh-my-coder/desktop && npm install && npm start
-            </div>
-        </div>
-    </section>
-
-    <!-- Screenshots Preview -->
-    <section class="screenshots-section" id="screenshots">
-        <h2 class="section-title">界面预览</h2>
-        <p class="section-subtitle">Web 界面、CLI 命令行、Desktop 桌面端三种使用方式</p>
-
-        <div class="screenshots-tabs">
-            <button class="tab-btn active" onclick="switchTab('web')">🌐 Web 界面</button>
-            <button class="tab-btn" onclick="switchTab('cli')">💻 CLI 命令行</button>
-            <button class="tab-btn" onclick="switchTab('desktop')">🖥️ Desktop 桌面端</button>
-        </div>
-
-        <div class="screenshots-content" id="tab-web">
-            <div class="screenshots-grid">
-                <div class="screenshot-card">
-                    <img src="https://raw.githubusercontent.com/vobc/oh-my-coder/main/docs/screenshots/screenshot-homepage.jpg" alt="Web 首页">
-                    <p>🏠 首页 — 模型选择与工作流</p>
-                </div>
-                <div class="screenshot-card">
-                    <img src="https://raw.githubusercontent.com/vobc/oh-my-coder/main/docs/screenshots/screenshot-task-create.jpg" alt="任务创建">
-                    <p>📝 任务创建 — 三种分析模式</p>
-                </div>
-                <div class="screenshot-card">
-                    <img src="https://raw.githubusercontent.com/vobc/oh-my-coder/main/docs/screenshots/screenshot-task-full.jpg" alt="完整任务创建">
-                    <p>🚀 完整任务创建页面</p>
-                </div>
-                <div class="screenshot-card">
-                    <img src="https://raw.githubusercontent.com/vobc/oh-my-coder/main/docs/screenshots/screenshot-api-keys.jpg" alt="API Keys">
-                    <p>🔑 API Keys 管理 — 多供应商配置</p>
-                </div>
-                <div class="screenshot-card">
-                    <img src="https://raw.githubusercontent.com/vobc/oh-my-coder/main/docs/screenshots/screenshot-history.jpg" alt="任务历史">
-                    <p>📋 任务历史 — 执行记录追踪</p>
-                </div>
-            </div>
-        </div>
-
-        <div class="screenshots-content hidden" id="tab-cli">
-            <div class="screenshot-single">
-                <img src="https://raw.githubusercontent.com/vobc/oh-my-coder/main/docs/screenshots/cli-agents.jpg" alt="CLI 命令行 - Agent 列表">
-                <p class="screenshot-caption">终端运行 <code>omc agents</code> 查看 30+ 智能体</p>
-            </div>
-        </div>
-
-        <div class="screenshots-content hidden" id="tab-desktop">
-            <div class="screenshot-single">
-                <img src="https://raw.githubusercontent.com/vobc/oh-my-coder/main/docs/screenshots/desktop-chat.jpg" alt="Desktop 桌面端 - 多 Agent 协作">
-                <p class="screenshot-caption">Electron 桌面应用，支持多 Agent 状态指示器和实时日志面板</p>
             </div>
         </div>
     </section>
