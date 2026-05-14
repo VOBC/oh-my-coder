@@ -14,9 +14,9 @@ export interface Model {
 
 export const PRODUCTION_MODELS: Model[] = [
   { id: 'deepseek-chat', name: 'DeepSeek V4', provider: 'deepseek', tier: 'low', context: 64000 },
-  { id: 'deepseek-reasoner', name: 'DeepSeek R1', provider: 'deepseek', tier: 'medium', context: 64000 },
+
   { id: 'glm-4-flash', name: 'GLM-4.7-Flash', provider: 'glm', tier: 'free', context: 128000 },
-  { id: 'MiniMax-Text-01', name: 'MiMo V2 Flash', provider: 'xiaomi', tier: 'free', context: 200000 },
+  { id: 'MiniMax-Text-01', name: 'MiMo Flash', provider: 'xiaomi', tier: 'free', context: 200000 },
   { id: 'moonshot-v1-128k', name: 'Kimi 128K', provider: 'kimi', tier: 'low', context: 128000 },
   { id: 'doubao-pro-32k', name: 'Doubao-Pro-32K', provider: 'doubao', tier: 'low', context: 32000 },
   { id: 'tiangong-3', name: '天工 3.0', provider: 'doubao', tier: 'low', context: 128000 },

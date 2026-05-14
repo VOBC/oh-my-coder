@@ -45,7 +45,7 @@ PRICES_FILE = CONFIG_DIR / "model_prices.json"
 DEFAULT_PRICES = {
     "deepseek-chat": {"prompt": 0.001, "completion": 0.002},
     "deepseek-coder": {"prompt": 0.001, "completion": 0.002},
-    "deepseek-reasoner": {"prompt": 0.004, "completion": 0.016},
+
     "gpt-4o": {"prompt": 0.036, "completion": 0.108},
     "gpt-4o-mini": {"prompt": 0.003, "completion": 0.012},
     "claude-3-opus": {"prompt": 0.105, "completion": 0.525},

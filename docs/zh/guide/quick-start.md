@@ -59,7 +59,7 @@ export HUNYUAN_SECRET_KEY=your_secret   # 腾讯混元 SECRET KEY
 ```bash
 export DEEPSEEK_API_KEY=sk-xxxxx
 # API 地址: https://api.deepseek.com
-# 模型: deepseek-chat, deepseek-reasoner
+# 模型: deepseek-chat
 ```
 
 **文心一言**

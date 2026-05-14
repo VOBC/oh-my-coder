@@ -247,7 +247,7 @@ def demo_complex_task():
             ("security", True, "发现 0 个高危漏洞"),
         ],
         agent_count=7,
-        models_used=["deepseek-chat", "deepseek-chat", "deepseek-reasoner"],
+        models_used=["deepseek-chat", "deepseek-chat", "glm-4-flash"],
     )
 
     print_summary(mock_summary)

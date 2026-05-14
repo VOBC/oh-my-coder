@@ -443,7 +443,7 @@ response = await model.generate(messages)
 |------|------|
 | LOW | `deepseek-chat` (快速) |
 | MEDIUM | `deepseek-chat` (平衡) |
-| HIGH | `deepseek-reasoner` (深度推理) |
+| HIGH | `glm-4-flash` (智谱) |
 
 **成本：** 完全免费（每日 4000 万 token 额度）
 

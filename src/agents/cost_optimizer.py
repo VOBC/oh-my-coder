@@ -364,7 +364,7 @@ MODEL_PRICING = {
     "claude-3.5-opus": {"input": 18.00, "output": 90.00},
     # DeepSeek
     "deepseek-chat": {"input": 0.14, "output": 0.28},
-    "deepseek-reasoner": {"input": 0.55, "output": 2.19},
+
     # Qwen
     "qwen-turbo": {"input": 0.30, "output": 0.60},
     "qwen-plus": {"input": 0.80, "output": 2.00},

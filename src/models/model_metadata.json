@@ -25,14 +25,7 @@
     "context": 64000,
     "description": "高性能对话模型，支持函数调用"
   },
-  "deepseek-reasoner": {
-    "status": "production",
-    "name": "DeepSeek R1",
-    "provider": "DeepSeek",
-    "tier": "low",
-    "context": 64000,
-    "description": "深度推理模型，适合复杂逻辑任务"
-  },
+
   "glm-4-flash": {
     "status": "production",
     "name": "GLM-4.7-Flash",
@@ -43,7 +36,7 @@
   },
   "MiniMax-Text-01": {
     "status": "production",
-    "name": "MiMo V2 Flash",
+    "name": "MiMo Flash",
     "provider": "MiniMax",
     "tier": "free",
     "context": 1000000,

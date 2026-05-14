@@ -235,17 +235,7 @@ BUILTIN_CATWALK_MODELS: list[dict[str, Any]] = [
         "context": 64000,
         "features": ["function_call", "streaming"],
     },
-    {
-        "name": "DeepSeek R1",
-        "provider": "deepseek",
-        "api_key_env": "DEEPSEEK_API_KEY",
-        "endpoint": "https://api.deepseek.com",
-        "model": "deepseek-reasoner",
-        "tier": "low",
-        "pricing": {"input": 16, "output": 60},
-        "context": 64000,
-        "features": ["reasoning", "function_call", "streaming"],
-    },
+
     {
         "name": "GLM-4.7-Flash",
         "provider": "glm",
@@ -258,7 +248,7 @@ BUILTIN_CATWALK_MODELS: list[dict[str, Any]] = [
         "features": ["function_call", "vision", "streaming"],
     },
     {
-        "name": "MiMo V2 Flash",
+        "name": "MiMo Flash",
         "provider": "mimo",
         "api_key_env": "MIMO_API_KEY",
         "endpoint": "https://api.minimax.chat/v1",

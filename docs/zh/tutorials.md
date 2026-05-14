@@ -85,6 +85,6 @@ omc checkpoint restore chk_001  # 如需回退
 ### 使用特定模型
 
 ```bash
-export OMC_DEFAULT_MODEL=deepseek-reasoner
+export OMC_DEFAULT_MODEL=deepseek-chat
 omc run "实现复杂算法"
 ```

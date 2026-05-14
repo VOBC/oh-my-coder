@@ -178,7 +178,7 @@ omc status
 
 2. **使用更快的模型**
    ```bash
-   export DEEPSEEK_MODEL=deepseek-chat  # 比 deepseek-reasoner 更快
+   export DEEPSEEK_MODEL=deepseek-chat  # DeepSeek 推荐模型
    ```
 
 3. **分步执行**

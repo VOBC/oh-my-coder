@@ -42,12 +42,7 @@ RECOMMENDATIONS: dict[str, list[dict]] = {
         },
     ],
     "reasoning": [
-        {
-            "model": "deepseek-reasoner",
-            "provider": "DeepSeek",
-            "reason": "深度推理能力强，适合数学与逻辑分析",
-            "free_quota": "500万 tokens/月",
-        },
+
         {
             "model": "qwen3-235b-a22b",
             "provider": "通义千问",
