@@ -1164,30 +1164,21 @@
 
         <!-- Tab: Desktop 桌面端 -->
         <div class="qs-content hidden" id="qs-tab-desktop">
-            <p style="color:#f59e0b; margin-bottom: 12px;">⚠️ <b>Desktop 需要同时启动两个终端窗口</b>（一个跑后端 API，一个跑桌面窗口）</p>
             <div class="code-block">
-                <div class="code-header"><span class="code-lang">终端窗口 1 - 后端 API</span><button class="copy-btn" onclick="copyCode(this)">复制</button></div>
+                <div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">复制</button></div>
                 <div class="code-content">
-<span class="comment"># 1. 安装 CLI（需要 Python 3.9+）</span><br>
+                    <span class="comment"># 1. 安装 CLI（需要 Python 3.9+，用于后端服务）</span><br>
                     pip3 install oh-my-coder<br><br>
                     <span class="comment"># ⚠️ 配置 PATH（如果 omc 命令找不到）：</span><br>
                     <span class="comment"># 将以下行加入 ~/.zshrc（macOS）或 ~/.bashrc（Linux）：</span><br>
                     export PATH="$HOME/Library/Python/3.9/bin:$PATH"<br>
                     source ~/.zshrc<br><br>
-                    <span class="comment"># 2. 启动后端 API 服务（保持这个窗口开着）</span><br>
-                    omc server start<br>
-                    <span class="comment"># 看到 "Uvicorn running on http://127.0.0.1:8080" 即成功</span><br>
-                </div>
-            </div>
-            <div class="code-block" style="margin-top: 16px;">
-                <div class="code-header"><span class="code-lang">终端窗口 2 - 桌面窗口</span><button class="copy-btn" onclick="copyCode(this)">复制</button></div>
-                <div class="code-content">
-                    <span class="comment"># 3. 克隆项目（如已有可跳过）</span><br>
+                    <span class="comment"># 2. 克隆项目（如已有可跳过）</span><br>
                     git clone https://github.com/vobc/oh-my-coder.git<br>
                     cd oh-my-coder/desktop<br><br>
-                    <span class="comment"># 4. 安装桌面端依赖（看到 "added XXX packages" 即成功）</span><br>
+                    <span class="comment"># 3. 安装桌面端依赖（看到 "added XXX packages" 即成功）</span><br>
                     npm install<br><br>
-                    <span class="comment"># 5. 启动桌面窗口（会自动打开）</span><br>
+                    <span class="comment"># 4. 启动桌面窗口（后端会自动启动，无需另开终端）</span><br>
                     npm run electron:dev<br>
                     <span class="comment"># 看到 "VITE" 和 "ELECTRON" 同时运行即成功</span><br>
                 </div>
