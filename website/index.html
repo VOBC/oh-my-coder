@@ -1121,18 +1121,16 @@
                 <div class="code-content">
                     <span class="comment"># 1. 安装（需要 Python 3.9+）</span><br>
                     pip install oh-my-coder<br><br>
-                    <span class="comment"># 2. 验证安装</span><br>
-                    omc --version<br><br>
-                    <span class="comment"># 3. 配置 API Key（免费模型 GLM-4-Flash）</span><br>
+                    <span class="comment"># 2. 配置 API Key（免费模型 GLM-4-Flash）</span><br>
                     <span class="comment"># 获取 Key：https://open.bigmodel.cn → 注册 → API Keys → 创建</span><br>
                     omc config set glm_api_key <span class="string">"your-api-key"</span><br>
                     omc config set default_model glm-4-flash<br><br>
-                    <span class="comment"># 4. 开始使用！直接输入需求即可</span><br>
+                    <span class="comment"># 3. 开始使用！直接输入需求即可</span><br>
                     omc run <span class="string">"帮我分析这个项目的架构"</span><br><br>
-                    <span class="comment"># 更多命令：</span><br>
-                    <span class="comment"># omc models list    查看可用模型</span><br>
-                    <span class="comment"># omc review --path ./src   代码审查</span><br>
-                    <span class="comment"># omc doctor          检查环境</span><br>
+                    <span class="comment"># 其他常用命令：</span><br>
+                    <span class="comment"># omc models list         查看可用模型</span><br>
+                    <span class="comment"># omc review --path ./src 代码审查</span><br>
+                    <span class="comment"># omc agents              查看所有 Agent</span><br>
                 </div>
             </div>
         </div>
@@ -1142,18 +1140,18 @@
             <div class="code-block">
                 <div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">复制</button></div>
                 <div class="code-content">
-                    <span class="comment"># 1. 安装（需要 Python 3.9+）</span><br>
-                    pip install oh-my-coder<br><br>
-                    <span class="comment"># 2. 配置 API Key（免费模型 GLM-4-Flash）</span><br>
-                    <span class="comment"># 获取 Key：https://open.bigmodel.cn → 注册 → API Keys → 创建</span><br>
-                    omc config set glm_api_key <span class="string">"your-api-key"</span><br>
-                    omc config set default_model glm-4-flash<br><br>
-                    <span class="comment"># 3. 启动 Web 服务（自动打开浏览器）</span><br>
-                    omc server<br>
-                    <span class="comment"># 浏览器访问 http://localhost:8080</span><br><br>
-                    <span class="comment"># 4. 在网页中输入任务，点击执行</span><br>
-                    <span class="comment"># 例如：「帮我写一个用户登录功能」</span><br><br>
-                    <span class="comment"># 提示：Web 界面支持 9 个模型可切换</span><br>
+                    <span class="comment"># 1. 克隆项目（Web 界面需从源码运行）</span><br>
+                    git clone https://github.com/vobc/oh-my-coder.git<br>
+                    cd oh-my-coder<br><br>
+                    <span class="comment"># 2. 安装依赖</span><br>
+                    pip install -e ".[web]"<br><br>
+                    <span class="comment"># 3. 启动 Web 服务</span><br>
+                    python -m src.web.app<br>
+                    <span class="comment"># 浏览器自动打开 http://localhost:8000</span><br><br>
+                    <span class="comment"># 4. 在网页中配置 API Key（点击右上角 ⚙️ 设置）</span><br>
+                    <span class="comment">#    - 选择模型（推荐免费：GLM-4-Flash）</span><br>
+                    <span class="comment">#    - 获取 Key：https://open.bigmodel.cn → 注册 → API Keys</span><br>
+                    <span class="comment">#    - 粘贴 API Key → 点击"测试连接"验证 → 开始使用</span><br>
                 </div>
             </div>
         </div>
@@ -1166,20 +1164,22 @@
                     <span class="comment"># 1. 克隆项目</span><br>
                     git clone https://github.com/vobc/oh-my-coder.git<br>
                     cd oh-my-coder<br><br>
-                    <span class="comment"># 2. 配置 API Key（同上，获取方式一样）</span><br>
-                    omc config set glm_api_key <span class="string">"your-api-key"</span><br>
-                    omc config set default_model glm-4-flash<br><br>
-                    <span class="comment"># 3. 进入桌面端目录并安装依赖</span><br>
+                    <span class="comment"># 2. 进入桌面端目录并安装依赖</span><br>
                     cd desktop<br>
                     npm install<br><br>
+                    <span class="comment"># 3. 【关键】安装额外依赖</span><br>
+                    npm install --save-dev concurrently wait-on<br><br>
                     <span class="comment"># 4. 启动桌面应用</span><br>
-                    npm start<br><br>
-                    <span class="comment"># 提示：桌面端支持多 Agent 协作可视化</span><br>
+                    npm run electron:dev<br><br>
+                    <span class="comment"># 5. 在桌面端配置 API Key（打开后点击右上角 ⚙️ 设置）</span><br>
+                    <span class="comment">#    - 选择模型（推荐免费：GLM-4-Flash）</span><br>
+                    <span class="comment">#    - 获取 Key：https://open.bigmodel.cn → 注册 → API Keys</span><br>
+                    <span class="comment">#    - 粘贴 API Key → 点击"测试连接"验证 → 开始使用</span><br>
                 </div>
             </div>
         </div>
 
-        <p class="qs-note">💡 新手推荐从 <strong>CLI 命令行</strong> 开始，最简单快捷。详细教程见 <a href="blog.html" target="_blank">博客 → 第一篇试用教程</a></p>
+        <p class="qs-note">💡 <strong>新手推荐</strong>：想最快体验 → 选 CLI；想要图形界面 → 选 Web 或 Desktop。三种方式都支持在界面内配置 API Key，无需命令行。</p>
     </section>
 
     <style>
