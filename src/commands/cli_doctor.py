@@ -111,7 +111,7 @@ def _check_config_file() -> tuple[bool, str, str]:
     # 用户级 JSON 配置
     user_config = Path.home() / ".config" / "oh-my-coder" / "config.json"
     if user_config.exists():
-        paths.append("~/.config/oh-my-coder/config.json")
+        paths.append("~/.omc/config.json")
 
     if paths:
         return True, " / ".join(paths), ""

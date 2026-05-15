@@ -37,7 +37,7 @@ app = typer.Typer(
 )
 
 # 配置文件路径
-CONFIG_DIR = Path.home() / ".config" / "oh-my-coder"
+CONFIG_DIR = Path.home() / ".omc"
 CONFIG_FILE = CONFIG_DIR / "config.json"
 
 # 支持的模型列表（参考 cli_model.py）

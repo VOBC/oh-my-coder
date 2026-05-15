@@ -16,7 +16,7 @@ def show(
     model: str = typer.Option(None, "--model", "-m", help="指定模型名称"),
 ):
     """查看当前配置"""
-    CONFIG_DIR = Path.home() / ".config" / "oh-my-coder"
+    CONFIG_DIR = Path.home() / ".omc"
     CONFIG_FILE = CONFIG_DIR / "config.json"
 
     def _load() -> dict:
@@ -118,7 +118,7 @@ def set(
         console.print("[red]❗ 需要 --key 参数[/red]")
         raise typer.Exit(1)
 
-    CONFIG_DIR = Path.home() / ".config" / "oh-my-coder"
+    CONFIG_DIR = Path.home() / ".omc"
     CONFIG_FILE = CONFIG_DIR / "config.json"
     CONFIG_FILE.parent.mkdir(parents=True, exist_ok=True)
 
@@ -175,7 +175,7 @@ def set(
 @app.command()
 def models():
     """列出已配置的模型"""
-    CONFIG_DIR = Path.home() / ".config" / "oh-my-coder"
+    CONFIG_DIR = Path.home() / ".omc"
     CONFIG_FILE = CONFIG_DIR / "config.json"
 
     def _load() -> dict:
