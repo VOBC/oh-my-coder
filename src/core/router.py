@@ -195,10 +195,30 @@ class RouterConfig:
             ]
 
             if default_model and default_model != "ollama":
+                # 模型 ID → provider 名的映射（前端传的是 glm-4-flash 等模型 ID）
+                _MODEL_ID_TO_PROVIDER = {
+                    "deepseek-chat": "deepseek",
+                    "glm-4-flash": "glm",
+                    "glm-4": "glm",
+                    "glm-4-plus": "glm",
+                    "MiniMax-Text-01": "minimax",
+                    "moonshot-v1-128k": "kimi",
+                    "moonshot-v1-8k": "kimi",
+                    "moonshot-v1-32k": "kimi",
+                    "doubao-pro-32k": "doubao",
+                    "ernie-4.0-8k-latest": "wenxin",
+                    "qwen-plus": "tongyi",
+                    "qwen-turbo": "tongyi",
+                    "qwen-max": "tongyi",
+                    "hunyuan-turbo": "hunyuan",
+                    "hunyuan-pro": "hunyuan",
+                }
+                # 如果 default_model 是模型 ID，转换为 provider 名
+                default_provider = _MODEL_ID_TO_PROVIDER.get(default_model, default_model)
                 # 用户配置的默认模型（如 glm、kimi 等）插入到第一位
-                if default_model in cloud_fallback:
-                    cloud_fallback.remove(default_model)
-                cloud_fallback.insert(0, default_model)
+                if default_provider in cloud_fallback:
+                    cloud_fallback.remove(default_provider)
+                cloud_fallback.insert(0, default_provider)
 
             if prefer_local:
                 self.fallback_order = ["ollama"] + cloud_fallback
