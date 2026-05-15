@@ -190,4 +190,4 @@ export const VoiceInput = ({
   );
 };
 
-module.exports = { VoiceInput };
+// No module.exports needed — already exported via `export const VoiceInput` above
