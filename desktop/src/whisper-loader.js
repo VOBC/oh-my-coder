@@ -1,6 +1,4 @@
-// whisper-loader.js — CommonJS module for Whisper.cpp WASM
-const fs = require('fs');
-const { promisify } = require('util');
+// whisper-loader.js — ES Module for Whisper.cpp WASM
 
 let whisperInstance = null;
 let modelBuffer = null;
@@ -8,7 +6,7 @@ let isLoading = false;
 let loadPromise = null;
 
 // Load WASM module
-async function loadWasm() {
+async function loadWhisper() {
   if (whisperInstance) return whisperInstance;
   if (loadPromise) return loadPromise;
 
@@ -78,8 +76,8 @@ async function decodeAudio(audioBlob) {
 }
 
 // Main API: transcribe audio blob to text
-async function transcribe(audioBlob) {
-  const whisper = await loadWasm();
+async function transcribeAudio(audioBlob) {
+  const whisper = await loadWhisper();
   const modelData = await loadModel();
   const pcmData = await decodeAudio(audioBlob);
 
@@ -92,8 +90,8 @@ async function transcribe(audioBlob) {
   return result.text || '';
 }
 
-module.exports = {
-  transcribe,
-  loadWasm,
+export {
+  loadWhisper,
+  transcribeAudio,
   loadModel,
 };
