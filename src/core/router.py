@@ -26,6 +26,13 @@ import os
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
+
+from dotenv import load_dotenv
+
+# 加载 .env 文件，确保 DEFAULT_MODEL 等配置能正确读取
+load_dotenv(Path.home() / ".omc" / ".env", override=False)
+load_dotenv(Path(".env"), override=False)
+
 from typing import Any, Optional
 
 import httpx
@@ -166,32 +173,37 @@ class RouterConfig:
             "yes",
         )
 
+        # 3b) 读取用户配置的默认模型（优先级高于硬编码 fallback_order）
+        # 兼容 OMC_DEFAULT_MODEL（环境变量）和 DEFAULT_MODEL（.env / omc config set）
+        default_model = os.getenv("OMC_DEFAULT_MODEL") or os.getenv("DEFAULT_MODEL", "")
+
         # 4) 默认故障转移顺序（优先本地模型，然后免费/便宜的云端）
+        # 用户配置的默认模型永远排在第一位，而不是硬编码 deepseek
         if not self.fallback_order:
-            if self.prefer_local:
-                self.fallback_order = [
-                    "ollama",  # 本地模型优先（零成本）
-                    "deepseek",  # 免费额度高
-                    "kimi",  # 长上下文
-                    "doubao",  # 性价比高
-                    "minimax",  # MiniMax
-                    "glm",  # 智谱
-                    "tongyi",  # 通义千问
-                    "wenxin",  # 文心一言
-                    "hunyuan",  # 混元
-                ]
+            prefer_local = self.prefer_local
+
+            # 通用云端备选列表（不含ollama和用户默认模型）
+            cloud_fallback = [
+                "deepseek",  # 免费额度高
+                "kimi",  # 长上下文
+                "doubao",  # 性价比高
+                "minimax",  # MiniMax
+                "glm",  # 智谱
+                "tongyi",  # 通义千问
+                "wenxin",  # 文心一言
+                "hunyuan",  # 混元
+            ]
+
+            if default_model and default_model != "ollama":
+                # 用户配置的默认模型（如 glm、kimi 等）插入到第一位
+                if default_model in cloud_fallback:
+                    cloud_fallback.remove(default_model)
+                cloud_fallback.insert(0, default_model)
+
+            if prefer_local:
+                self.fallback_order = ["ollama"] + cloud_fallback
             else:
-                self.fallback_order = [
-                    "deepseek",
-                    "kimi",
-                    "doubao",
-                    "minimax",
-                    "glm",
-                    "tongyi",
-                    "wenxin",
-                    "hunyuan",
-                    "ollama",  # 本地模型作为后备
-                ]
+                self.fallback_order = cloud_fallback + ["ollama"]  # 本地模型作为后备
 
     def _load_from_config_file(self) -> None:
         """从 ~/.omc/config.json 读取 API Keys（Web UI 设置保存的目标文件）"""

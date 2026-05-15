@@ -329,8 +329,28 @@ def _init_router() -> ModelRouter:
     """初始化模型路由器，失败时给出友好提示"""
     config = RouterConfig()
 
-    if not config.deepseek_api_key:
-        _print_missing_key_hint("DEEPSEEK_API_KEY", "性价比最高，推荐配置")
+    # 获取用户配置的默认模型，用于提示缺失的 API Key
+    default_model = os.getenv("OMC_DEFAULT_MODEL") or os.getenv("DEFAULT_MODEL", "deepseek")
+    # 将 provider 名映射到对应的 API Key 环境变量
+    api_key_hint_map = {
+        "deepseek": ("DEEPSEEK_API_KEY", "https://platform.deepseek.com/", "性价比最高，推荐配置"),
+        "glm": ("GLM_API_KEY", "https://www.zhipuai.cn/", "智谱 GLM 模型"),
+        "kimi": ("KIMI_API_KEY", "https://platform.moonshot.cn/", "月之暗面 Kimi"),
+        "doubao": ("DOUBAO_API_KEY", "https://console.volcengine.com/", "字节豆包"),
+        "minimax": ("MINIMAX_API_KEY", "https://www.minimax.io/", "MiniMax"),
+        "tongyi": ("DASHSCOPE_API_KEY", "https://dashscope.console.aliyun.com/", "通义千问"),
+        "wenxin": ("ERNIE_API_KEY", "https://cloud.baidu.com/", "文心一言"),
+        "hunyuan": ("HUNYUAN_API_KEY", "https://cloud.tencent.com/", "腾讯混元"),
+        "ollama": None,  # 本地模型不需要 API Key
+    }
+    hint = api_key_hint_map.get(default_model)
+    if hint and not os.getenv(hint[0]):
+        key_name, url, reason = hint
+        _print_missing_key_hint(key_name, reason, url=url)
+    else:
+        # DeepSeek 默认检查（用户没有配置默认模型时）
+        if not os.getenv("DEEPSEEK_API_KEY"):
+            _print_missing_key_hint("DEEPSEEK_API_KEY", "性价比最高，推荐配置", url="https://platform.deepseek.com/")
 
     try:
         return ModelRouter(config)
@@ -338,20 +358,22 @@ def _init_router() -> ModelRouter:
         _print_fatal(f"路由器初始化失败: {e}")
 
 
-def _print_missing_key_hint(key: str, reason: str = ""):
+def _print_missing_key_hint(key: str, reason: str = "", url: str = ""):
     """打印缺失 API Key 的友好提示"""
 
     console.print()
+    hint_lines = f"[dim]推荐:[/dim] {key.split('_')[0].title()} — {reason}\n\n" if reason else ""
+    url_line = f"[dim]获取地址:[/dim] {url}" if url else ""
     console.print(
         Panel(
             f"[bold red]✗ 未找到 {key}[/bold red]\n\n"
             f"[yellow]请先配置 API Key[/yellow]\n\n"
-            f"[dim]推荐:[/dim] DeepSeek — {reason}\n\n"
+            f"{hint_lines}"
             f"[cyan]方法一:[/cyan] 设置环境变量\n"
             f"  [green]export {key}=your_key_here[green]\n\n"
             f"[cyan]方法二:[/cyan] 写入 .env 文件\n"
             f"  [green]echo '{key}=your_key_here' >> .env[green]\n\n"
-            f"[dim]获取地址:[/dim] https://platform.deepseek.com/",
+            f"{url_line}",
             title="⚠️ 缺少 API Key",
             border_style="red",
         )
