@@ -1,6 +1,7 @@
 /* src/App.css — OpenCode Dark Theme */
 
 /* ── Variables ──────────────────────────────────────────────────────────────── */
+/* Dark theme (default) */
 :root {
   --bg:         #0d1117;
   --bg-2:       #1E293B;
@@ -64,6 +65,40 @@
   --shadow-xl:   0 16px 48px rgba(0, 0, 0, 0.6);
 }
 
+/* Light theme */
+[data-theme="light"] {
+  --bg:         #f8f9fb;
+  --bg-2:       #e9ecf1;
+  --bg-3:       #e2e5eb;
+  --bg-4:       #d8dce2;
+  --bg-hover:   #d1d5db;
+  --border:     #d0d3d9;
+  --border-2:   #c8ccd2;
+
+  --amber:      #d49b1a;
+  --accent:     #0891b2;
+  --amber-dim:  #b8860b;
+  --amber-glow: rgba(212, 155, 26, 0.12);
+  --green:      #16a34a;
+  --green-dim:  #15803d;
+  --red:        #dc2626;
+  --blue:       #2563eb;
+  --purple:     #9333ea;
+  --cyan:       #0891b2;
+  --gray-1:     #374151;
+  --gray-2:     #4b5563;
+  --gray-3:     #6b7280;
+  --text:       #111827;
+  --text-dim:   #4b5563;
+
+  /* Light theme glass */
+  --glass-bg:   rgba(248, 249, 251, 0.9);
+  --shadow-sm:   0 1px 3px rgba(0, 0, 0, 0.08);
+  --shadow-md:   0 4px 12px rgba(0, 0, 0, 0.1);
+  --shadow-lg:   0 8px 24px rgba(0, 0, 0, 0.12);
+  --shadow-xl:   0 16px 48px rgba(0, 0, 0, 0.16);
+}
+
 /* ── Focus Visible Styles ───────────────────────────────────────────────────── */
 *:focus-visible {
   outline: 2px solid var(--amber);
@@ -82,6 +117,7 @@ select:focus-visible {
 /* ── Reset ─────────────────────────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+/* Theme transition */
 html, body, #root {
   height: 100%;
   overflow: hidden;
@@ -91,6 +127,7 @@ html, body, #root {
   font-size: 14px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
+  transition: background-color 300ms ease, color 300ms ease;
 }
 
 /* Custom scrollbar */
@@ -467,6 +504,30 @@ html, body, #root {
   color: var(--gray-3);
   font-size: 10px;
   margin-left: 4px;
+}
+
+/* Theme toggle button */
+.topbar__theme-toggle {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 6px 10px;
+  color: var(--text-dim);
+  font-size: 14px;
+  cursor: pointer;
+  transition: all var(--transition);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.topbar__theme-toggle:hover {
+  background: var(--bg-hover);
+  border-color: var(--amber-dim);
+  color: var(--text);
+}
+.topbar__theme-toggle:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: 2px;
 }
 
 /* Model selector */

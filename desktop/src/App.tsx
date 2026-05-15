@@ -371,6 +371,22 @@ export default function App() {
   const [serverStatus, setServerStatus] = useState<'stopped' | 'starting' | 'running'>('stopped');
   const [tab, setTab] = useState<'chat' | 'models'>('chat');
   const [agentState, setAgentState] = useState<AgentState>({ name: 'Idle', status: '待机中', color: '#71717a', icon: '💤' });
+
+  // Theme state
+  const [theme, setTheme] = useState<'dark' | 'light'>(() => {
+    const saved = localStorage.getItem('omc-theme');
+    return (saved === 'light' ? 'light' : 'dark');
+  });
+
+  // Apply theme on change
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('omc-theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme(prev => prev === 'dark' ? 'light' : 'dark');
+  };
   
   // Track if current message is a task (for conditional TaskProgress display)
   const [isTaskMode, setIsTaskMode] = useState(false);
@@ -933,6 +949,13 @@ export default function App() {
               </div>
             }
           />
+          <button
+            className="topbar__theme-toggle"
+            onClick={toggleTheme}
+            title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+          >
+            {theme === 'dark' ? '☀️' : '🌙'}
+          </button>
         </div>
 
         {/* Agent Status Bar */}
