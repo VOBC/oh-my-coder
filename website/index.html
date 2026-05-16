@@ -1171,9 +1171,11 @@
                     <span class="comment"># 1. 克隆项目（如已有可跳过）</span><br>
                     git clone https://github.com/vobc/oh-my-coder.git<br>
                     cd oh-my-coder/desktop<br><br>
-                    <span class="comment"># 2. 安装桌面端依赖（看到 "added XXX packages" 即成功）</span><br>
+                    <span class="comment"># 2. 设置 Electron 镜像（国内必须，否则下载卡住）</span><br>
+                    export ELECTRON_MIRROR=https://npmmirror.com/mirrors/electron/<br><br>
+                    <span class="comment"># 3. 安装桌面端依赖（看到 "added XXX packages" 即成功）</span><br>
                     npm install<br><br>
-                    <span class="comment"># 3. 启动桌面端（直接调用 LLM API，无需启动后端服务）</span><br>
+                    <span class="comment"># 4. 启动桌面端（直接调用 LLM API，无需启动后端服务）</span><br>
                     npm run electron:dev<br>
                     <span class="comment"># 看到 "VITE" 和 "ELECTRON" 同时运行即成功</span><br>
                 </div>
