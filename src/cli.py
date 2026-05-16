@@ -1341,10 +1341,29 @@ def _print_fatal(msg: str, hint: str = ""):
     console.print()
 
 
+def _resolve_default_model(config: dict) -> str:
+    """解析默认模型：环境变量 > config.json > 第一个有 api_key 的模型 > deepseek"""
+    # 1. 环境变量
+    env_model = os.getenv("OMC_DEFAULT_MODEL")
+    if env_model:
+        return env_model
+    # 2. config.json 显式设置
+    cfg_model = config.get("default_model")
+    if cfg_model:
+        return cfg_model
+    # 3. 找第一个有 api_key 的模型
+    models = config.get("models", {})
+    if isinstance(models, dict):
+        for name, mcfg in models.items():
+            if isinstance(mcfg, dict) and mcfg.get("api_key"):
+                return name
+    return "deepseek"
+
+
 def _check_env() -> bool:
     """检查当前默认模型的 API Key 是否就绪（读 config.json），返回 True 表示就绪"""
     config = _load_config()
-    default_model = os.getenv("OMC_DEFAULT_MODEL") or config.get("default_model", "deepseek")
+    default_model = _resolve_default_model(config)
 
     # 优先从 config.json 的 models[default_model].api_key 读取
     models = config.get("models", {})
@@ -1363,6 +1382,8 @@ def _check_env() -> bool:
         "wenxin": "WENXIN_API_KEY",
         "hunyuan": "HUNYUAN_API_KEY",
         "mimo": "MINIMAX_API_KEY",
+        "glm-4-flash": "GLM_API_KEY",
+        "deepseek-chat": "DEEPSEEK_API_KEY",
     }
     key_var = key_map.get(default_model, "DEEPSEEK_API_KEY")
     if not os.getenv(key_var):
