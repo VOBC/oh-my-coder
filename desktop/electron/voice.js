@@ -10,9 +10,9 @@ let whisper = null;
 async function getWhisper() {
   if (whisper) return whisper;
   
-  const { Whisper, decodeAudioAsync } = await import('@napi-rs/whisper');
+  const { Whisper } = await import('@napi-rs/whisper');
   
-  // Load GGML base model (downloaded to user data dir)
+  // Load GGML base model
   const modelPath = path.join(process.env.APPDATA || process.env.HOME, '.omc', 'whisper', 'ggml-base.bin');
   const modelBuf = await readFile(modelPath);
   
@@ -20,13 +20,16 @@ async function getWhisper() {
   return whisper;
 }
 
-// Transcribe audio buffer (raw PCM or audio file bytes) to text
-async function transcribeAudio(audioBuffer) {
+// Transcribe raw audio bytes to text
+async function transcribeAudio(audioBytes) {
   const { WhisperFullParams, WhisperSamplingStrategy, decodeAudioAsync } = await import('@napi-rs/whisper');
   const w = await getWhisper();
   
-  // Decode audio to Float32Array (16kHz mono PCM)
-  const pcm = await decodeAudioAsync(audioBuffer, 'input.wav');
+  // audioBytes is a number array from IPC — convert back to Buffer/Uint8Array
+  const audioBuf = Uint8Array.from(audioBytes);
+  
+  // Decode audio to PCM Float32Array (16kHz mono)
+  const pcm = await decodeAudioAsync(audioBuf, 'input.webm');
   
   // Build params for Chinese transcription
   const params = new WhisperFullParams(WhisperSamplingStrategy.Greedy);
@@ -35,10 +38,9 @@ async function transcribeAudio(audioBuffer) {
   params.printRealtime = false;
   params.printTimestamps = false;
   
-  // Run full transcription
+  // Run full transcription — returns a string
   const result = w.full(params, pcm);
   
-  // full() returns a string directly
   return result || '';
 }
 
