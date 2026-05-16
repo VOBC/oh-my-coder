@@ -1165,18 +1165,28 @@
 
         <!-- Tab: Desktop 桌面端 -->
         <div class="qs-content hidden" id="qs-tab-desktop">
+            <div class="qs-note" style="margin-bottom: 12px; background: #fef3c7; padding: 10px 14px; border-radius: 8px; border-left: 4px solid #f59e0b;">
+                <strong>📋 前置要求</strong><br>
+                • <strong>Node.js ≥ 18</strong>（终端执行 <code>node --version</code> 检查，未安装去 <a href="https://nodejs.org" target="_blank">nodejs.org</a> 下载 LTS 版）<br>
+                • macOS / Windows 10+ / Linux（macOS 用户建议用内置 Terminal，不要用 VS Code 内嵌终端）<br>
+                • Git（终端执行 <code>git --version</code> 检查）
+            </div>
             <div class="code-block">
                 <div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">复制</button></div>
                 <div class="code-content">
-                    <span class="comment"># 1. 克隆项目（约 10 秒，如已有可跳过）</span><br>
+                    <span class="comment"># 1. 克隆项目（如已克隆过可跳过此步）</span><br>
+                    <span class="comment"># ⚠️ 如果提示 "already exists"，先删旧目录或跳过此步直接 cd 进去</span><br>
                     git clone https://github.com/VOBC/oh-my-coder.git<br>
                     cd oh-my-coder/desktop<br><br>
                     <span class="comment"># 2. 设置 Electron 镜像（⚠️ 国内必须设置，否则 npm install 卡死）</span><br>
                     export ELECTRON_MIRROR=https://npmmirror.com/mirrors/electron/<br><br>
                     <span class="comment"># 3. 安装依赖（首次约 1-3 分钟，含 Electron 二进制下载 ~90MB）</span><br>
-                    <span class="comment"># 看到 "added XXX packages" + "Built Electron" 即成功</span><br>
+                    <span class="comment"># ✅ 成功标志：看到 "added XXX packages" 和 "Built Electron"</span><br>
+                    <span class="comment"># ❌ 如果无输出或报错 → 见下方「常见问题」第 1 条</span><br>
                     npm install<br><br>
-                    <span class="comment"># 4. 启动桌面端（约 5-10 秒弹出窗口）</span><br>
+                    <span class="comment"># 4. 验证安装成功（必须看到版本号 v33.x.x）</span><br>
+                    npx electron --version<br><br>
+                    <span class="comment"># 5. 启动桌面端（约 5-10 秒弹出窗口）</span><br>
                     <span class="comment"># 直接调用 LLM API，无需启动后端服务</span><br>
                     npm run electron:dev<br>
                     <span class="comment"># ✅ 看到桌面窗口弹出 = 成功！终端显示两行：</span><br>
@@ -1196,7 +1206,9 @@
             </div>
             <div class="qs-note" style="margin-top: 12px;">
                 <strong>⚠️ 常见问题：</strong><br>
-                • <code>npm install</code> 卡住超过 3 分钟 → 检查是否设置了 ELECTRON_MIRROR<br>
+                • <strong><code>npm install</code> 无输出或报错</strong> → 先确认 Node.js ≥ 18（<code>node --version</code>），然后重试：<code>rm -rf node_modules package-lock.json &amp;&amp; npm install</code><br>
+                • <strong><code>npx electron --version</code> 报 command not found</strong> → 说明 Electron 未安装成功，重新执行第 2+3 步（确保 ELECTRON_MIRROR 已设置）<br>
+                • <strong><code>npm run electron:dev</code> 无输出、光标停住</strong> → 说明依赖没装好，先跑 <code>npx electron --version</code> 验证，失败则重新 <code>npm install</code><br>
                 • <code>port 1420 already in use</code> → 终端执行 <code>lsof -ti:1420 | xargs kill -9</code> 再重启<br>
                 • 窗口白屏 → 检查终端 Vite 是否正常启动（应显示 ready in xxx ms）<br>
                 • 麦克风权限 → 系统设置 → 安全性与隐私 → 麦克风 → 勾选 Electron / Terminal
