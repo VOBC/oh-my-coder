@@ -67,8 +67,20 @@ async function transcribeAudio(audioBytes) {
   console.log('[voice] Raw result:', JSON.stringify(raw));
 
   // Convert Traditional Chinese to Simplified Chinese
-  const result = raw ? tradToSimp(raw) : '';
-  console.log('[voice] Simplified result:', JSON.stringify(result));
+  let result = raw ? tradToSimp(raw) : '';
+
+  // Replace English punctuation with Chinese equivalents
+  result = result
+    .replace(/,/g, '，')
+    .replace(/\./g, '。')
+    .replace(/\?/g, '？')
+    .replace(/!/g, '！')
+    .replace(/;/g, '；')
+    .replace(/:/g, '：')
+    .replace(/\(/g, '（')
+    .replace(/\)/g, '）')
+    .replace(/,/g, '，');
+  console.log('[voice] Final result:', JSON.stringify(result));
 
   return result;
 }
