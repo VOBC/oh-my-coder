@@ -45,10 +45,14 @@ export const VoiceInput = ({
     return () => clearTimeout(t);
   }, [errorMsg]);
 
-  // Convert audio Blob to raw bytes for IPC transfer
-  const blobToBytes = async (blob: Blob): Promise<Uint8Array> => {
+  // Convert audio Blob to PCM Float32Array (16kHz mono) for Whisper
+  const blobToPCM = async (blob: Blob): Promise<Float32Array> => {
     const arrayBuffer = await blob.arrayBuffer();
-    return new Uint8Array(arrayBuffer);
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)({
+      sampleRate: 16000,
+    });
+    const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+    return new Float32Array(audioBuffer.getChannelData(0));
   };
 
   const toggleListening = useCallback(() => {
@@ -98,9 +102,9 @@ export const VoiceInput = ({
           setInterimText('识别中...');
 
           try {
-            // Send raw audio bytes to main process for Whisper decoding
-            const audioBytes = await blobToBytes(blob);
-            const result = await window.omc.whisper.transcribe(Array.from(audioBytes));
+            // Decode to PCM and send to main process for Whisper transcription
+            const pcmData = await blobToPCM(blob);
+            const result = await window.omc.whisper.transcribe(Array.from(pcmData));
             
             if (result.ok && result.text) {
               onResult(result.text);
