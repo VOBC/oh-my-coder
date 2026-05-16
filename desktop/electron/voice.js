@@ -20,7 +20,7 @@ async function getWhisper() {
   const modelBuf = await readFile(modelPath);
 
   whisper = new Whisper(modelBuf);
-  console.log('[voice] Whisper model loaded, type:', whisper.modelType());
+  console.log('[voice] Whisper model loaded');
   return whisper;
 }
 
