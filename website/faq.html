@@ -685,6 +685,20 @@ omc run "使用 my_agent 处理任务"</code></pre>
 
             <div class="faq-item">
                 <div class="faq-question" onclick="toggleFaq(this)">
+                    <span>简单任务（如创建文件）执行很慢/卡住怎么办？</span>
+                    <span class="faq-icon">+</span>
+                </div>
+                <div class="faq-answer">
+                    <p>默认 <code>omc run</code> 会走完整工作流（6个步骤），适合复杂开发任务。对于简单任务（创建文件、运行命令等），加 <code>--simple</code> 或 <code>-s</code> 参数跳过工作流直接执行：</p>
+                    <pre><code># 快速创建文件（不走工作流）
+omc run --simple "帮我在桌面创建一个 hello.txt"
+# 简写
+omc run -s "帮我打印当前目录结构"</code></pre>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">
                     <span>如何集成到 CI/CD？</span>
                     <span class="faq-icon">+</span>
                 </div>

@@ -1144,6 +1144,9 @@
                     omc config set -m glm -k api_key -v <span class="string">"你的API Key"</span><br>
                     omc config set -k DEFAULT_MODEL -v glm-4-flash<br><br>
                     <span class="comment"># 第 4 步：开始使用！</span><br>
+                    <span class="comment"># 简单任务（如创建文件），加 --simple 或 -s 秒出结果</span><br>
+                    omc run --simple <span class="string">"帮我在桌面创建一个 hello.txt"</span><br>
+                    <span class="comment"># 复杂任务（如分析代码），去掉 --simple 走完整工作流</span><br>
                     omc run <span class="string">"帮我分析这个项目"</span><br>
                 </div>
             </div>
@@ -1151,7 +1154,8 @@
                 <div style="font-weight:700; margin-bottom:8px;">⚠️ 遇到问题？</div>
                 <div style="line-height:2;">
                     • <code>omc</code> 说找不到命令 → 粘贴这行：<code style="background:#fff;padding:2px 6px;border-radius:3px;">export PATH="$HOME/Library/Python/3.9/bin:$PATH"</code> 再试<br>
-                    • 更多问题 → 见下方「常见问题」
+                    • 简单任务卡住 → 加 <code>--simple</code> 跳过工作流直接执行：<code>omc run --simple "你的任务"</code><br>
+                    • 更多问题 → 见下方「常见问题」<br>
                 </div>
             </div>
         </div>
