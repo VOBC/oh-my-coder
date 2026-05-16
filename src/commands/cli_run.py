@@ -451,7 +451,7 @@ def _run_simple_task(router: ModelRouter, task: str) -> None:
         try:
             commands = json.loads(raw)
         except json.JSONDecodeError:
-            console.print(f"[red]模型返回结果解析失败[/red]")
+            console.print("[red]模型返回结果解析失败[/red]")
             console.print(f"原始输出:\n{raw}")
             return
 
@@ -489,7 +489,7 @@ def _run_simple_task(router: ModelRouter, task: str) -> None:
             )
 
             if result.returncode == 0:
-                console.print(f"  [green]✓ 成功[/green]")
+                console.print("  [green]✓ 成功[/green]")
                 if result.stdout.strip():
                     console.print(f"    {result.stdout.rstrip()}")
                 success_count += 1
@@ -498,7 +498,7 @@ def _run_simple_task(router: ModelRouter, task: str) -> None:
                 if result.stderr.strip():
                     console.print(f"    [red]{result.stderr.rstrip()}[/red]")
         except subprocess.TimeoutExpired:
-            console.print(f"  [red]✗ 超时 (30s)[/red]")
+            console.print("  [red]✗ 超时 (30s)[/red]")
         except Exception as e:
             console.print(f"  [red]✗ 异常: {e}[/red]")
 
