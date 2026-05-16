@@ -394,11 +394,10 @@ function setupIpc() {
   });
 
   // Whisper voice transcription
-  ipcMain.handle('omc:whisper:transcribe', async (_, audioBuffer) => {
+  ipcMain.handle('omc:whisper:transcribe', async (_, audioBytes) => {
     try {
-      // audioBuffer comes as array from renderer (Transferable)
-      const float32Array = new Float32Array(audioBuffer);
-      const text = await transcribeAudio(float32Array);
+      // audioBytes is Uint8Array (WAV bytes) from renderer
+      const text = await transcribeAudio(audioBytes);
       return { ok: true, text };
     } catch (e) {
       log('Whisper transcribe error:', e.message);
