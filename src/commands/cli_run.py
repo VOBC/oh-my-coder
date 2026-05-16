@@ -53,6 +53,9 @@ def run(
     no_checkpoint: bool = typer.Option(
         False, "--no-checkpoint", help="跳过自动快照（断点续传）"
     ),
+    simple: bool = typer.Option(
+        False, "--simple", "-s", help="简单模式：不经过工作流，直接执行（适合创建文件等快速任务）"
+    ),
     cross_validate: bool = typer.Option(
         False,
         "--cross-validate",
@@ -102,6 +105,11 @@ def run(
         router = _init_router()
     except SystemExit:
         raise typer.Exit(1)
+
+    # ---- 简单模式：不走工作流，直接调用模型生成命令执行 ----
+    if simple:
+        _run_simple_task(router, task)
+        raise typer.Exit(0)
 
     orchestrator = Orchestrator(router, state_dir=project_path / ".omc" / "state")
 
@@ -371,6 +379,140 @@ def _get_api_key(config: dict, model: str) -> str:
         "hunyuan": "HUNYUAN_API_KEY",
     }
     return os.getenv(key_map.get(model, f"{model.upper()}_API_KEY"), "")
+
+
+def _run_simple_task(router: ModelRouter, task: str) -> None:
+    """
+    简单模式：不经过工作流，直接调用模型生成并执行 shell 命令。
+    适合创建文件、运行命令等快速任务。
+    """
+    import json
+    import subprocess
+
+    from src.models.base import Message
+
+    console.print(Panel.fit(
+        f"[cyan]⚡ 简单模式 — 直接执行[/cyan]\n任务: {task}",
+        title="🚀 启动",
+        border_style="cyan",
+    ))
+
+    with Progress(
+        SpinnerColumn(),
+        TextColumn("[progress.description]{task.description}"),
+        console=console,
+        transient=True,
+    ) as progress:
+        progress.add_task("🤔 分析任务...", total=None)
+
+        try:
+            response = asyncio.run(
+                router.route_and_call(
+                    task_type="simple",
+                    messages=[
+                        Message(
+                            role="system",
+                            content=(
+                                "你是一个任务执行助手。请将用户的任务描述转换为一条或多条 shell 命令。"
+                                "只输出 JSON 数组格式，不要多余的文字。\n"
+                                '格式: [{"cmd": "命令", "desc": "步骤说明"}, ...]\n'
+                                "注意：\n"
+                                "1. 如果是创建文件，用 echo 或 cat 命令\n"
+                                "2. 路径用绝对路径（如 ~/Desktop/xxx）\n"
+                                "3. 每个命令必须独立可执行\n"
+                                '4. 如果任务不需要任何命令（如纯问答），输出 []'
+                            ),
+                        ),
+                        Message(role="user", content=f"任务: {task}"),
+                    ],
+                    complexity="low",
+                )
+            )
+        except Exception as e:
+            _print_fatal(
+                f"模型请求失败: {e}",
+                hint="请检查网络连接和 API Key 配置。",
+            )
+            raise typer.Exit(1)
+
+        progress.remove_task(progress.task_ids[0])
+
+        # 第二步：解析命令
+        raw = response.content.strip()
+        # 去掉可能的 markdown 代码块标记
+        if raw.startswith("```"):
+            first_newline = raw.find("\n")
+            if first_newline != -1:
+                raw = raw[first_newline + 1:]
+            end_marker = raw.rfind("```")
+            if end_marker != -1:
+                raw = raw[:end_marker].strip()
+
+        try:
+            commands = json.loads(raw)
+        except json.JSONDecodeError:
+            console.print(f"[red]模型返回结果解析失败[/red]")
+            console.print(f"原始输出:\n{raw}")
+            return
+
+    # 执行命令
+    if not commands:
+        console.print("[yellow]⚠️ 没有需要执行的命令[/yellow]")
+        console.print(f"\n模型回答:\n{response.content}")
+        return
+
+    console.print(f"[bold]📋 执行计划 — {len(commands)} 步[/bold]\n")
+    for i, cmd_info in enumerate(commands, 1):
+        desc = cmd_info.get("desc", "")
+        cmd = cmd_info.get("cmd", "")
+        console.print(f"  {i}. {desc}")
+        console.print(f"     $ {cmd}\n")
+
+    # 直接执行
+    success_count = 0
+    for cmd_info in commands:
+        cmd = cmd_info.get("cmd", "")
+        desc = cmd_info.get("desc", "")
+        if not cmd:
+            continue
+
+        console.print(f"[cyan]▶ 执行: {desc}[/cyan]")
+        console.print(f"   $ {cmd}")
+
+        try:
+            result = subprocess.run(
+                cmd,
+                shell=True,
+                capture_output=True,
+                text=True,
+                timeout=30,
+            )
+
+            if result.returncode == 0:
+                console.print(f"  [green]✓ 成功[/green]")
+                if result.stdout.strip():
+                    console.print(f"    {result.stdout.rstrip()}")
+                success_count += 1
+            else:
+                console.print(f"  [red]✗ 失败 (exit {result.returncode})[/red]")
+                if result.stderr.strip():
+                    console.print(f"    [red]{result.stderr.rstrip()}[/red]")
+        except subprocess.TimeoutExpired:
+            console.print(f"  [red]✗ 超时 (30s)[/red]")
+        except Exception as e:
+            console.print(f"  [red]✗ 异常: {e}[/red]")
+
+    console.print()
+    if success_count == len(commands):
+        console.print(Panel.fit(
+            f"[green]✅ 全部完成 ({success_count}/{len(commands)} 步成功)[/green]",
+            border_style="green",
+        ))
+    else:
+        console.print(Panel.fit(
+            f"[yellow]⚠️ 部分完成 ({success_count}/{len(commands)} 步成功)[/yellow]",
+            border_style="yellow",
+        ))
 
 
 def _init_router() -> ModelRouter:
