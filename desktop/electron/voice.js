@@ -18,13 +18,23 @@ async function getWhisper() {
   return whisper;
 }
 
-// Transcribe PCM Float32Array (16kHz mono) to text
-async function transcribeAudio(pcmData) {
+// Transcribe raw audio bytes (WAV or PCM) to text
+async function transcribeAudio(audioBytes) {
   const { WhisperFullParams, WhisperSamplingStrategy } = await import('@napi-rs/whisper');
   const w = await getWhisper();
   
-  // pcmData is a number array from IPC — convert to Float32Array
-  const pcm = Float32Array.from(pcmData);
+  // audioBytes is a number array from IPC (Uint8Array from frontend)
+  const buf = Buffer.from(audioBytes);
+  
+  // Try decodeAudioAsync first (handles WAV, MP3, etc.)
+  let pcm;
+  try {
+    pcm = await w.decodeAudioAsync(buf, 'audio.wav');
+  } catch {
+    // If decode fails, treat as raw PCM Float32Array bytes
+    // Each float32 = 4 bytes
+    pcm = new Float32Array(buf.buffer, buf.byteOffset, buf.byteLength / 4);
+  }
   
   // Build params for Chinese transcription
   const params = new WhisperFullParams(WhisperSamplingStrategy.Greedy);

@@ -45,14 +45,70 @@ export const VoiceInput = ({
     return () => clearTimeout(t);
   }, [errorMsg]);
 
-  // Convert audio Blob to PCM Float32Array (16kHz mono) for Whisper
-  const blobToPCM = async (blob: Blob): Promise<Float32Array> => {
+  // Convert audio Blob to WAV bytes for IPC transfer
+  // MediaRecorder outputs webm/opus which whisper can't decode,
+  // so we use AudioContext to decode then re-encode as WAV
+  const blobToWavBytes = async (blob: Blob): Promise<Uint8Array> => {
     const arrayBuffer = await blob.arrayBuffer();
-    const audioContext = new (window.AudioContext || window.webkitAudioContext)({
-      sampleRate: 16000,
-    });
-    const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
-    return new Float32Array(audioBuffer.getChannelData(0));
+    const offlineCtx = new OfflineAudioContext(1, 48000, 48000);
+    let audioBuffer;
+    try {
+      audioBuffer = await offlineCtx.decodeAudioData(arrayBuffer);
+    } catch {
+      // Fallback: try with default sample rate
+      const ctx = new AudioContext({ sampleRate: 16000 });
+      audioBuffer = await ctx.decodeAudioData(arrayBuffer);
+      ctx.close();
+    }
+    
+    const channelData = audioBuffer.getChannelData(0);
+    return encodeWAV(channelData, audioBuffer.sampleRate);
+  };
+
+  // Encode Float32Array PCM data to WAV format bytes
+  const encodeWAV = (samples: Float32Array, sampleRate: number): Uint8Array => {
+    const numChannels = 1;
+    const bitsPerSample = 16;
+    const byteRate = sampleRate * numChannels * (bitsPerSample / 8);
+    const blockAlign = numChannels * (bitsPerSample / 8);
+    const dataSize = samples.length * (bitsPerSample / 8);
+    const bufferSize = 44 + dataSize;
+    
+    const buffer = new ArrayBuffer(bufferSize);
+    const view = new DataView(buffer);
+    
+    // RIFF header
+    writeString(view, 0, 'RIFF');
+    view.setUint32(4, bufferSize - 8, true);
+    writeString(view, 8, 'WAVE');
+    // fmt chunk
+    writeString(view, 12, 'fmt ');
+    view.setUint32(16, 16, true); // chunk size
+    view.setUint16(20, 1, true); // PCM format
+    view.setUint16(22, numChannels, true);
+    view.setUint32(24, sampleRate, true);
+    view.setUint32(28, byteRate, true);
+    view.setUint16(32, blockAlign, true);
+    view.setUint16(34, bitsPerSample, true);
+    // data chunk
+    writeString(view, 36, 'data');
+    view.setUint32(40, dataSize, true);
+    
+    // Write PCM samples as 16-bit signed integers
+    let offset = 44;
+    for (let i = 0; i < samples.length; i++) {
+      const s = Math.max(-1, Math.min(1, samples[i]));
+      view.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
+      offset += 2;
+    }
+    
+    return new Uint8Array(buffer);
+  };
+
+  const writeString = (view: DataView, offset: number, str: string) => {
+    for (let i = 0; i < str.length; i++) {
+      view.setUint8(offset + i, str.charCodeAt(i));
+    }
   };
 
   const toggleListening = useCallback(() => {
@@ -102,9 +158,9 @@ export const VoiceInput = ({
           setInterimText('识别中...');
 
           try {
-            // Decode to PCM and send to main process for Whisper transcription
-            const pcmData = await blobToPCM(blob);
-            const result = await window.omc.whisper.transcribe(Array.from(pcmData));
+            // Encode as WAV and send to main process for Whisper transcription
+            const wavBytes = await blobToWavBytes(blob);
+            const result = await window.omc.whisper.transcribe(Array.from(wavBytes));
             
             if (result.ok && result.text) {
               onResult(result.text);
