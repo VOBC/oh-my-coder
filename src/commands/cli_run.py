@@ -325,46 +325,80 @@ def _detect_project_name(project_path: Path) -> str:
     return project_path.name
 
 
+def _load_config() -> dict:
+    """从 ~/.omc/config.json 读取配置"""
+    config_path = Path.home() / ".omc" / "config.json"
+    if not config_path.exists():
+        return {}
+    import json
+    with open(config_path, encoding="utf-8") as f:
+        return json.load(f)
+
+
+def _resolve_default_model(config: dict) -> str:
+    """解析默认模型：环境变量 > config.json > 第一个有 api_key 的模型 > deepseek"""
+    env_model = os.getenv("OMC_DEFAULT_MODEL") or os.getenv("DEFAULT_MODEL")
+    if env_model:
+        return env_model
+    cfg_model = config.get("defaults", {}).get("model") or config.get("default_model")
+    if cfg_model:
+        return cfg_model
+    models = config.get("models", {})
+    if isinstance(models, dict):
+        for name, mcfg in models.items():
+            if isinstance(mcfg, dict) and mcfg.get("api_key"):
+                return name
+    return "deepseek"
+
+
+def _get_api_key(config: dict, model: str) -> str:
+    """获取模型对应的 API Key：config.json > 环境变量"""
+    # 1. 从 config.json 的 models 中读取
+    models = config.get("models", {})
+    if isinstance(models, dict):
+        for name, mcfg in models.items():
+            if isinstance(mcfg, dict) and mcfg.get("api_key") and name in (model, model.replace("-", "_"), model.replace("_", "-")):
+                return mcfg["api_key"]
+    # 2. 环境变量回退
+    key_map = {
+        "deepseek": "DEEPSEEK_API_KEY",
+        "kimi": "KIMI_API_KEY",
+        "doubao": "DOUBAO_API_KEY",
+        "minimax": "MINIMAX_API_KEY",
+        "glm": "GLM_API_KEY",
+        "tongyi": "DASHSCOPE_API_KEY",
+        "wenxin": "ERNIE_API_KEY",
+        "hunyuan": "HUNYUAN_API_KEY",
+    }
+    return os.getenv(key_map.get(model, f"{model.upper()}_API_KEY"), "")
+
+
 def _init_router() -> ModelRouter:
     """初始化模型路由器，失败时给出友好提示"""
     config = RouterConfig()
+    user_config = _load_config()
+    default_model = _resolve_default_model(user_config)
 
-    # 获取用户配置的默认模型，用于提示缺失的 API Key
-    default_model = os.getenv("OMC_DEFAULT_MODEL") or os.getenv(
-        "DEFAULT_MODEL", "deepseek"
-    )
-    # 将 provider 名映射到对应的 API Key 环境变量
-    api_key_hint_map = {
-        "deepseek": (
-            "DEEPSEEK_API_KEY",
-            "https://platform.deepseek.com/",
-            "性价比最高，推荐配置",
-        ),
-        "glm": ("GLM_API_KEY", "https://www.zhipuai.cn/", "智谱 GLM 模型"),
-        "kimi": ("KIMI_API_KEY", "https://platform.moonshot.cn/", "月之暗面 Kimi"),
-        "doubao": ("DOUBAO_API_KEY", "https://console.volcengine.com/", "字节豆包"),
-        "minimax": ("MINIMAX_API_KEY", "https://www.minimax.io/", "MiniMax"),
-        "tongyi": (
-            "DASHSCOPE_API_KEY",
-            "https://dashscope.console.aliyun.com/",
-            "通义千问",
-        ),
-        "wenxin": ("ERNIE_API_KEY", "https://cloud.baidu.com/", "文心一言"),
-        "hunyuan": ("HUNYUAN_API_KEY", "https://cloud.tencent.com/", "腾讯混元"),
-        "ollama": None,  # 本地模型不需要 API Key
-    }
-    hint = api_key_hint_map.get(default_model)
-    if hint and not os.getenv(hint[0]):
-        key_name, url, reason = hint
-        _print_missing_key_hint(key_name, reason, url=url)
-    else:
-        # DeepSeek 默认检查（用户没有配置默认模型时）
-        if not os.getenv("DEEPSEEK_API_KEY"):
-            _print_missing_key_hint(
-                "DEEPSEEK_API_KEY",
-                "性价比最高，推荐配置",
-                url="https://platform.deepseek.com/",
-            )
+    # 检查 API Key 是否就绪
+    api_key = _get_api_key(user_config, default_model)
+    if not api_key:
+        # 没有找到 key，给提示
+        api_key_hint_map = {
+            "deepseek": ("DEEPSEEK_API_KEY", "https://platform.deepseek.com/", "性价比最高，推荐配置"),
+            "glm": ("GLM_API_KEY", "https://www.zhipuai.cn/", "智谱 GLM 模型"),
+            "kimi": ("KIMI_API_KEY", "https://platform.moonshot.cn/", "月之暗面 Kimi"),
+            "doubao": ("DOUBAO_API_KEY", "https://console.volcengine.com/", "字节豆包"),
+            "minimax": ("MINIMAX_API_KEY", "https://www.minimax.io/", "MiniMax"),
+            "tongyi": ("DASHSCOPE_API_KEY", "https://dashscope.console.aliyun.com/", "通义千问"),
+            "wenxin": ("ERNIE_API_KEY", "https://cloud.baidu.com/", "文心一言"),
+            "hunyuan": ("HUNYUAN_API_KEY", "https://cloud.tencent.com/", "腾讯混元"),
+        }
+        hint = api_key_hint_map.get(default_model)
+        if hint:
+            _print_missing_key_hint(hint[0], hint[2], url=hint[1])
+        else:
+            _print_missing_key_hint(f"{default_model.upper()}_API_KEY", "")
+        raise typer.Exit(1)
 
     try:
         return ModelRouter(config)
@@ -413,12 +447,26 @@ def _print_fatal(msg: str, hint: str = ""):
 
 
 def _check_env() -> bool:
-    """检查环境是否就绪，返回 True 表示就绪"""
-    missing = []
-    if not os.getenv("DEEPSEEK_API_KEY"):
-        missing.append("DEEPSEEK_API_KEY")
-    if missing:
-        _print_missing_key_hint(missing[0], "性价比最高，推荐配置")
+    """检查当前默认模型的 API Key 是否就绪，返回 True 表示就绪"""
+    user_config = _load_config()
+    default_model = _resolve_default_model(user_config)
+    api_key = _get_api_key(user_config, default_model)
+    if not api_key:
+        api_key_hint_map = {
+            "deepseek": ("DEEPSEEK_API_KEY", "性价比最高，推荐配置"),
+            "glm": ("GLM_API_KEY", "智谱 GLM 模型"),
+            "kimi": ("KIMI_API_KEY", "月之暗面 Kimi"),
+            "doubao": ("DOUBAO_API_KEY", "字节豆包"),
+            "minimax": ("MINIMAX_API_KEY", "MiniMax"),
+            "tongyi": ("DASHSCOPE_API_KEY", "通义千问"),
+            "wenxin": ("ERNIE_API_KEY", "文心一言"),
+            "hunyuan": ("HUNYUAN_API_KEY", "腾讯混元"),
+        }
+        hint = api_key_hint_map.get(default_model)
+        if hint:
+            _print_missing_key_hint(hint[0], hint[1])
+        else:
+            _print_missing_key_hint(f"{default_model.upper()}_API_KEY", "")
         return False
     return True
 
