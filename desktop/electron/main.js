@@ -144,7 +144,23 @@ function setupIpc() {
       const child = spawn(omcBin, cmdArgs, {
         cwd: projectPath || OMC_ROOT,
         stdio: ['ignore', 'pipe', 'pipe'],
-        env: { ...process.env, PYTHONIOENCODING: 'utf-8' },
+        env: {
+          ...process.env,
+          PYTHONIOENCODING: 'utf-8',
+          // Inject API keys from config.json so omc CLI can use them
+          DEEPSEEK_API_KEY: (() => {
+            try {
+              const cfg = JSON.parse(fs.readFileSync(path.join(CONFIG_PATH, 'config.json'), 'utf-8'));
+              return cfg.models?.deepseek?.api_key || '';
+            } catch { return ''; }
+          })(),
+          OPENAI_API_KEY: (() => {
+            try {
+              const cfg = JSON.parse(fs.readFileSync(path.join(CONFIG_PATH, 'config.json'), 'utf-8'));
+              return cfg.models?.deepseek?.api_key || '';
+            } catch { return ''; }
+          })(),
+        },
         shell: false,
       });
 
@@ -172,13 +188,11 @@ function setupIpc() {
         child.on('close', (code) => {
           // Save result to MD file
           const header = `# Task Report\n\n- **Command**: \`omc ${cmdArgs.join(' ')}\`\n- **Time**: ${new Date().toLocaleString('zh-CN')}\n- **Status**: ${code === 0 ? '✅ Success' : '❌ Failed (exit ' + code + ')'}\n- **Project**: ${projectPath || './'}\n\n---\n\n`;
-          const content = header + '## Output\n\n' + stdout;
+          let mdContent = header + '## Output\n\n' + stdout;
           if (stderr) {
-            fs.writeFileSync(outputFile, content + '\n\n## Errors\n\n```
-' + stderr + '\n```', 'utf-8');
-          } else {
-            fs.writeFileSync(outputFile, content, 'utf-8');
+            mdContent += '\n\n## Errors\n\n```\n' + stderr + '\n```';
           }
+          fs.writeFileSync(outputFile, mdContent, 'utf-8');
           log('[task:execute] done, saved to', outputFile);
           resolve({ code, stdout, stderr, outputFile });
         });
