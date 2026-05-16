@@ -4,7 +4,8 @@ import React, { useState, useRef, useCallback, useEffect } from 'react';
 
 // ---------------------------------------------------------------------------
 // VoiceInput Component
-// Uses Electron IPC for Whisper speech recognition via @napi-rs/whisper in main process.
+// Captures raw PCM audio via AudioContext + ScriptProcessorNode,
+// encodes to WAV, sends to main process for Whisper transcription.
 // ---------------------------------------------------------------------------
 
 interface VoiceInputProps {
@@ -21,8 +22,11 @@ export const VoiceInput = ({
   const [interimText, setInterimText] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
 
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const chunksRef = useRef<Blob[]>([]);
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const processorRef = useRef<ScriptProcessorNode | null>(null);
+  const sourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const pcmChunksRef = useRef<Float32Array[]>([]);
 
   const isSupported =
     typeof window !== 'undefined' &&
@@ -32,9 +36,7 @@ export const VoiceInput = ({
   // Clean up on unmount.
   useEffect(() => {
     return () => {
-      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
-        mediaRecorderRef.current.stop();
-      }
+      cleanup();
     };
   }, []);
 
@@ -45,27 +47,26 @@ export const VoiceInput = ({
     return () => clearTimeout(t);
   }, [errorMsg]);
 
-  // Convert audio Blob to WAV bytes for IPC transfer
-  // MediaRecorder outputs webm/opus which whisper can't decode,
-  // so we use AudioContext to decode then re-encode as WAV
-  const blobToWavBytes = async (blob: Blob): Promise<Uint8Array> => {
-    const arrayBuffer = await blob.arrayBuffer();
-    const offlineCtx = new OfflineAudioContext(1, 48000, 48000);
-    let audioBuffer;
-    try {
-      audioBuffer = await offlineCtx.decodeAudioData(arrayBuffer);
-    } catch {
-      // Fallback: try with default sample rate
-      const ctx = new AudioContext({ sampleRate: 16000 });
-      audioBuffer = await ctx.decodeAudioData(arrayBuffer);
-      ctx.close();
+  const cleanup = () => {
+    if (processorRef.current) {
+      processorRef.current.disconnect();
+      processorRef.current = null;
     }
-    
-    const channelData = audioBuffer.getChannelData(0);
-    return encodeWAV(channelData, audioBuffer.sampleRate);
+    if (sourceRef.current) {
+      sourceRef.current.disconnect();
+      sourceRef.current = null;
+    }
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((t) => t.stop());
+      streamRef.current = null;
+    }
+    if (audioCtxRef.current && audioCtxRef.current.state !== 'closed') {
+      audioCtxRef.current.close();
+      audioCtxRef.current = null;
+    }
   };
 
-  // Encode Float32Array PCM data to WAV format bytes
+  // Encode Float32Array PCM samples to WAV bytes
   const encodeWAV = (samples: Float32Array, sampleRate: number): Uint8Array => {
     const numChannels = 1;
     const bitsPerSample = 16;
@@ -73,39 +74,38 @@ export const VoiceInput = ({
     const blockAlign = numChannels * (bitsPerSample / 8);
     const dataSize = samples.length * (bitsPerSample / 8);
     const bufferSize = 44 + dataSize;
-    
+
     const buffer = new ArrayBuffer(bufferSize);
     const view = new DataView(buffer);
-    
+
     // RIFF header
-    writeString(view, 0, 'RIFF');
+    writeStr(view, 0, 'RIFF');
     view.setUint32(4, bufferSize - 8, true);
-    writeString(view, 8, 'WAVE');
+    writeStr(view, 8, 'WAVE');
     // fmt chunk
-    writeString(view, 12, 'fmt ');
-    view.setUint32(16, 16, true); // chunk size
-    view.setUint16(20, 1, true); // PCM format
+    writeStr(view, 12, 'fmt ');
+    view.setUint32(16, 16, true);
+    view.setUint16(20, 1, true); // PCM
     view.setUint16(22, numChannels, true);
     view.setUint32(24, sampleRate, true);
     view.setUint32(28, byteRate, true);
     view.setUint16(32, blockAlign, true);
     view.setUint16(34, bitsPerSample, true);
     // data chunk
-    writeString(view, 36, 'data');
+    writeStr(view, 36, 'data');
     view.setUint32(40, dataSize, true);
-    
-    // Write PCM samples as 16-bit signed integers
+
     let offset = 44;
     for (let i = 0; i < samples.length; i++) {
       const s = Math.max(-1, Math.min(1, samples[i]));
       view.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
       offset += 2;
     }
-    
+
     return new Uint8Array(buffer);
   };
 
-  const writeString = (view: DataView, offset: number, str: string) => {
+  const writeStr = (view: DataView, offset: number, str: string) => {
     for (let i = 0; i < str.length; i++) {
       view.setUint8(offset + i, str.charCodeAt(i));
     }
@@ -118,72 +118,75 @@ export const VoiceInput = ({
     }
 
     if (isListening) {
-      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
-        mediaRecorderRef.current.stop();
-      }
+      // Stop recording
+      cleanup();
       setIsListening(false);
+
+      // Merge PCM chunks and transcribe
+      if (pcmChunksRef.current.length === 0) return;
+
+      const totalLength = pcmChunksRef.current.reduce((sum, c) => sum + c.length, 0);
+      const merged = new Float32Array(totalLength);
+      let offset = 0;
+      for (const chunk of pcmChunksRef.current) {
+        merged.set(chunk, offset);
+        offset += chunk.length;
+      }
+      pcmChunksRef.current = [];
+
+      const wavBytes = encodeWAV(merged, 16000);
+
+      setIsTranscribing(true);
+      setInterimText('识别中...');
+
+      window.omc.whisper.transcribe(Array.from(wavBytes))
+        .then((result: { ok: boolean; text: string; error?: string }) => {
+          if (result.ok && result.text) {
+            onResult(result.text);
+          } else {
+            setErrorMsg(result.error || '语音识别失败');
+          }
+        })
+        .catch((err: unknown) => {
+          console.error('[VoiceInput] Transcribe error:', err);
+          setErrorMsg('语音识别失败，请重试');
+        })
+        .finally(() => {
+          setIsTranscribing(false);
+          setInterimText('');
+        });
+
       return;
     }
 
-    chunksRef.current = [];
+    // Start recording
+    pcmChunksRef.current = [];
 
-    navigator.mediaDevices.getUserMedia({ audio: true })
+    navigator.mediaDevices.getUserMedia({ audio: { sampleRate: 16000, channelCount: 1 } })
       .then((stream) => {
-        const mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
-        mediaRecorderRef.current = mediaRecorder;
+        streamRef.current = stream;
 
-        mediaRecorder.onstart = () => {
-          setIsListening(true);
-          setInterimText('');
-          setErrorMsg('');
+        const audioCtx = new AudioContext({ sampleRate: 16000 });
+        audioCtxRef.current = audioCtx;
+
+        const source = audioCtx.createMediaStreamSource(stream);
+        sourceRef.current = source;
+
+        // ScriptProcessorNode to capture raw PCM
+        const processor = audioCtx.createScriptProcessor(4096, 1, 1);
+        processorRef.current = processor;
+
+        processor.onaudioprocess = (e) => {
+          const channelData = e.inputBuffer.getChannelData(0);
+          pcmChunksRef.current.push(new Float32Array(channelData));
         };
 
-        mediaRecorder.ondataavailable = (e) => {
-          if (e.data.size > 0) {
-            chunksRef.current.push(e.data);
-          }
-        };
+        source.connect(processor);
+        processor.connect(audioCtx.destination);
 
-        mediaRecorder.onstop = async () => {
-          setIsListening(false);
-
-          // Release microphone.
-          stream.getTracks().forEach((t) => t.stop());
-
-          if (chunksRef.current.length === 0) return;
-
-          const blob = new Blob(chunksRef.current, { type: 'audio/webm' });
-
-          setIsTranscribing(true);
-          setInterimText('识别中...');
-
-          try {
-            // Encode as WAV and send to main process for Whisper transcription
-            const wavBytes = await blobToWavBytes(blob);
-            const result = await window.omc.whisper.transcribe(Array.from(wavBytes));
-            
-            if (result.ok && result.text) {
-              onResult(result.text);
-            } else {
-              setErrorMsg(result.error || '语音识别失败');
-            }
-          } catch (err: unknown) {
-            console.error('[VoiceInput] Transcribe error:', err);
-            setErrorMsg('语音识别失败，请重试');
-          } finally {
-            setIsTranscribing(false);
-            setInterimText('');
-          }
-        };
-
-        mediaRecorder.onerror = () => {
-          setIsListening(false);
-          setInterimText('');
-          setErrorMsg('录音出错');
-        };
-
-        // Record in 1-second chunks so we can stop quickly on button press.
-        mediaRecorder.start(1000);
+        setIsListening(true);
+        setInterimText('');
+        setErrorMsg('');
       })
       .catch((err: unknown) => {
         console.error('[VoiceInput] getUserMedia error:', err);
@@ -195,7 +198,6 @@ export const VoiceInput = ({
       });
   }, [isListening, isSupported, onResult]);
 
-  // Compute button status label (simplified, no pre-loading needed)
   const btnTitle = isListening
     ? '点击停止'
     : isTranscribing
@@ -212,12 +214,10 @@ export const VoiceInput = ({
         type="button"
       >
         {isListening ? (
-          // Stop icon (filled square)
           <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
             <rect x="6" y="6" width="12" height="12" rx="2"/>
           </svg>
         ) : (
-          // Microphone icon
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
             <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
