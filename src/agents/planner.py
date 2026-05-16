@@ -581,7 +581,7 @@ class PlannerAgent(BaseAgent):
         if has_cycle:
             recommendations.append("⚠️ 检测到循环依赖，需要调整计划")
 
-        return AgentOutput(agent_name=self.name, 
+        return AgentOutput(agent_name=self.name,
             status=AgentStatus.COMPLETED,
             result=result,
             artifacts={

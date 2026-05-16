@@ -309,7 +309,7 @@ class CodeResearchAgent(BaseAgent):
                 query = task
 
         if not query:
-            return AgentOutput(agent_name=self.name, 
+            return AgentOutput(agent_name=self.name,
                 status=AgentStatus.FAILED,
                 summary="未提供搜索关键词",
                 content="请在 context.metadata 或 kwargs 中提供 query 参数",
@@ -355,7 +355,7 @@ class CodeResearchAgent(BaseAgent):
                 for rec in result.recommendations:
                     output_lines.append(f"- {rec}")
 
-            return AgentOutput(agent_name=self.name, 
+            return AgentOutput(agent_name=self.name,
                 status=AgentStatus.COMPLETED,
                 summary=f"找到 {len(result.examples)} 个代码示例, {len(result.repos)} 个相关项目",
                 content="\n".join(output_lines),
@@ -367,7 +367,7 @@ class CodeResearchAgent(BaseAgent):
             )
 
         except Exception as e:
-            return AgentOutput(agent_name=self.name, 
+            return AgentOutput(agent_name=self.name,
                 status=AgentStatus.FAILED,
                 summary="研究失败",
                 content=f"错误: {e}",

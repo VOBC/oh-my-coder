@@ -227,7 +227,7 @@ class AnalystAgent(BaseAgent):
     ) -> AgentOutput:
         """后处理 - 提取关键信息"""
         # 后处理 - 提取关键信息（当前使用规则匹配，暂未接入 LLM）
-        return AgentOutput(agent_name=self.name, 
+        return AgentOutput(agent_name=self.name,
             status=AgentStatus.COMPLETED,
             result=result,
             recommendations=[

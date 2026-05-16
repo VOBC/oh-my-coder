@@ -145,7 +145,7 @@ class DebuggerAgent(BaseAgent):
 
     def _post_process(self, result: str, context: AgentContext) -> AgentOutput:
         """后处理"""
-        return AgentOutput(agent_name=self.name, 
+        return AgentOutput(agent_name=self.name,
             status=AgentStatus.COMPLETED,
             result=result,
             recommendations=[

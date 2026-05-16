@@ -499,7 +499,7 @@ export const PageLayout: React.FC = () => {
                     output_dir = _infer_output_dir(context)
                     artifacts[filename] = str(output_dir / filename)
 
-        return AgentOutput(agent_name=self.name, 
+        return AgentOutput(agent_name=self.name,
             status=AgentStatus.COMPLETED,
             result=result,
             artifacts=artifacts,

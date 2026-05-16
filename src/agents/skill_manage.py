@@ -335,7 +335,7 @@ updated_at: 2026-04-12
         return self.tool_list() + "\n\n💡 提示：用 search <关键词> 搜索已有 Skill"
 
     def _post_process(self, result: str, context: AgentContext) -> AgentOutput:
-        return AgentOutput(agent_name=self.name, 
+        return AgentOutput(agent_name=self.name,
             status=AgentStatus.COMPLETED,
             result=result,
             recommendations=[

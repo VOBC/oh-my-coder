@@ -390,7 +390,7 @@ class ExploreAgent(BaseAgent):
     ) -> AgentOutput:
         """后处理 - 提取关键信息"""
         # 后处理 - 提取关键信息（当前为占位实现）
-        return AgentOutput(agent_name=self.name, 
+        return AgentOutput(agent_name=self.name,
             status=AgentStatus.COMPLETED,
             result=result,
             recommendations=[
