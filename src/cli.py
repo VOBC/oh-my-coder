@@ -1,3 +1,4 @@
+
 # mypy: disable-error-code="abstract, arg-type, assignment, attr-defined, call-arg, call-overload, dict-item, func-returns-value, import-untyped, index, misc, no-any-return, no-redef, operator, override, return, return-value, syntax, union-attr, var-annotated"
 """
 
@@ -1293,8 +1294,10 @@ def _init_router() -> ModelRouter:
     """初始化模型路由器，失败时给出友好提示"""
     config = RouterConfig()
 
-    if not config.deepseek_api_key:
-        _print_missing_key_hint("DEEPSEEK_API_KEY", "性价比最高，推荐配置")
+    # 只检查当前默认模型的 key，不强制要求 DeepSeek
+    config_check = _check_env()
+    if not config_check:
+        raise typer.Exit(1)
 
     try:
         return ModelRouter(config)
@@ -1339,14 +1342,43 @@ def _print_fatal(msg: str, hint: str = ""):
 
 
 def _check_env() -> bool:
-    """检查环境是否就绪，返回 True 表示就绪"""
-    missing = []
-    if not os.getenv("DEEPSEEK_API_KEY"):
-        missing.append("DEEPSEEK_API_KEY")
-    if missing:
-        _print_missing_key_hint(missing[0], "性价比最高，推荐配置")
+    """检查当前默认模型的 API Key 是否就绪（读 config.json），返回 True 表示就绪"""
+    config = _load_config()
+    default_model = os.getenv("OMC_DEFAULT_MODEL") or config.get("default_model", "deepseek")
+
+    # 优先从 config.json 的 models[default_model].api_key 读取
+    models = config.get("models", {})
+    if isinstance(models, dict):
+        model_cfg = models.get(default_model, {}) or models.get(default_model.replace("-", "_"), {})
+        if model_cfg and model_cfg.get("api_key"):
+            return True
+    # 回退：检查环境变量
+    key_map = {
+        "deepseek": "DEEPSEEK_API_KEY",
+        "kimi": "KIMI_API_KEY",
+        "doubao": "DOUBAO_API_KEY",
+        "minimax": "MINIMAX_API_KEY",
+        "glm": "GLM_API_KEY",
+        "tongyi": "TONGYI_API_KEY",
+        "wenxin": "WENXIN_API_KEY",
+        "hunyuan": "HUNYUAN_API_KEY",
+        "mimo": "MINIMAX_API_KEY",
+    }
+    key_var = key_map.get(default_model, "DEEPSEEK_API_KEY")
+    if not os.getenv(key_var):
+        _print_missing_key_hint(key_var, f"当前默认模型: {default_model}")
         return False
     return True
+
+
+def _load_config() -> dict:
+    """从 ~/.omc/config.json 读取配置"""
+    config_path = Path.home() / ".omc" / "config.json"
+    if not config_path.exists():
+        return {}
+    import json
+    with open(config_path, encoding="utf-8") as f:
+        return json.load(f)
 
 
 def _display_result(result):
