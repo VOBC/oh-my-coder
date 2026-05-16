@@ -1021,8 +1021,8 @@ export default function App() {
               onResult={(text) => {
                 const newText = input ? input + ' ' + text : text;
                 setInput(newText);
-                // Auto-send after voice transcription
-                setTimeout(() => handleSend(), 300);
+                // Auto-send: call handleSendMessage directly to avoid stale input state
+                setTimeout(() => handleSendMessage(newText), 300);
               }}
               disabled={loading}
             />

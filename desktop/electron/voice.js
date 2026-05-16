@@ -3,6 +3,10 @@
 // electron/voice.js — Whisper speech recognition via @napi-rs/whisper
 const path = require('path');
 const { readFile } = require('node:fs/promises');
+const { Converter } = require('opencc-js');
+
+// Traditional to Simplified Chinese converter
+const tradToSimp = new Converter('taiwan', 'china');
 
 let whisper = null;
 
@@ -58,10 +62,14 @@ async function transcribeAudio(audioBytes) {
 
   // Run full transcription — returns a string
   console.log('[voice] Running transcription...');
-  const result = w.full(params, pcm);
-  console.log('[voice] Transcription result:', JSON.stringify(result));
+  const raw = w.full(params, pcm);
+  console.log('[voice] Raw result:', JSON.stringify(raw));
 
-  return result || '';
+  // Convert Traditional Chinese to Simplified Chinese
+  const result = raw ? tradToSimp(raw) : '';
+  console.log('[voice] Simplified result:', JSON.stringify(result));
+
+  return result;
 }
 
 module.exports = {
