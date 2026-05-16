@@ -6,7 +6,7 @@ const { readFile } = require('node:fs/promises');
 const { Converter } = require('opencc-js');
 
 // Traditional to Simplified Chinese converter
-const tradToSimp = new Converter('taiwan', 'china');
+const tradToSimp = Converter({ from: 'tw', to: 'cn' });
 
 let whisper = null;
 
