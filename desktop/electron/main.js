@@ -134,15 +134,32 @@ function setupIpc() {
       const taskDir = path.join(CONFIG_PATH, 'tasks');
       fs.mkdirSync(taskDir, { recursive: true });
 
+      let actualPath = projectPath || OMC_ROOT;
+
+      // If projectPath is a GitHub URL, clone it first
+      if (actualPath.match(/^https?:\/\/github\.com\/[\w.-]+\/[\w.-]+/)) {
+        const repoUrl = actualPath;
+        const repoName = repoUrl.split('/').pop().replace(/\.git$/, '') || 'repo';
+        actualPath = path.join(os.tmpdir(), `omc-task-${Date.now()}-${repoName}`);
+        log('[task:execute] cloning', repoUrl, 'to', actualPath);
+        await new Promise((resolve, reject) => {
+          const clone = spawn('git', ['clone', '--depth', '1', repoUrl, actualPath], { stdio: ['ignore', 'pipe', 'pipe'] });
+          let stderr = '';
+          clone.stderr.on('data', d => stderr += d.toString());
+          clone.on('close', code => code === 0 ? resolve() : reject(new Error(`git clone failed (${code}): ${stderr}`)));
+        });
+        log('[task:execute] cloned successfully');
+      }
+
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
       const outputFile = path.join(taskDir, `task_${timestamp}.md`);
 
       const cmdArgs = [command, ...args];
-      if (projectPath) cmdArgs.push(projectPath);
+      cmdArgs.push(actualPath);
 
       log('[task:execute] running:', omcBin, cmdArgs.join(' '));
       const child = spawn(omcBin, cmdArgs, {
-        cwd: projectPath || OMC_ROOT,
+        cwd: actualPath,
         stdio: ['ignore', 'pipe', 'pipe'],
         env: {
           ...process.env,

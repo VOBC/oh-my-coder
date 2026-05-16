@@ -821,10 +821,24 @@ export default function App() {
         setTaskStages(prev => prev.map((s, i) => i === 0 ? { ...s, status: 'active' as const } : s));
         setCurrentStage(0);
 
+        // Determine project path: extract from message or use default
+        let projectPath = undefined;
+        const urlMatch = text.match(/https?:\/\/github\.com\/[\w.-]+\/[\w.-]+/);
+        if (urlMatch) {
+          // GitHub URL provided — will clone first
+          projectPath = urlMatch[0];
+        } else if (window.omc?.appInfo) {
+          // Default to the omc project root
+          try {
+            const info = await window.omc.appInfo();
+            projectPath = info?.omcRoot || undefined;
+          } catch {}
+        }
+
         const taskResult = await window.omc.taskExecute({
           command: classification.command,
           args: classification.args,
-          projectPath: undefined, // TODO: let user select project
+          projectPath,
         });
 
         unsubChunk();
