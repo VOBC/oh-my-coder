@@ -305,9 +305,11 @@ def create_app(
     # ---------------------------------------------------------------------------
 
     # 挂载 Web UI（前端页面、静态文件、模板渲染）
-    from src.web.app import app as web_app
     from pathlib import Path
+
     from fastapi.responses import FileResponse
+
+    from src.web.app import app as web_app
 
     _web_dir = Path(__file__).parent.parent / "web"
 
