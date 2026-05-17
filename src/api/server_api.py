@@ -304,9 +304,10 @@ def create_app(
     # 路由
     # ---------------------------------------------------------------------------
 
-    @app.get("/")
-    async def root() -> dict[str, str]:
-        return {"service": "Oh My Coder Server", "version": "0.2.0"}
+    # 挂载 Web UI（前端页面、静态文件、模板渲染）
+    from src.web.app import app as web_app
+
+    app.mount("/", web_app)
 
     @app.get("/health")
     async def health() -> dict[str, str]:
