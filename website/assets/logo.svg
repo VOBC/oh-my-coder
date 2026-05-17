@@ -1,14 +1,14 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
   <defs>
-    <linearGradient id="gl" x1="0%" y1="0%" x2="100%" y2="100%">
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" style="stop-color:#f59e0b"/>
       <stop offset="100%" style="stop-color:#06b6d4"/>
     </linearGradient>
   </defs>
-  <rect x="12" y="12" width="176" height="176" rx="32" ry="32" fill="#14142a" stroke="url(#gl)" stroke-width="2.5"/>
-  <text x="100" y="118" font-family="'Courier New',Menlo,Consolas,monospace" font-size="72" font-weight="bold" fill="url(#gl)" text-anchor="middle" letter-spacing="2">OMC</text>
-  <rect x="166" y="92" width="5" height="40" rx="1" fill="#06b6d4">
-    <animate attributeName="opacity" values="0.9;0.1;0.9" dur="1s" repeatCount="indefinite"/>
+  <rect x="10" y="10" width="180" height="180" rx="30" ry="30" fill="#1a1a2e"/>
+  <text x="100" y="118" font-family="'Courier New', monospace" font-size="72" font-weight="bold" fill="url(#grad)" text-anchor="middle" letter-spacing="4">OMC</text>
+  <line x1="45" y1="140" x2="155" y2="140" stroke="#f59e0b" stroke-width="2" opacity="0.6"/>
+  <rect x="162" y="98" width="6" height="36" rx="1" fill="#06b6d4" opacity="0.8">
+    <animate attributeName="opacity" values="0.8;0.1;0.8" dur="1.2s" repeatCount="indefinite"/>
   </rect>
-  <line x1="46" y1="140" x2="154" y2="140" stroke="#f59e0b" stroke-width="1.5" opacity="0.6"/>
 </svg>
