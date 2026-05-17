@@ -1257,10 +1257,8 @@
                     <span class="comment"># 第 3 步：安装运行所需文件（大概 1-3 分钟，耐心等）</span><br>
                     <span class="comment"># 看到「added XXX packages」字样就说明成功啦 ✅</span><br>
                     npm install<br><br>
-                    <span class="comment"># 第 4 步：验证安装成功（应该看到 v33.x.x 版本号）</span><br>
-                    npx electron --version<br><br>
-                    <span class="comment"># ✅ 到这里如果都没报错，说明安装成功了！下面启动：</span><br>
-                    <span class="comment"># 第 5 步：一键启动（一条命令搞定）</span><br>
+                    <span class="comment"># ✅ 看到「added」字样就是安装成功！直接启动：</span><br>
+                    <span class="comment"># 第 4 步：一键启动（一条命令搞定）</span><br>
                     node start.js<br><br>
                     <span class="comment"># 看到「🎉 Desktop 已启动」字样，桌面窗口会自动弹出来 🎉</span>
                 </div>
@@ -1281,17 +1279,15 @@
                     <strong>1. 粘贴命令后没有任何反应 / 报错</strong><br>
                     &nbsp;&nbsp;→ 先确认第 0 步的 Node.js 安装成功了（看到版本号）<br>
                     &nbsp;&nbsp;→ 再试一次：<code style="background:#fff;padding:2px 6px;border-radius:3px;">rm -rf node_modules package-lock.json &amp;&amp; npm install</code><br><br>
-                    <strong>2. 跑 <code>npx electron --version</code> 说找不到命令</strong><br>
-                    &nbsp;&nbsp;→ 说明第 3 步没装成功，重新做第 2 步 + 第 3 步（记得先设 ELECTRON_MIRROR）<br><br>
-                    <strong>3. 跑 <code>node start.js</code> 后卡住 / 没有反应</strong><br>
+                    <strong>2. 跑 <code>node start.js</code> 后卡住 / 没有反应</strong><br>
                     &nbsp;&nbsp;→ 按一下回车，可能只是光标停在等待状态<br>
                     &nbsp;&nbsp;→ 确认能看到「⚡ 启动 Vite」和「✅ Vite 已就绪」字样<br>
                     &nbsp;&nbsp;→ 确认端口 1420 没被占用：<code style="background:#fff;padding:2px 6px;border-radius:3px;">lsof -ti:1420 | xargs kill -9</code><br><br>
-                    <strong>4. 提示「port 1420 被占用」</strong><br>
+                    <strong>3. 提示「port 1420 被占用」</strong><br>
                     &nbsp;&nbsp;→ 粘贴这行命令：<code style="background:#fff;padding:2px 6px;border-radius:3px;">lsof -ti:1420 | xargs kill -9</code>，然后再启动<br><br>
-                    <strong>5. 窗口是白的 / 没内容</strong><br>
+                    <strong>4. 窗口是白的 / 没内容</strong><br>
                     &nbsp;&nbsp;→ 看终端里有没有显示「ready in xxx ms」，没有的话重做第 3 步<br><br>
-                    <strong>6. 不能用语音输入</strong><br>
+                    <strong>5. 不能用语音输入</strong><br>
                     &nbsp;&nbsp;→ Mac：系统设置 → 隐私与安全性 → 麦克风 → 勾选 Terminal 或 Electron
                 </div>
             </div>
