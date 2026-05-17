@@ -93,8 +93,8 @@ def start(
             console.print("[red]✗ 无法找到可用端口[/red]")
             raise typer.Exit(1)
 
-        # API Key 在 Web UI 中配置，命令行不提示
-        effective_key = os.getenv("OMC_SERVER_API_KEY") or _load_api_key_from_config()
+    # API Key 在 Web UI 中配置，命令行不提示
+    effective_key = os.getenv("OMC_SERVER_API_KEY") or _load_api_key_from_config()
 
     # 创建 FastAPI app
     fastapi_app, store = create_app(api_key=effective_key)
