@@ -257,47 +257,62 @@ function setupIpc() {
     }
   });
 
-  // Chat — direct LLM API call (quick fix: bypasses omc run)
+  // Chat — route through omc server to support tools (web_fetch, browser, etc.)
   // Payload: { endpoint, model, apiKey, message }
   ipcMain.handle('omc:chat:direct', async (event, { endpoint, model, apiKey, message }) => {
-    console.log('[chatDirect] endpoint=', endpoint, 'model=', model, 'hasKey=', !!apiKey, 'keyLen=', apiKey?.length);
+    console.log('[chatDirect] model=', model, 'hasKey=', !!apiKey);
     try {
-      const { execFileSync } = require('child_process');
       const { spawn } = require('child_process');
 
-      // Ensure endpoint ends with /chat/completions (OpenAI-compatible)
-      if (endpoint && !endpoint.endsWith('/chat/completions')) {
-        // Strip trailing slash first to avoid double-slash
-        endpoint = endpoint.replace(/\/$/, '') + '/chat/completions';
+      // Ensure omc server is running
+      if (!omcReady) {
+        console.log('[chatDirect] omc server not ready, starting...');
+        await startOmcServer();
       }
 
+      // Route through omc server's /api/chat/completions endpoint (has tool support)
+      const serverUrl = 'http://localhost:7890/api/chat/completions';
       const payload = {
-        model,
         messages: [{ role: 'user', content: message }],
+        model: model,
         stream: true,
       };
 
-      // Use curl for streaming HTTP POST (cross-platform)
-      const curlCmd = [
-        'curl', '-s', '-N',
-        '-X', 'POST', endpoint,
+      console.log('[chatDirect] calling omc server:', serverUrl);
+      const child = spawn('curl', [
+        '-s', '-N',
+        '-X', 'POST', serverUrl,
         '-H', 'Content-Type: application/json',
-        '-H', `Authorization: Bearer ${apiKey}`,
         '-d', JSON.stringify(payload),
-      ];
-
-      const child = spawn(curlCmd[0], curlCmd.slice(1), {
+      ], {
         stdio: ['ignore', 'pipe', 'pipe'],
         shell: false,
       });
 
+      let buffer = '';
       let fullResponse = '';
 
       child.stdout.on('data', (chunk) => {
-        const text = chunk.toString();
-        fullResponse += text;
-        if (event && event.sender && !event.sender.isDestroyed()) {
-          event.sender.send('omc:chat:chunk', text);
+        buffer += chunk.toString();
+        // Parse SSE: each line is "data: {...}"
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';  // Keep incomplete line
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const dataStr = line.slice(6).trim();
+            if (dataStr === '[DONE]') continue;
+            try {
+              const data = JSON.parse(dataStr);
+              if (data.content) {
+                fullResponse += data.content;
+                if (event && event.sender && !event.sender.isDestroyed()) {
+                  event.sender.send('omc:chat:chunk', data.content);
+                }
+              }
+            } catch (e) {
+              // Ignore parse errors for malformed SSE
+            }
+          }
         }
       });
 
@@ -309,9 +324,11 @@ function setupIpc() {
 
       return new Promise((resolve) => {
         child.on('close', (code) => {
+          console.log('[chatDirect] done, code=', code, 'responseLen=', fullResponse.length);
           resolve({ code, stdout: fullResponse, stderr: '' });
         });
         child.on('error', (e) => {
+          console.error('[chatDirect] error:', e.message);
           resolve({ code: 1, stdout: '', stderr: e.message });
         });
         // Timeout after 60s
@@ -321,6 +338,7 @@ function setupIpc() {
         }, 60000);
       });
     } catch (e) {
+      console.error('[chatDirect] exception:', e.message);
       return { code: 1, stdout: '', stderr: e.message };
     }
   });
