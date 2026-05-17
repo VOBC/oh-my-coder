@@ -7,14 +7,14 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-primary: #0a0e1a;
-            --bg-secondary: #111827;
-            --bg-card: #1a1f2e;
-            --text-primary: #f0f4f8;
-            --text-secondary: #94a3b8;
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8fafc;
+            --bg-card: #ffffff;
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
             --accent-amber: #f59e0b;
             --accent-cyan: #06b6d4;
-            --border: #1e293b;
+            --border: #e2e8f0;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -65,10 +65,10 @@
         .page-title {
             font-size: 2.5rem;
             font-weight: 800;
+            color: var(--text-primary);
             margin-bottom: 0.5rem;
             background: linear-gradient(135deg, var(--accent-amber), var(--accent-cyan));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+            color: var(--text-primary);
         }
         .page-subtitle {
             color: var(--text-secondary);
@@ -162,15 +162,16 @@
             margin-bottom: 0.75rem;
         }
         .faq-answer-content code {
-            background: var(--bg-primary);
+            background: var(--bg-secondary);
             padding: 0.2rem 0.4rem;
             border-radius: 0.25rem;
             font-family: 'JetBrains Mono', monospace;
             font-size: 0.875rem;
             color: var(--accent-cyan);
+            border: 1px solid var(--border);
         }
         .faq-answer-content pre {
-            background: var(--bg-primary);
+            background: var(--bg-secondary);
             padding: 1rem;
             border-radius: 0.5rem;
             overflow-x: auto;
