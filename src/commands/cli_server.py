@@ -167,7 +167,7 @@ def start(
     if not no_open:
         import threading
 
-        threading.Timer(1.5, _open_browser, args=(docs_url,)).start()
+        threading.Timer(1.5, _open_browser, args=(api_url,)).start()
 
     # 同步运行（阻塞）
     asyncio.run(_server_process.serve())
