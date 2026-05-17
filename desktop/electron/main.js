@@ -614,7 +614,17 @@ function createWindow() {
     mainWindow.loadFile(path.join(__dirname, '..', 'dist', 'index.html'));
   }
 
-  mainWindow.once('ready-to-show', () => { mainWindow.show(); });
+  // Show window when ready, with a 5s fallback in case ready-to-show never fires
+  let shown = false;
+  const forceShow = () => {
+    if (!shown && mainWindow && !mainWindow.isDestroyed()) {
+      shown = true;
+      mainWindow.show();
+      mainWindow.focus();
+    }
+  };
+  mainWindow.once('ready-to-show', forceShow);
+  setTimeout(forceShow, 5000);
   mainWindow.webContents.on('console-message', (event, level, message, line, sourceId) => {
 
   // Auto-retry when Vite dev server is temporarily unreachable
