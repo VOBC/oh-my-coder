@@ -116,9 +116,6 @@ async function main() {
     process.exit(1);
   });
 
-  // 6. Open browser
-  openBrowser('http://localhost:1420');
-
   log('🎉', `Desktop 已启动！Electron PID: ${electronProcess.pid}`, c.green);
   console.log(`${c.dim('   按 Ctrl+C 停止\n')}`);
 
