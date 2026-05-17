@@ -1,1 +1,0 @@
-python -m pytest tests/test_create_hello.py -v

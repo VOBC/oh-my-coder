@@ -299,7 +299,6 @@ def agents():
         DataAgent,
         DatabaseAgent,
         DebuggerAgent,
-        DocumentAgent,
         DesignerAgent,
         DevOpsAgent,
         DocumentAgent,
