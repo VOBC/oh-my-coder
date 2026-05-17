@@ -93,20 +93,8 @@ def start(
             console.print("[red]✗ 无法找到可用端口[/red]")
             raise typer.Exit(1)
 
-    # API Key 处理
-    if no_auth:
-        effective_key: Optional[str] = None
-    elif api_key:
-        effective_key = api_key
-    else:
-        # 从环境变量或配置文件读取
+        # API Key 在 Web UI 中配置，命令行不提示
         effective_key = os.getenv("OMC_SERVER_API_KEY") or _load_api_key_from_config()
-        if effective_key:
-            console.print("[dim]API Key: 从配置文件加载（已设置）[/dim]")
-        else:
-            console.print(
-                "[yellow]⚠ 未设置 API Key，所有请求无需认证（生产环境建议设置）[/yellow]"
-            )
 
     # 创建 FastAPI app
     fastapi_app, store = create_app(api_key=effective_key)
