@@ -309,6 +309,7 @@ function setupIpc() {
 
       // Check for tool calls
       const toolCalls = responseData.choices?.[0]?.message?.tool_calls || [];
+      console.log('[DEBUG] initial response:', JSON.stringify(responseData, null, 2));
 
       if (toolCalls.length > 0) {
         // Execute tool calls
@@ -346,6 +347,8 @@ function setupIpc() {
         } catch (e) {
           return { code: 0, stdout: finalResponse, stderr: '' };
         }
+        // DEBUG: log full response to diagnose empty response issue
+        console.log('[DEBUG] finalData:', JSON.stringify(finalData, null, 2));
         const content = finalData.choices?.[0]?.message?.content || '';
         // Simulate SSE streaming: send content in 3 chunks
         if (content) {
