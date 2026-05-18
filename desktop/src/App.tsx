@@ -4,7 +4,6 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import './App.css';
 import { getKeyboardShortcutsController } from './controllers/KeyboardShortcutsController';
 import { useChatHistory } from './hooks/useChatHistory';
-import HistoryPanel from './components/HistoryPanel';
 import DiffView, { FileDiff, DiffLine } from './components/DiffView';
 import { ModelSelector } from './components/ModelSelector';
 import { ShortcutsPanel } from './components/ShortcutsPanel';
@@ -375,7 +374,6 @@ export default function App() {
   const [currentModel, setCurrentModel] = useState<string>('');
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
-  const [showHistory, setShowHistory] = useState(false);
   const [showConfig, setShowConfig] = useState(false);
   const [serverStatus, setServerStatus] = useState<'stopped' | 'starting' | 'running'>('stopped');
   const [tab, setTab] = useState<'chat' | 'models'>('chat');
@@ -558,7 +556,6 @@ export default function App() {
       handler: () => {
         setModelSelectorOpen(false);
         setShowConfig(false);
-        setShowHistory(false);
         setShortcutsPanelOpen(false);
         setInlineInputOpen(false);
         console.log('[Shortcuts] All overlays closed');
@@ -973,28 +970,10 @@ export default function App() {
   return (
     <div className="app">
       {/* Sidebar */}
-      <aside className={`sidebar ${showHistory ? 'sidebar--open' : ''}`}>
+      <aside className="sidebar">
         <div className="sidebar__header">
           <span className="sidebar__logo">⬡ OMC</span>
-          <button className="sidebar__btn" onClick={() => setShowHistory(v => !v)} title="History">
-            {showHistory ? '◀' : '☰'}
-          </button>
         </div>
-
-        {/* History panel */}
-        {showHistory ? (
-          <HistoryPanel
-            sessions={sessions}
-            activeId={activeId}
-            onSelect={handleHistorySelect}
-            onDelete={handleHistoryDelete}
-            onNew={handleHistoryNew}
-            onRename={handleHistoryRename}
-            onExport={handleHistoryExport}
-            onClearAll={handleHistoryClearAll}
-          />
-        ) : (
-          <>
             {/* Tab nav */}
             <div className="sidebar__tabs">
               <button className={`sidebar__tab ${tab === 'chat' ? 'active' : ''}`} onClick={() => setTab('chat')}>Chat</button>
@@ -1050,8 +1029,6 @@ export default function App() {
                 ⌨ 快捷键
               </button>
             </div>
-          </>
-        )}
       </aside>
 
       {/* Main */}
