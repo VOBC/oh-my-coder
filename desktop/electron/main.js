@@ -329,14 +329,53 @@ function setupIpc() {
           }
         }
 
-        // Step 2: Streaming call with tool results
+        // Step 2: Non-streaming call with tool results
+        // NOTE: streaming + function_calling conflict on DeepSeek & some providers,
+        // so we use non-streaming here, then simulate SSE chunks for the UI
         const finalPayload = {
           model,
           messages,
-          stream: true,
+          stream: false,
         };
 
-        return await streamCurl(event, endpoint, apiKey, finalPayload);
+        // Execute non-streaming call
+        const finalResponse = await curlPost(endpoint, apiKey, finalPayload);
+        let finalData;
+        try {
+          finalData = JSON.parse(finalResponse);
+        } catch (e) {
+          return { code: 0, stdout: finalResponse, stderr: '' };
+        }
+        const content = finalData.choices?.[0]?.message?.content || '';
+        // Simulate SSE streaming: send content in 3 chunks
+        if (content) {
+          const third = Math.max(1, Math.floor(content.length / 3));
+          const chunks = [
+            content.slice(0, third),
+            content.slice(third, third * 2),
+            content.slice(third * 2),
+          ];
+          for (let i = 0; i < chunks.length; i++) {
+            const isLast = i === chunks.length - 1;
+            const doneData = JSON.stringify({
+              content: chunks[i],
+              done: isLast,
+              usage: finalData.usage || {},
+              model: finalData.model || model,
+            });
+            if (event && event.sender && !event.sender.isDestroyed()) {
+              event.sender.send('omc:chat:chunk', 'data: ' + doneData + '\n\n');
+            }
+            await new Promise(r => setTimeout(r, 30));
+          }
+        } else {
+          // No content, send done signal
+          const doneData = JSON.stringify({ content: '', done: true });
+          if (event && event.sender && !event.sender.isDestroyed()) {
+            event.sender.send('omc:chat:chunk', 'data: ' + doneData + '\n\n');
+          }
+        }
+        return { code: 0, stdout: finalResponse, stderr: '' };
       } else {
         // No tool calls, stream the response
         const payload = {
