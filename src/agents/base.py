@@ -28,6 +28,7 @@ from datetime import datetime
 from enum import Enum
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Optional
+
 from src.models.base import Message, ModelResponse
 
 logger = logging.getLogger(__name__)
@@ -420,7 +421,9 @@ class BaseAgent(ABC):
 
     async def _web_fetch_tool(self, args_json) -> str:
         """web_fetch 工具：获取 URL 的网页文本内容（HTML 转纯文本）"""
-        import json, re, subprocess
+        import json
+        import re
+        import subprocess
         # 接受 dict（直接调用）或 JSON 字符串（call_model 传过来）
         if isinstance(args_json, dict):
             args = args_json
@@ -429,11 +432,11 @@ class BaseAgent(ABC):
                 args = json.loads(args_json)
             except Exception:
                 return f"[web_fetch error] Invalid arguments (not JSON): {str(args_json)[:200]}"
-        
+
         url = args.get("url", "")
         if not url:
             return "[web_fetch error] Missing url parameter"
-        
+
         try:
             result = subprocess.run(
                 ["curl", "-s", "-L", "--max-time", "15", url],
