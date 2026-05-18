@@ -57,7 +57,7 @@ class ExecutorAgent(BaseAgent):
     lane = AgentLane.BUILD_ANALYSIS
     default_tier = "medium"
     icon = "💻"
-    tools = ["file_read", "file_write", "bash", "test", "git"]
+    tools = ["file_read", "file_write", "bash", "test", "git", "web_fetch"]
 
     # 支持的编程语言
     LANGUAGE_EXTENSIONS = {

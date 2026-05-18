@@ -27,6 +27,27 @@ from datetime import datetime
 from enum import Enum
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Optional
+import logging
+
+logger = logging.getLogger(__name__)
+
+# 工具 Schema 定义（OpenAI function calling 格式）
+WEB_FETCH_TOOL_SCHEMA = {
+    "type": "function",
+    "function": {
+        "name": "web_fetch",
+        "description": "获取指定 URL 的网页文本内容，用于访问外部链接、查阅在线文档",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "url": {"type": "string", "description": "要访问的 URL"}
+            },
+            "required": ["url"],
+        },
+    },
+}
+
+SUPPORTED_TOOLS = {"web_fetch": WEB_FETCH_TOOL_SCHEMA}
 
 if TYPE_CHECKING:
     from src.models.base import Message, ModelResponse
@@ -337,18 +358,81 @@ class BaseAgent(ABC):
         """
         调用模型（自动注入用户指定的模型覆盖）
 
-        所有子类的 _run 应该用此方法代替直接调用 self.model_router.route_and_call()。
+        支持工具调用：self.tools 非空时自动注入工具定义，
+        模型返回 tool_calls 时自动执行工具并回传结果，最多 5 轮。
         """
-        response = await self.model_router.route_and_call(
-            task_type=task_type,
-            messages=messages,
-            complexity=complexity,
-            use_cache=use_cache,
-            override_model=getattr(self, "_override_model", None),
-            **kwargs,
-        )
-        self._last_model_response = response  # 缓存用于 token 统计
+        # 构建工具定义列表
+        if self.tools and "tools" not in kwargs:
+            tools_param = [SUPPORTED_TOOLS[t] for t in self.tools if t in SUPPORTED_TOOLS]
+            if tools_param:
+                kwargs["tools"] = tools_param
+
+        available_tools = {"web_fetch": self._web_fetch_tool}
+        current_messages: list[Message] = list(messages)
+
+        for _ in range(5):  # 最多 5 轮工具调用
+            response = await self.model_router.route_and_call(
+                task_type=task_type,
+                messages=current_messages,
+                complexity=complexity,
+                use_cache=use_cache,
+                override_model=getattr(self, "_override_model", None),
+                **kwargs,
+            )
+            self._last_model_response = response
+
+            if not response.tool_calls:
+                return response
+
+            # 执行工具调用
+            for tc in response.tool_calls:
+                func_name = tc.get("function", {}).get("name", "")
+                func_args_str = tc.get("function", {}).get("arguments", "{}")
+                try:
+                    func_args = json.loads(func_args_str)
+                except Exception:
+                    func_args = {}
+
+                if func_name in available_tools:
+                    try:
+                        result = await available_tools[func_name](func_args)
+                    except Exception as e:
+                        result = f"Error: {type(e).__name__}: {e}"
+                else:
+                    result = f"Error: unknown tool {func_name}"
+
+                # 追加 assistant 消息和 tool 结果
+                current_messages.append(Message(
+                    role="assistant",
+                    content=response.content or "",
+                    tool_calls=response.tool_calls,
+                ))
+                current_messages.append(Message(
+                    role="tool",
+                    content=result,
+                    tool_call_id=tc.get("id", ""),
+                    name=func_name,
+                ))
+
+            # 后续轮次不再传 tools
+            kwargs = {k: v for k, v in kwargs.items() if k != "tools"}
+
         return response
+
+    async def _web_fetch_tool(self, args: dict) -> str:
+        """web_fetch 工具：获取 URL 的网页文本内容"""
+        url = args.get("url", "")
+        if not url:
+            return "Error: missing url parameter"
+        import subprocess
+        try:
+            result = subprocess.run(
+                ["curl", "-s", "-L", "--max-time", "15", url],
+                capture_output=True, timeout=20
+            )
+            return result.stdout.decode("utf-8", errors="replace")[:8000]
+        except Exception as e:
+            return f"Error: {e}"
 
     def get_last_output(self) -> Optional[AgentOutput]:
         """获取最后一次输出"""

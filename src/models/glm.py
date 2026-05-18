@@ -124,8 +124,9 @@ class GLMModel(BaseModel):
             request_body["top_p"] = kwargs["top_p"]
         if "stop" in kwargs:
             request_body["stop"] = kwargs["stop"]
-        if "tools" in kwargs:
+        if "tools" in kwargs and kwargs["tools"]:
             request_body["tools"] = kwargs["tools"]
+            request_body["tool_choice"] = kwargs.get("tool_choice", "auto")
 
         start_time = time.time()
 
@@ -138,8 +139,14 @@ class GLMModel(BaseModel):
             choice = data["choices"][0]
             delta = choice["message"]
 
-            # GLM 可能返回 text 或 function_call
-            content = delta["text"] if "text" in delta else delta.get("content", "")
+            # GLM 可能返回 text 或 content 或 tool_calls
+            content = ""
+            if "text" in delta:
+                content = delta["text"]
+            elif "content" in delta:
+                content = delta["content"] or ""
+
+            tool_calls = delta.get("tool_calls", [])
 
             usage_data = data.get("usage", {})
             usage = Usage(
@@ -158,6 +165,7 @@ class GLMModel(BaseModel):
                 finish_reason=choice.get("finish_reason", "stop"),
                 latency_ms=latency_ms,
                 metadata={"response_id": data.get("id")},
+                tool_calls=tool_calls,
             )
 
         except httpx.HTTPStatusError as e:

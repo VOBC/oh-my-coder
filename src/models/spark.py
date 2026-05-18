@@ -142,6 +142,7 @@ class SparkModel(BaseModel):
                 finish_reason="stop",
                 latency_ms=latency_ms,
                 metadata={"app_id": self.app_id},
+            tool_calls=tool_calls if "tool_calls" in dir() else [],
             )
         except httpx.HTTPStatusError as e:
             raise SparkAPIError(f"讯飞星火 API 错误 ({e.response.status_code}): {e}")

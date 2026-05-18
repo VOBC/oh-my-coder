@@ -83,7 +83,7 @@ class CodeResearchAgent(BaseAgent):
     lane = AgentLane.BUILD_ANALYSIS
     default_tier = "medium"
     icon = "🔎"
-    tools = ["web_search"]  # 可选的补充搜索
+    tools = ["web_search", "web_fetch"]  # 可选的补充搜索
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

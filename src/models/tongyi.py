@@ -177,6 +177,7 @@ class TongyiModel(BaseModel):
                 metadata={
                     "request_id": data.get("request_id"),
                 },
+            tool_calls=tool_calls if "tool_calls" in dir() else [],
             )
 
         except httpx.HTTPStatusError as e:

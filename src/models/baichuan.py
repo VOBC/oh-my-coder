@@ -120,6 +120,9 @@ class BaichuanModel(BaseModel):
             request_body["top_p"] = kwargs["top_p"]
         if "stop" in kwargs:
             request_body["stop"] = kwargs["stop"]
+        if "tools" in kwargs and kwargs["tools"]:
+            request_body["tools"] = kwargs["tools"]
+            request_body["tool_choice"] = kwargs.get("tool_choice", "auto")
 
         start_time = time.time()
 
@@ -130,7 +133,8 @@ class BaichuanModel(BaseModel):
             latency_ms = (time.time() - start_time) * 1000
 
             choice = data["choices"][0]
-            content = choice["message"]["content"]
+            content = choice["message"].get("content") or ""
+            tool_calls = choice["message"].get("tool_calls", [])
 
             usage_data = data.get("usage", {})
             usage = Usage(
@@ -149,6 +153,7 @@ class BaichuanModel(BaseModel):
                 finish_reason=choice.get("finish_reason", "stop"),
                 latency_ms=latency_ms,
                 metadata={"response_id": data.get("id")},
+            tool_calls=tool_calls if "tool_calls" in dir() else [],
             )
 
         except httpx.HTTPStatusError as e:

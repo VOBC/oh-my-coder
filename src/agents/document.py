@@ -32,7 +32,7 @@ class DocumentAgent(BaseAgent):
     lane = AgentLane.DOMAIN
     default_tier = "low"
     icon = "📄"
-    tools = ["file_read", "file_write"]
+    tools = ["file_read", "file_write", "web_fetch"]
 
     @property
     def system_prompt(self) -> str:

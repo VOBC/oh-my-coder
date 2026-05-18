@@ -321,7 +321,7 @@ class PlannerAgent(BaseAgent):
     lane = AgentLane.BUILD_ANALYSIS
     default_tier = "high"
     icon = "📋"
-    tools = ["file_read", "search", "code_analyze"]
+    tools = ["file_read", "search", "code_analyze", "web_fetch"]
 
     @property
     def system_prompt(self) -> str:

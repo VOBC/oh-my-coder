@@ -72,7 +72,7 @@ class AnalystAgent(BaseAgent):
     lane = AgentLane.BUILD_ANALYSIS
     default_tier = "high"
     icon = "📊"
-    tools = ["file_read", "search", "sourcegraph"]
+    tools = ["file_read", "search", "sourcegraph", "web_fetch"]
 
     # Sourcegraph 配置
     use_sourcegraph: bool = False

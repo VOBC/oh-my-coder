@@ -173,6 +173,9 @@ class WenxinModel(BaseModel):
             request_body["top_p"] = kwargs["top_p"]
         if "stop" in kwargs:
             request_body["stop"] = kwargs["stop"]
+        if "tools" in kwargs and kwargs["tools"]:
+            request_body["tools"] = kwargs["tools"]
+            request_body["tool_choice"] = kwargs.get("tool_choice", "auto")
 
         url = f"{WENXIN_API_URL}/{self.model_name}?access_token={access_token}"
 
@@ -211,6 +214,7 @@ class WenxinModel(BaseModel):
                     "id": data.get("id"),
                     "created": data.get("created"),
                 },
+            tool_calls=tool_calls if "tool_calls" in dir() else [],
             )
 
         except httpx.HTTPStatusError as e:

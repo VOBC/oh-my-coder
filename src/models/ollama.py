@@ -194,6 +194,7 @@ class OllamaModel(BaseModel):
                     "local": True,
                     "base_url": self.base_url,
                 },
+            tool_calls=tool_calls if "tool_calls" in dir() else [],
             )
 
         except httpx.HTTPStatusError as e:

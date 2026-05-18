@@ -172,7 +172,7 @@ class MimoModel(BaseModel):
 
             # 解析响应
             choice = data["choices"][0]
-            content = choice["message"]["content"]
+            content = choice["message"].get("content") or ""
             finish_reason = choice.get("finish_reason", "stop")
 
             # 处理函数调用
@@ -202,6 +202,7 @@ class MimoModel(BaseModel):
                     "created": data.get("created"),
                     "tool_calls": tool_calls,
                 },
+            tool_calls=tool_calls if "tool_calls" in dir() else [],
             )
 
         except httpx.HTTPStatusError as e:

@@ -52,9 +52,11 @@ class ModelProvider(Enum):
 class Message:
     """统一的消息格式"""
 
-    role: str  # system, user, assistant
+    role: str  # system, user, assistant, tool
     content: str
     name: Optional[str] = None  # 用于多轮对话中的角色标识
+    tool_calls: Optional[list[dict[str, Any]]] = None  # assistant 消息中的工具调用
+    tool_call_id: Optional[str] = None  # tool 消息中的工具调用 ID
 
 
 @dataclass
@@ -85,6 +87,7 @@ class ModelResponse:
     finish_reason: str = "stop"
     latency_ms: float = 0.0
     metadata: dict[str, Any] = field(default_factory=dict)
+    tool_calls: list[dict[str, Any]] = field(default_factory=list)  # 工具调用（function calling）
 
 
 @dataclass

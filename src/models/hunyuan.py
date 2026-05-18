@@ -197,7 +197,8 @@ class HunyuanModel(BaseModel):
             latency_ms = (time.time() - start_time) * 1000
 
             choice = data["choices"][0]
-            content = choice["message"]["content"]
+            content = choice["message"].get("content") or ""
+            tool_calls = choice["message"].get("tool_calls", [])
 
             usage_data = data.get("usage", {})
             usage = Usage(

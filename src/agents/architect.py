@@ -58,7 +58,7 @@ class ArchitectAgent(BaseAgent):
     lane = AgentLane.BUILD_ANALYSIS
     default_tier = "high"
     icon = "🏗️"
-    tools = ["file_read", "file_write", "diagram"]
+    tools = ["file_read", "file_write", "diagram", "web_fetch"]
 
     @property
     def system_prompt(self) -> str:

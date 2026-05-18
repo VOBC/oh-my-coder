@@ -168,6 +168,10 @@ class DeepSeekModel(BaseModel):
             request_body["top_p"] = kwargs["top_p"]
         if "stop" in kwargs:
             request_body["stop"] = kwargs["stop"]
+        # 工具调用（function calling）
+        if "tools" in kwargs and kwargs["tools"]:
+            request_body["tools"] = kwargs["tools"]
+            request_body["tool_choice"] = kwargs.get("tool_choice", "auto")
 
         start_time = time.time()
 
@@ -189,8 +193,12 @@ class DeepSeekModel(BaseModel):
 
             # 解析响应
             choice = data["choices"][0]
-            content = choice["message"]["content"]
+            message = choice["message"]
+            content = message.get("content") or ""
             finish_reason = choice.get("finish_reason", "stop")
+
+            # 工具调用
+            tool_calls = message.get("tool_calls", [])
 
             # 使用统计
             usage_data = data.get("usage", {})
@@ -215,6 +223,7 @@ class DeepSeekModel(BaseModel):
                     "response_id": data.get("id"),
                     "created": data.get("created"),
                 },
+                tool_calls=tool_calls,
             )
 
         except httpx.HTTPStatusError as e:
