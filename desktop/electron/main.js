@@ -260,38 +260,139 @@ function setupIpc() {
   // Chat — direct connection to model API endpoint (OpenAI-compatible)
   // Payload: { endpoint, model, apiKey, message }
   ipcMain.handle('omc:chat:direct', async (event, { endpoint, model, apiKey, message }) => {
-    console.log('[chatDirect] endpoint=', endpoint, 'model=', model, 'hasKey=', !!apiKey, 'keyLen=', apiKey?.length);
+    console.log('[chatDirect] endpoint=', endpoint, 'model=', model, 'hasKey=', !!apiKey);
     try {
       const { spawn } = require('child_process');
 
       // Ensure endpoint ends with /chat/completions (OpenAI-compatible)
       if (endpoint && !endpoint.endsWith('/chat/completions')) {
-        // Strip trailing slash first to avoid double-slash
         endpoint = endpoint.replace(/\/$/, '') + '/chat/completions';
       }
 
-      const payload = {
-        model,
-        messages: [{ role: 'user', content: message }],
-        stream: true,
-      };
-
-      // Use curl for streaming HTTP POST (cross-platform)
-      const curlCmd = [
-        'curl', '-s', '-N',
-        '-X', 'POST', endpoint,
-        '-H', 'Content-Type: application/json',
-        `-H`, `Authorization: Bearer ${apiKey}`,
-        '-d', JSON.stringify(payload),
+      // Define tools for web_fetch
+      const tools = [
+        {
+          type: 'function',
+          function: {
+            name: 'web_fetch',
+            description: 'Fetch the content of a URL and return the text content',
+            parameters: {
+              type: 'object',
+              properties: {
+                url: { type: 'string', description: 'The URL to fetch' },
+              },
+              required: ['url'],
+            },
+          },
+        },
       ];
 
+      // Step 1: Non-streaming call to check for tool calls
+      const initialPayload = {
+        model,
+        messages: [{ role: 'user', content: message }],
+        tools,
+        stream: false,
+      };
+
+      const initialResponse = await curlPost(endpoint, apiKey, initialPayload);
+      let responseData;
+      try {
+        responseData = JSON.parse(initialResponse);
+      } catch (e) {
+        // If not JSON, just return the response as-is
+        if (event && event.sender && !event.sender.isDestroyed()) {
+          event.sender.send('omc:chat:chunk', initialResponse);
+        }
+        return { code: 0, stdout: initialResponse, stderr: '' };
+      }
+
+      // Check for tool calls
+      const toolCalls = responseData.choices?.[0]?.message?.tool_calls || [];
+
+      if (toolCalls.length > 0) {
+        // Execute tool calls
+        const messages = [
+          { role: 'user', content: message },
+          responseData.choices[0].message,
+        ];
+
+        for (const toolCall of toolCalls) {
+          if (toolCall.function.name === 'web_fetch') {
+            const args = JSON.parse(toolCall.function.arguments);
+            const content = await webFetch(args.url);
+            messages.push({
+              role: 'tool',
+              tool_call_id: toolCall.id,
+              content: content,
+            });
+          }
+        }
+
+        // Step 2: Streaming call with tool results
+        const finalPayload = {
+          model,
+          messages,
+          stream: true,
+        };
+
+        return await streamCurl(event, endpoint, apiKey, finalPayload);
+      } else {
+        // No tool calls, stream the response
+        const payload = {
+          model,
+          messages: [{ role: 'user', content: message }],
+          stream: true,
+        };
+        return await streamCurl(event, endpoint, apiKey, payload);
+      }
+    } catch (e) {
+      console.error('[chatDirect] error:', e.message);
+      return { code: 1, stdout: '', stderr: e.message };
+    }
+  });
+
+  // Helper: POST request using curl (non-streaming)
+  async function curlPost(url, apiKey, payload) {
+    return new Promise((resolve, reject) => {
+      const curlCmd = [
+        'curl', '-s',
+        '-X', 'POST', url,
+        '-H', 'Content-Type: application/json',
+        '-H', `Authorization: Bearer ${apiKey}`,
+        '-d', JSON.stringify(payload),
+      ];
       const child = spawn(curlCmd[0], curlCmd.slice(1), {
         stdio: ['ignore', 'pipe', 'pipe'],
         shell: false,
       });
+      let stdout = '';
+      let stderr = '';
+      child.stdout.on('data', (d) => { stdout += d.toString(); });
+      child.stderr.on('data', (d) => { stderr += d.toString(); });
+      child.on('close', (code) => {
+        if (code === 0) resolve(stdout);
+        else reject(new Error(stderr || `curl exited with ${code}`));
+      });
+      child.on('error', reject);
+    });
+  }
 
+  // Helper: Streaming request using curl
+  async function streamCurl(event, url, apiKey, payload) {
+    return new Promise((resolve) => {
+      const curlCmd = [
+        'curl', '-s', '-N',
+        '-X', 'POST', url,
+        '-H', 'Content-Type: application/json',
+        '-H', `Authorization: Bearer ${apiKey}`,
+        '-d', JSON.stringify(payload),
+      ];
+      const child = spawn(curlCmd[0], curlCmd.slice(1), {
+        stdio: ['ignore', 'pipe', 'pipe'],
+        shell: false,
+      });
       let fullResponse = '';
-
       child.stdout.on('data', (chunk) => {
         const text = chunk.toString();
         fullResponse += text;
@@ -299,30 +400,57 @@ function setupIpc() {
           event.sender.send('omc:chat:chunk', text);
         }
       });
-
       child.stderr.on('data', (d) => {
         if (event && event.sender && !event.sender.isDestroyed()) {
           event.sender.send('omc:chat:error', d.toString());
         }
       });
-
-      return new Promise((resolve) => {
-        child.on('close', (code) => {
-          resolve({ code, stdout: fullResponse, stderr: '' });
-        });
-        child.on('error', (e) => {
-          resolve({ code: 1, stdout: '', stderr: e.message });
-        });
-        // Timeout after 60s
-        setTimeout(() => {
-          child.kill('SIGTERM');
-          resolve({ code: 124, stdout: fullResponse, stderr: 'timeout' });
-        }, 60000);
+      child.on('close', (code) => {
+        resolve({ code, stdout: fullResponse, stderr: '' });
       });
-    } catch (e) {
-      return { code: 1, stdout: '', stderr: e.message };
-    }
-  });
+      child.on('error', (e) => {
+        resolve({ code: 1, stdout: '', stderr: e.message });
+      });
+      setTimeout(() => {
+        child.kill('SIGTERM');
+        resolve({ code: 124, stdout: fullResponse, stderr: 'timeout' });
+      }, 60000);
+    });
+  }
+
+  // Helper: Fetch URL content (web_fetch implementation)
+  async function webFetch(url) {
+    return new Promise((resolve) => {
+      const curlCmd = [
+        'curl', '-s', '-L', '--max-time', '30',
+        '-H', 'User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
+        url,
+      ];
+      const child = spawn(curlCmd[0], curlCmd.slice(1), {
+        stdio: ['ignore', 'pipe', 'pipe'],
+        shell: false,
+      });
+      let content = '';
+      child.stdout.on('data', (d) => { content += d.toString(); });
+      child.stderr.on('data', () => {});
+      child.on('close', () => {
+        // Strip HTML tags and truncate
+        let text = content.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '');
+        text = text.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '');
+        text = text.replace(/<[^>]+>/g, ' ');
+        text = text.replace(/\s+/g, ' ').trim();
+        if (text.length > 8000) {
+          text = text.slice(0, 8000) + '\n\n... (content truncated)';
+        }
+        resolve(text);
+      });
+      child.on('error', () => resolve('Error fetching URL'));
+      setTimeout(() => {
+        child.kill('SIGTERM');
+        resolve('Timeout fetching URL');
+      }, 35000);
+    });
+  }
 
   // Config
   ipcMain.handle('omc:config:get', async () => {
