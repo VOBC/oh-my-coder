@@ -175,7 +175,7 @@
         // Load agent status from API
         async function loadAgents() {
             try {
-                const res = await fetch('/api/agents/status');
+                const res = await fetch('/api/v1/agents/status');
                 const data = await res.json();
                 if (data.agents) {
                     const grid = document.getElementById('agentsGrid');

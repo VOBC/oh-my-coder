@@ -187,7 +187,7 @@
             const list = document.getElementById('historyList');
             list.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:40px;">加载中...</div>';
             try {
-                const res = await fetch('/api/history');
+                const res = await fetch('/api/v1/history');
                 const data = await res.json();
                 const records = data.records || data.history || [];
                 if (!records.length) {
@@ -244,7 +244,7 @@
         async function deleteTask(taskId) {
             if (!confirm('确定要删除这个任务吗？')) return;
             try {
-                const res = await fetch(`/api/tasks/${taskId}`, { method: 'DELETE' });
+                const res = await fetch(`/api/v1/tasks/${taskId}`, { method: 'DELETE' });
                 if (res.ok) {
                     const item = document.querySelector(`[data-task-id="${taskId}"]`);
                     if (item) { item.style.opacity = '0'; item.style.transform = 'translateX(20px)'; setTimeout(() => item.remove(), 300); }
@@ -261,11 +261,11 @@
         async function clearAllTasks() {
             if (!confirm('确定要清除所有任务记录吗？此操作不可恢复。')) return;
             try {
-                const res = await fetch('/api/tasks');
+                const res = await fetch('/api/v1/tasks');
                 const data = await res.json();
                 const tasks = data.tasks || [];
                 for (const t of tasks) {
-                    await fetch(`/api/tasks/${t.task_id}`, { method: 'DELETE' });
+                    await fetch(`/api/v1/tasks/${t.task_id}`, { method: 'DELETE' });
                 }
                 loadHistory();
             } catch (e) {
@@ -288,7 +288,7 @@
             modalBody.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted)">加载中...</div>';
 
             try {
-                const res = await fetch(`/api/history/${taskId}`);
+                const res = await fetch(`/api/v1/history/${taskId}`);
                 if (!res.ok) throw new Error('任务不存在');
                 const task = await res.json();
 
@@ -334,7 +334,7 @@
             btn.textContent = '保存中...';
 
             try {
-                const res = await fetch('/api/save-report', {
+                const res = await fetch('/api/v1/save-report', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ task_id: currentTaskId })

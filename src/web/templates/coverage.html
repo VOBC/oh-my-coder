@@ -155,7 +155,7 @@
         async function loadCoverage() {
             const content = document.getElementById('content');
             try {
-                const res = await fetch('/api/coverage');
+                const res = await fetch('/api/v1/coverage');
                 const data = await res.json();
                 currentData = data;
                 render(data);
@@ -172,7 +172,7 @@
             content.innerHTML = '<div class="loading">运行测试并收集覆盖率数据，请稍候...</div>';
 
             try {
-                const res = await fetch('/api/coverage/run', { method: 'POST' });
+                const res = await fetch('/api/v1/coverage/run', { method: 'POST' });
                 const data = await res.json();
                 currentData = data;
                 render(data);

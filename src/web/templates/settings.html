@@ -919,7 +919,7 @@ steps:
             const statusDiv = document.getElementById('ollamaStatus');
             const grid = document.getElementById('localModels');
             try {
-                const res = await fetch('/api/local-models/status');
+                const res = await fetch('/api/v1/local-models/status');
                 const data = await res.json();
                 const dot = statusDiv.querySelector('.status-dot');
                 const text = statusDiv.querySelector('span');
@@ -963,7 +963,7 @@ steps:
         // Load settings
         async function loadSettings() {
             try {
-                const res = await fetch('/api/settings');
+                const res = await fetch('/api/v1/settings');
                 const data = await res.json();
                 const models = data.models || {};
                 // Update key statuses
@@ -1069,7 +1069,7 @@ steps:
                 return;
             }
             try {
-                const res = await fetch('/api/settings', {
+                const res = await fetch('/api/v1/settings', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ models: { [id]: conf } })
@@ -1101,7 +1101,7 @@ steps:
             if (dot) dot.className = 'key-dot unset';
             if (status) status.textContent = '未配置';
             // Also delete from backend
-            fetch('/api/settings', {
+            fetch('/api/v1/settings', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ models: { [id]: { api_key: '', base_url: '' } } })
@@ -1126,7 +1126,7 @@ steps:
             const oldMsg = btn.parentElement.querySelector('.test-msg');
             if (oldMsg) oldMsg.remove();
             try {
-                const res = await fetch('/api/test-connection', {
+                const res = await fetch('/api/v1/test-connection', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ provider: id, api_key: keyVal, base_url: urlVal || undefined })
@@ -1192,7 +1192,7 @@ steps:
                 if (Object.keys(conf).length > 0) keys['custom_' + cp.id] = conf;
             });
             try {
-                const res = await fetch('/api/settings', {
+                const res = await fetch('/api/v1/settings', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ models: keys })
@@ -1258,7 +1258,7 @@ steps:
                 showToastSmall('请填写 API Key', 'error');
                 return;
             }
-            fetch('/api/settings', {
+            fetch('/api/v1/settings', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ models: { ['custom_' + id]: conf } })
@@ -1293,7 +1293,7 @@ steps:
             btn.classList.remove('ok', 'err', 'testing');
             btn.textContent = '测试中...';
             try {
-                const res = await fetch('/api/test-connection', {
+                const res = await fetch('/api/v1/test-connection', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ base_url: urlVal, api_key: keyVal, model_id: modelVal || 'gpt-4o' })
@@ -1366,7 +1366,7 @@ steps:
                 prefer_local: document.getElementById('prefer-local').value === 'true',
             };
             try {
-                const res = await fetch('/api/settings', {
+                const res = await fetch('/api/v1/settings', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ defaults: prefs })
@@ -1398,7 +1398,7 @@ steps:
             if (!container) return;
             container.innerHTML = '<div class="wf-loading">加载中...</div>';
             try {
-                const res = await fetch('/api/workflows');
+                const res = await fetch('/api/v1/workflows');
                 if (!res.ok) throw new Error(`API错误: ${res.status} ${await res.text()}`);
                 const data = await res.json();
                 const names = data.workflows || [];
@@ -1412,7 +1412,7 @@ steps:
                 let errorCount = 0;
                 for (const name of names) {
                     try {
-                        const r = await fetch(`/api/workflows/${encodeURIComponent(name)}`);
+                        const r = await fetch(`/api/v1/workflows/${encodeURIComponent(name)}`);
                         if (!r.ok) {
                             errorCount++;
                             console.warn(`Failed to load workflow ${name}: ${r.status}`);
@@ -1536,7 +1536,7 @@ steps:
             const yaml = document.getElementById('wfEditYaml')?.value || '';
             if (!name) { showToast('请填写工作流名称', 'error'); return; }
             try {
-                const res = await fetch(`/api/workflows/${encodeURIComponent(name)}`, {
+                const res = await fetch(`/api/v1/workflows/${encodeURIComponent(name)}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ yaml }),
@@ -1555,7 +1555,7 @@ steps:
             const yaml = document.getElementById('wfCreateYaml')?.value || '';
             if (!name) { showToast('请填写工作流名称', 'error'); return; }
             try {
-                const res = await fetch(`/api/workflows/${encodeURIComponent(name)}`, {
+                const res = await fetch(`/api/v1/workflows/${encodeURIComponent(name)}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ yaml }),
@@ -1573,7 +1573,7 @@ steps:
             const name = document.getElementById('wfDeleteName')?.textContent?.trim();
             if (!name) { closeAllModals(); return; }
             try {
-                const res = await fetch(`/api/workflows/${encodeURIComponent(name)}`, { method: 'DELETE' });
+                const res = await fetch(`/api/v1/workflows/${encodeURIComponent(name)}`, { method: 'DELETE' });
                 const data = await res.json();
                 if (!res.ok || !data.success) throw new Error(data.error || '删除失败');
                 closeAllModals();
@@ -1759,7 +1759,7 @@ steps:
             resultDiv.style.display = 'none';
 
             try {
-                const res = await fetch('/api/test-connection', {
+                const res = await fetch('/api/v1/test-connection', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ base_url: url, api_key: key, model_id: modelId })

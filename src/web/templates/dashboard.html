@@ -193,7 +193,7 @@
         // Load dashboard data
         async function loadDashboard() {
             try {
-                const res = await fetch('/api/dashboard/stats');
+                const res = await fetch('/api/v1/dashboard/stats');
                 const data = await res.json();
                 if (data.total_tasks !== undefined) document.getElementById('totalTasks').textContent = data.total_tasks;
                 if (data.total_tokens !== undefined) document.getElementById('totalTokens').textContent = data.total_tokens.toLocaleString();
@@ -201,7 +201,7 @@
             } catch (e) {}
 
             try {
-                const res = await fetch('/api/dashboard/files');
+                const res = await fetch('/api/v1/dashboard/files');
                 const data = await res.json();
                 if (data.files) {
                     document.getElementById('fileList').innerHTML = data.files.slice(0, 15).map(f =>
@@ -221,7 +221,7 @@
         // 打开文件所在文件夹
         async function openFile(filePath) {
             try {
-                await fetch('/api/open-folder', {
+                await fetch('/api/v1/open-folder', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({path: filePath})
@@ -234,7 +234,7 @@
         // 打开文件夹
         async function openFolder(folderPath) {
             try {
-                await fetch('/api/open-folder', {
+                await fetch('/api/v1/open-folder', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({path: folderPath})

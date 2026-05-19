@@ -19,7 +19,7 @@ from src.team import (
     team_statistics,
 )
 
-router = APIRouter(prefix="/api/team", tags=["team"])
+router = APIRouter(prefix="/team", tags=["team"])
 
 
 # ========================================

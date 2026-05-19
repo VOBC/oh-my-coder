@@ -40,9 +40,9 @@ async def verify_api_token(
     return credentials.credentials
 
 
-# 创建路由器
-history_router = APIRouter(prefix="/api/history", tags=["history"])
-agent_router = APIRouter(prefix="/api/agents", tags=["agents"])
+# 创建路由器（prefix 不含 /api/，由 app.include_router 添加 /api/v1）
+history_router = APIRouter(prefix="/history", tags=["history"])
+agent_router = APIRouter(prefix="/agents", tags=["agents"])
 
 
 # ========================================

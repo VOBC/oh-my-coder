@@ -22,7 +22,7 @@ from typing import Any, Optional
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
-router = APIRouter(prefix="/api/share", tags=["share"])
+router = APIRouter(prefix="/share", tags=["share"])
 
 # ========================================
 # Share Storage (复用 commands/share.py 逻辑)
