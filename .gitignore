@@ -74,6 +74,7 @@ site/
 desktop/node_modules/
 web-ui/node_modules/
 .github/vscode-extension/node_modules/
+.github/vscode-extension/vscode/node_modules/
 desktop/node_modules/
 web-ui/node_modules/
 
@@ -87,6 +88,11 @@ projects/
 memory/
 task-summary_*.md
 
+
+# Runtime JSON (cache, state, status)
+.openclaw/
+desktop/electron/model_status.json
+*.cache.json
 
 # 临时工作文件
 .consolidate-state.json
