@@ -1252,7 +1252,7 @@ def status():
         "KIMI_API_KEY": "🟢 生产就绪",
         "DOUBAO_API_KEY": "🟢 生产就绪",
         "MINIMAX_API_KEY": "🟡 Beta",
-        "GLM_API_KEY": "🟡 Beta",
+        "ZHIPUAI_API_KEY": "🟡 Beta",
         "TONGYI_API_KEY": "🟡 Beta",
         "WENXIN_API_KEY": "🔴 待完善",
         "HUNYUAN_API_KEY": "🔴 待完善",
@@ -1377,12 +1377,12 @@ def _check_env() -> bool:
         "kimi": "KIMI_API_KEY",
         "doubao": "DOUBAO_API_KEY",
         "minimax": "MINIMAX_API_KEY",
-        "glm": "GLM_API_KEY",
+        "glm": "ZHIPUAI_API_KEY",
         "tongyi": "TONGYI_API_KEY",
         "wenxin": "WENXIN_API_KEY",
         "hunyuan": "HUNYUAN_API_KEY",
         "mimo": "MINIMAX_API_KEY",
-        "glm-4-flash": "GLM_API_KEY",
+        "glm-4-flash": "ZHIPUAI_API_KEY",
         "deepseek-chat": "DEEPSEEK_API_KEY",
     }
     key_var = key_map.get(default_model, "DEEPSEEK_API_KEY")

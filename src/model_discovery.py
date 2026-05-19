@@ -32,7 +32,7 @@ class ModelDiscovery:
         },
         "glm": {
             "url": "https://open.bigmodel.cn/api/paas/v4/models",
-            "key_env": "ZHIPU_API_KEY",
+            "key_env": "ZHIPUAI_API_KEY",
             "format": "openai",
         },
         "tongyi": {

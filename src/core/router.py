@@ -156,7 +156,7 @@ class RouterConfig:
         self.deepseek_api_key = self.deepseek_api_key or os.getenv("DEEPSEEK_API_KEY")
         self.wenxin_api_key = self.wenxin_api_key or os.getenv("WENXIN_API_KEY")
         self.tongyi_api_key = self.tongyi_api_key or os.getenv("TONGYI_API_KEY")
-        self.glm_api_key = self.glm_api_key or os.getenv("GLM_API_KEY")
+        self.glm_api_key = self.glm_api_key or os.getenv("ZHIPUAI_API_KEY")
         self.minimax_api_key = self.minimax_api_key or os.getenv("MINIMAX_API_KEY")
         self.kimi_api_key = self.kimi_api_key or os.getenv("KIMI_API_KEY")
         self.hunyuan_api_key = self.hunyuan_api_key or os.getenv("HUNYUAN_API_KEY")

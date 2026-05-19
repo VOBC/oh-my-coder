@@ -373,7 +373,7 @@ def _get_api_key(config: dict, model: str) -> str:
         "kimi": "KIMI_API_KEY",
         "doubao": "DOUBAO_API_KEY",
         "minimax": "MINIMAX_API_KEY",
-        "glm": "GLM_API_KEY",
+        "glm": "ZHIPUAI_API_KEY",
         "tongyi": "DASHSCOPE_API_KEY",
         "wenxin": "ERNIE_API_KEY",
         "hunyuan": "HUNYUAN_API_KEY",
@@ -543,7 +543,7 @@ def _init_router() -> ModelRouter:
         # 没有找到 key，给提示
         api_key_hint_map = {
             "deepseek": ("DEEPSEEK_API_KEY", "https://platform.deepseek.com/", "性价比最高，推荐配置"),
-            "glm": ("GLM_API_KEY", "https://www.zhipuai.cn/", "智谱 GLM 模型"),
+            "glm": ("ZHIPUAI_API_KEY", "https://www.zhipuai.cn/", "智谱 GLM 模型"),
             "kimi": ("KIMI_API_KEY", "https://platform.moonshot.cn/", "月之暗面 Kimi"),
             "doubao": ("DOUBAO_API_KEY", "https://console.volcengine.com/", "字节豆包"),
             "minimax": ("MINIMAX_API_KEY", "https://www.minimax.io/", "MiniMax"),
@@ -612,7 +612,7 @@ def _check_env() -> bool:
     if not api_key:
         api_key_hint_map = {
             "deepseek": ("DEEPSEEK_API_KEY", "性价比最高，推荐配置"),
-            "glm": ("GLM_API_KEY", "智谱 GLM 模型"),
+            "glm": ("ZHIPUAI_API_KEY", "智谱 GLM 模型"),
             "kimi": ("KIMI_API_KEY", "月之暗面 Kimi"),
             "doubao": ("DOUBAO_API_KEY", "字节豆包"),
             "minimax": ("MINIMAX_API_KEY", "MiniMax"),

@@ -57,7 +57,7 @@ API_KEYS = [
     ("KIMI_API_KEY", "KIMI (Moonshot)", "https://platform.moonshot.cn/"),
     ("DOUBAO_API_KEY", "豆包 (Volcengine)", "https://console.volcengine.com/"),
     ("TONGYI_API_KEY", "通义千问", "https://dashscope.console.aliyun.com/"),
-    ("GLM_API_KEY", "智谱 GLM", "https://open.bigmodel.cn/"),
+    ("ZHIPUAI_API_KEY", "智谱 GLM", "https://open.bigmodel.cn/"),
     ("MINIMAX_API_KEY", "MiniMax", "https://www.minimaxi.com/"),
 ]
 

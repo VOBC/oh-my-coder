@@ -47,7 +47,7 @@ def _check_env() -> bool:
         "DASHSCOPE_API_KEY",
         "QWEN_API_KEY",
         "XAI_API_KEY",
-        "ZHIPU_API_KEY",
+        "ZHIPUAI_API_KEY",
     ]
     if not any(os.getenv(k) for k in keys):
         console.print(

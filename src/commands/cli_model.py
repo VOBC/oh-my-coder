@@ -116,7 +116,7 @@ def _get_current_api_key(model_id: str) -> Optional[str]:
     """获取当前模型的 API Key（从环境变量推断）"""
     key_map = {
         "deepseek": "DEEPSEEK_API_KEY",
-        "glm": "ZHIPU_API_KEY",
+        "glm": "ZHIPUAI_API_KEY",
         "wenxin": "ERNIE_API_KEY",
         "tongyi": "DASHSCOPE_API_KEY",
         "minimax": "MINIMAX_API_KEY",
@@ -238,7 +238,7 @@ BUILTIN_CATWALK_MODELS: list[dict[str, Any]] = [
     {
         "name": "GLM-4.7-Flash",
         "provider": "glm",
-        "api_key_env": "ZHIPU_API_KEY",
+        "api_key_env": "ZHIPUAI_API_KEY",
         "endpoint": "https://open.bigmodel.cn/api/paas/v4",
         "model": "glm-4-flash",
         "tier": "free",

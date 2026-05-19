@@ -93,7 +93,7 @@ CONFIG_INTENTS = {
 MODEL_PROVIDERS = {
     "glm": {
         "name": "智谱 GLM",
-        "api_key_env": "GLM_API_KEY",
+        "api_key_env": "ZHIPUAI_API_KEY",
         "base_url": "https://open.bigmodel.cn/api/paas/v4",
         "free_quota": "200万 Tokens",
     },

@@ -403,7 +403,7 @@ def status():
         "KIMI_API_KEY": "🟢 生产就绪",
         "DOUBAO_API_KEY": "🟢 生产就绪",
         "MINIMAX_API_KEY": "🟡 Beta",
-        "GLM_API_KEY": "🟡 Beta",
+        "ZHIPUAI_API_KEY": "🟡 Beta",
         "TONGYI_API_KEY": "🟡 Beta",
         "WENXIN_API_KEY": "🔴 待完善",
         "HUNYUAN_API_KEY": "🔴 待完善",
