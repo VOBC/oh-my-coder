@@ -94,25 +94,37 @@ class TestModelRouter:
         assert stats["total_requests"] == 0
         assert stats["total_cost"] == 0.0
 
-    def test_select_low_tier(self):
+    def test_select_low_tier(self, monkeypatch):
         """测试 LOW tier 任务路由"""
-        config = RouterConfig(deepseek_api_key="test_key")
-        router = ModelRouter(config)
+        # 1. 禁止从 config.json 加载（避免 glm 被自动配置）
+        # 2. 清除环境变量
+        monkeypatch.setenv("ZHIPUAI_API_KEY", "")
+        monkeypatch.setenv("DEEPSEEK_API_KEY", "test_key")
 
-        decision = router.select(TaskType.EXPLORE)
+        with patch.object(RouterConfig, "_load_from_config_file", return_value=None):
+            config = RouterConfig()  # 从环境变量读取，不读 config.json
+            router = ModelRouter(config)
 
-        assert decision.selected_tier == "low"
-        assert decision.selected_provider == "deepseek"
+            decision = router.select(TaskType.EXPLORE)
 
-    def test_select_high_tier(self):
+            assert decision.selected_tier == "low"
+            assert decision.selected_provider == "deepseek"
+
+    def test_select_high_tier(self, monkeypatch):
         """测试 HIGH tier 任务路由"""
-        config = RouterConfig(deepseek_api_key="test_key")
-        router = ModelRouter(config)
+        # 1. 禁止从 config.json 加载（避免 glm 被自动配置）
+        # 2. 清除环境变量
+        monkeypatch.setenv("ZHIPUAI_API_KEY", "")
+        monkeypatch.setenv("DEEPSEEK_API_KEY", "test_key")
 
-        decision = router.select(TaskType.ARCHITECTURE)
+        with patch.object(RouterConfig, "_load_from_config_file", return_value=None):
+            config = RouterConfig()  # 从环境变量读取，不读 config.json
+            router = ModelRouter(config)
 
-        assert decision.selected_tier == "high"
-        assert decision.selected_provider == "deepseek"
+            decision = router.select(TaskType.ARCHITECTURE)
+
+            assert decision.selected_tier == "high"
+            assert decision.selected_provider == "deepseek"
 
     def test_select_with_complexity(self):
         """测试复杂度调整"""

@@ -27,6 +27,18 @@ from src.core.router import (
 from src.models.base import Message, ModelConfig, ModelResponse, ModelTier, Usage
 from src.models.deepseek import DeepSeekAPIError, DeepSeekModel
 
+
+# ============================================================
+# Fixtures
+# ============================================================
+
+@pytest.fixture(autouse=True)
+def disable_config_file_loading():
+    """禁止从 config.json 加载 API Keys，避免真实密钥干扰测试"""
+    with patch.object(RouterConfig, "_load_from_config_file", return_value=None):
+        yield
+
+
 # ============================================================
 # Helpers
 # ============================================================
