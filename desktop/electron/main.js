@@ -19,6 +19,9 @@ let omcReady = false;
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function log(...args) {
+  const ts = new Date().toISOString().slice(11, 23);
+  console.log(`[omc:electron:${ts}]`, ...args);
+}
 
 // ── Process-level error protection ────────────────────────────────────────
 process.on("uncaughtException", (err) => {
@@ -27,8 +30,103 @@ process.on("uncaughtException", (err) => {
 process.on("unhandledRejection", (reason) => {
   log("UNHANDLED REJECTION:", reason);
 });
-  const ts = new Date().toISOString().slice(11, 23);
-  console.log(`[omc:electron:${ts}]`, ...args);
+
+// ── IPC Input Validation ─────────────────────────────────────────────────────
+/**
+ * Validate IPC arguments against a schema
+ * @param {Object} args - The arguments to validate
+ * @param {Object} schema - Validation schema { key: { type, required, pattern, enum } }
+ * @returns {{ valid: boolean, error?: string }}
+ */
+function validateIpcArgs(args, schema) {
+  if (!args || typeof args !== 'object') {
+    return { valid: false, error: 'Arguments must be an object' };
+  }
+
+  for (const [key, rules] of Object.entries(schema)) {
+    const value = args[key];
+
+    // Check required
+    if (rules.required && (value === undefined || value === null)) {
+      return { valid: false, error: `Missing required field: ${key}` };
+    }
+
+    // Skip further validation if value is not provided and not required
+    if (value === undefined || value === null) {
+      continue;
+    }
+
+    // Check type
+    if (rules.type && typeof value !== rules.type) {
+      return { valid: false, error: `Field '${key}' must be of type ${rules.type}, got ${typeof value}` };
+    }
+
+    // Check pattern (regex)
+    if (rules.pattern && typeof value === 'string' && !rules.pattern.test(value)) {
+      return { valid: false, error: `Field '${key}' does not match required pattern` };
+    }
+
+    // Check enum
+    if (rules.enum && !rules.enum.includes(value)) {
+      return { valid: false, error: `Field '${key}' must be one of: ${rules.enum.join(', ')}` };
+    }
+
+    // Check array type
+    if (rules.isArray && !Array.isArray(value)) {
+      return { valid: false, error: `Field '${key}' must be an array` };
+    }
+  }
+
+  return { valid: true };
+}
+
+/**
+ * Sanitize a path to prevent path traversal attacks
+ * @param {string} inputPath - The path to sanitize
+ * @param {string} basePath - The allowed base path
+ * @returns {{ valid: boolean, path?: string, error?: string }}
+ */
+function sanitizePath(inputPath, basePath) {
+  if (!inputPath || typeof inputPath !== 'string') {
+    return { valid: false, error: 'Path must be a non-empty string' };
+  }
+
+  // Resolve to absolute path
+  const resolved = path.resolve(basePath, inputPath);
+  
+  // Check if path is within base path
+  if (!resolved.startsWith(basePath)) {
+    return { valid: false, error: 'Path traversal detected' };
+  }
+
+  return { valid: true, path: resolved };
+}
+
+/**
+ * Validate URL to prevent SSRF attacks
+ * @param {string} url - The URL to validate
+ * @returns {{ valid: boolean, error?: string }}
+ */
+function validateUrl(url) {
+  if (!url || typeof url !== 'string') {
+    return { valid: false, error: 'URL must be a non-empty string' };
+  }
+
+  try {
+    const parsed = new URL(url);
+    // Only allow http and https protocols
+    if (!['http:', 'https:'].includes(parsed.protocol)) {
+      return { valid: false, error: 'Only HTTP and HTTPS protocols are allowed' };
+    }
+    // Block private IPs (basic check)
+    const hostname = parsed.hostname;
+    if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname.startsWith('192.168.') || hostname.startsWith('10.') || hostname.startsWith('172.')) {
+      return { valid: false, error: 'Private IP addresses are not allowed' };
+    }
+    return { valid: true };
+  } catch (e) {
+    return { valid: false, error: 'Invalid URL format' };
+  }
 }
 
 function resolveOmcBinary() {
@@ -116,11 +214,32 @@ function setupIpc() {
   });
 
   ipcMain.handle('omc:model:switch', async (_, modelId) => {
+    // Validate: modelId must be a non-empty string
+    if (!modelId || typeof modelId !== 'string' || modelId.trim().length === 0) {
+      return { ok: false, error: 'modelId must be a non-empty string' };
+    }
+    // Sanitize: only allow alphanumeric, hyphens, underscores, dots
+    if (!/^[\w\.-]+$/.test(modelId)) {
+      return { ok: false, error: 'Invalid modelId format' };
+    }
     return ApiBridge.switchModel(modelId);
   });
 
   // Chat — send task to omc and stream response
   ipcMain.handle('omc:chat:send', async (event, opts) => {
+    // Validate opts
+    const validation = validateIpcArgs(opts, {
+      message: { type: 'string', required: true },
+      model: { type: 'string', required: false },
+      stream: { type: 'boolean', required: false },
+    });
+    if (!validation.valid) {
+      return { ok: false, error: validation.error };
+    }
+    // Sanitize message length
+    if (opts.message.length > 100000) {
+      return { ok: false, error: 'Message too long (max 100000 characters)' };
+    }
     return ApiBridge.chatSend(event, opts);
   });
 
@@ -128,13 +247,52 @@ function setupIpc() {
   // Payload: { command, args, projectPath }
   // Returns: { code, stdout, stderr, outputFile }
   ipcMain.handle('omc:task:execute', async (event, { command, args, projectPath }) => {
-    log('[task:execute] command=', command, 'args=', args, 'project=', projectPath);
+    // === Input Validation ===
+    // Validate command
+    const validation = validateIpcArgs({ command, args, projectPath }, {
+      command: { type: 'string', required: true, pattern: /^[a-zA-Z0-9_:-]+$/ },
+      args: { isArray: true, required: false },
+      projectPath: { type: 'string', required: false },
+    });
+    if (!validation.valid) {
+      return { code: 1, stdout: '', stderr: `Invalid input: ${validation.error}`, outputFile: '' };
+    }
+
+    // Validate command whitelist (security: only allow specific commands)
+    const allowedCommands = ['explore', 'run', 'test', 'lint', 'format', 'typecheck', 'build', 'init'];
+    if (!allowedCommands.includes(command)) {
+      return { code: 1, stdout: '', stderr: `Command not allowed: ${command}`, outputFile: '' };
+    }
+
+    // Validate args (no shell metacharacters)
+    if (args) {
+      for (const arg of args) {
+        if (typeof arg !== 'string') {
+          return { code: 1, stdout: '', stderr: 'All args must be strings', outputFile: '' };
+        }
+        // Block shell metacharacters
+        if (/[;|&$`\n\r]/.test(arg)) {
+          return { code: 1, stdout: '', stderr: 'Invalid argument: shell metacharacters not allowed', outputFile: '' };
+        }
+      }
+    }
+
+    // Validate projectPath
+    let actualPath = projectPath || OMC_ROOT;
+    if (projectPath) {
+      // Only allow GitHub URLs or paths within OMC_ROOT
+      const isGitHubUrl = projectPath.match(/^https?:\/\/github\.com\/[\w.-]+\/[\w.-]+/);
+      const isWithinRoot = path.resolve(projectPath).startsWith(OMC_ROOT);
+      if (!isGitHubUrl && !isWithinRoot) {
+        return { code: 1, stdout: '', stderr: 'projectPath must be a GitHub URL or a path within the project', outputFile: '' };
+      }
+    }
+
+    log('[task:execute] command=', command, 'args=', args, 'project=', actualPath);
     try {
       const omcBin = resolveOmcBinary();
       const taskDir = path.join(CONFIG_PATH, 'tasks');
       fs.mkdirSync(taskDir, { recursive: true });
-
-      let actualPath = projectPath || OMC_ROOT;
 
       // If projectPath is a GitHub URL, clone it first
       if (actualPath.match(/^https?:\/\/github\.com\/[\w.-]+\/[\w.-]+/)) {
@@ -249,9 +407,24 @@ function setupIpc() {
 
   // Task — read a saved task result
   ipcMain.handle('omc:task:read', async (_, { filePath }) => {
+    // Validate filePath
+    const validation = validateIpcArgs({ filePath }, {
+      filePath: { type: 'string', required: true },
+    });
+    if (!validation.valid) {
+      return { error: `Invalid input: ${validation.error}` };
+    }
+
+    // Sanitize path (only allow reading from task directory)
+    const taskDir = path.join(CONFIG_PATH, 'tasks');
+    const resolved = path.resolve(filePath);
+    if (!resolved.startsWith(taskDir)) {
+      return { error: 'Access denied: can only read from tasks directory' };
+    }
+
     try {
-      if (!fs.existsSync(filePath)) return { error: 'File not found' };
-      return { content: fs.readFileSync(filePath, 'utf-8') };
+      if (!fs.existsSync(resolved)) return { error: 'File not found' };
+      return { content: fs.readFileSync(resolved, 'utf-8') };
     } catch (e) {
       return { error: e.message };
     }
@@ -260,6 +433,33 @@ function setupIpc() {
   // Chat — direct connection to model API endpoint (OpenAI-compatible)
   // Payload: { endpoint, model, apiKey, message }
   ipcMain.handle('omc:chat:direct', async (event, { endpoint, model, apiKey, message }) => {
+    // Validate inputs
+    const validation = validateIpcArgs({ endpoint, model, apiKey, message }, {
+      endpoint: { type: 'string', required: true },
+      model: { type: 'string', required: true },
+      apiKey: { type: 'string', required: false },
+      message: { type: 'string', required: true },
+    });
+    if (!validation.valid) {
+      return { code: 1, stdout: '', stderr: `Invalid input: ${validation.error}` };
+    }
+
+    // Validate endpoint URL (prevent SSRF)
+    const urlValidation = validateUrl(endpoint);
+    if (!urlValidation.valid) {
+      return { code: 1, stdout: '', stderr: `Invalid endpoint: ${urlValidation.error}` };
+    }
+
+    // Validate message length
+    if (message.length > 100000) {
+      return { code: 1, stdout: '', stderr: 'Message too long (max 100000 characters)' };
+    }
+
+    // Validate model name format
+    if (!/^[\w\.-]+$/.test(model)) {
+      return { code: 1, stdout: '', stderr: 'Invalid model name format' };
+    }
+
     console.log('[chatDirect] endpoint=', endpoint, 'model=', model, 'hasKey=', !!apiKey);
     try {
       const { spawn } = require('child_process');
@@ -503,6 +703,20 @@ function setupIpc() {
   });
 
   ipcMain.handle('omc:config:set', async (_, { key, value }) => {
+    // Validate inputs
+    const validation = validateIpcArgs({ key, value }, {
+      key: { type: 'string', required: true, pattern: /^[A-Z_][A-Z0-9_]*$/ },
+      value: { type: 'string', required: true },
+    });
+    if (!validation.valid) {
+      return { ok: false, error: `Invalid input: ${validation.error}` };
+    }
+
+    // Validate value length (prevent buffer overflow)
+    if (value.length > 10000) {
+      return { ok: false, error: 'Value too long (max 10000 characters)' };
+    }
+
     const envPath = path.join(CONFIG_PATH, '.env');
     ensureConfigDir();
     let content = '';
@@ -537,6 +751,14 @@ function setupIpc() {
   });
 
   ipcMain.handle('omc:history:get', async (_, id) => {
+    // Validate id (prevent command injection)
+    if (!id || typeof id !== 'string') {
+      return {};
+    }
+    // Only allow alphanumeric, hyphens, underscores
+    if (!/^[\w-]+$/.test(id)) {
+      return {};
+    }
     try {
       const out = execSync(`omc history get ${id} --json 2>/dev/null || echo "{}"`, {
         cwd: OMC_ROOT,
@@ -549,10 +771,39 @@ function setupIpc() {
 
   // Open folder / file
   ipcMain.handle('shell:openExternal', async (_, url) => {
+    // Validate URL (prevent SSRF)
+    if (!url || typeof url !== 'string') {
+      return { ok: false, error: 'URL must be a non-empty string' };
+    }
+    
+    const urlValidation = validateUrl(url);
+    if (!urlValidation.valid) {
+      return { ok: false, error: `Invalid URL: ${urlValidation.error}` };
+    }
+
     shell.openExternal(url);
     return { ok: true };
   });
+
   ipcMain.handle('shell:openPath', async (_, p) => {
+    // Validate path
+    if (!p || typeof p !== 'string') {
+      return { ok: false, error: 'Path must be a non-empty string' };
+    }
+
+    // Only allow opening paths within OMC_ROOT or common system paths
+    const resolved = path.resolve(p);
+    const allowedPrefixes = [
+      OMC_ROOT,
+      path.join(os.homedir(), 'Downloads'),
+      path.join(os.homedir(), 'Documents'),
+    ];
+    
+    const isAllowed = allowedPrefixes.some(prefix => resolved.startsWith(prefix));
+    if (!isAllowed) {
+      return { ok: false, error: 'Access denied: path not allowed' };
+    }
+
     shell.openPath(p);
     return { ok: true };
   });
