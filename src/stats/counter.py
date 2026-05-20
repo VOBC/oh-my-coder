@@ -8,7 +8,7 @@
 
 import os
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Union
 
 from .models import FileStats, StatsResult
 
@@ -122,7 +122,7 @@ def _get_file_type(path: Path) -> str:
 
 
 def count_files(
-    root_path: str | Path,
+    root_path: Union[str, Path],
     exclude_dirs: Optional[set[str]] = None,
     exclude_files: Optional[set[str]] = None,
     exclude_extensions: Optional[set[str]] = None,
