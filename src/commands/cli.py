@@ -118,20 +118,10 @@ try:
 except Exception:
     pass
 
-# 本地模型命令
-try:
-    from .cli_local_models import app as local_models_app
-
-    app.add_typer(
-        local_models_app, name="local", help="本地模型管理 - Ollama 零成本运行"
-    )
-except Exception:
-    pass
-
 # model 子命令
 from .cli_model import app as model_app  # noqa: E402
 
-app.add_typer(model_app, name="model", help="模型管理 - 查看/切换默认模型")
+app.add_typer(model_app, name="model", help="模型管理 - 查看/切换默认模型，本地 Ollama 支持")
 
 # gateway 子命令（懒导入，避免 gateway 依赖缺失时报错）
 try:
