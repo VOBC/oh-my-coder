@@ -1,7 +1,6 @@
 """测试 skill_extractor.py — Skill 沉淀闭环"""
 
 import json
-from pathlib import Path
 
 from src.core.skill_extractor import (
     SkillProposal,
