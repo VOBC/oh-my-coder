@@ -358,8 +358,8 @@ class TestMultiAgentCoordinator:
         assert all(r.success for r in result.results)
 
     @pytest.mark.asyncio
-    async def test_dispatch_sequential_continues_after_exception(self, coordinator):
-        """Test that dispatch_sequential continues after exception (doesn't break loop)"""
+    async def test_dispatch_sequential_breaks_on_failure(self, coordinator):
+        """Test that dispatch_sequential breaks on failure (stops loop)"""
 
         call_count = 0
 
@@ -379,11 +379,9 @@ class TestMultiAgentCoordinator:
 
         result = await coordinator.dispatch_sequential("Test task", agents)
 
-        # Should have 2 results (all agents run, even if first fails)
-        assert len(result.results) == 2
+        # Should have 1 result (first agent fails, loop breaks)
+        assert len(result.results) == 1
         assert result.results[0].success is False  # First failed
-        assert result.results[1].success is True   # Second succeeded
-        assert "失败: 1" in result.summary
 
     def test_summarize(self, coordinator):
         """Test _summarize method"""

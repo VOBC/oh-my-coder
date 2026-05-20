@@ -256,7 +256,7 @@ class MultiAgentCoordinator:
         for agent in agents:
             result = await self._run_agent(agent, context)
             results.append(result)
-            if isinstance(result, Exception):
+            if not result.success:
                 break
             # 将前一个 Agent 的输出作为下一个 Agent 的输入
             if result.output:
