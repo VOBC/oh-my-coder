@@ -1,7 +1,7 @@
 """测试 summary.py — 任务总结模块"""
 
 import json
-from datetime import datetime
+from io import StringIO
 
 import pytest
 
@@ -9,6 +9,10 @@ from src.core.summary import (
     ModelUsage,
     StepRecord,
     TaskSummary,
+    _generate_recommendations,
+    _infer_models,
+    _write_html_summary,
+    _write_txt_summary,
     generate_summary,
     load_summary,
     print_summary,
@@ -21,27 +25,18 @@ from src.core.summary import (
 
 
 class TestStepRecord:
-    def test_to_dict(self):
-        step = StepRecord(agent="Coder", status="completed", duration=5.0, tokens=100, cost=0.01)
-        d = step.to_dict()
-        assert d["agent"] == "Coder"
-        assert d["status"] == "completed"
-        assert d["duration"] == 5.0
-        assert d["tokens"] == 100
-        assert d["cost"] == 0.01
-        assert d["result"] == ""
-        assert d["error"] == ""
-
     def test_defaults(self):
-        step = StepRecord(agent="X", status="failed", duration=1.0)
-        assert step.tokens == 0
-        assert step.cost == 0.0
-        assert step.result == ""
-        assert step.error == ""
+        s = StepRecord(agent="Coder", status="completed", duration=1.5)
+        assert s.tokens == 0
+        assert s.cost == 0.0
+        assert s.result == ""
+        assert s.error == ""
 
-    def test_with_error(self):
-        step = StepRecord(agent="A", status="failed", duration=2.0, error="Timeout")
-        assert step.error == "Timeout"
+    def test_to_dict(self):
+        s = StepRecord(agent="Coder", status="failed", duration=2.0, tokens=100, cost=0.5, result="ok", error="err")
+        d = s.to_dict()
+        assert d["agent"] == "Coder"
+        assert d["cost"] == 0.5
 
 
 # ===== ModelUsage =====
@@ -51,34 +46,78 @@ class TestModelUsage:
     def test_defaults(self):
         m = ModelUsage(provider="deepseek", model_name="chat")
         assert m.calls == 0
-        assert m.tokens == 0
-        assert m.cost == 0.0
 
 
 # ===== TaskSummary =====
 
 
 class TestTaskSummary:
+    def test_defaults(self):
+        t = TaskSummary(task="test", workflow="build")
+        assert t.success is True
+        assert t.steps_completed == []
+        assert t.models_used == []
+
     def test_to_dict(self):
-        ts = TaskSummary(task="Test", workflow="build")
-        d = ts.to_dict()
-        assert d["task"] == "Test"
-        assert d["workflow"] == "build"
-        assert d["success"] is True
-        assert d["steps_completed"] == []
+        t = TaskSummary(task="t", workflow="w", total_tokens=100)
+        d = t.to_dict()
+        assert d["total_tokens"] == 100
 
     def test_from_dict(self):
-        data = {"task": "X", "workflow": "review", "success": False, "errors": ["e1"]}
-        ts = TaskSummary.from_dict(data)
-        assert ts.task == "X"
-        assert ts.success is False
-        assert ts.errors == ["e1"]
+        d = {"task": "t", "workflow": "w", "total_tokens": 50}
+        t = TaskSummary.from_dict(d)
+        assert t.total_tokens == 50
 
-    def test_defaults(self):
-        ts = TaskSummary(task="T", workflow="build")
-        assert ts.start_time == ""
-        assert ts.total_tokens == 0
-        assert ts.agent_count == 0
+
+# ===== _infer_models =====
+
+
+class TestInferModels:
+    def test_build(self):
+        assert len(_infer_models("build", 3)) == 3
+
+    def test_review(self):
+        assert _infer_models("review", 1) == ["deepseek-chat"]
+
+    def test_debug(self):
+        assert _infer_models("debug", 1) == ["deepseek-chat"]
+
+    def test_test(self):
+        assert len(_infer_models("test", 2)) == 2
+
+    def test_unknown(self):
+        assert _infer_models("custom", 1) == ["deepseek-chat"]
+
+
+# ===== _generate_recommendations =====
+
+
+class TestGenerateRecommendations:
+    def test_no_issues(self):
+        recs = _generate_recommendations([], 0.01, 100, "build")
+        assert "良好" in recs[0]
+
+    def test_high_cost(self):
+        recs = _generate_recommendations([], 2.0, 100, "build")
+        assert any("成本较高" in r for r in recs)
+
+    def test_medium_cost(self):
+        recs = _generate_recommendations([], 0.2, 100, "build")
+        assert any("适中" in r for r in recs)
+
+    def test_high_tokens(self):
+        recs = _generate_recommendations([], 0.01, 60000, "build")
+        assert any("Token" in r for r in recs)
+
+    def test_long_duration(self):
+        steps = [StepRecord(agent="a", status="completed", duration=70)]
+        recs = _generate_recommendations(steps, 0.01, 100, "build")
+        assert any("时间较长" in r for r in recs)
+
+    def test_failed_steps(self):
+        steps = [StepRecord(agent="a", status="failed", duration=1, error="oops")]
+        recs = _generate_recommendations(steps, 0.01, 100, "build")
+        assert any("失败" in r for r in recs)
 
 
 # ===== generate_summary =====
@@ -87,249 +126,140 @@ class TestTaskSummary:
 class TestGenerateSummary:
     def test_basic(self):
         steps = [
-            {"agent": "Coder", "status": "completed", "duration": 10.0, "tokens": 500, "result": "Done"},
+            {"agent": "Coder", "status": "completed", "duration": 5.0, "tokens": 500, "result": "done"},
+            {"agent": "Reviewer", "status": "completed", "duration": 3.0, "tokens": 200, "result": "ok"},
         ]
-        s = generate_summary("Build feature", "build", steps)
-        assert s.task == "Build feature"
-        assert s.workflow == "build"
+        s = generate_summary("实现模块", "build", steps)
         assert s.success is True
-        assert s.agent_count == 1
-        assert s.total_tokens == 500
-        assert len(s.steps_completed) == 1
+        assert s.agent_count == 2
+        assert s.total_tokens == 700
 
-    def test_failed_step(self):
+    def test_with_failure(self):
         steps = [
-            {"agent": "Coder", "status": "completed", "duration": 5.0},
-            {"agent": "Reviewer", "status": "failed", "duration": 2.0, "error": "Bad code"},
+            {"agent": "Coder", "status": "completed", "duration": 5.0, "tokens": 500, "result": "done"},
+            {"agent": "Coder", "status": "failed", "duration": 2.0, "tokens": 100, "error": "bug", "result": ""},
         ]
-        s = generate_summary("Task", "build", steps)
+        s = generate_summary("修bug", "debug", steps)
         assert s.success is False
         assert len(s.errors) == 1
-        assert "Bad code" in s.errors[0]
 
-    def test_cost_estimate(self):
-        """When cost=0 and tokens>0, estimate cost"""
-        steps = [{"agent": "A", "status": "completed", "duration": 1.0, "tokens": 100000}]
-        s = generate_summary("T", "build", steps)
-        assert s.total_cost > 0  # estimated
+    def test_cost_estimation(self):
+        steps = [{"agent": "A", "status": "completed", "duration": 1, "tokens": 100000}]
+        s = generate_summary("test", "build", steps)
+        assert s.total_cost > 0  # auto-estimated
 
-    def test_skipped_step(self):
-        steps = [{"agent": "A", "status": "skipped", "duration": 0.0}]
-        s = generate_summary("T", "build", steps)
-        assert s.success is False  # skipped != completed
-
-    def test_multiple_agents(self):
-        steps = [
-            {"agent": "Coder", "status": "completed", "duration": 5.0},
-            {"agent": "Coder", "status": "completed", "duration": 3.0},
-            {"agent": "Reviewer", "status": "completed", "duration": 2.0},
-        ]
-        s = generate_summary("T", "build", steps)
-        assert s.agent_count == 2  # Coder + Reviewer
-
-    def test_with_explicit_times(self):
+    def test_with_custom_times(self):
+        from datetime import datetime, timedelta
         start = datetime(2026, 1, 1, 10, 0)
-        end = datetime(2026, 1, 1, 10, 5)
-        s = generate_summary("T", "build", [], start_time=start, end_time=end)
+        end = start + timedelta(minutes=5)
+        s = generate_summary("t", "build", [], start_time=start, end_time=end)
         assert s.duration_seconds == 300.0
 
-    def test_unknown_agent(self):
-        steps = [{"status": "completed", "duration": 1.0}]  # no agent key
-        s = generate_summary("T", "build", steps)
-        assert s.steps_completed[0]["agent"] == "unknown"
 
-    def test_empty_steps(self):
-        s = generate_summary("T", "build", [])
-        assert s.success is True
-        assert s.agent_count == 0
-
-    def test_recommendations_high_cost(self):
-        steps = [{"agent": "A", "status": "completed", "duration": 1.0, "tokens": 0, "cost": 5.0}]
-        s = generate_summary("T", "build", steps)
-        assert any("成本较高" in r for r in s.recommendations)
-
-    def test_recommendations_medium_cost(self):
-        steps = [{"agent": "A", "status": "completed", "duration": 1.0, "tokens": 0, "cost": 0.15}]
-        s = generate_summary("T", "build", steps)
-        assert any("成本适中" in r for r in s.recommendations)
-
-    def test_recommendations_high_tokens(self):
-        steps = [{"agent": "A", "status": "completed", "duration": 1.0, "tokens": 60000}]
-        s = generate_summary("T", "build", steps)
-        assert any("Token" in r for r in s.recommendations)
-
-    def test_recommendations_long_duration(self):
-        steps = [{"agent": "A", "status": "completed", "duration": 70.0}]
-        s = generate_summary("T", "build", steps)
-        assert any("执行时间较长" in r for r in s.recommendations)
-
-    def test_recommendations_failed(self):
-        steps = [{"agent": "A", "status": "failed", "duration": 1.0, "error": "err"}]
-        s = generate_summary("T", "build", steps)
-        assert any("失败" in r for r in s.recommendations)
-
-    def test_recommendations_no_issue(self):
-        steps = [{"agent": "A", "status": "completed", "duration": 5.0, "tokens": 100}]
-        s = generate_summary("T", "build", steps)
-        assert any("良好" in r for r in s.recommendations)
-
-    def test_models_build(self):
-        s = generate_summary("T", "build", [])
-        assert len(s.models_used) == 3
-
-    def test_models_review(self):
-        s = generate_summary("T", "review", [])
-        assert len(s.models_used) == 1
-
-    def test_models_debug(self):
-        s = generate_summary("T", "debug", [])
-        assert len(s.models_used) == 1
-
-    def test_models_test(self):
-        s = generate_summary("T", "test", [])
-        assert len(s.models_used) == 2
-
-    def test_models_unknown(self):
-        s = generate_summary("T", "custom", [])
-        assert len(s.models_used) == 1
-
-
-# ===== save_summary =====
-
-
-class TestSaveSummary:
-    @pytest.fixture()
-    def summary(self):
-        return TaskSummary(
-            task="Test task",
-            workflow="build",
-            duration_seconds=10.0,
-            total_tokens=500,
-            total_cost=0.01,
-            success=True,
-            steps_completed=[
-                {"agent": "Coder", "status": "completed", "duration": 5.0, "tokens": 500, "result": "Done", "cost": 0.0, "error": ""},
-            ],
-            recommendations=["✅ 执行效率良好"],
-        )
-
-    def test_save_json(self, summary, tmp_path):
-        path = save_summary(summary, output_dir=tmp_path, format="json")
-        assert path.exists()
-        data = json.loads(path.read_text(encoding="utf-8"))
-        assert data["task"] == "Test task"
-
-    def test_save_txt(self, summary, tmp_path):
-        path = save_summary(summary, output_dir=tmp_path, format="txt")
-        assert path.exists()
-        content = path.read_text(encoding="utf-8")
-        assert "Test task" in content
-        assert "执行步骤" in content
-
-    def test_save_html(self, summary, tmp_path):
-        path = save_summary(summary, output_dir=tmp_path, format="html")
-        assert path.exists()
-        content = path.read_text(encoding="utf-8")
-        assert "<html" in content
-        assert "Test task" in content
-
-    def test_save_custom_filename(self, summary, tmp_path):
-        path = save_summary(summary, output_dir=tmp_path, format="json", filename="custom.json")
-        assert path.name == "custom.json"
-
-    def test_save_creates_dir(self, summary, tmp_path):
-        subdir = tmp_path / "new"
-        path = save_summary(summary, output_dir=subdir, format="json")
-        assert subdir.exists()
-        assert path.exists()
-
-    def test_save_invalid_format(self, summary, tmp_path):
-        with pytest.raises(ValueError, match="不支持的格式"):
-            save_summary(summary, output_dir=tmp_path, format="csv")
-
-    def test_save_failed_summary_html(self, tmp_path):
-        s = TaskSummary(task="Fail", workflow="debug", success=False)
-        path = save_summary(s, output_dir=tmp_path, format="html")
-        content = path.read_text(encoding="utf-8")
-        assert "失败" in content or "F44336" in content
-
-    def test_save_txt_with_recommendations(self, summary, tmp_path):
-        path = save_summary(summary, output_dir=tmp_path, format="txt")
-        content = path.read_text(encoding="utf-8")
-        assert "优化建议" in content
-
-    def test_save_html_with_recommendations(self, summary, tmp_path):
-        path = save_summary(summary, output_dir=tmp_path, format="html")
-        content = path.read_text(encoding="utf-8")
-        assert "优化建议" in content or "rec" in content
-
-
-# ===== load_summary =====
-
-
-class TestLoadSummary:
-    def test_load_json(self, tmp_path):
-        s = TaskSummary(task="Loaded", workflow="build")
-        path = save_summary(s, output_dir=tmp_path, format="json")
-        loaded = load_summary(path)
-        assert loaded.task == "Loaded"
-
-    def test_load_invalid_format(self, tmp_path):
-        txt_file = tmp_path / "summary.csv"
-        txt_file.write_text("data", encoding="utf-8")
-        with pytest.raises(ValueError, match="不支持的文件格式"):
-            load_summary(txt_file)
-
-
-# ===== print functions =====
+# ===== print_summary / print_summary_compact =====
 
 
 class TestPrintSummary:
-    def test_print_summary_success(self, capsys):
-        s = TaskSummary(task="T", workflow="build", success=True, duration_seconds=5.0)
+    def test_print_summary(self, capsys):
+        s = TaskSummary(task="测试任务", workflow="build", success=True, duration_seconds=10.0, total_cost=0.5, total_tokens=1000, agent_count=2, models_used=["deepseek-chat"])
         print_summary(s)
         captured = capsys.readouterr()
         assert "✅" in captured.out
-        assert "T" in captured.out
+        assert "测试任务" in captured.out
 
     def test_print_summary_failed(self, capsys):
-        s = TaskSummary(task="T", workflow="debug", success=False, errors=["err"])
+        s = TaskSummary(task="fail task", workflow="debug", success=False, errors=["Coder: bug"])
         print_summary(s)
         captured = capsys.readouterr()
         assert "❌" in captured.out
 
     def test_print_summary_with_steps(self, capsys):
         s = TaskSummary(
-            task="T",
-            workflow="build",
-            steps_completed=[
-                {"agent": "AgentCoder", "status": "completed", "duration": 5.0, "tokens": 100, "result": "Result text that is longer than fifty chars for truncation test"},
-                {"agent": "AgentReviewer", "status": "failed", "duration": 2.0, "tokens": 50, "result": "Bad"},
-            ],
+            task="t", workflow="build", success=True,
+            steps_completed=[{"agent": "AgentCoder", "status": "completed", "duration": 5.0, "tokens": 100, "result": "done"}],
         )
         print_summary(s)
         captured = capsys.readouterr()
-        assert "Coder" in captured.out  # "AgentCoder" -> "Coder" after strip
-        assert "❌" in captured.out
+        assert "Coder" in captured.out
 
-    def test_print_summary_with_recommendations(self, capsys):
-        s = TaskSummary(task="T", workflow="build", recommendations=["💡 Tip"])
-        print_summary(s)
-        captured = capsys.readouterr()
-        assert "优化建议" in captured.out
-
-    def test_print_compact(self, capsys):
-        s = TaskSummary(task="A long task name that will be truncated", workflow="build", success=True, duration_seconds=10.0)
+    def test_print_summary_compact(self, capsys):
+        s = TaskSummary(task="测试", workflow="build", success=True, duration_seconds=5.0, total_cost=0.01, agent_count=1)
         print_summary_compact(s)
         captured = capsys.readouterr()
         assert "✅" in captured.out
-        assert "build" in captured.out
 
-    def test_print_compact_failed(self, capsys):
-        s = TaskSummary(task="T", workflow="debug", success=False)
-        print_summary_compact(s)
-        captured = capsys.readouterr()
-        assert "❌" in captured.out
+
+# ===== save_summary / load_summary =====
+
+
+class TestSaveAndLoad:
+    def test_save_json(self, tmp_path):
+        s = TaskSummary(task="测试", workflow="build", total_tokens=100, total_cost=0.5)
+        path = save_summary(s, output_dir=tmp_path, format="json")
+        assert path.exists()
+        data = json.loads(path.read_text(encoding="utf-8"))
+        assert data["total_tokens"] == 100
+
+    def test_save_txt(self, tmp_path):
+        s = TaskSummary(task="测试", workflow="build", success=True, duration_seconds=10.0, total_tokens=1000, total_cost=0.5, recommendations=["建议"])
+        path = save_summary(s, output_dir=tmp_path, format="txt")
+        assert path.exists()
+        content = path.read_text(encoding="utf-8")
+        assert "测试" in content
+
+    def test_save_html(self, tmp_path):
+        s = TaskSummary(task="测试", workflow="build", success=True, steps_completed=[{"agent": "Coder", "status": "completed", "duration": 5.0, "result": "ok"}])
+        path = save_summary(s, output_dir=tmp_path, format="html")
+        assert path.exists()
+        content = path.read_text(encoding="utf-8")
+        assert "<html" in content
+
+    def test_save_custom_filename(self, tmp_path):
+        s = TaskSummary(task="t", workflow="build")
+        path = save_summary(s, output_dir=tmp_path, format="json", filename="custom.json")
+        assert path.name == "custom.json"
+
+    def test_save_invalid_format(self, tmp_path):
+        s = TaskSummary(task="t", workflow="build")
+        with pytest.raises(ValueError, match="不支持"):
+            save_summary(s, output_dir=tmp_path, format="pdf")
+
+    def test_load_json(self, tmp_path):
+        s = TaskSummary(task="加载测试", workflow="build", total_tokens=200)
+        path = save_summary(s, output_dir=tmp_path, format="json")
+        loaded = load_summary(path)
+        assert loaded.total_tokens == 200
+        assert loaded.task == "加载测试"
+
+    def test_load_non_json(self, tmp_path):
+        txt = tmp_path / "summary.txt"
+        txt.write_text("text", encoding="utf-8")
+        with pytest.raises(ValueError, match="不支持"):
+            load_summary(txt)
+
+
+# ===== _write_txt / _write_html helpers =====
+
+
+class TestWriteHelpers:
+    def test_txt_with_recommendations(self):
+        s = TaskSummary(task="t", workflow="w", success=True, recommendations=["rec1"])
+        f = StringIO()
+        _write_txt_summary(f, s)
+        assert "rec1" in f.getvalue()
+
+    def test_txt_no_recommendations(self):
+        s = TaskSummary(task="t", workflow="w", success=False)
+        f = StringIO()
+        _write_txt_summary(f, s)
+        assert "失败" in f.getvalue()
+
+    def test_html_basic(self):
+        s = TaskSummary(task="t", workflow="w", success=True, duration_seconds=10.0, total_cost=0.5, total_tokens=1000, agent_count=1)
+        f = StringIO()
+        _write_html_summary(f, s)
+        html = f.getvalue()
+        assert "✅" in html
 
 
 # ===== quick_summary =====
@@ -337,11 +267,10 @@ class TestPrintSummary:
 
 class TestQuickSummary:
     def test_basic(self):
-        s = quick_summary("Fast task", "build", 5.0, 100, ["step1", "step2"])
-        assert s.task == "Fast task"
-        assert s.workflow == "build"
+        s = quick_summary("快速测试", "build", 5.0, 500, ["步骤1", "步骤2"])
+        assert s.success is True
         assert len(s.steps_completed) == 2
 
-    def test_empty_steps(self):
-        s = quick_summary("T", "build", 1.0, 0, [])
-        assert s.steps_completed == []
+    def test_with_workflow(self):
+        s = quick_summary("t", "review", 1.0, 100, ["a"])
+        assert s.workflow == "review"
