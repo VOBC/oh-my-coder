@@ -62,7 +62,7 @@ class OllamaHealthStatus:
     model_count: int = 0
     available_models: list[str] = field(default_factory=list)
     latency_ms: float = 0.0
-    last_check_time: Optional[datetime] = field(default_factory=None)
+    last_check_time: Optional[datetime] = None
 
     def to_dict(self) -> dict:
         """导出为字典，便于序列化或日志记录"""
@@ -264,10 +264,7 @@ class OllamaHealthChecker:
         """获取/创建复用的 httpx client"""
         if self._client is None or self._client.is_closed:
             self._client = httpx.Client(
-                timeout=httpx.Timeout(
-                    connect=self.connect_timeout,
-                    read=self.read_timeout,
-                )
+                timeout=self.connect_timeout + self.read_timeout,
             )
         return self._client
 
