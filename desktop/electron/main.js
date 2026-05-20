@@ -485,6 +485,20 @@ function setupIpc() {
             },
           },
         },
+        {
+          type: 'function',
+          function: {
+            name: 'file_read',
+            description: 'Read the contents of a local file. Returns the first 2000 characters.',
+            parameters: {
+              type: 'object',
+              properties: {
+                path: { type: 'string', description: 'Absolute path to the file' },
+              },
+              required: ['path'],
+            },
+          },
+        },
       ];
 
       // Step 1: Non-streaming call to check for tool calls
@@ -527,6 +541,34 @@ function setupIpc() {
               tool_call_id: toolCall.id,
               content: content,
             });
+          } else if (toolCall.function.name === 'file_read') {
+            const args = JSON.parse(toolCall.function.arguments);
+            
+            // Path traversal security check
+            if (args.path.includes('..')) {
+              messages.push({
+                role: 'tool',
+                tool_call_id: toolCall.id,
+                content: 'Error reading file: Path traversal detected (contains \'..\'). Access denied for security reasons.',
+              });
+              continue;
+            }
+            
+            try {
+              const fs = require('fs');
+              const content = fs.readFileSync(args.path, 'utf-8');
+              messages.push({
+                role: 'tool',
+                tool_call_id: toolCall.id,
+                content: content.slice(0, 2000),
+              });
+            } catch (e) {
+              messages.push({
+                role: 'tool',
+                tool_call_id: toolCall.id,
+                content: `Error reading file: ${e.message}`,
+              });
+            }
           }
         }
 
