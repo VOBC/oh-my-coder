@@ -38,7 +38,8 @@ from .cli_checkpoint import app as checkpoint_app
 from .cli_commands import app as commands_app
 from .cli_config import app as config_app
 from .cli_config_ext import app as config_ext_app
-from .cli_context import context_app
+# merged into cli_usage
+# from .cli_context import context_app
 from .cli_doctor import app as doctor_app
 from .cli_lsp import app as lsp_app
 from .cli_mcp import app as mcp_app
@@ -92,7 +93,8 @@ app = typer.Typer(
 )
 
 # 注册子命令
-app.add_typer(context_app, name="context")
+# merged into usage
+# app.add_typer(context_app, name="context")
 app.add_typer(config_ext_app, name="agent-config")
 app.add_typer(task_app, name="task")
 app.add_typer(multiagent_app, name="multiagent")

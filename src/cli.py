@@ -33,7 +33,8 @@ from .commands.cli_commands import app as commands_app
 # merged into cli_usage
 # from .commands.cli_compact import app as compact_app
 from .commands.cli_config_ext import app as config_ext_app
-from .commands.cli_context import context_app
+# merged into cli_usage
+# from .commands.cli_context import context_app
 from .commands.cli_lsp import app as lsp_app
 from .commands.cli_mcp import app as mcp_app
 # merged into cli_usage
@@ -69,7 +70,8 @@ app = typer.Typer(
 )
 
 # 注册子命令
-app.add_typer(context_app, name="context")
+# merged into usage
+# app.add_typer(context_app, name="context")
 app.add_typer(config_ext_app, name="agent-config")
 app.add_typer(task_app, name="task")
 app.add_typer(multiagent_app, name="multiagent")
