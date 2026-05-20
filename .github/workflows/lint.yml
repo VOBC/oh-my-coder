@@ -9,4 +9,4 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
       - run: pip install "ruff>=0.15.0"
-      - run: ruff check . --target-version py310
+      - run: ruff check .
