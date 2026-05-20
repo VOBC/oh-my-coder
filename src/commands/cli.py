@@ -38,13 +38,9 @@ from .cli_checkpoint import app as checkpoint_app
 from .cli_commands import app as commands_app
 from .cli_config import app as config_app
 from .cli_config_ext import app as config_ext_app
-# merged into cli_usage
-# from .cli_context import context_app
 from .cli_doctor import app as doctor_app
 from .cli_lsp import app as lsp_app
 from .cli_mcp import app as mcp_app
-# merged into cli_usage
-# from .cli_memory import app as memory_app
 from .cli_migrate import app as migrate_app
 from .cli_multiagent import app as multiagent_app
 from .cli_package_manager import app as pkg_app
@@ -63,10 +59,6 @@ from .cli_self_config import app as self_config_app
 from .cli_server import app as server_app
 from .cli_skill import app as skill_app
 from .cli_task import app as task_app
-# merged into cli_usage
-# from .cli_thought import app as thought_app
-# merged into cli_usage
-# from .cli_trace import app as trace_app
 from .cli_tui import app as tui_app
 from .cli_usage import app as usage_app
 
@@ -93,8 +85,6 @@ app = typer.Typer(
 )
 
 # 注册子命令
-# merged into usage
-# app.add_typer(context_app, name="context")
 app.add_typer(config_ext_app, name="agent-config")
 app.add_typer(task_app, name="task")
 app.add_typer(multiagent_app, name="multiagent")
@@ -104,10 +94,6 @@ app.add_typer(mcp_app, name="mcp")
 app.add_typer(
     skill_app, name="skill", help="Skill 系统 - 内置和自定义 Skill 管理与执行"
 )
-# merged into usage
-# app.add_typer(trace_app, name="trace", help="Trace 执行记录 - 查看 Agent 执行过程")
-# merged into usage
-# app.add_typer(memory_app, name="memory", help="分层记忆管理 - 查看核心/精选/完整记忆")
 app.add_typer(usage_app, name="usage", help="用量统计与追踪 - stats/trace/memory")
 app.add_typer(migrate_app, name="migrate", help="记忆迁移 - 从 Claude/Gemini 导入配置")
 app.add_typer(tui_app, name="tui", help="TUI 交互界面 - 简易终端交互")
@@ -123,8 +109,6 @@ app.add_typer(review_app, name="review", help="代码审查 - 智能分析代码
 app.add_typer(quality_app, name="quality", help="代码质量检查 - ruff/black 集成")
 app.add_typer(profile_app, name="profile", help="Profile 隔离 - 子 Agent 上下文管理")
 app.add_typer(server_app, name="server", help="远程 Server - HTTP REST API 服务")
-# merged into cli_usage
-# app.add_typer(thought_app, name="thought", help="思维链 - 记录和可视化 Agent 推理过程")
 
 # 代码清理命令
 try:
