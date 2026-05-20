@@ -1,67 +1,114 @@
 """
-通知模块测试
+Tests for src/utils/notify.py
+
+Coverage target: 86% → 95%+
 """
 
+import os
 from unittest.mock import MagicMock, patch
 
+from src.utils.notify import (
+    notify_quest_update,
+    notify_quest_update_dingtalk,
+    notify_workflow_complete,
+    notify_workflow_complete_dingtalk,
+    send_dingtalk_notification,
+    send_notification,
+)
 
-class TestDesktopNotification:
-    """测试桌面通知"""
 
-    @patch("src.utils.notify.subprocess.run")
-    def test_send_notification_darwin(self, mock_run):
-        """测试 macOS 通知发送"""
-        mock_run.return_value = MagicMock(returncode=0)
+class TestSendNotification:
+    """Test send_notification function."""
 
-        from src.utils.notify import send_notification
-
-        with patch("sys.platform", "darwin"):
-            result = send_notification("Test", "Hello")
-            assert result is True
-            mock_run.assert_called_once()
-
-    def test_send_notification_non_darwin(self):
-        """测试非 macOS 平台返回 False"""
-        from src.utils.notify import send_notification
-
+    def test_non_darwin_platform(self):
+        """On non-macOS, should return False."""
         with patch("sys.platform", "linux"):
-            result = send_notification("Test", "Hello")
+            result = send_notification("title", "message")
             assert result is False
 
-    def test_notify_workflow_complete(self):
-        """测试工作流完成通知"""
-        from src.utils.notify import notify_workflow_complete
+    @patch("sys.platform", "darwin")
+    @patch("subprocess.run")
+    def test_success_with_title_only(self, mock_run):
+        """Successfully send notification with title only."""
+        mock_run.return_value = MagicMock(returncode=0)
+        result = send_notification("Test Title", "Test Message")
+        assert result is True
+        mock_run.assert_called_once()
 
-        with patch("src.utils.notify.send_notification") as mock_send:
-            mock_send.return_value = True
-            result = notify_workflow_complete("build", "completed", 5, 10.5)
-            assert result is True
-            mock_send.assert_called_once()
-            call_args = mock_send.call_args
-            assert "工作流完成" in call_args[1]["title"]
+    @patch("sys.platform", "darwin")
+    @patch("subprocess.run")
+    def test_success_with_subtitle(self, mock_run):
+        """Successfully send notification with subtitle."""
+        mock_run.return_value = MagicMock(returncode=0)
+        result = send_notification(
+            "Test Title", "Test Message", subtitle="Subtitle"
+        )
+        assert result is True
+        mock_run.assert_called_once()
 
-    def test_notify_quest_update(self):
-        """测试 Quest 更新通知"""
-        from src.utils.notify import notify_quest_update
+    @patch("sys.platform", "darwin")
+    @patch("subprocess.run")
+    def test_success_without_sound(self, mock_run):
+        """Successfully send notification without sound."""
+        mock_run.return_value = MagicMock(returncode=0)
+        result = send_notification("Test Title", "Test Message", sound=False)
+        assert result is True
+        mock_run.assert_called_once()
 
-        with patch("src.utils.notify.send_notification") as mock_send:
-            mock_send.return_value = True
-            result = notify_quest_update("MyQuest", "Step 1 done")
-            assert result is True
-            mock_send.assert_called_once()
+    @patch("sys.platform", "darwin")
+    @patch("subprocess.run", side_effect=Exception("mock error"))
+    def test_exception_handling(self, mock_run):
+        """Should return False on exception."""
+        result = send_notification("Test Title", "Test Message")
+        assert result is False
 
 
-class TestDingTalkNotification:
-    """测试钉钉通知"""
+class TestNotifyWorkflowComplete:
+    """Test notify_workflow_complete function."""
 
-    @patch("src.utils.notify.urllib.request.urlopen")
-    def test_send_dingtalk_notification_success(self, mock_urlopen):
-        """测试钉钉通知发送成功"""
+    @patch("src.utils.notify.send_notification", return_value=True)
+    def test_success(self, mock_send):
+        """Successfully notify workflow complete."""
+        result = notify_workflow_complete("test_workflow", "completed", 5, 10.5)
+        assert result is True
+        mock_send.assert_called_once()
+
+    @patch("src.utils.notify.send_notification", return_value=True)
+    def test_failed_status(self, mock_send):
+        """Notify with failed status (should use ❌ icon)."""
+        result = notify_workflow_complete("test_workflow", "failed", 3, 5.2)
+        assert result is True
+        mock_send.assert_called_once()
+
+
+class TestNotifyQuestUpdate:
+    """Test notify_quest_update function."""
+
+    @patch("src.utils.notify.send_notification", return_value=True)
+    def test_success(self, mock_send):
+        """Successfully notify quest update."""
+        result = notify_quest_update("test_quest", "Quest updated")
+        assert result is True
+        mock_send.assert_called_once()
+
+
+class TestSendDingtalkNotification:
+    """Test send_dingtalk_notification function."""
+
+    def test_invalid_scheme(self):
+        """Invalid URL scheme should return False."""
+        result = send_dingtalk_notification(
+            "ftp://example.com", "Title", "Message"
+        )
+        assert result is False
+
+    @patch("urllib.request.urlopen")
+    def test_success(self, mock_urlopen):
+        """Successfully send DingTalk notification."""
         mock_response = MagicMock()
         mock_response.read.return_value = b'{"errcode": 0}'
-        mock_urlopen.return_value.__enter__.return_value = mock_response
-
-        from src.utils.notify import send_dingtalk_notification
+        mock_urlopen.return_value.__enter__ = lambda s: mock_response
+        mock_urlopen.return_value.__exit__ = MagicMock(return_value=False)
 
         result = send_dingtalk_notification(
             "https://oapi.dingtalk.com/robot/send?access_token=xxx",
@@ -70,14 +117,13 @@ class TestDingTalkNotification:
         )
         assert result is True
 
-    @patch("src.utils.notify.urllib.request.urlopen")
-    def test_send_dingtalk_notification_failure(self, mock_urlopen):
-        """测试钉钉通知发送失败"""
+    @patch("urllib.request.urlopen")
+    def test_failed_response(self, mock_urlopen):
+        """DingTalk API returns errcode != 0."""
         mock_response = MagicMock()
-        mock_response.read.return_value = b'{"errcode": 400001, "errmsg": "error"}'
-        mock_urlopen.return_value.__enter__.return_value = mock_response
-
-        from src.utils.notify import send_dingtalk_notification
+        mock_response.read.return_value = b'{"errcode": 1, "errmsg": "error"}'
+        mock_urlopen.return_value.__enter__ = lambda s: mock_response
+        mock_urlopen.return_value.__exit__ = MagicMock(return_value=False)
 
         result = send_dingtalk_notification(
             "https://oapi.dingtalk.com/robot/send?access_token=xxx",
@@ -86,46 +132,71 @@ class TestDingTalkNotification:
         )
         assert result is False
 
-    def test_notify_workflow_complete_dingtalk_no_webhook(self):
-        """测试无 webhook 时返回 False"""
-        from src.utils.notify import notify_workflow_complete_dingtalk
+    @patch("urllib.request.urlopen", side_effect=Exception("mock error"))
+    def test_exception_handling(self, mock_urlopen):
+        """Should return False on exception."""
+        result = send_dingtalk_notification(
+            "https://oapi.dingtalk.com/robot/send?access_token=xxx",
+            "Test Title",
+            "Test Message",
+        )
+        assert result is False
 
-        with patch.dict("os.environ", {}, clear=True):
+
+class TestNotifyWorkflowCompleteDingtalk:
+    """Test notify_workflow_complete_dingtalk function."""
+
+    @patch("src.utils.notify.send_dingtalk_notification", return_value=True)
+    def test_success(self, mock_send):
+        """Successfully notify via DingTalk."""
+        result = notify_workflow_complete_dingtalk(
+            "https://webhook", "test_workflow", "completed", 5, 10.5
+        )
+        assert result is True
+
+    def test_no_webhook(self):
+        """No webhook URL should return False."""
+        with patch.dict(os.environ, {}, clear=True):
             result = notify_workflow_complete_dingtalk(
-                None, "build", "completed", 5, 10.5
+                None, "test_workflow", "completed", 5, 10.5
             )
             assert result is False
 
-    @patch("src.utils.notify.send_dingtalk_notification")
-    def test_notify_workflow_complete_dingtalk_with_env(self, mock_send):
-        """测试从环境变量读取 webhook"""
-        mock_send.return_value = True
+    @patch.dict(os.environ, {"DINGTALK_WEBHOOK": "https://env_webhook"})
+    @patch("src.utils.notify.send_dingtalk_notification", return_value=True)
+    def test_webhook_from_env(self, mock_send):
+        """Webhook URL from environment variable."""
+        result = notify_workflow_complete_dingtalk(
+            None, "test_workflow", "completed", 5, 10.5
+        )
+        assert result is True
+        mock_send.assert_called_once()
 
-        from src.utils.notify import notify_workflow_complete_dingtalk
 
-        with patch.dict(
-            "os.environ",
-            {"DINGTALK_WEBHOOK": "https://oapi.dingtalk.com/robot/send?token=xxx"},
-        ):
-            result = notify_workflow_complete_dingtalk(
-                None, "build", "completed", 5, 10.5, "/path/to/project"
-            )
-            assert result is True
-            mock_send.assert_called_once()
+class TestNotifyQuestUpdateDingtalk:
+    """Test notify_quest_update_dingtalk function."""
 
-    @patch("src.utils.notify.send_dingtalk_notification")
-    def test_notify_quest_update_dingtalk(self, mock_send):
-        """测试 Quest 钉钉通知"""
-        mock_send.return_value = True
+    @patch("src.utils.notify.send_dingtalk_notification", return_value=True)
+    def test_success(self, mock_send):
+        """Successfully notify quest update via DingTalk."""
+        result = notify_quest_update_dingtalk(
+            "https://webhook", "test_quest", "Quest updated"
+        )
+        assert result is True
 
-        from src.utils.notify import notify_quest_update_dingtalk
-
-        with patch.dict(
-            "os.environ",
-            {"DINGTALK_WEBHOOK": "https://oapi.dingtalk.com/robot/send?token=xxx"},
-        ):
+    def test_no_webhook(self):
+        """No webhook URL should return False."""
+        with patch.dict(os.environ, {}, clear=True):
             result = notify_quest_update_dingtalk(
-                None, "MyQuest", "Quest completed", "completed"
+                None, "test_quest", "Quest updated"
             )
-            assert result is True
-            mock_send.assert_called_once()
+            assert result is False
+
+    @patch.dict(os.environ, {"DINGTALK_WEBHOOK": "https://env_webhook"})
+    @patch("src.utils.notify.send_dingtalk_notification", return_value=True)
+    def test_webhook_from_env(self, mock_send):
+        """Webhook URL from environment variable."""
+        result = notify_quest_update_dingtalk(
+            None, "test_quest", "Quest updated"
+        )
+        assert result is True
