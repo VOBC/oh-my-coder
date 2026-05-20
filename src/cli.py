@@ -35,7 +35,8 @@ from .commands.cli_config_ext import app as config_ext_app
 from .commands.cli_context import context_app
 from .commands.cli_lsp import app as lsp_app
 from .commands.cli_mcp import app as mcp_app
-from .commands.cli_memory import app as memory_app
+# merged into cli_usage
+# from .commands.cli_memory import app as memory_app
 from .commands.cli_migrate import app as migrate_app
 from .commands.cli_multiagent import app as multiagent_app
 from .commands.cli_package_manager import app as pkg_app
@@ -45,8 +46,10 @@ from .commands.cli_self_config import app as self_config_app
 from .commands.cli_server import app as server_app
 from .commands.cli_skill import app as skill_app
 from .commands.cli_task import app as task_app
-from .commands.cli_trace import app as trace_app
+# merged into cli_usage
+# from .commands.cli_trace import app as trace_app
 from .commands.cli_tui import app as tui_app
+from .commands.cli_usage import app as usage_app
 from .core.orchestrator import Orchestrator
 from .core.router import ModelRouter, RouterConfig
 from .quest import QuestStatus
@@ -75,11 +78,14 @@ app.add_typer(mcp_app, name="mcp")
 app.add_typer(
     skill_app, name="skill", help="Skill 系统 - 内置和自定义 Skill 管理与执行"
 )
-app.add_typer(trace_app, name="trace", help="Trace 执行记录 - 查看 Agent 执行过程")
+# merged into usage
+# app.add_typer(trace_app, name="trace", help="Trace 执行记录 - 查看 Agent 执行过程")
 app.add_typer(
     compact_app, name="compact", help="自动压缩统计 - 查看压缩历史和 token 使用情况"
 )
-app.add_typer(memory_app, name="memory", help="分层记忆管理 - 查看核心/精选/完整记忆")
+# merged into usage
+# app.add_typer(memory_app, name="memory", help="分层记忆管理 - 查看核心/精选/完整记忆")
+app.add_typer(usage_app, name="usage", help="用量统计与追踪 - stats/trace/memory")
 app.add_typer(migrate_app, name="migrate", help="记忆迁移 - 从 Claude/Gemini 导入配置")
 app.add_typer(tui_app, name="tui", help="TUI 交互界面 - 简易终端交互")
 app.add_typer(

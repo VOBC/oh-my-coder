@@ -42,7 +42,8 @@ from .cli_context import context_app
 from .cli_doctor import app as doctor_app
 from .cli_lsp import app as lsp_app
 from .cli_mcp import app as mcp_app
-from .cli_memory import app as memory_app
+# merged into cli_usage
+# from .cli_memory import app as memory_app
 from .cli_migrate import app as migrate_app
 from .cli_multiagent import app as multiagent_app
 from .cli_package_manager import app as pkg_app
@@ -62,8 +63,10 @@ from .cli_server import app as server_app
 from .cli_skill import app as skill_app
 from .cli_task import app as task_app
 from .cli_thought import app as thought_app
-from .cli_trace import app as trace_app
+# merged into cli_usage
+# from .cli_trace import app as trace_app
 from .cli_tui import app as tui_app
+from .cli_usage import app as usage_app
 
 # 用户级配置 ~/.omc/.env（最高优先级）
 _user_env = Path.home() / ".omc" / ".env"
@@ -98,8 +101,11 @@ app.add_typer(mcp_app, name="mcp")
 app.add_typer(
     skill_app, name="skill", help="Skill 系统 - 内置和自定义 Skill 管理与执行"
 )
-app.add_typer(trace_app, name="trace", help="Trace 执行记录 - 查看 Agent 执行过程")
-app.add_typer(memory_app, name="memory", help="分层记忆管理 - 查看核心/精选/完整记忆")
+# merged into usage
+# app.add_typer(trace_app, name="trace", help="Trace 执行记录 - 查看 Agent 执行过程")
+# merged into usage
+# app.add_typer(memory_app, name="memory", help="分层记忆管理 - 查看核心/精选/完整记忆")
+app.add_typer(usage_app, name="usage", help="用量统计与追踪 - stats/trace/memory")
 app.add_typer(migrate_app, name="migrate", help="记忆迁移 - 从 Claude/Gemini 导入配置")
 app.add_typer(tui_app, name="tui", help="TUI 交互界面 - 简易终端交互")
 app.add_typer(
