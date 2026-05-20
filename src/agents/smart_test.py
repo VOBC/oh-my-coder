@@ -248,8 +248,8 @@ class SmartTestEnhancer:
 
         risk_level = "low"
         for file_path in diff.changed_files:
-            for factor, level in risk_factors.items():
-                if any(f in file_path.lower() for f in factor):
+            for level, keywords in risk_factors.items():
+                if any(f in file_path.lower() for f in keywords):
                     if level == "high":
                         risk_level = "high"
                         break
