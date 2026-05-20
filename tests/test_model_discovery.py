@@ -5,8 +5,8 @@ import json
 from datetime import datetime, timedelta
 from unittest.mock import MagicMock, patch
 
+import httpx
 import pytest
-import requests
 
 from src.model_discovery import ModelDiscovery, get_discovery_summary
 
@@ -44,7 +44,7 @@ class TestFetchProviderModels:
             ]
         }
         mock_resp.raise_for_status = MagicMock()
-        with patch("requests.get", return_value=mock_resp):
+        with patch("httpx.get", return_value=mock_resp):
             models = discovery._fetch_provider_models("deepseek", {
                 "url": "https://api.deepseek.com/models",
                 "key_env": "DEEPSEEK_API_KEY",
@@ -70,7 +70,7 @@ class TestFetchProviderModels:
             ]
         }
         mock_resp.raise_for_status = MagicMock()
-        with patch("requests.get", return_value=mock_resp):
+        with patch("httpx.get", return_value=mock_resp):
             models = discovery._fetch_provider_models("openai", {
                 "url": "https://api.openai.com/v1/models",
                 "key_env": "OPENAI_API_KEY",
@@ -81,14 +81,14 @@ class TestFetchProviderModels:
 
     def test_timeout(self, discovery, monkeypatch):
         monkeypatch.setenv("DEEPSEEK_API_KEY", "sk-testkey")
-        with patch("requests.get", side_effect=requests.exceptions.Timeout("timeout")):
+        with patch("httpx.get", side_effect=httpx.TimeoutException("timeout")):
             assert discovery._fetch_provider_models("deepseek", {
                 "url": "http://x.com", "key_env": "DEEPSEEK_API_KEY", "format": "openai"
             }) == []
 
     def test_request_exception(self, discovery, monkeypatch):
         monkeypatch.setenv("DEEPSEEK_API_KEY", "sk-testkey")
-        with patch("requests.get", side_effect=requests.exceptions.RequestException("err")):
+        with patch("httpx.get", side_effect=httpx.RequestError("err")):
             assert discovery._fetch_provider_models("deepseek", {
                 "url": "http://x.com", "key_env": "DEEPSEEK_API_KEY", "format": "openai"
             }) == []
@@ -97,8 +97,8 @@ class TestFetchProviderModels:
         monkeypatch.setenv("DEEPSEEK_API_KEY", "sk-testkey")
         mock_resp = MagicMock()
         mock_resp.status_code = 401
-        mock_resp.raise_for_status.side_effect = requests.exceptions.HTTPError("401")
-        with patch("requests.get", return_value=mock_resp):
+        mock_resp.raise_for_status.side_effect = httpx.HTTPStatusError("401", request=MagicMock(), response=mock_resp)
+        with patch("httpx.get", return_value=mock_resp):
             assert discovery._fetch_provider_models("deepseek", {
                 "url": "http://x.com", "key_env": "DEEPSEEK_API_KEY", "format": "openai"
             }) == []
@@ -109,7 +109,7 @@ class TestFetchProviderModels:
         mock_resp.status_code = 200
         mock_resp.json.return_value = {"data": []}
         mock_resp.raise_for_status = MagicMock()
-        with patch("requests.get", return_value=mock_resp):
+        with patch("httpx.get", return_value=mock_resp):
             models = discovery._fetch_provider_models("deepseek", {
                 "url": "http://x.com", "key_env": "DEEPSEEK_API_KEY", "format": "openai"
             })

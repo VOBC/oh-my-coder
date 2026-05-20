@@ -17,7 +17,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, Optional
 
-import requests
+import httpx
 
 
 class ModelDiscovery:
@@ -141,9 +141,10 @@ class ModelDiscovery:
 
         try:
             headers = {"Authorization": f"Bearer {api_key}"}
-            response = requests.get(url, headers=headers, timeout=timeout)
+            response = httpx.get(url, headers=headers, timeout=timeout)
             response.raise_for_status()
             data = response.json()
+
 
             # 解析 OpenAI 兼容格式
             if api_format == "openai":
@@ -176,9 +177,9 @@ class ModelDiscovery:
 
             return []
 
-        except requests.exceptions.Timeout:
+        except httpx.TimeoutException:
             return []
-        except requests.exceptions.RequestException:
+        except (httpx.RequestError, httpx.HTTPStatusError):
             return []
         except Exception:
             return []
