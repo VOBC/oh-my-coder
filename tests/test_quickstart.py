@@ -21,7 +21,6 @@ from src.commands.quickstart import (
     detect_completed_steps,
 )
 
-
 # ── Constants ───────────────────────────────────────────────────
 
 class TestConstants:
@@ -147,7 +146,6 @@ class TestDetectCompletedSteps:
     def test_no_config(self, monkeypatch, tmp_path):
         monkeypatch.delenv("DEEPSEEK_API_KEY", raising=False)
         monkeypatch.delenv("OMC_DEFAULT_MODEL", raising=False)
-        config_dir = tmp_path / ".config" / "oh-my-coder"
         monkeypatch.setattr(Path, "home", lambda: tmp_path)
         steps = detect_completed_steps()
         assert steps["model"] is False
