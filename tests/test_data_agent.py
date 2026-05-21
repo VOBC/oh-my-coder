@@ -82,7 +82,7 @@ class TestRun:
         agent.call_model = AsyncMock(return_value=mock_response)
 
         prompt = [{"role": "user", "content": "test"}]
-        result = await agent._run(mock_context, prompt)
+        await agent._run(mock_context, prompt)
         # data hint was appended
         assert len(prompt) > 1
         assert any("数据" in str(p) or "data" in str(p).lower() for p in prompt)
