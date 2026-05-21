@@ -299,3 +299,314 @@ class TestVisionAgentMetadata:
         assert output.status == AgentStatus.COMPLETED
         assert "浏览器中打开" in output.recommendations[0]
         assert output.artifacts is not None
+
+
+# ---------------------------------------------------------------------------
+# VisionAgent._run 集成测试（mock call_model）
+# ---------------------------------------------------------------------------
+
+from unittest.mock import AsyncMock, MagicMock, patch
+
+from src.agents.base import AgentContext, AgentStatus
+from src.agents.vision import VisionAgent
+from src.models.base import Message
+
+
+class TestVisionAgentRun:
+    """测试 VisionAgent._run 方法"""
+
+    def _make_agent(self):
+        """创建未初始化 agent"""
+        agent = VisionAgent.__new__(VisionAgent)
+        agent.name = "vision"
+        agent.MODE_ANALYSIS = "analysis"
+        agent.MODE_UI_CODE = "ui_code"
+        return agent
+
+    @pytest.mark.asyncio
+    async def test_run_analysis_mode_no_image(self):
+        """分析模式 + 无图片：直接调用模型"""
+        agent = self._make_agent()
+        context = AgentContext(
+            project_path=Path("/nonexistent"),
+            task_description="分析截图",
+            metadata={"output_format": "analysis"},
+        )
+        prompt = [{"role": "user", "content": "请分析这张截图"}]
+        mock_resp = MagicMock(content="这是视觉审查报告")
+
+        async def fake_call_model(task_type, messages):
+            return mock_resp
+
+        with patch.object(agent, "call_model", side_effect=fake_call_model):
+            result = await agent._run(context, prompt)
+
+        assert "这是视觉审查报告" in result
+        # 分析模式不写入文件
+        assert not result.startswith("Traceback")
+
+    @pytest.mark.asyncio
+    async def test_run_analysis_mode_with_image(self):
+        """分析模式 + 有图片：注入元数据"""
+        agent = self._make_agent()
+        with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as f:
+            path = Path(f.name)
+        png = (
+            b"\x89PNG\r\n\x1a\n"
+            b"\x00\x00\x00\rIHDR"
+            + struct.pack(">I", 800)
+            + struct.pack(">I", 600)
+            + b"\x08\x02\x00\x00\x00"
+            + b"\x00\x00\x00\x00IEND"
+        )
+        path.write_bytes(png)
+        try:
+            context = AgentContext(
+                project_path=Path("/nonexistent"),
+                task_description="分析截图",
+                metadata={"output_format": "analysis", "image_path": str(path)},
+            )
+            prompt = [{"role": "user", "content": "请分析"}]
+            mock_resp = MagicMock(content="分析报告")
+
+            async def fake_call_model(task_type, messages):
+                return mock_resp
+
+            with patch.object(agent, "call_model", side_effect=fake_call_model):
+                result = await agent._run(context, prompt)
+            assert "分析报告" in result
+        finally:
+            path.unlink(missing_ok=True)
+
+    @pytest.mark.asyncio
+    async def test_run_analysis_mode_project_with_images(self, tmp_path):
+        """分析模式 + 项目目录含图片：注入图片列表"""
+        agent = self._make_agent()
+        # 在项目中放几张图片
+        img_dir = tmp_path / "assets"
+        img_dir.mkdir()
+        (img_dir / "hero.png").write_bytes(b"\x89PNG\r\n\x1a\n" + b"\x00" * 30)
+        (img_dir / "bg.jpg").write_bytes(b"\xff\xd8\xff\xe0" + b"\x00" * 20)
+
+        context = AgentContext(
+            project_path=tmp_path,
+            task_description="分析",
+            metadata={"output_format": "analysis"},
+        )
+        prompt = [{"role": "user", "content": "分析"}]
+        mock_resp = MagicMock(content="报告")
+
+        async def fake_call_model(task_type, messages):
+            # 检查是否注入了图片文件信息
+            sys_msg = next(
+                (m.content for m in messages if m.role == "system"), ""
+            )
+            assert "项目中的图片文件" in sys_msg
+            return mock_resp
+
+        with patch.object(agent, "call_model", side_effect=fake_call_model):
+            await agent._run(context, prompt)
+
+    @pytest.mark.asyncio
+    async def test_run_ui_code_mode_saves_files(self, tmp_path):
+        """UI 代码模式：提取代码块并写入文件"""
+        agent = self._make_agent()
+        context = AgentContext(
+            project_path=tmp_path,
+            task_description="生成 UI",
+            metadata={"output_format": "ui_code"},
+        )
+        prompt = [{"role": "user", "content": "生成代码"}]
+        mock_resp = MagicMock(
+            content="""这里有一些描述。
+
+```html:index.html
+<!DOCTYPE html>
+<html><body>Hello</body></html>
+```
+
+```css:style.css
+body { margin: 0; }
+```
+"""
+        )
+
+        async def fake_call_model(task_type, messages):
+            return mock_resp
+
+        with patch.object(agent, "call_model", side_effect=fake_call_model):
+            result = await agent._run(context, prompt)
+
+        assert (tmp_path / "index.html").exists()
+        assert (tmp_path / "style.css").exists()
+        assert "已生成" in result
+        assert "index.html" in result
+
+    @pytest.mark.asyncio
+    async def test_run_ui_code_mode_no_blocks_no_files(self, tmp_path):
+        """UI 代码模式但无代码块：不写文件"""
+        agent = self._make_agent()
+        context = AgentContext(
+            project_path=tmp_path,
+            task_description="生成 UI",
+            metadata={"output_format": "ui_code"},
+        )
+        prompt = [{"role": "user", "content": "生成"}]
+        mock_resp = MagicMock(content="我无法生成代码，因为没有提供截图。")
+
+        async def fake_call_model(task_type, messages):
+            return mock_resp
+
+        with patch.object(agent, "call_model", side_effect=fake_call_model):
+            result = await agent._run(context, prompt)
+
+        assert result == "我无法生成代码，因为没有提供截图。"
+        # 无文件写入
+        assert len(list(tmp_path.iterdir())) == 0
+
+    @pytest.mark.asyncio
+    async def test_run_ui_code_with_subpath_file(self, tmp_path):
+        """UI 代码模式：文件路径含子目录（如 src/components/Button.tsx）"""
+        agent = self._make_agent()
+        context = AgentContext(
+            project_path=tmp_path,
+            task_description="生成",
+            metadata={"output_format": "ui_code"},
+        )
+        prompt = [{"role": "user", "content": "生成"}]
+        mock_resp = MagicMock(
+            content="""```tsx:src/components/Button.tsx
+export const Button = () => <button>Click</button>;
+```
+"""
+        )
+
+        async def fake_call_model(task_type, messages):
+            return mock_resp
+
+        with patch.object(agent, "call_model", side_effect=fake_call_model):
+            result = await agent._run(context, prompt)
+
+        assert (tmp_path / "src" / "components" / "Button.tsx").exists()
+
+
+# ---------------------------------------------------------------------------
+# _post_process 边界情况
+# ---------------------------------------------------------------------------
+
+class TestPostProcessEdgeCases:
+    """测试 _post_process 边界情况"""
+
+    def _make_agent(self):
+        agent = VisionAgent.__new__(VisionAgent)
+        agent.name = "vision"
+        agent.MODE_ANALYSIS = "analysis"
+        agent.MODE_UI_CODE = "ui_code"
+        return agent
+
+    def test_post_process_ui_code_extracts_artifacts(self, tmp_path):
+        """UI 模式：从结果中提取 artifacts 路径"""
+        agent = self._make_agent()
+        context = AgentContext(
+            project_path=tmp_path,
+            task_description="生成",
+            metadata={"output_format": "ui_code"},
+        )
+        # 结果包含文件路径
+        result = """```tsx:App.tsx
+export const App = () => null;
+```
+---
+📁 已生成 1 个文件:
+- `App.tsx` → `/tmp/abc/App.tsx`
+**输出目录**: `/tmp/abc`
+"""
+        output = agent._post_process(result, context)
+        assert "App.tsx" in output.artifacts
+
+    def test_post_process_ui_code_fallback_artifacts(self):
+        """UI 模式：结果中无路径时，用 output_dir 补全"""
+        agent = self._make_agent()
+        context = AgentContext(
+            project_path=Path("/tmp/nonexistent"),
+            task_description="test",
+            metadata={"output_format": "ui_code"},
+        )
+        result = """```tsx:Button.tsx
+export const Button = () => <button />;
+```"""
+        output = agent._post_process(result, context)
+        assert "Button.tsx" in output.artifacts
+        # 路径应该指向 vision_output 目录
+        assert "Button.tsx" in output.artifacts["Button.tsx"]
+
+    def test_post_process_analysis_no_artifacts(self):
+        """分析模式：artifacts 为空 dict"""
+        agent = self._make_agent()
+        context = AgentContext(
+            project_path=Path("/tmp"),
+            task_description="test",
+            metadata={"output_format": "analysis"},
+        )
+        output = agent._post_process("分析完成", context)
+        assert output.artifacts == {}
+
+    def test_post_process_analysis_no_recommendations(self):
+        """分析模式：推荐内容正确"""
+        agent = self._make_agent()
+        agent.name = "vision"
+        context = AgentContext(
+            project_path=Path("/tmp"),
+            task_description="test",
+            metadata={"output_format": "analysis"},
+        )
+        output = agent._post_process("完成", context)
+        assert len(output.recommendations) == 2
+        assert "应用视觉修改建议" in output.recommendations[0]
+
+
+# ---------------------------------------------------------------------------
+# WebP 格式测试
+# ---------------------------------------------------------------------------
+
+class TestImageMetadataWebP:
+    """测试 WebP 格式识别"""
+
+    def test_webp_format(self):
+        """WebP 文件返回正确的格式信息"""
+        with tempfile.NamedTemporaryFile(suffix=".webp", delete=False) as f:
+            path = Path(f.name)
+            # RIFF header + WEBP chunk
+            path.write_bytes(b"RIFF" + b"\x00\x00\x00\x00" + b"WEBP" + b"VP8 " + b"\x00" * 20)
+        try:
+            meta = _load_image_meta(path)
+            assert meta is not None
+            assert meta["format"] == "WEBP"
+        finally:
+            path.unlink(missing_ok=True)
+
+    def test_png_no_size_if_truncated(self):
+        """PNG 文件元数据截断时返回 None"""
+        with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as f:
+            path = Path(f.name)
+            # 文件太短，无法读取完整 IHDR
+            path.write_bytes(b"\x89PNG\r\n\x1a\n" + b"\x00" * 10)
+        try:
+            meta = _load_image_meta(path)
+            # 读取时会尝试 struct.unpack，可能抛出异常，被 except 捕获
+            assert meta is None
+        finally:
+            path.unlink(missing_ok=True)
+
+    def test_jpeg_no_sof_returns_partial_or_none(self):
+        """JPEG 无 SOF 标记时可能返回部分元数据或 None（取决于文件结构）"""
+        with tempfile.NamedTemporaryFile(suffix=".jpg", delete=False) as f:
+            path = Path(f.name)
+            # SOI + APP0 + EOI，无 SOF
+            path.write_bytes(b"\xff\xd8\xff\xe0\x00\x10JFIF\x00\x01\x01\x00\x00\x01\x00\x01\x00\x00\xff\xd9")
+        try:
+            meta = _load_image_meta(path)
+            # 此结构下返回 None（读完 APP0 后遇到截断的 EOI）
+            assert meta is None
+        finally:
+            path.unlink(missing_ok=True)
