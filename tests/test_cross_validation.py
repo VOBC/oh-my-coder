@@ -8,9 +8,8 @@ All external dependencies (model router, file I/O) are mocked.
 from __future__ import annotations
 
 import json
-from dataclasses import asdict
 from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
@@ -21,7 +20,6 @@ from src.agents.cross_validation import (
     ValidationSeverity,
     ValidationStatus,
 )
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -788,7 +786,7 @@ class TestSaveResult:
         assert result_file.exists()
 
         # Check content
-        with open(result_file, "r", encoding="utf-8") as f:
+        with open(result_file, encoding="utf-8") as f:
             data = json.load(f)
         assert data["validation_id"] == "abc12345"
         assert data["workflow_id"] == "wf-001"
@@ -821,7 +819,7 @@ class TestSaveResult:
         result_file = cv_layer._cv_dir / "def67890.json"
         assert result_file.exists()
 
-        with open(result_file, "r", encoding="utf-8") as f:
+        with open(result_file, encoding="utf-8") as f:
             data = json.load(f)
         assert len(data["issues"]) == 1
         assert data["issues"][0]["severity"] == "critical"

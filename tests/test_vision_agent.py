@@ -266,7 +266,6 @@ class TestVisionAgentMetadata:
 
     def test_post_process_analysis_mode(self):
         """后处理（分析模式）返回正确的 AgentOutput"""
-        from src.agents.base import AgentStatus
 
         agent = VisionAgent.__new__(VisionAgent)
         agent.name = "vision"
@@ -284,7 +283,6 @@ class TestVisionAgentMetadata:
 
     def test_post_process_ui_code_mode(self):
         """后处理（UI 代码生成模式）返回正确的推荐"""
-        from src.agents.base import AgentStatus
 
         agent = VisionAgent.__new__(VisionAgent)
         agent.name = "vision"
@@ -305,11 +303,9 @@ class TestVisionAgentMetadata:
 # VisionAgent._run 集成测试（mock call_model）
 # ---------------------------------------------------------------------------
 
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 from src.agents.base import AgentContext, AgentStatus
-from src.agents.vision import VisionAgent
-from src.models.base import Message
 
 
 class TestVisionAgentRun:
@@ -485,7 +481,7 @@ export const Button = () => <button>Click</button>;
             return mock_resp
 
         with patch.object(agent, "call_model", side_effect=fake_call_model):
-            result = await agent._run(context, prompt)
+            await agent._run(context, prompt)
 
         assert (tmp_path / "src" / "components" / "Button.tsx").exists()
 

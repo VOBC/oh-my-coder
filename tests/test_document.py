@@ -1,7 +1,6 @@
 """DocumentAgent 单元测试（纯逻辑，不调 API）"""
 
 import asyncio
-from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
 from src.agents.base import AgentContext, AgentOutput, AgentStatus

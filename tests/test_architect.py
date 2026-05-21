@@ -2,14 +2,12 @@
 ArchitectAgent 单元测试（纯逻辑，不调 API）
 """
 
-from dataclasses import dataclass
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from src.agents.architect import ArchitectureDecision, ArchitectAgent
+from src.agents.architect import ArchitectAgent, ArchitectureDecision
 from src.agents.base import AgentContext, AgentOutput, AgentStatus
-
 
 # ─────────────────────────────────────────────────────────────────
 # ArchitectureDecision
@@ -289,7 +287,7 @@ class TestRunMethod:
 
         with patch.object(agent, "call_model", new_callable=AsyncMock) as mock_call:
             mock_call.return_value = mock_response
-            result = await agent._run(basic_context, prompt)
+            await agent._run(basic_context, prompt)
 
         # 验证 prompt 中包含了设计提示
         # 没有前序输出时，prompt 长度应该是 2 (原始 + 设计提示)
@@ -318,7 +316,7 @@ class TestRunMethod:
 
         with patch.object(agent, "call_model", new_callable=AsyncMock) as mock_call:
             mock_call.return_value = mock_response
-            result = await agent._run(context, prompt)
+            await agent._run(context, prompt)
 
         # prompt 应该包含：原始 + explore上下文 + 设计提示 = 3
         assert len(prompt) == 3

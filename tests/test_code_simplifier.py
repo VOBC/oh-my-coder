@@ -9,7 +9,6 @@ import pytest
 from src.agents.base import AgentContext, AgentLane, AgentStatus
 from src.agents.code_simplifier import CodeSimplifierAgent
 
-
 # ── Fixtures ──────────────────────────────────────────────────────
 
 @pytest.fixture

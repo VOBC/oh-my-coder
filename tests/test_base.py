@@ -1,28 +1,25 @@
 """Tests for base.py - Agent 基类"""
 from __future__ import annotations
 
-import asyncio
 import json
-from pathlib import Path
-from unittest.mock import MagicMock, AsyncMock, patch, mock_open
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
 from src.agents.base import (
+    AGENT_REGISTRY,
+    SUPPORTED_TOOLS,
+    WEB_FETCH_TOOL_SCHEMA,
     AgentContext,
     AgentLane,
     AgentOutput,
     AgentStatus,
     BaseAgent,
-    WEB_FETCH_TOOL_SCHEMA,
-    SUPPORTED_TOOLS,
-    AGENT_REGISTRY,
-    register_agent,
     get_agent,
-    list_all_agents,
     list_agents,
+    list_all_agents,
+    register_agent,
 )
-
 
 # ── Test Fixtures ──────────────────────────────────────────────────────
 
@@ -66,11 +63,11 @@ class ConcreteTestAgent(BaseAgent):
     lane = AgentLane.BUILD_ANALYSIS
     default_tier = "medium"
     icon = "🧪"
-    
+
     @property
     def system_prompt(self) -> str:
         return "You are a test agent."
-    
+
     async def _run(
         self, context: AgentContext, prompt: list[dict[str, str]], **kwargs
     ) -> str:
@@ -180,7 +177,7 @@ class TestToolSchemas:
         assert WEB_FETCH_TOOL_SCHEMA["type"] == "function"
         assert WEB_FETCH_TOOL_SCHEMA["function"]["name"] == "web_fetch"
         assert "url" in WEB_FETCH_TOOL_SCHEMA["function"]["parameters"]["properties"]
-    
+
     def test_supported_tools(self):
         assert "web_fetch" in SUPPORTED_TOOLS
         assert SUPPORTED_TOOLS["web_fetch"] == WEB_FETCH_TOOL_SCHEMA
@@ -272,7 +269,7 @@ class TestGetFullContext:
     def test_browser_context_success(self):
         agent = ConcreteTestAgent()
         agent.workspace_scanner = None
-        
+
         with patch("src.context.BrowserAwareness") as mock_awareness_cls:
             mock_awareness = MagicMock()
             mock_awareness.get_current_tab = AsyncMock()
@@ -280,7 +277,7 @@ class TestGetFullContext:
             mock_tab.to_context_string.return_value = "browser info"
             mock_awareness.get_current_tab.return_value = mock_tab
             mock_awareness_cls.return_value = mock_awareness
-            
+
             result = agent.get_full_context()
             assert "workspace" in result
             assert "browser" in result
@@ -288,7 +285,7 @@ class TestGetFullContext:
     def test_browser_context_exception(self):
         agent = ConcreteTestAgent()
         agent.workspace_scanner = None
-        
+
         with patch("src.context.BrowserAwareness") as mock_awareness_cls:
             mock_awareness_cls.side_effect = Exception("No browser")
             result = agent.get_full_context()
@@ -419,14 +416,14 @@ class TestExecute:
             name = "failing"
             description = "Fails"
             lane = AgentLane.BUILD_ANALYSIS
-            
+
             @property
             def system_prompt(self) -> str:
                 return "Fail"
-            
+
             async def _run(self, context, prompt, **kwargs):
                 raise ValueError("Test error")
-        
+
         agent = FailingAgent()
         agent.workspace_scanner = None
         output = await agent.execute(sample_context)
@@ -447,11 +444,11 @@ class TestExecute:
             name = "with_model"
             description = "Uses model"
             lane = AgentLane.BUILD_ANALYSIS
-            
+
             @property
             def system_prompt(self) -> str:
                 return "Test"
-            
+
             async def _run(self, context, prompt, **kwargs):
                 # Simulate model call that sets _last_model_response
                 mock_usage = MagicMock()
@@ -462,7 +459,7 @@ class TestExecute:
                 mock_response.usage = mock_usage
                 self._last_model_response = mock_response
                 return "Result"
-        
+
         agent = AgentWithModelCall(model_router=mock_model_router)
         agent.workspace_scanner = None
         output = await agent.execute(sample_context)
@@ -500,10 +497,10 @@ class TestCallModel:
         mock_response.content = "Response"
         mock_response.tool_calls = None
         mock_model_router.route_and_call.return_value = mock_response
-        
+
         from src.models.base import Message
         messages = [Message(role="user", content="Test")]
-        
+
         result = await agent.call_model(
             task_type="test",
             messages=messages,
@@ -518,11 +515,11 @@ class TestCallModel:
         mock_response.content = "Response"
         mock_response.tool_calls = None
         mock_model_router.route_and_call.return_value = mock_response
-        
+
         from src.models.base import Message
         messages = [Message(role="user", content="Test")]
-        
-        result = await agent.call_model(
+
+        await agent.call_model(
             task_type="test",
             messages=messages,
         )
@@ -538,10 +535,10 @@ class TestCallModel:
         mock_response.content = "Response"
         mock_response.tool_calls = None
         mock_model_router.route_and_call.return_value = mock_response
-        
+
         from src.models.base import Message
         messages = [Message(role="user", content="Test")]
-        
+
         await agent.call_model(task_type="test", messages=messages)
         call_kwargs = mock_model_router.route_and_call.call_args[1]
         assert call_kwargs["override_model"] == "custom-model"
@@ -549,7 +546,7 @@ class TestCallModel:
     @pytest.mark.asyncio
     async def test_call_model_with_tool_calls(self, mock_model_router):
         agent = ConcreteTestAgent(model_router=mock_model_router)
-        
+
         # First response with tool call
         mock_response1 = MagicMock()
         mock_response1.content = ""
@@ -560,21 +557,21 @@ class TestCallModel:
                 "arguments": json.dumps({"url": "https://example.com"})
             }
         }]
-        
+
         # Second response without tool call
         mock_response2 = MagicMock()
         mock_response2.content = "Final response"
         mock_response2.tool_calls = None
-        
+
         mock_model_router.route_and_call.side_effect = [mock_response1, mock_response2]
-        
+
         # Mock web_fetch tool
         with patch.object(agent, '_web_fetch_tool', new_callable=AsyncMock) as mock_fetch:
             mock_fetch.return_value = "Fetched content"
-            
+
             from src.models.base import Message
             messages = [Message(role="user", content="Test")]
-            
+
             result = await agent.call_model(task_type="test", messages=messages)
             assert result == mock_response2
             mock_fetch.assert_called_once()
@@ -582,7 +579,7 @@ class TestCallModel:
     @pytest.mark.asyncio
     async def test_call_model_unknown_tool(self, mock_model_router):
         agent = ConcreteTestAgent(model_router=mock_model_router)
-        
+
         mock_response1 = MagicMock()
         mock_response1.content = ""
         mock_response1.tool_calls = [{
@@ -592,16 +589,16 @@ class TestCallModel:
                 "arguments": "{}"
             }
         }]
-        
+
         mock_response2 = MagicMock()
         mock_response2.content = "Done"
         mock_response2.tool_calls = None
-        
+
         mock_model_router.route_and_call.side_effect = [mock_response1, mock_response2]
-        
+
         from src.models.base import Message
         messages = [Message(role="user", content="Test")]
-        
+
         result = await agent.call_model(task_type="test", messages=messages)
         assert result == mock_response2
 
@@ -684,7 +681,7 @@ class TestCallSubagent:
         agent = ConcreteTestAgent(orchestrator=mock_orchestrator)
         mock_output = AgentOutput(agent_name="analyst", status=AgentStatus.COMPLETED)
         mock_orchestrator.invoke_subagent.return_value = mock_output
-        
+
         result = await agent.call_subagent("analyst", "task", sample_context)
         assert result == mock_output
         mock_orchestrator.invoke_subagent.assert_called_once()
@@ -701,10 +698,10 @@ class TestCallSubagent:
         agent._output_history = [
             AgentOutput(agent_name="test_agent", status=AgentStatus.COMPLETED)
         ]
-        
+
         mock_output = AgentOutput(agent_name="analyst", status=AgentStatus.COMPLETED)
         mock_orchestrator.invoke_subagent.return_value = mock_output
-        
+
         await agent.call_subagent("analyst", "task", ctx)
         # Verify previous_outputs was merged
         call_kwargs = mock_orchestrator.invoke_subagent.call_args[1]
@@ -731,13 +728,13 @@ class TestSaveOutput:
             error=None,
         )
         agent._output_history = [output]
-        
+
         agent.save_output(tmp_path)
-        
+
         files = list(tmp_path.glob("test_agent_*.json"))
         assert len(files) == 1
-        
-        with open(files[0], "r", encoding="utf-8") as f:
+
+        with open(files[0], encoding="utf-8") as f:
             data = json.load(f)
         assert data["agent"] == "test_agent"
         assert data["status"] == "completed"
@@ -753,14 +750,14 @@ class TestAgentRegistry:
             name = "registered_test"
             description = "Registered"
             lane = AgentLane.BUILD_ANALYSIS
-            
+
             @property
             def system_prompt(self) -> str:
                 return "Test"
-            
+
             async def _run(self, context, prompt, **kwargs):
                 return "result"
-        
+
         assert "registered_test" in AGENT_REGISTRY
         assert AGENT_REGISTRY["registered_test"] == RegisteredAgent
 
@@ -778,7 +775,7 @@ class TestAgentRegistry:
         # Register some agents
         AGENT_REGISTRY["agent1"] = ConcreteTestAgent
         AGENT_REGISTRY["agent2"] = ConcreteTestAgent
-        
+
         result = list_all_agents()
         assert isinstance(result, list)
         names = [a["name"] for a in result]
@@ -800,14 +797,14 @@ class TestEdgeCases:
             name = "exception"
             description = "Raises exception"
             lane = AgentLane.BUILD_ANALYSIS
-            
+
             @property
             def system_prompt(self) -> str:
                 return "Test"
-            
+
             async def _run(self, context, prompt, **kwargs):
                 raise RuntimeError("Unexpected error")
-        
+
         agent = ExceptionAgent()
         agent.workspace_scanner = None
         output = await agent.execute(sample_context)

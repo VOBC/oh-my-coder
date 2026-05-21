@@ -1,12 +1,11 @@
 """Tests for WriterAgent"""
 
-from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from src.agents.writer import WriterAgent
 from src.agents.base import AgentContext, AgentOutput, AgentStatus
+from src.agents.writer import WriterAgent
 
 
 @pytest.fixture

@@ -2,14 +2,12 @@
 
 from __future__ import annotations
 
-from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from src.agents.code_reviewer import CodeReviewerAgent
 from src.agents.base import AgentContext, AgentOutput, AgentStatus
-
+from src.agents.code_reviewer import CodeReviewerAgent
 
 # ── Fixtures ──────────────────────────────────────────────────────
 
@@ -118,7 +116,7 @@ class TestRunMethod:
     @pytest.mark.asyncio
     async def test_run_with_relevant_files(self, agent, mock_context, mock_prompt):
         """Test _run with relevant files."""
-        with patch("src.models.base.Message") as mock_message_class:
+        with patch("src.models.base.Message"):
             mock_instance = MagicMock()
             mock_instance.content = "Review result"
             agent.call_model = AsyncMock(return_value=mock_instance)

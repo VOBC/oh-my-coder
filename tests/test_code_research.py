@@ -1,20 +1,18 @@
 """CodeResearchAgent 单元测试（纯逻辑，mock 外部依赖）"""
 
-from unittest.mock import MagicMock, patch, PropertyMock
+from pathlib import Path
+from unittest.mock import MagicMock, PropertyMock, patch
 
 import pytest
 
-from pathlib import Path
-
+from src.agents.base import AgentContext, AgentStatus
 from src.agents.code_research import (
     CodeExample,
     CodeResearchAgent,
     ResearchResult,
     ResearchTarget,
 )
-from src.agents.base import AgentContext, AgentOutput, AgentStatus
-from src.integrations.sourcegraph import SearchMatch, SearchResult, RepoInfo
-
+from src.integrations.sourcegraph import RepoInfo, SearchMatch, SearchResult
 
 # ─────────────────────────────────────────────────────────────────
 # Data classes
@@ -316,7 +314,7 @@ class TestSgClient:
         agent = ConcreteCodeResearchAgent()
         assert agent._sg_client is None
         with patch("src.agents.code_research.SourcegraphClient") as MockSG:
-            client = agent.sg_client
+            _ = agent.sg_client  # trigger lazy init
             MockSG.assert_called_once()
             assert agent._sg_client is not None
 

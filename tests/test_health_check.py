@@ -4,19 +4,17 @@ from __future__ import annotations
 import asyncio
 import json
 import time
-from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 
 from src.agents.health_check import (
     AgentHealth,
     AgentStatus,
-    HealthCheckResult,
     HealthChecker,
+    HealthCheckResult,
     format_health_display,
 )
-
 
 # ── AgentStatus ──────────────────────────────────────────────────
 
@@ -135,7 +133,7 @@ def checker(tmp_path):
 class TestHealthCheckerInit:
     def test_creates_state_dir(self, tmp_path):
         d = tmp_path / "nested" / "health"
-        hc = HealthChecker(state_dir=d)
+        HealthChecker(state_dir=d)
         assert d.exists()
 
     def test_default_params(self, tmp_path):
@@ -272,7 +270,7 @@ class TestCheckAll:
     @pytest.mark.asyncio
     async def test_check_all_stale_retries(self, checker):
         checker.stale_threshold = 0.01
-        h = checker.register_agent("a1")
+        checker.register_agent("a1")
         time.sleep(0.02)
         result = await checker._check_all()
         assert result.stale_count == 1

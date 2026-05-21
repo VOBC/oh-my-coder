@@ -1,6 +1,5 @@
 """SecurityReviewerAgent 单元测试"""
 
-from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest

@@ -1,11 +1,12 @@
 """Tests for cost_optimizer.py"""
 from __future__ import annotations
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
 from src.agents.cost_optimizer import (
+    MODEL_PRICING,
     Complexity,
     CostEstimate,
     CostOptimizer,
@@ -13,7 +14,6 @@ from src.agents.cost_optimizer import (
     calculate_cost,
     calculate_multi_model_cost,
     main,
-    MODEL_PRICING,
 )
 
 # ── Fixtures ──────────────────────────────────────────────────────
@@ -466,7 +466,7 @@ class TestMain:
 class TestModelPricing:
     def test_all_pricing_entries(self):
         """Ensure all pricing entries have input and output keys"""
-        for model, pricing in MODEL_PRICING.items():
+        for _model, pricing in MODEL_PRICING.items():
             assert "input" in pricing
             assert "output" in pricing
             assert isinstance(pricing["input"], (int, float))

@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import subprocess
-from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -11,7 +10,6 @@ import pytest
 from src.agents.base import AgentContext, AgentLane, AgentOutput, AgentStatus
 from src.agents.git_master import GitMasterAgent
 from src.core.router import TaskType
-
 
 # ── Fixtures ──────────────────────────────────────────────────────
 

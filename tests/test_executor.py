@@ -298,7 +298,7 @@ class A:
 class B:
     pass
 ```'''
-        output = agent._post_process(result, ctx)
+        agent._post_process(result, ctx)
         assert (tmp_path / "src" / "a.py").exists()
         assert (tmp_path / "src" / "b.py").exists()
 
@@ -307,7 +307,7 @@ class B:
         ctx.project_path = tmp_path
         ctx.task_description = "test"
         result = '```python:/src/absolute.py\nx=1\n```'
-        output = agent._post_process(result, ctx)
+        agent._post_process(result, ctx)
         assert (tmp_path / "src" / "absolute.py").exists()
 
     def test_save_error_handled(self, agent, tmp_path, monkeypatch):
@@ -320,7 +320,7 @@ class B:
         import builtins
         def mock_open(*args, **kwargs):
             if "test.py" in str(args):
-                raise IOError("disk full")
+                raise OSError("disk full")
             return original_open(*args, **kwargs)
 
         original_open = builtins.open

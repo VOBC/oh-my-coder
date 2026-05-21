@@ -3,7 +3,6 @@ Evolution 模块单元测试（纯逻辑，不依赖真实服务）
 """
 
 import json
-from pathlib import Path
 
 import pytest
 
@@ -15,7 +14,6 @@ from src.agents.evolution import (
     EvolutionStore,
     SuccessPattern,
 )
-
 
 # ─────────────────────────────────────────────────────────────────
 # Dataclasses
@@ -164,7 +162,7 @@ class TestEvolutionStore:
         assert patterns[0].occurrences == 1
 
     def test_add_success_pattern_no_example(self, store):
-        pid = store.add_success_pattern(
+        store.add_success_pattern(
             agent_name="myagent",
             pattern_type="workflow",
             description="Test pattern",

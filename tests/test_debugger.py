@@ -1,11 +1,12 @@
 """DebuggerAgent 单元测试"""
 
-import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
 from pathlib import Path
+from unittest.mock import AsyncMock, MagicMock
 
-from src.agents.debugger import DebuggerAgent
+import pytest
+
 from src.agents.base import AgentContext, AgentLane, AgentOutput, AgentStatus
+from src.agents.debugger import DebuggerAgent
 from src.core.router import TaskType
 
 

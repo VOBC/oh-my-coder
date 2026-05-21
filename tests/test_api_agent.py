@@ -9,7 +9,6 @@ import pytest
 from src.agents.api_agent import APIAgent
 from src.agents.base import AgentContext, AgentLane, AgentOutput, AgentStatus
 
-
 # ─────────────────────────────────────────────────────────────────
 # Fixtures
 # ─────────────────────────────────────────────────────────────────

@@ -6,24 +6,21 @@ from __future__ import annotations
 
 import json
 import sqlite3
-from pathlib import Path
-from unittest.mock import MagicMock, patch, AsyncMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 
+from src.agents.evolution import (
+    EvolutionConfig,
+    EvolutionRecord,
+    EvolutionStore,
+)
 from src.agents.self_improving import (
     ExecutionFeedback,
     LearningStore,
     SelfImprovingAgent,
     StrategyAdjustment,
 )
-from src.agents.evolution import (
-    EvolutionConfig,
-    EvolutionRecord,
-    EvolutionStore,
-    SuccessPattern,
-)
-
 
 # ── Fixtures ──────────────────────────────────────────────────────
 
@@ -54,19 +51,19 @@ def self_improving_agent(tmp_path, temp_db_path):
     store = LearningStore(str(temp_db_path))
     state_dir = tmp_path / "state"
     state_dir.mkdir(exist_ok=True)
-    
+
     # Mock LearningsMemory to avoid real file operations
     with patch("src.memory.learnings.LearningsMemory") as mock_memory:
         mock_memory_instance = MagicMock()
         mock_memory.return_value = mock_memory_instance
-        
+
         agent = SelfImprovingAgent(
             store=store,
             evolution_config=EvolutionConfig(enabled=True, min_samples=1),
         )
         agent._evolution_store = EvolutionStore(state_dir)
         agent._decision_memory = MagicMock()
-    
+
     return agent
 
 
@@ -128,7 +125,7 @@ class TestStrategyAdjustment:
 
 class TestLearningStoreInit:
     def test_creates_db_file(self, temp_db_path):
-        store = LearningStore(str(temp_db_path))
+        LearningStore(str(temp_db_path))
         assert temp_db_path.exists()
 
     def test_creates_tables(self, learning_store):
@@ -593,7 +590,7 @@ class TestSelfImprovingAgentGetAllAgentTypes:
 class TestSelfImprovingAgentRun:
     # NOTE: The source code has a bug - uses AgentStatus.SUCCESS which doesn't exist
     # Should be AgentStatus.COMPLETED. Skipping these tests until source is fixed.
-    
+
     @pytest.mark.skip(reason="Source code bug: AgentStatus.SUCCESS doesn't exist")
     @pytest.mark.asyncio
     async def test_run_report(self, self_improving_agent):
@@ -1063,7 +1060,7 @@ class TestPromoteBestPracticesToSkills:
         mock_entry.title = "test title"
         mock_entry.tags = ["test"]
         mock_entry.context = "test context"
-        
+
         self_improving_agent._memory.get_by_category.return_value = [mock_entry]
 
         result = self_improving_agent.promote_best_practices_to_skills(dry_run=True)
@@ -1077,7 +1074,7 @@ class TestPromoteBestPracticesToSkills:
         mock_entry.title = "test title"
         mock_entry.tags = ["test"]
         mock_entry.context = "test context"
-        
+
         self_improving_agent._memory.get_by_category.return_value = [mock_entry]
 
         with patch("src.memory.skill_manager.SkillManager") as mock_sm_class:
@@ -1102,7 +1099,7 @@ class TestDecisionMemory:
     def test_record_decision(self, self_improving_agent):
         self_improving_agent._decision_memory._extract_keywords.return_value = ["test"]
         self_improving_agent._decision_memory.record_decision.return_value = "dec-1"
-        
+
         result = self_improving_agent.record_decision(
             title="Test Decision",
             problem="test problem",
@@ -1117,9 +1114,9 @@ class TestDecisionMemory:
         mock_decision.category = "test"
         mock_decision.result = "success"
         mock_decision.problem = "test problem"
-        
+
         self_improving_agent._decision_memory.list_decisions.return_value = [mock_decision]
-        
+
         decisions = self_improving_agent.list_decisions()
         assert len(decisions) == 1
         assert decisions[0]["id"] == "dec-1"
@@ -1157,13 +1154,13 @@ class TestEdgeCases:
         """Test that multiple connections work correctly."""
         fb1 = ExecutionFeedback(agent_type="a", task_description="t1", success=True)
         fb2 = ExecutionFeedback(agent_type="b", task_description="t2", success=False)
-        
+
         id1 = learning_store.record_feedback(fb1)
         id2 = learning_store.record_feedback(fb2)
-        
+
         assert id1 is not None
         assert id2 is not None
-        
+
         types = ["a", "b"]
         all_types = []
         with sqlite3.connect(learning_store.db_path) as conn:
@@ -1171,7 +1168,7 @@ class TestEdgeCases:
                 "SELECT DISTINCT agent_type FROM execution_feedback"
             ).fetchall()
             all_types = [r[0] for r in rows]
-        
+
         assert set(all_types) == set(types)
 
     def test_analyze_with_retries(self, self_improving_agent):
@@ -1199,7 +1196,7 @@ class TestEdgeCases:
         mock_entry.title = "test"
         mock_entry.tags = ["test"]
         mock_entry.context = "test"
-        
+
         self_improving_agent._memory.get_by_category.return_value = [mock_entry]
 
         with patch("src.memory.skill_manager.SkillManager") as mock_sm_class:
