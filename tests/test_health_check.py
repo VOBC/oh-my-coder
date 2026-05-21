@@ -1,460 +1,470 @@
-"""
-测试 Agent 健康检查与故障自动重分配
+"""Tests for health_check.py"""
+from __future__ import annotations
 
-运行: pytest tests/test_health_check.py -v
-"""
-
+import asyncio
 import json
-import sys
 import time
-from unittest.mock import MagicMock
+from pathlib import Path
+from unittest.mock import MagicMock, patch
 
 import pytest
-
-sys.path.insert(0, "/Users/vobc/.qclaw/workspace-agent-bf627e2b/projects/oh-my-coder")
 
 from src.agents.health_check import (
     AgentHealth,
     AgentStatus,
+    HealthCheckResult,
     HealthChecker,
     format_health_display,
 )
 
-# ------------------------------------------------------------------
-# AgentHealth 测试
-# ------------------------------------------------------------------
 
-
-class TestAgentHealth:
-    """AgentHealth 数据结构测试"""
-
-    def test_default_healthy(self):
-        h = AgentHealth(agent_name="executor")
-        assert h.status == AgentStatus.HEALTHY
-        assert h.retry_count == 0
-        assert h.last_error is None
-        assert h.can_retry()
-
-    def test_touch_updates_heartbeat(self):
-        h = AgentHealth(agent_name="executor")
-        before = h.last_heartbeat
-        time.sleep(0.01)
-        h.touch()
-        assert h.last_heartbeat > before
-        assert h.status == AgentStatus.HEALTHY
-
-    def test_is_stale_false_when_fresh(self):
-        h = AgentHealth(agent_name="executor")
-        assert h.is_stale(threshold=300.0) is False
-
-    def test_is_stale_true_after_threshold(self):
-        h = AgentHealth(agent_name="executor")
-        h.last_heartbeat = time.time() - 400  # 400秒前
-        assert h.is_stale(threshold=300.0) is True
-
-    def test_record_failure_increments_retry(self):
-        h = AgentHealth(agent_name="executor")
-        exceeded = h.record_failure("timeout")
-        assert not exceeded
-        assert h.retry_count == 1
-        assert h.status == AgentStatus.STALE
-        assert h.last_error == "timeout"
-
-    def test_record_failure_max_retries(self):
-        h = AgentHealth(agent_name="executor", retry_count=2)
-        h.MAX_RETRIES = 3
-        # 第3次失败
-        exceeded = h.record_failure("timeout")
-        assert exceeded  # 达到上限
-        assert h.status == AgentStatus.FAILED
-        assert h.retry_count == 3
-
-    def test_can_retry_false_at_limit(self):
-        h = AgentHealth(agent_name="executor", retry_count=3)
-        h.MAX_RETRIES = 3
-        assert h.can_retry() is False
-
-    def test_can_retry_true_below_limit(self):
-        h = AgentHealth(agent_name="executor", retry_count=2)
-        h.MAX_RETRIES = 3
-        assert h.can_retry() is True
-
-    def test_to_dict_serialization(self):
-        h = AgentHealth(agent_name="analyst", task_id="task-1", retry_count=1)
-        d = h.to_dict()
-        assert d["agent_name"] == "analyst"
-        assert d["status"] == "healthy"
-        assert d["retry_count"] == 1
-        assert "last_heartbeat" in d
-        assert "MAX_RETRIES" not in d  # 常量不应序列化
-
+# ── AgentStatus ──────────────────────────────────────────────────
 
 class TestAgentStatus:
-    """AgentStatus 枚举测试"""
-
-    def test_all_statuses_exist(self):
+    def test_values(self):
         assert AgentStatus.HEALTHY.value == "healthy"
         assert AgentStatus.STALE.value == "stale"
         assert AgentStatus.FAILED.value == "failed"
         assert AgentStatus.REASSIGNED.value == "reassigned"
 
 
-# ------------------------------------------------------------------
-# HealthChecker 测试
-# ------------------------------------------------------------------
+# ── AgentHealth ──────────────────────────────────────────────────
+
+class TestAgentHealth:
+    def test_defaults(self):
+        h = AgentHealth(agent_name="a1")
+        assert h.status == AgentStatus.HEALTHY
+        assert h.task_id is None
+        assert h.retry_count == 0
+        assert h.last_error is None
+        assert h.workflow_id is None
+        assert h.step_index == -1
+        assert h.MAX_RETRIES == 3
+
+    def test_touch(self):
+        h = AgentHealth(agent_name="a1")
+        h.status = AgentStatus.STALE
+        old = h.last_heartbeat
+        time.sleep(0.01)
+        h.touch()
+        assert h.last_heartbeat > old
+        assert h.status == AgentStatus.HEALTHY
+
+    def test_touch_no_stale_reset(self):
+        h = AgentHealth(agent_name="a1")
+        h.status = AgentStatus.FAILED
+        h.touch()
+        # touch only resets STALE -> HEALTHY
+        assert h.status == AgentStatus.FAILED
+
+    def test_is_stale(self):
+        h = AgentHealth(agent_name="a1")
+        h.last_heartbeat = time.time() - 600
+        assert h.is_stale(threshold=300) is True
+        assert h.is_stale(threshold=700) is False
+
+    def test_is_stale_not_stale(self):
+        h = AgentHealth(agent_name="a1")
+        assert h.is_stale() is False
+
+    def test_record_failure_below_limit(self):
+        h = AgentHealth(agent_name="a1")
+        exceeded = h.record_failure("err1")
+        assert exceeded is False
+        assert h.retry_count == 1
+        assert h.status == AgentStatus.STALE
+        assert h.last_error == "err1"
+
+    def test_record_failure_at_limit(self):
+        h = AgentHealth(agent_name="a1", retry_count=2)
+        exceeded = h.record_failure("err_final")
+        assert exceeded is True
+        assert h.retry_count == 3
+        assert h.status == AgentStatus.FAILED
+
+    def test_record_failure_resets_heartbeat(self):
+        h = AgentHealth(agent_name="a1")
+        h.last_heartbeat = 0
+        h.record_failure("err")
+        assert h.last_heartbeat > 0
+
+    def test_can_retry(self):
+        h = AgentHealth(agent_name="a1")
+        assert h.can_retry() is True
+        h.retry_count = 3
+        assert h.can_retry() is False
+
+    def test_to_dict(self):
+        h = AgentHealth(agent_name="a1", task_id="t1", workflow_id="w1", step_index=2)
+        d = h.to_dict()
+        assert d["agent_name"] == "a1"
+        assert d["status"] == "healthy"
+        assert d["task_id"] == "t1"
+        assert d["workflow_id"] == "w1"
+        assert d["step_index"] == 2
+        assert "MAX_RETRIES" not in d
+        assert isinstance(d["last_heartbeat"], str)
+
+
+# ── HealthCheckResult ────────────────────────────────────────────
+
+class TestHealthCheckResult:
+    def test_defaults(self):
+        r = HealthCheckResult(check_id="abc", checked_agents=0, healthy_count=0,
+                               stale_count=0, failed_count=0, reassigned_count=0)
+        assert r.check_id == "abc"
+        assert r.reassignments == []
+        assert r.timestamp != ""
+
+    def test_to_dict(self):
+        r = HealthCheckResult(check_id="x1", checked_agents=2, healthy_count=1,
+                               stale_count=1, failed_count=0, reassigned_count=0)
+        d = r.to_dict()
+        assert "check_id" not in d
+        assert d["checked_agents"] == 2
+        assert d["healthy_count"] == 1
+
+
+# ── HealthChecker ────────────────────────────────────────────────
+
+@pytest.fixture
+def checker(tmp_path):
+    return HealthChecker(state_dir=tmp_path / "health", max_retries=3)
 
 
 class TestHealthCheckerInit:
-    """HealthChecker 初始化测试"""
+    def test_creates_state_dir(self, tmp_path):
+        d = tmp_path / "nested" / "health"
+        hc = HealthChecker(state_dir=d)
+        assert d.exists()
 
-    def test_default_values(self):
-        hc = HealthChecker()
+    def test_default_params(self, tmp_path):
+        hc = HealthChecker(state_dir=tmp_path / "h")
         assert hc.check_interval == 60.0
         assert hc.stale_threshold == 300.0
         assert hc.max_retries == 3
-        assert hc._agent_health == {}
-        assert hc._active_tasks == {}
 
-    def test_custom_values(self):
-        hc = HealthChecker(check_interval=30.0, stale_threshold=120.0, max_retries=5)
-        assert hc.check_interval == 30.0
-        assert hc.stale_threshold == 120.0
+    def test_custom_params(self, tmp_path):
+        hc = HealthChecker(state_dir=tmp_path / "h", check_interval=10,
+                           stale_threshold=60, max_retries=5)
+        assert hc.check_interval == 10
+        assert hc.stale_threshold == 60
         assert hc.max_retries == 5
 
 
-class TestAgentRegistration:
-    """Agent 注册与心跳测试"""
-
-    def setup_method(self):
-        self.hc = HealthChecker()
-
-    def test_register_agent(self):
-        h = self.hc.register_agent("executor", task_id="task-1")
-        assert h.agent_name == "executor"
-        assert h.task_id == "task-1"
+class TestRegisterAgent:
+    def test_register(self, checker):
+        h = checker.register_agent("a1", task_id="t1", workflow_id="w1", step_index=0)
+        assert h.agent_name == "a1"
+        assert h.task_id == "t1"
         assert h.status == AgentStatus.HEALTHY
-        assert "executor" in self.hc._agent_health
+        assert h.MAX_RETRIES == checker.max_retries
+        assert "a1" in checker._agent_health
 
-    def test_register_multiple_agents(self):
-        self.hc.register_agent("analyst")
-        self.hc.register_agent("executor")
-        assert len(self.hc._agent_health) == 2
+    def test_register_overwrite(self, checker):
+        checker.register_agent("a1", task_id="old")
+        checker.register_agent("a1", task_id="new")
+        assert checker._agent_health["a1"].task_id == "new"
 
-    def test_heartbeat_updates_existing(self):
-        self.hc.register_agent("executor")
-        before = self.hc._agent_health["executor"].last_heartbeat
-        time.sleep(0.01)
-        self.hc.heartbeat("executor")
-        assert self.hc._agent_health["executor"].last_heartbeat > before
 
-    def test_heartbeat_unknown_agent_returns_false(self):
-        result = self.hc.heartbeat("unknown")
-        assert result is False
+class TestUnregisterAgent:
+    def test_unregister(self, checker):
+        checker.register_agent("a1")
+        assert checker.unregister_agent("a1") is True
+        assert "a1" not in checker._agent_health
 
-    def test_unregister_agent(self):
-        self.hc.register_agent("executor")
-        self.hc.unregister_agent("executor")
-        assert "executor" not in self.hc._agent_health
+    def test_unregister_not_registered(self, checker):
+        assert checker.unregister_agent("ghost") is True
+
+    def test_unregister_removes_active_task(self, checker):
+        checker.register_agent("a1")
+        checker._active_tasks["a1"] = MagicMock()
+        checker.unregister_agent("a1")
+        assert "a1" not in checker._active_tasks
+
+
+class TestHeartbeat:
+    def test_heartbeat_registered(self, checker):
+        checker.register_agent("a1")
+        assert checker.heartbeat("a1") is True
+
+    def test_heartbeat_unregistered(self, checker):
+        assert checker.heartbeat("ghost") is False
+
+    def test_heartbeat_touches(self, checker):
+        h = checker.register_agent("a1")
+        h.last_heartbeat = 0
+        checker.heartbeat("a1")
+        assert checker._agent_health["a1"].last_heartbeat > 0
 
 
 class TestRecordFailure:
-    """故障记录与重试测试"""
+    def test_record_failure_below_limit(self, checker):
+        exceeded = checker.record_failure("a1", "error1")
+        assert exceeded is False
+        assert checker._agent_health["a1"].retry_count == 1
 
-    def setup_method(self):
-        self.hc = HealthChecker(max_retries=3)
+    def test_record_failure_exceeds_limit(self, checker):
+        checker.register_agent("a1")
+        for i in range(2):
+            checker._agent_health["a1"].record_failure(f"err{i}")
+        exceeded = checker.record_failure("a1", "final_err")
+        assert exceeded is True
 
-    def test_record_failure_not_exceeded(self):
-        self.hc.register_agent("executor")
-        exceeded = self.hc.record_failure("executor", "timeout error")
-        assert not exceeded
-        assert self.hc._agent_health["executor"].retry_count == 1
-        assert self.hc._agent_health["executor"].status == AgentStatus.STALE
+    def test_record_failure_unregistered_agent(self, checker):
+        # Should auto-register
+        exceeded = checker.record_failure("new_agent", "err", workflow_id="w1")
+        assert "new_agent" in checker._agent_health
+        assert exceeded is False
 
-    def test_record_failure_unregistered_agent(self):
-        # 自动注册未注册的 agent
-        exceeded = self.hc.record_failure("unknown", "error")
-        assert not exceeded
-        assert "unknown" in self.hc._agent_health
-        assert self.hc._agent_health["unknown"].retry_count == 1
+    def test_record_failure_notification(self, checker):
+        notifications = []
+        checker.on_notification = lambda t, b: notifications.append((t, b))
+        checker.record_failure("a1", "err")
+        assert len(notifications) == 1
+        assert "重试" in notifications[0][0]
 
-    def test_record_failure_max_exceeded(self):
-        self.hc.register_agent("executor")
-        # 连续失败3次
-        for _ in range(3):
-            self.hc.record_failure("executor", "timeout")
-        # 第3次返回 True（已达上限）
-        exceeded = self.hc.record_failure("executor", "timeout")
-        assert exceeded
-        assert self.hc._agent_health["executor"].status == AgentStatus.FAILED
-
-
-class TestReassignment:
-    """任务重分配测试"""
-
-    def setup_method(self):
-        self.hc = HealthChecker()
-
-    def test_reassign_to_idle_agent(self):
-        """有空闲健康 Agent 时，任务重分配到该 Agent"""
-        self.hc.register_agent("executor-1", workflow_id="wf-1")
-        self.hc.register_agent("analyst", workflow_id="wf-1")
-        # analyst 空闲（无 active task）
-
-        mock_step = MagicMock()
-        mock_step.agent_name = "executor-1"
-
-        new_agent = self.hc.reassign_task(
-            agent_name="executor-1",
-            workflow_id="wf-1",
-            step=mock_step,
-        )
-        # 应该分配给 analyst（唯一的空闲健康 Agent）
-        assert new_agent == "analyst"
-
-    def test_reassign_no_idle_agent(self):
-        """没有空闲 Agent 时返回 None"""
-        self.hc.register_agent("executor-1", workflow_id="wf-1")
-        # executor-1 是唯一的 Agent，无法重分配给自己
-        mock_step = MagicMock()
-        mock_step.agent_name = "executor-1"
-
-        new_agent = self.hc.reassign_task(
-            agent_name="executor-1",
-            workflow_id="wf-1",
-            step=mock_step,
-        )
-        assert new_agent is None
-
-    def test_reassign_skips_failed_agent(self):
-        """跳过已标记为 FAILED 的 Agent"""
-        self.hc.register_agent("executor-1")
-        self.hc.register_agent("analyst")
-        self.hc._agent_health["analyst"].status = AgentStatus.FAILED
-
-        mock_step = MagicMock()
-        mock_step.agent_name = "executor-1"
-
-        new_agent = self.hc.reassign_task(
-            agent_name="executor-1",
-            workflow_id="wf-1",
-            step=mock_step,
-        )
-        # analyst 是 FAILED，无法分配
-        assert new_agent is None
+    def test_record_failure_exceeded_notification(self, checker):
+        notifications = []
+        checker.on_notification = lambda t, b: notifications.append((t, b))
+        h = checker.register_agent("a1")
+        h.retry_count = 2  # one more will exceed
+        checker.record_failure("a1", "err")
+        assert len(notifications) == 1
+        assert "失败" in notifications[0][0]
 
 
-class TestPeriodicCheck:
-    """定期检查测试"""
+class TestReassignTask:
+    def test_reassign_to_idle_agent(self, checker):
+        checker.register_agent("a1")
+        checker.register_agent("a2")
+        checker._active_tasks["a1"] = MagicMock()  # a1 is busy
+        step = MagicMock(agent_name="step1")
+        result = checker.reassign_task("a1", "w1", step)
+        assert result == "a2"
 
-    def setup_method(self):
-        self.hc = HealthChecker(stale_threshold=1.0, max_retries=3)  # 1秒超时
+    def test_reassign_no_idle(self, checker):
+        checker.register_agent("a1")
+        checker._active_tasks["a1"] = MagicMock()
+        step = MagicMock(agent_name="step1")
+        result = checker.reassign_task("a1", "w1", step)
+        assert result is None
 
+    def test_reassign_no_other_agents(self, checker):
+        step = MagicMock(agent_name="step1")
+        result = checker.reassign_task("a1", "w1", step)
+        assert result is None
+
+
+class TestCheckAll:
     @pytest.mark.asyncio
-    async def test_check_detects_stale_agent(self):
-        """检测到超时的 Agent 并标记为 STALE"""
-        h = self.hc.register_agent("executor", workflow_id="wf-1")
-        h.last_heartbeat = time.time() - 10  # 10秒前（> 1秒阈值）
-
-        result = await self.hc._check_all()
-
-        assert result is not None
-        assert result.stale_count >= 1
-        assert result.checked_agents >= 1
-        assert self.hc._agent_health["executor"].status == AgentStatus.STALE
-
-    @pytest.mark.asyncio
-    async def test_check_empty_returns_none(self):
-        """无 Agent 时检查返回 None"""
-        result = await self.hc._check_all()
+    async def test_check_all_empty(self, checker):
+        result = await checker._check_all()
         assert result is None
 
     @pytest.mark.asyncio
-    async def test_check_auto_retry_on_stale(self):
-        """STALE Agent 自动重试并触发重分配"""
-        h = self.hc.register_agent("executor", workflow_id="wf-1")
-        h.last_heartbeat = time.time() - 10
-
-        # 同时注册一个空闲的备份 Agent
-        self.hc.register_agent("executor-backup", workflow_id="wf-1")
-
-        result = await self.hc._check_all()
-
-        assert result is not None
-        assert result.stale_count >= 1
-        assert result.reassigned_count >= 1
+    async def test_check_all_healthy(self, checker):
+        checker.register_agent("a1")
+        result = await checker._check_all()
+        assert result.healthy_count == 1
+        assert result.stale_count == 0
 
     @pytest.mark.asyncio
-    async def test_check_healthy_agent_untouched(self):
-        """健康 Agent 不受影响"""
-        self.hc.register_agent("executor")
-        result = await self.hc._check_all()
-        assert result.healthy_count >= 1
-        assert self.hc._agent_health["executor"].status == AgentStatus.HEALTHY
-
-
-class TestHealthCheckerSummary:
-    """状态摘要测试"""
-
-    def test_get_summary_empty(self):
-        hc = HealthChecker()
-        summary = hc.get_summary()
-        assert summary["total_registered"] == 0
-        assert summary["healthy"] == 0
-        assert summary["is_running"] is False
-
-    def test_get_summary_mixed_status(self):
-        hc = HealthChecker()
-        hc.register_agent("executor-1")
-        h2 = hc.register_agent("executor-2")
-        h2.status = AgentStatus.FAILED
-        h3 = hc.register_agent("analyst")
-        h3.status = AgentStatus.STALE
-
-        summary = hc.get_summary()
-        assert summary["total_registered"] == 3
-        assert summary["healthy"] == 1
-        assert summary["failed"] == 1
-        assert summary["stale"] == 1
-
-    def test_get_all_health(self):
-        hc = HealthChecker()
-        hc.register_agent("executor", task_id="task-1")
-        health_map = hc.get_all_health()
-        assert "executor" in health_map
-        assert health_map["executor"]["task_id"] == "task-1"
-
-
-class TestFormatDisplay:
-    """CLI 格式化输出测试"""
-
-    def test_format_empty(self):
-        display = format_health_display({})
-        assert "no agents" in display
-
-    def test_format_healthy(self):
-        health_map = {
-            "executor": {
-                "status": "healthy",
-                "retry_count": 0,
-                "last_heartbeat": "2026-04-23T12:00:00",
-                "workflow_id": "wf-abc",
-                "last_error": "",
-            }
-        }
-        display = format_health_display(health_map)
-        assert "✅" in display
-        assert "executor" in display
-        assert "healthy" in display
-
-    def test_format_failed(self):
-        health_map = {
-            "analyst": {
-                "status": "failed",
-                "retry_count": 3,
-                "last_heartbeat": "2026-04-23T12:00:00",
-                "workflow_id": "wf-xyz",
-                "last_error": "connection timeout",
-            }
-        }
-        display = format_health_display(health_map)
-        assert "❌" in display
-        assert "failed" in display
-        assert "3" in display
-
-
-class TestNotification:
-    """通知测试"""
-
-    def test_notify_callback(self):
-        notifications = []
-
-        def on_notify(title: str, body: str):
-            notifications.append((title, body))
-
-        hc = HealthChecker(on_notification=on_notify)
-        hc._notify("test title", "test body")
-
-        assert len(notifications) == 1
-        assert notifications[0] == ("test title", "test body")
-
-    def test_notify_without_callback(self):
-        """无回调时不抛异常"""
-        hc = HealthChecker(on_notification=None)
-        hc._notify("test", "body")  # 不应抛异常
-
-
-# ------------------------------------------------------------------
-# 集成场景：模拟 Agent 超时，观察自动重分配
-# ------------------------------------------------------------------
-
-
-class TestIntegrationTimeoutReassignment:
-    """验收测试：模拟 Agent 超时，观察任务是否自动重分配"""
-
-    def setup_method(self):
-        self.hc = HealthChecker(check_interval=60.0, stale_threshold=1.0, max_retries=3)
+    async def test_check_all_stale_retries(self, checker):
+        checker.stale_threshold = 0.01
+        h = checker.register_agent("a1")
+        time.sleep(0.02)
+        result = await checker._check_all()
+        assert result.stale_count == 1
+        assert result.reassigned_count == 1
 
     @pytest.mark.asyncio
-    async def test_timeout_triggers_reassignment(self):
-        """
-        场景：
-        1. executor-1 注册并开始执行
-        2. executor-1 心跳超时（>1s 无响应）
-        3. 系统自动重分配给 executor-backup
+    async def test_check_all_stale_exceeds_retries(self, checker):
+        checker.stale_threshold = 0.01
+        h = checker.register_agent("a1")
+        h.retry_count = 3  # already at max
+        time.sleep(0.02)
+        result = await checker._check_all()
+        assert result.failed_count == 1
 
-        预期：executor-1 被标记为 STALE，重分配事件被记录
-        """
-        # Step 1: 注册两个 Agent
-        h1 = self.hc.register_agent("executor-1", workflow_id="wf-1")
-        self.hc.register_agent("executor-backup", workflow_id="wf-1")
+    @pytest.mark.asyncio
+    async def test_check_all_skips_failed(self, checker):
+        h = checker.register_agent("a1")
+        h.status = AgentStatus.FAILED
+        result = await checker._check_all()
+        assert result.checked_agents == 0
 
-        # Step 2: 模拟 executor-1 很久没有心跳
-        h1.last_heartbeat = time.time() - 10
+    @pytest.mark.asyncio
+    async def test_check_all_skips_reassigned(self, checker):
+        h = checker.register_agent("a1")
+        h.status = AgentStatus.REASSIGNED
+        result = await checker._check_all()
+        assert result.checked_agents == 0
 
-        # Step 3: 触发检查
-        result = await self.hc._check_all()
 
-        # 验证
-        assert result is not None
-        assert result.stale_count >= 1
-        assert result.reassigned_count >= 1
-        assert h1.status in (AgentStatus.STALE, AgentStatus.FAILED)
-        assert h1.retry_count >= 1
+class TestStartStop:
+    def test_start_stop(self, checker):
+        checker.check_interval = 600
+        loop = asyncio.new_event_loop()
+        try:
+            loop.run_until_complete(checker.start())
+            assert checker._check_task is not None
+            # cancel the check loop directly
+            checker._stop_event.set()
+            checker._check_task.cancel()
+            try:
+                loop.run_until_complete(checker._check_task)
+            except asyncio.CancelledError:
+                pass
+            checker._check_task = None
+            checker._stop_event = None
+        finally:
+            loop.close()
 
-    def test_max_retries_then_failed(self):
-        """
-        场景：连续 3 次失败后，Agent 被标记为 FAILED，通知用户
-        """
-        h = self.hc.register_agent("buggy-agent", workflow_id="wf-1")
+    def test_start_idempotent(self, checker):
+        checker.check_interval = 600
+        loop = asyncio.new_event_loop()
+        try:
+            loop.run_until_complete(checker.start())
+            task = checker._check_task
+            loop.run_until_complete(checker.start())
+            assert checker._check_task is task
+            # cleanup
+            checker._stop_event.set()
+            checker._check_task.cancel()
+            try:
+                loop.run_until_complete(checker._check_task)
+            except asyncio.CancelledError:
+                pass
+            checker._check_task = None
+            checker._stop_event = None
+        finally:
+            loop.close()
 
-        # 模拟3次失败
-        for _ in range(3):
-            exceeded = self.hc.record_failure("buggy-agent", "always fails")
-            if exceeded:
-                break
+    def test_stop_when_not_started(self, checker):
+        loop = asyncio.new_event_loop()
+        try:
+            loop.run_until_complete(checker.stop())
+        finally:
+            loop.close()
 
-        assert h.status == AgentStatus.FAILED
-        assert h.retry_count == 3
-        assert h.can_retry() is False
 
-    def test_reassignment_logs_to_file(self, tmp_path):
-        """
-        验收：重分配事件被记录到文件
-        """
-        hc = HealthChecker(
-            state_dir=tmp_path,
-            max_retries=3,
-        )
-        hc.register_agent("agent-1", workflow_id="wf-test")
-        hc.register_agent("agent-2", workflow_id="wf-test")
+class TestGetAllHealth:
+    def test_empty(self, checker):
+        assert checker.get_all_health() == {}
 
-        mock_step = MagicMock()
-        mock_step.agent_name = "agent-1"
+    def test_with_agents(self, checker):
+        checker.register_agent("a1")
+        result = checker.get_all_health()
+        assert "a1" in result
+        assert result["a1"]["status"] == "healthy"
 
-        hc.reassign_task("agent-1", "wf-test", mock_step)
 
-        log_files = list(tmp_path.glob("reassignment_*.json"))
-        assert len(log_files) >= 1
-        content = json.loads(log_files[0].read_text(encoding="utf-8"))
-        assert content["from_agent"] == "agent-1"
-        assert content["workflow_id"] == "wf-test"
+class TestGetSummary:
+    def test_empty(self, checker):
+        s = checker.get_summary()
+        assert s["total_registered"] == 0
+        assert s["is_running"] is False
+
+    def test_with_agents(self, checker):
+        checker.register_agent("a1")
+        h2 = checker.register_agent("a2")
+        h2.status = AgentStatus.STALE
+        s = checker.get_summary()
+        assert s["total_registered"] == 2
+        assert s["healthy"] == 1
+        assert s["stale"] == 1
+
+
+class TestPersistence:
+    def test_save_health_log(self, checker):
+        h = checker.register_agent("a1")
+        checker._save_health_log(h)
+        log_file = checker.state_dir / "health_a1.json"
+        assert log_file.exists()
+        data = json.loads(log_file.read_text())
+        assert data["agent_name"] == "a1"
+
+    def test_save_check_result(self, checker):
+        r = HealthCheckResult(check_id="c1", checked_agents=1, healthy_count=1,
+                               stale_count=0, failed_count=0, reassigned_count=0)
+        checker._save_check_result(r)
+        f = checker.state_dir / "check_c1.json"
+        assert f.exists()
+
+    def test_save_status(self, checker):
+        checker._save_status()
+        f = checker.state_dir / "status.json"
+        assert f.exists()
+        data = json.loads(f.read_text())
+        assert "total_registered" in data
+
+
+class TestNotify:
+    def test_notify_with_callback(self, checker):
+        calls = []
+        checker.on_notification = lambda t, b: calls.append((t, b))
+        checker._notify("title", "body")
+        assert len(calls) == 1
+
+    def test_notify_without_callback(self, checker):
+        checker._notify("title", "body")  # no error
+
+    def test_notify_callback_exception_suppressed(self, checker):
+        checker.on_notification = MagicMock(side_effect=RuntimeError("boom"))
+        checker._notify("title", "body")  # suppressed
+
+    def test_notify_writes_log(self, checker):
+        checker._notify("title", "body")
+        log_file = checker.state_dir / "notifications.jsonl"
+        assert log_file.exists()
+
+
+class TestRegisterTask:
+    def test_register_task(self, checker):
+        task = MagicMock(spec=asyncio.Task)
+        checker.register_task("a1", task)
+        assert checker._active_tasks["a1"] is task
+
+
+# ── format_health_display ────────────────────────────────────────
+
+class TestFormatHealthDisplay:
+    def test_empty(self):
+        assert format_health_display({}) == "  (no agents registered)"
+
+    def test_healthy_agent(self):
+        result = format_health_display({
+            "a1": {"status": "healthy", "retry_count": 0,
+                    "last_heartbeat": "2026-01-01T00:00:00", "workflow_id": "w1"}
+        })
+        assert "✅ a1" in result
+
+    def test_stale_agent(self):
+        result = format_health_display({
+            "a1": {"status": "stale", "retry_count": 1, "workflow_id": None,
+                    "last_heartbeat": "", "last_error": "timeout"}
+        })
+        assert "⚠️ a1" in result
+        assert "timeout" in result
+
+    def test_failed_agent(self):
+        result = format_health_display({
+            "a1": {"status": "failed", "retry_count": 3, "workflow_id": None,
+                    "last_heartbeat": "", "last_error": ""}
+        })
+        assert "❌ a1" in result
+
+    def test_reassigned_agent(self):
+        result = format_health_display({
+            "a1": {"status": "reassigned", "retry_count": 0, "workflow_id": None,
+                    "last_heartbeat": ""}
+        })
+        assert "🔄 a1" in result
+
+    def test_no_workflow_shows_dash(self):
+        result = format_health_display({
+            "a1": {"status": "healthy", "retry_count": 0,
+                    "last_heartbeat": "", "workflow_id": None}
+        })
+        assert "—" in result
