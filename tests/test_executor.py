@@ -234,3 +234,148 @@ class TestTryRunTests:
         with patch("subprocess.run", side_effect=side_effect):
             result = agent._try_run_tests(tmp_path, ["tests/test_x.py"])
         assert result["tests_failed"] == 1
+
+
+# ── _inject_relevant_files ──────────────────────────────────────
+
+class TestInjectRelevantFiles:
+    def test_no_files(self, agent):
+        ctx = MagicMock()
+        ctx.relevant_files = None
+        ctx.project_path = MagicMock(spec=Path)
+        ctx.task_description = "test"
+        prompt = []
+        agent._inject_relevant_files(ctx, prompt)
+        assert prompt == []
+
+    def test_with_relevant_files(self, agent, tmp_path):
+        test_file = tmp_path / "test_module.py"
+        test_file.write_text("def test_func(): pass", encoding="utf-8")
+        ctx = MagicMock()
+        ctx.relevant_files = [test_file]
+        ctx.project_path = tmp_path
+        ctx.task_description = "test"
+        prompt = []
+        agent._inject_relevant_files(ctx, prompt)
+        assert len(prompt) == 1
+        assert "test_module.py" in prompt[0]["content"]
+
+    def test_read_error_handled(self, agent, tmp_path):
+        ctx = MagicMock()
+        ctx.relevant_files = [tmp_path / "nonexistent.py"]
+        ctx.project_path = tmp_path
+        ctx.task_description = "test"
+        prompt = []
+        agent._inject_relevant_files(ctx, prompt)
+        assert prompt == []
+
+
+# ── _post_process ──────────────────────────────────────────────
+
+class TestPostProcess:
+    def test_extract_and_save_code(self, agent, tmp_path):
+        ctx = MagicMock()
+        ctx.project_path = tmp_path
+        ctx.task_description = "test"
+        result = '''```python:src/new_module.py
+class NewClass:
+    pass
+```'''
+        output = agent._post_process(result, ctx)
+        assert output.status.name == "COMPLETED"
+        assert (tmp_path / "src" / "new_module.py").exists()
+
+    def test_multiple_code_blocks(self, agent, tmp_path):
+        ctx = MagicMock()
+        ctx.project_path = tmp_path
+        ctx.task_description = "test"
+        result = '''```python:src/a.py
+class A:
+    pass
+```
+
+```python:src/b.py
+class B:
+    pass
+```'''
+        output = agent._post_process(result, ctx)
+        assert (tmp_path / "src" / "a.py").exists()
+        assert (tmp_path / "src" / "b.py").exists()
+
+    def test_path_lstrip_slash(self, agent, tmp_path):
+        ctx = MagicMock()
+        ctx.project_path = tmp_path
+        ctx.task_description = "test"
+        result = '```python:/src/absolute.py\nx=1\n```'
+        output = agent._post_process(result, ctx)
+        assert (tmp_path / "src" / "absolute.py").exists()
+
+    def test_save_error_handled(self, agent, tmp_path, monkeypatch):
+        ctx = MagicMock()
+        ctx.project_path = tmp_path
+        ctx.task_description = "test"
+        result = '```python:src/test.py\nx=1\n```'
+
+        # Mock open to raise error
+        import builtins
+        def mock_open(*args, **kwargs):
+            if "test.py" in str(args):
+                raise IOError("disk full")
+            return original_open(*args, **kwargs)
+
+        original_open = builtins.open
+        monkeypatch.setattr(builtins, "open", mock_open)
+
+        output = agent._post_process(result, ctx)
+        # Should still complete with errors in recommendations
+        assert output.status.name == "COMPLETED"
+
+
+# ── _resolve_dependencies ───────────────────────────────────────
+
+class TestResolveDependencies:
+    def test_no_python_files(self, agent, tmp_path):
+        result = agent._resolve_dependencies(tmp_path, ["src/utils.js"])
+        assert result is None
+
+    def test_no_missing_deps(self, agent, tmp_path):
+        py_file = tmp_path / "test.py"
+        py_file.write_text("print('hello')", encoding="utf-8")
+        with patch("src.agents.executor.DependencyResolver") as mock_resolver:
+            mock_resolver_instance = MagicMock()
+            mock_resolver_instance.resolve.return_value = MagicMock(missing=[])
+            mock_resolver.return_value = mock_resolver_instance
+            result = agent._resolve_dependencies(tmp_path, ["test.py"])
+            assert result is not None
+
+    def test_with_missing_deps(self, agent, tmp_path, capsys):
+        py_file = tmp_path / "test.py"
+        py_file.write_text("import requests\nimport pandas", encoding="utf-8")
+        with patch("src.agents.executor.DependencyResolver") as mock_resolver:
+            mock_resolver_instance = MagicMock()
+            mock_resolver_instance.resolve.return_value = MagicMock(missing=["requests", "pandas"])
+            mock_install = MagicMock(return_value={"installed": ["requests"], "failed": []})
+            mock_resolver_instance.install_dependencies = mock_install
+            mock_resolver.return_value = mock_resolver_instance
+            result = agent._resolve_dependencies(tmp_path, ["test.py"])
+            assert result is not None
+
+    def test_exception_handled(self, agent, tmp_path):
+        py_file = tmp_path / "test.py"
+        py_file.write_text("import something", encoding="utf-8")
+        with patch("src.agents.executor.DependencyResolver", side_effect=Exception("fail")):
+            result = agent._resolve_dependencies(tmp_path, ["test.py"])
+            assert result is None
+
+
+# ── system_prompt property ──────────────────────────────────────
+
+class TestSystemPrompt:
+    def test_system_prompt_exists(self, agent):
+        prompt = agent.system_prompt
+        assert "资深的全栈软件工程师" in prompt
+        assert "代码实现" in prompt
+
+    def test_system_prompt_contains_examples(self, agent):
+        prompt = agent.system_prompt
+        assert "```" in prompt  # contains code block markers
