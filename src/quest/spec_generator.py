@@ -166,7 +166,8 @@ class SpecGenerator:
 
         # 提取章节
         sections: list[SpecSection] = []
-        current_title = "概述"
+        current_title = ""
+        seen_first_heading = False
         current_content: list[str] = []
         in_acceptance = False
         acceptance_criteria: list[AcceptanceCriteria] = []
@@ -195,14 +196,15 @@ class SpecGenerator:
                         )
                     current_content = []
 
-                title = stripped[2:].strip()
-                current_title = title
+                section_title = stripped[2:].strip()
+                current_title = section_title
+                seen_first_heading = True
 
-                if "概述" in title:
+                if "概述" in section_title:
                     in_acceptance = False
-                elif "验收标准" in title:
+                elif "验收标准" in section_title:
                     in_acceptance = True
-                elif "动机" in title or "包含范围" in title or "风险" in title:
+                elif "动机" in section_title or "包含范围" in section_title or "风险" in section_title:
                     in_acceptance = False
                 continue
 
@@ -212,14 +214,17 @@ class SpecGenerator:
                 match = re.search(r"\[AC?\d+\]", stripped, re.IGNORECASE)
                 if match or stripped.startswith(("- [ ]", "-[**")):
                     # 提取标准描述
-                    desc = re.sub(r"^\[[ x]\]\s*", "", stripped).strip()
-                    desc = re.sub(r"\[\*\*[AC?\d+\]\*\*]\s*", "", desc).strip()
+                    desc = re.sub(r"^-\s*\[[\sx]\]\s*", "", stripped).strip()
+                    desc = re.sub(r"\*\*\[AC\d+\]\*\*\s*", "", desc).strip()
                     if desc:
                         ac_id = f"AC{len(acceptance_criteria) + 1}"
                         acceptance_criteria.append(
                             AcceptanceCriteria(id=ac_id, description=desc)
                         )
             else:
+                if not seen_first_heading:
+                    # 跳过第一个 ## 之前的内容（如 # 标题 行）
+                    continue
                 if current_title == "概述" and overview == "":
                     overview = stripped
                 elif current_title == "动机" and motivation == "":
