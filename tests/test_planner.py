@@ -3,6 +3,7 @@ PlannerAgent 单元测试（纯逻辑，不调 API）
 """
 
 from src.agents.planner import (
+    AgentContext,
     ChainOfThought,
     DependencyGraph,
     ExecutionPlan,
@@ -276,3 +277,271 @@ class TestAdjustPlan:
         ready = graph.get_ready_tasks({"T1"})
         assert "T2" in ready
         assert "T1" not in ready
+
+
+# ─────────────────────────────────────────────────────────────────
+# TaskPriority.from_string()
+# ─────────────────────────────────────────────────────────────────
+
+
+class TestTaskPriorityFromString:
+    """测试 TaskPriority.from_string() 的各种分支"""
+
+    def test_empty_string(self):
+        assert TaskPriority.from_string("") == TaskPriority.MEDIUM
+
+    def test_none_value(self):
+        assert TaskPriority.from_string(None) == TaskPriority.MEDIUM
+
+    def test_english_critical(self):
+        assert TaskPriority.from_string("critical") == TaskPriority.CRITICAL
+
+    def test_english_high(self):
+        assert TaskPriority.from_string("high") == TaskPriority.HIGH
+
+    def test_english_low(self):
+        assert TaskPriority.from_string("low") == TaskPriority.LOW
+
+    def test_english_medium(self):
+        assert TaskPriority.from_string("medium") == TaskPriority.MEDIUM
+
+    def test_chinese_critical_variants(self):
+        assert TaskPriority.from_string("紧急") == TaskPriority.CRITICAL
+        assert TaskPriority.from_string("极高") == TaskPriority.CRITICAL
+        assert TaskPriority.from_string("阻塞") == TaskPriority.CRITICAL
+
+    def test_chinese_high_variants(self):
+        assert TaskPriority.from_string("高") == TaskPriority.HIGH
+        assert TaskPriority.from_string("重要") == TaskPriority.HIGH
+
+    def test_chinese_medium_variants(self):
+        assert TaskPriority.from_string("中") == TaskPriority.MEDIUM
+        assert TaskPriority.from_string("中等") == TaskPriority.MEDIUM
+        assert TaskPriority.from_string("普通") == TaskPriority.MEDIUM
+        assert TaskPriority.from_string("常规") == TaskPriority.MEDIUM
+
+    def test_chinese_low_variants(self):
+        assert TaskPriority.from_string("低") == TaskPriority.LOW
+        assert TaskPriority.from_string("次要") == TaskPriority.LOW
+        assert TaskPriority.from_string("可延后") == TaskPriority.LOW
+
+    def test_lowercase_english(self):
+        assert TaskPriority.from_string("high") == TaskPriority.HIGH
+
+    def test_invalid_returns_medium(self):
+        assert TaskPriority.from_string("invalid_priority") == TaskPriority.MEDIUM
+
+
+
+# ─────────────────────────────────────────────────────────────────
+# TaskComplexity.from_string()
+# ─────────────────────────────────────────────────────────────────
+
+
+class TestTaskComplexityFromString:
+    """测试 TaskComplexity.from_string() 的各种分支"""
+
+    def test_empty_string(self):
+        assert TaskComplexity.from_string("") == TaskComplexity.MODERATE
+
+    def test_none_value(self):
+        assert TaskComplexity.from_string(None) == TaskComplexity.MODERATE
+
+    def test_english_simple(self):
+        assert TaskComplexity.from_string("simple") == TaskComplexity.SIMPLE
+
+    def test_english_complex(self):
+        assert TaskComplexity.from_string("complex") == TaskComplexity.COMPLEX
+
+    def test_english_moderate(self):
+        assert TaskComplexity.from_string("moderate") == TaskComplexity.MODERATE
+
+    def test_chinese_simple_variants(self):
+        assert TaskComplexity.from_string("简单") == TaskComplexity.SIMPLE
+        assert TaskComplexity.from_string("低") == TaskComplexity.SIMPLE
+        assert TaskComplexity.from_string("容易") == TaskComplexity.SIMPLE
+
+    def test_chinese_moderate_variants(self):
+        assert TaskComplexity.from_string("中等") == TaskComplexity.MODERATE
+        assert TaskComplexity.from_string("中") == TaskComplexity.MODERATE
+        assert TaskComplexity.from_string("普通") == TaskComplexity.MODERATE
+
+    def test_chinese_complex_variants(self):
+        assert TaskComplexity.from_string("高") == TaskComplexity.COMPLEX
+        assert TaskComplexity.from_string("复杂") == TaskComplexity.COMPLEX
+        assert TaskComplexity.from_string("困难") == TaskComplexity.COMPLEX
+        assert TaskComplexity.from_string("难") == TaskComplexity.COMPLEX
+
+    def test_lowercase_english(self):
+        assert TaskComplexity.from_string("simple") == TaskComplexity.SIMPLE
+
+    def test_invalid_returns_moderate(self):
+        assert TaskComplexity.from_string("invalid_complexity") == TaskComplexity.MODERATE
+
+
+
+# ─────────────────────────────────────────────────────────────────
+# DependencyGraph.find_critical_path()
+# ─────────────────────────────────────────────────────────────────
+
+
+class TestDependencyGraphCriticalPath:
+    """测试 DependencyGraph.find_critical_path()"""
+
+    def test_critical_path_basic(self):
+        graph = DependencyGraph()
+        graph.add_task("T1", [])
+        graph.add_task("T2", ["T1"])
+        graph.add_task("T3", ["T2"])
+        path = graph.find_critical_path()
+        assert isinstance(path, list)
+        assert len(path) == 3
+
+    def test_critical_path_parallel(self):
+        """并行任务的关键路径"""
+        graph = DependencyGraph()
+        graph.add_task("T1", [])
+        graph.add_task("T2", ["T1"])
+        graph.add_task("T3", ["T1"])
+        path = graph.find_critical_path()
+        assert "T1" in path
+
+    def test_critical_path_empty_graph(self):
+        graph = DependencyGraph()
+        path = graph.find_critical_path()
+        assert path == []
+
+
+# ─────────────────────────────────────────────────────────────────
+# PlannerAgent._build_context_prompt()
+# ─────────────────────────────────────────────────────────────────
+
+
+class TestBuildContextPrompt:
+    """测试 PlannerAgent._build_context_prompt()"""
+
+    def test_empty_context(self):
+        from src.agents.planner import PlannerAgent
+        agent = PlannerAgent()
+        context = AgentContext(task_description="test", project_path="/fake/path")
+        result = agent._build_context_prompt(context)
+        assert result == ""
+
+    def test_with_explore_result_dict(self):
+        from src.agents.planner import PlannerAgent
+        agent = PlannerAgent()
+        context = AgentContext(
+            task_description="test",
+            project_path="/fake/path",
+            previous_outputs={
+                "explore": {
+                    "files_count": 10,
+                    "tech_stack": ["Python", "FastAPI"],
+                    "structure": "MVC",
+                }
+            },
+        )
+        result = agent._build_context_prompt(context)
+        assert "10" in result
+        assert "Python" in result
+        assert "MVC" in result
+
+    def test_with_analyst_result_dict(self):
+        from src.agents.planner import PlannerAgent
+        agent = PlannerAgent()
+        context = AgentContext(
+            task_description="test",
+            project_path="/fake/path",
+            previous_outputs={
+                "analyst": {
+                    "entities": ["User", "Order"],
+                    "features": ["login", "checkout"],
+                    "constraints": ["max 100 users"],
+                }
+            },
+        )
+        result = agent._build_context_prompt(context)
+        assert "User" in result
+        assert "login" in result
+        assert "max 100 users" in result
+
+    def test_with_relevant_files(self):
+        from src.agents.planner import PlannerAgent
+        agent = PlannerAgent()
+        context = AgentContext(
+            task_description="test",
+            project_path="/fake/path",
+            relevant_files=["/path/to/file1.py", "/path/to/file2.py"],
+        )
+        result = agent._build_context_prompt(context)
+        assert "file1.py" in result
+        assert "file2.py" in result
+
+    def test_with_all_context(self):
+        from src.agents.planner import PlannerAgent
+        agent = PlannerAgent()
+        context = AgentContext(
+            task_description="test",
+            project_path="/fake/path",
+            previous_outputs={
+                "explore": {"files_count": 5},
+                "analyst": {"entities": ["Product"]},
+            },
+            relevant_files=["/src/main.py"],
+        )
+        result = agent._build_context_prompt(context)
+        assert "5" in result
+        assert "Product" in result
+        assert "main.py" in result
+
+
+# ─────────────────────────────────────────────────────────────────
+# PlannerAgent._parse_structured_plan()
+# ─────────────────────────────────────────────────────────────────
+
+
+class TestParseStructuredPlan:
+    """测试 PlannerAgent._parse_structured_plan()"""
+
+    def test_parse_valid_plan(self):
+        from src.agents.planner import PlannerAgent
+        agent = PlannerAgent()
+        result = (
+            "| T1 | 探索项目 | explore | HIGH | MODERATE | - | 5m |\n"
+            "| T2 | 实现功能 | executor | MEDIUM | SIMPLE | T1 | 10m |"
+        )
+        plan = agent._parse_structured_plan(result)
+        assert plan.total_tasks == 2
+        assert len(plan.phases) == 1
+        assert plan.phases[0].tasks[0].id == "T1"
+        assert plan.phases[0].tasks[1].id == "T2"
+
+    def test_parse_empty_result(self):
+        from src.agents.planner import PlannerAgent
+        agent = PlannerAgent()
+        plan = agent._parse_structured_plan("")
+        assert plan.total_tasks == 0
+        assert len(plan.phases) == 0  # 无任务时无阶段
+
+    def test_parse_with_complex_deps(self):
+        from src.agents.planner import PlannerAgent
+        agent = PlannerAgent()
+        result = (
+            "| T1 | Task 1 | explore | HIGH | MODERATE | - | 5m |\n"
+            "| T2 | Task 2 | executor | HIGH | MODERATE | T1, T3 | 10m |"
+        )
+        plan = agent._parse_structured_plan(result)
+        t2 = plan.phases[0].tasks[1]
+        assert "T1" in t2.dependencies
+        assert "T3" in t2.dependencies
+
+    def test_parse_task_with_defaults(self):
+        """测试解析时默认值处理"""
+        from src.agents.planner import PlannerAgent
+        agent = PlannerAgent()
+        # 使用小写和边界值
+        result = "| T1 | Test | explore | high | simple | - | 5m |"
+        plan = agent._parse_structured_plan(result)
+        task = plan.phases[0].tasks[0]
+        assert task.priority == TaskPriority.HIGH
+        assert task.complexity == TaskComplexity.SIMPLE
