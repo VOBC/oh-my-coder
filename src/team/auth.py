@@ -12,7 +12,7 @@ from __future__ import annotations
 import hashlib
 import secrets
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Any, Optional
 
 from .task_sync import MemberRole
@@ -375,7 +375,7 @@ class TeamAuth:
             session_id=session_id,
             user_id=user_id,
             team_id=team_id,
-            expires_at=datetime.now().timestamp() + expires_in_hours * 3600,
+            expires_at=datetime.now() + timedelta(hours=expires_in_hours),
         )
 
         self._sessions[session_id] = session
