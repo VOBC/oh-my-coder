@@ -1,6 +1,5 @@
 """Tests for SelfImprovingAgent."""
-from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -55,7 +54,7 @@ def agent(temp_db_path):
 class TestLearningStoreInit:
     def test_init_creates_db_file(self, temp_db_path):
         """Test that LearningStore creates database file on init."""
-        store = LearningStore(str(temp_db_path))
+        LearningStore(str(temp_db_path))
         assert temp_db_path.exists()
 
     def test_init_creates_tables(self, learning_store):
@@ -690,7 +689,7 @@ class TestUpdateSystemPrompt:
         # Use a fresh evolution store to avoid interference from other tests
         from src.agents.evolution import EvolutionStore
         agent._evolution_store = EvolutionStore(tmp_path / "state")
-        
+
         base_prompt = "You are an agent."
         new_prompt = agent.update_system_prompt("nonexistent_agent", base_prompt)
         # Should return base prompt when no adjustments
@@ -764,7 +763,7 @@ class TestDecisionMemory:
         # Use a fresh decision memory for this test
         from src.agents.evolution import DecisionMemory
         agent._decision_memory = DecisionMemory(tmp_path / "state")
-        
+
         decision_id = agent.record_decision(
             title="Test decision",
             problem="Test problem",
@@ -778,7 +777,7 @@ class TestDecisionMemory:
         """Test retrieving past decisions."""
         from src.agents.evolution import DecisionMemory
         agent._decision_memory = DecisionMemory(tmp_path / "state")
-        
+
         # Record a decision
         agent.record_decision(
             title="Fix timeout issue",
@@ -800,7 +799,7 @@ class TestDecisionMemory:
         """Test listing decisions."""
         from src.agents.evolution import DecisionMemory
         agent._decision_memory = DecisionMemory(tmp_path / "state")
-        
+
         agent.record_decision(
             title="Decision 1",
             problem="Problem 1",
@@ -821,7 +820,7 @@ class TestDecisionMemory:
         """Test listing decisions filtered by category."""
         from src.agents.evolution import DecisionMemory
         agent._decision_memory = DecisionMemory(tmp_path / "state")
-        
+
         agent.record_decision(
             title="Bug fix",
             problem="Problem",
@@ -842,7 +841,7 @@ class TestDecisionMemory:
         """Test getting decision statistics."""
         from src.agents.evolution import DecisionMemory
         agent._decision_memory = DecisionMemory(tmp_path / "state")
-        
+
         agent.record_decision(
             title="Decision 1",
             problem="Problem 1",
@@ -935,8 +934,7 @@ class TestEdgeCases:
         )
         assert feedback_id is not None
         # Verify truncation happened (task_description limited to 200 chars)
-        failures = agent.store.get_recent_failures("executor", limit=0)
-        # No failures since success=True
+        agent.store.get_recent_failures("executor", limit=0)  # side effect only, result unused
 
     def test_classify_error_with_network_keywords(self, agent):
         """Test classifying network-related errors."""

@@ -9,6 +9,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
+from src.agents.base import AgentContext, AgentOutput, AgentStatus
 from src.core.orchestrator import (
     ExecutionMode,
     Orchestrator,
@@ -16,8 +17,6 @@ from src.core.orchestrator import (
     WorkflowStatus,
     WorkflowStep,
 )
-from src.agents.base import AgentOutput, AgentStatus, AgentContext
-
 
 # ---------------------------------------------------------------------------
 # Fixture
