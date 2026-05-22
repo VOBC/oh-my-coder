@@ -46,7 +46,7 @@ class TestRun:
 
         agent = DocumentAgent()
         ctx = _make_context()
-        result = asyncio.get_event_loop().run_until_complete(
+        result = asyncio.run(
             agent._run(ctx, [{"role": "user", "content": "写文档"}])
         )
         assert result == "# Test Doc\n内容"
@@ -63,7 +63,7 @@ class TestRun:
         ctx = _make_context(previous_outputs={"architect": architect_output})
 
         agent = DocumentAgent()
-        asyncio.get_event_loop().run_until_complete(
+        asyncio.run(
             agent._run(ctx, [{"role": "user", "content": "写"}])
         )
 
@@ -84,7 +84,7 @@ class TestRun:
         ctx = _make_context(previous_outputs={"writer": writer_output})
 
         agent = DocumentAgent()
-        asyncio.get_event_loop().run_until_complete(
+        asyncio.run(
             agent._run(ctx, [{"role": "user", "content": "写"}])
         )
         mock_call.assert_called_once()
@@ -101,7 +101,7 @@ class TestRun:
         ctx = _make_context(project_path=tmp_path)
 
         agent = DocumentAgent()
-        asyncio.get_event_loop().run_until_complete(
+        asyncio.run(
             agent._run(ctx, [{"role": "user", "content": "写"}])
         )
         mock_call.assert_called_once()
@@ -118,7 +118,7 @@ class TestRun:
         ctx = _make_context(project_path=tmp_path)
 
         agent = DocumentAgent()
-        asyncio.get_event_loop().run_until_complete(
+        asyncio.run(
             agent._run(ctx, [{"role": "user", "content": "写"}])
         )
 
@@ -142,7 +142,7 @@ class TestRun:
         ctx = _make_context(project_path=tmp_path)
 
         agent = DocumentAgent()
-        asyncio.get_event_loop().run_until_complete(
+        asyncio.run(
             agent._run(ctx, [{"role": "user", "content": "写"}])
         )
         mock_call.assert_called_once()
@@ -161,7 +161,7 @@ class TestRun:
         )
 
         agent = DocumentAgent()
-        asyncio.get_event_loop().run_until_complete(
+        asyncio.run(
             agent._run(ctx, [{"role": "user", "content": "写"}])
         )
 
@@ -181,7 +181,7 @@ class TestRun:
         ctx = _make_context(project_path=None)
 
         agent = DocumentAgent()
-        asyncio.get_event_loop().run_until_complete(
+        asyncio.run(
             agent._run(ctx, [{"role": "user", "content": "写"}])
         )
         mock_call.assert_called_once()
