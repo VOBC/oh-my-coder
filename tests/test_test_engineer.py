@@ -116,7 +116,7 @@ class TestRunMethod:
         agent.call_model = AsyncMock(return_value=mock_resp)
 
         with patch("src.models.base.Message"):
-            result = await agent._run(ctx, mock_prompt)
+            await agent._run(ctx, mock_prompt)
         assert any("现有测试" in m.get("content", "") for m in mock_prompt)
 
 

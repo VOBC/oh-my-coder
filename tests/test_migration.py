@@ -85,7 +85,7 @@ class TestRunMethod:
         agent.call_model = AsyncMock(return_value=mock_resp)
 
         with patch("src.models.base.Message"):
-            result = await agent._run(mock_context_with_db, mock_prompt)
+            await agent._run(mock_context_with_db, mock_prompt)
         assert any("数据库设计" in m.get("content", "") for m in mock_prompt)
 
 

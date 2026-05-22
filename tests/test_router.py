@@ -1,17 +1,15 @@
 """Tests for src.core.router – target >80% coverage."""
 from __future__ import annotations
 
-import asyncio
-import os
 import json
-from datetime import datetime, timedelta
+import os
 from pathlib import Path
-from typing import Optional
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
 from src.core.router import (
+    _TASK_TIER_MAPPING,
     ModelRouter,
     NoModelAvailableError,
     RateLimitError,
@@ -19,7 +17,6 @@ from src.core.router import (
     RouterConfig,
     RoutingDecision,
     TaskType,
-    _TASK_TIER_MAPPING,
 )
 from src.models.base import (
     BaseModel,
@@ -30,7 +27,6 @@ from src.models.base import (
     ModelTier,
     Usage,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -145,7 +141,7 @@ class TestRouterConfig:
 
     def test_load_from_config_file_missing(self):
         with patch.object(Path, "exists", return_value=False):
-            cfg = RouterConfig()
+            RouterConfig()
             # Should not crash
 
     def test_load_from_config_file_with_data(self, tmp_path):
@@ -156,7 +152,7 @@ class TestRouterConfig:
             "models": {"deepseek": {"api_key": "sk-from-config"}}
         }))
         with patch.object(Path, "home", return_value=tmp_path):
-            cfg = RouterConfig(deepseek_api_key=None)
+            RouterConfig(deepseek_api_key=None)
             # If config loaded, key should be set (unless env overrides)
 
     def test_default_model_from_env(self):
@@ -270,7 +266,7 @@ class TestModelRouterInit:
         cfg = RouterConfig(fallback_order=["deepseek"])
         # No API keys set
         with patch.dict(os.environ, {}, clear=False):
-            router = ModelRouter(cfg)
+            ModelRouter(cfg)
             # deepseek should NOT be in _models if no key
             # (depends on env, but we cleared relevant vars)
 
@@ -489,7 +485,7 @@ class TestModelRouterRouteAndCall:
         )
         router = _router_with_fake_models(fake_models, cfg)
         msgs = [Message(role="user", content="no cache test")]
-        resp = await router.route_and_call("simple_qa", msgs, use_cache=False)
+        await router.route_and_call("simple_qa", msgs, use_cache=False)
         # Should not be cached
         cached = router._cache.get(msgs) if router._cache else None
         assert cached is None
@@ -682,7 +678,7 @@ class TestRouterConfigLoadConfigFile:
             "models": {"deepseek": {"api_key": "****masked"}}
         }))
         with patch.object(Path, "home", return_value=tmp_path):
-            cfg = RouterConfig(deepseek_api_key=None)
+            RouterConfig(deepseek_api_key=None)
             # Masked key should not be loaded
 
     def test_load_with_invalid_models_section(self, tmp_path):
@@ -691,7 +687,7 @@ class TestRouterConfigLoadConfigFile:
         config_file = config_dir / "config.json"
         config_file.write_text(json.dumps({"models": "not_a_dict"}))
         with patch.object(Path, "home", return_value=tmp_path):
-            cfg = RouterConfig()  # should not crash
+            RouterConfig()  # should not crash
 
     def test_load_with_unsupported_provider(self, tmp_path):
         config_dir = tmp_path / ".omc"
@@ -701,7 +697,7 @@ class TestRouterConfigLoadConfigFile:
             "models": {"tiangong": {"api_key": "sk-tiangong"}}
         }))
         with patch.object(Path, "home", return_value=tmp_path):
-            cfg = RouterConfig()  # tiangong has None mapping, should skip
+            RouterConfig()  # tiangong has None mapping, should skip
 
 
 # ---------------------------------------------------------------------------

@@ -698,13 +698,22 @@ class DecisionMemory:
 
         for line in lines:
             if line.startswith("**Agent**:"):
-                agent_type = line.split(":**")[1].strip()
+                # Format: **Agent**: value
+                parts = line.split(":", 1)
+                if len(parts) > 1:
+                    agent_type = parts[1].strip()
             elif line.startswith("**类别**:"):
-                category = line.split(":**")[1].strip()
+                parts = line.split(":", 1)
+                if len(parts) > 1:
+                    category = parts[1].strip()
             elif line.startswith("**结果**:"):
-                result = line.split(":**")[1].strip()
+                parts = line.split(":", 1)
+                if len(parts) > 1:
+                    result = parts[1].strip()
             elif line.startswith("**版本**:"):
-                version_tag = line.split(":**")[1].strip()
+                parts = line.split(":", 1)
+                if len(parts) > 1:
+                    version_tag = parts[1].strip()
 
         # 解析章节内容
         problem = self._extract_section(content, "问题背景")

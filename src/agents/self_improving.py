@@ -505,7 +505,7 @@ class SelfImprovingAgent(BaseAgent):
             data = self.report()
 
         return AgentOutput(agent_name=self.name,
-            status=AgentStatus.SUCCESS,
+            status=AgentStatus.COMPLETED,
             result=json.dumps(data, ensure_ascii=False, indent=2),
         )
 

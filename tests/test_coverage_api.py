@@ -2,11 +2,8 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from pathlib import Path
 from unittest.mock import MagicMock, patch
-
-import pytest
 
 from src.web.coverage_api import (
     CoverageSummary,
