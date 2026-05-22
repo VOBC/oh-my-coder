@@ -680,6 +680,40 @@ class TestTaskReplayMissing:
         assert replay.current_step_index == 1
 
     @pytest.mark.asyncio
+    async def test_replay_stop_during_execution(self):
+        """测试执行中停止"""
+        history = TaskHistory(
+            history_id="replay_009",
+            task_description="停止测试",
+            workflow_name="test",
+        )
+        for i in range(5):
+            history.add_step(
+                StepExecution(
+                    step_id=f"s{i}",
+                    agent_name=f"A{i}",
+                    description="",
+                    status=StepStatus.COMPLETED,
+                    input_context={},
+                    duration_seconds=0.01,
+                )
+            )
+
+        replay = TaskReplay(history)
+
+        async def on_start(step, index):
+            # 执行第一步后停止
+            if index == 1:
+                replay.stop()
+
+        replay.on_step_start(on_start)
+        await replay.replay()
+
+        # 应该停在第二步（index=1）
+        assert replay.status.value == "failed"
+        assert replay.current_step_index <= 2
+
+    @pytest.mark.asyncio
     async def test_replay_from_middle(self):
         """测试从中间开始回放"""
         history = TaskHistory(
