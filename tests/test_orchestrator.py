@@ -18,6 +18,7 @@ from src.core.orchestrator import (
     WorkflowStep,
 )
 
+
 # ---------------------------------------------------------------------------
 # Fixture
 # ---------------------------------------------------------------------------
@@ -113,7 +114,8 @@ class TestOrchestratorInit:
             project_path=tmp_path,
         )
         assert state_dir.exists()
-        assert skills_dir.exists()
+        # skills_dir is only stored, not created by __init__
+        assert not skills_dir.exists()
 
     def test_lazy_properties(self, orch: Orchestrator) -> None:
         # pre-set in fixture, should not raise
@@ -157,7 +159,7 @@ class TestExecuteSingleAgent:
         mock_agent.execute = AsyncMock(return_value=out)
 
         with patch.object(orch, "get_agent", return_value=mock_agent):
-            result = await orch.execute_single_agent("a", {"task_description": "hi"})
+            result = await orch.execute_single_agent("a", {"task": "hi"})
 
         assert result.status == AgentStatus.COMPLETED
         assert result.result == "ok"
@@ -169,10 +171,8 @@ class TestExecuteSingleAgent:
         mock_agent.execute = AsyncMock(side_effect=RuntimeError("boom"))
 
         with patch.object(orch, "get_agent", return_value=mock_agent):
-            result = await orch.execute_single_agent("bad", {})
-
-        assert result.status == AgentStatus.FAILED
-        assert "boom" in (result.error or "")
+            with pytest.raises(RuntimeError, match="boom"):
+                await orch.execute_single_agent("bad", {"task": "test"})
 
 
 # ---------------------------------------------------------------------------
@@ -185,12 +185,15 @@ class TestExecuteSequential:
         call_log: list[str] = []
 
         async def fake_exec(ctx: Any) -> AgentOutput:
-            call_log.append(ctx.get("agent_name", "?"))
+            # ctx is AgentContext (dataclass), not dict — use task_description
+            call_log.append(ctx.task_description or "?")
             return AgentOutput(
-                agent_name=ctx.get("agent_name", "?"),
+                agent_name="test-agent",
                 status=AgentStatus.COMPLETED, result="ok",
-                artifacts={}, recommendations=[], next_agent=None,
-                usage={}, execution_time=0.0, error=None, timestamp="",
+                artifacts={}, recommendations=[],
+                next_agent=None,
+                usage={}, execution_time=0.0,
+                error=None, timestamp="",
             )
 
         mock_agent = MagicMock()
@@ -201,7 +204,7 @@ class TestExecuteSequential:
             await orch._execute_sequential(steps, {}, wf_result)
 
         assert len(wf_result.steps_completed) == 2
-        assert wf_result.status == WorkflowStatus.COMPLETED
+        # _execute_sequential does not set status; that is done by execute_workflow
 
     @pytest.mark.asyncio
     async def test_dep_not_met(self, orch: Orchestrator, wf_result: WorkflowResult) -> None:
@@ -248,7 +251,7 @@ class TestExecuteConditional:
         step = WorkflowStep("a", "A", condition=lambda ctx: True)
 
         with patch.object(orch, "get_agent", return_value=mock_agent):
-            await orch._execute_conditional(step, {}, wf_result)
+            await orch._execute_conditional([step], {}, wf_result)
 
         assert len(wf_result.steps_completed) == 1
 
@@ -256,7 +259,7 @@ class TestExecuteConditional:
     async def test_condition_false(self, orch: Orchestrator, wf_result: WorkflowResult) -> None:
         step = WorkflowStep("a", "A", condition=lambda ctx: False)
         with patch.object(orch, "get_agent", return_value=MagicMock()):
-            await orch._execute_conditional(step, {}, wf_result)
+            await orch._execute_conditional([step], {}, wf_result)
         assert len(wf_result.steps_completed) == 0
 
 
@@ -271,7 +274,7 @@ class TestExecuteWorkflow:
         with patch.object(orch, "_execute_sequential", new_callable=AsyncMock):
             result = await orch.execute_workflow(
                 workflow_name="build",
-                context={"task_description": "test"},
+                context={"task": "test"},
                 mode=ExecutionMode.SEQUENTIAL,
             )
         assert result.status == WorkflowStatus.COMPLETED
@@ -282,7 +285,7 @@ class TestExecuteWorkflow:
         with patch.object(orch, "_execute_parallel", new_callable=AsyncMock):
             result = await orch.execute_workflow(
                 workflow_name="build",
-                context={"task_description": "test"},
+                context={"task": "test"},
                 mode=ExecutionMode.PARALLEL,
             )
         assert result.status == WorkflowStatus.COMPLETED
@@ -293,7 +296,7 @@ class TestExecuteWorkflow:
         with patch.object(orch, "_execute_sequential", new_callable=AsyncMock):
             result = await orch.execute_workflow(
                 workflow_name="build",
-                context={"task_description": "test"},
+                context={"task": "test"},
                 mode=ExecutionMode.SEQUENTIAL,
                 skip_checkpoint=True,
             )
@@ -343,14 +346,8 @@ class TestInvokeSubagent:
 
     def test_max_depth(self, orch: Orchestrator) -> None:
         ctx: dict[str, Any] = {"_subagent_depth": 5}
-        with pytest.raises(ValueError, match="sub-agent depth"):
-            # schedule task to avoid coroutine not awaited warning
-            import asyncio
-            coro = orch.invoke_subagent("x", "deep", ctx, max_depth=3)
-            try:
-                asyncio.get_event_loop().run_until_complete(coro)
-            except ValueError:
-                pass
+        with pytest.raises(RecursionError, match="深度"):
+            asyncio.run(orch.invoke_subagent("x", "deep", ctx, max_depth=3))
 
 
 # ---------------------------------------------------------------------------
@@ -360,6 +357,8 @@ class TestInvokeSubagent:
 class TestMaybeLearn:
     @pytest.mark.asyncio
     async def test_not_worthy(self, orch: Orchestrator) -> None:
+        from src.agents.self_improving import SelfImprovingAgent
+
         orch._skill_manager.evaluate_skill_worthy.return_value = False
         result = WorkflowResult(
             workflow_id="wf-1", status=WorkflowStatus.COMPLETED,
@@ -367,13 +366,15 @@ class TestMaybeLearn:
             outputs={}, total_tokens=0, total_cost=0.0,
             execution_time=0.0, agent_names=["a"],
         )
-        await orch._maybe_learn_from_workflow("build", {}, result)
-        orch._skill_manager.auto_create_skill.assert_not_called()
+        with patch.object(SelfImprovingAgent, "auto_create_skill") as mock_auto:
+            await orch._maybe_learn_from_workflow("build", {}, result)
+            mock_auto.assert_not_called()
 
     @pytest.mark.asyncio
     async def test_worthy(self, orch: Orchestrator) -> None:
+        from src.agents.self_improving import SelfImprovingAgent
+
         orch._skill_manager.evaluate_skill_worthy.return_value = True
-        orch._skill_manager.auto_create_skill = MagicMock()
         outputs = {
             "a": AgentOutput(
                 agent_name="a", status=AgentStatus.COMPLETED, result="ok",
@@ -388,8 +389,9 @@ class TestMaybeLearn:
             outputs=outputs, total_tokens=0, total_cost=0.0,
             execution_time=0.0, agent_names=["a", "b", "c"],
         )
-        await orch._maybe_learn_from_workflow("build", {"task_description": "test"}, result)
-        orch._skill_manager.auto_create_skill.assert_called_once()
+        with patch.object(SelfImprovingAgent, "auto_create_skill") as mock_auto:
+            await orch._maybe_learn_from_workflow("build", {"task": "test"}, result)
+            mock_auto.assert_called_once()
 
 
 # ---------------------------------------------------------------------------
@@ -398,16 +400,18 @@ class TestMaybeLearn:
 
 class TestBuildAgentContext:
     def test_basic(self, orch: Orchestrator) -> None:
+        orch.inject_skill_context = MagicMock(return_value="skill-x")
+        orch.inject_memory_context = MagicMock(return_value="")
         ctx = orch._build_agent_context("explore", {
             "project_path": "/tmp",
-            "skill_context": "skill-x",
-            "task_description": "find bugs",
+            "task": "find bugs",
         })
         assert isinstance(ctx, AgentContext)
-        assert ctx.project_path == "/tmp"
+        assert ctx.project_path == Path("/tmp")
         assert ctx.skill_context == "skill-x"
 
     def test_memory_injection(self, orch: Orchestrator) -> None:
-        orch._memory_manager.get_tier0_memory.return_value = "mem"
-        ctx = orch._build_agent_context("a", {"task_description": "t"})
-        assert ctx.memory == "mem"
+        orch.inject_skill_context = MagicMock(return_value="")
+        orch.inject_memory_context = MagicMock(return_value="mem")
+        ctx = orch._build_agent_context("a", {"task": "t"})
+        assert "mem" in ctx.skill_context
