@@ -2,6 +2,8 @@
 任务历史模块测试
 """
 
+import json
+import pytest
 import tempfile
 from pathlib import Path
 
@@ -502,3 +504,404 @@ class TestHelperFunctions:
         result = fail_step_execution(step, "Something went wrong")
         assert result.status == StepStatus.FAILED
         assert result.error == "Something went wrong"
+
+
+class TestTaskCheckpointMissing:
+    """TaskCheckpoint 缺失测试"""
+
+    def test_can_resume_from(self):
+        """测试是否可恢复"""
+        history = TaskHistory(
+            history_id="cp_003",
+            task_description="恢复测试",
+            workflow_name="test",
+        )
+        for i in range(5):
+            history.add_step(
+                StepExecution(
+                    step_id=f"s{i}",
+                    agent_name=f"A{i}",
+                    description="",
+                    status=StepStatus.COMPLETED,
+                    input_context={},
+                )
+            )
+
+        checkpoint = TaskCheckpoint(history, step_index=3)
+
+        # step_index=3, 可以恢复 s2 (index=2 <= 3)
+        assert checkpoint.can_resume_from("s2") is True
+
+        # 不可以恢复 s4 (index=4 > 3)
+        assert checkpoint.can_resume_from("s4") is False
+
+        # 不存在的 step
+        assert checkpoint.can_resume_from("nonexistent") is False
+
+    def test_to_dict(self):
+        """测试转换为字典"""
+        history = TaskHistory(
+            history_id="cp_004",
+            task_description="字典测试",
+            workflow_name="test",
+        )
+        checkpoint = TaskCheckpoint(history, step_index=2)
+
+        data = checkpoint.to_dict()
+        assert "checkpoint_id" in data
+        assert data["history_id"] == "cp_004"
+        assert data["step_index"] == 2
+        assert "created_at" in data
+
+
+class TestTaskReplayMissing:
+    """TaskReplay 缺失测试"""
+
+    @pytest.mark.asyncio
+    async def test_replay_callbacks(self):
+        """测试回放回调"""
+        history = TaskHistory(
+            history_id="replay_004",
+            task_description="回调测试",
+            workflow_name="test",
+        )
+        history.add_step(
+            StepExecution(
+                step_id="s1",
+                agent_name="A",
+                description="",
+                status=StepStatus.COMPLETED,
+                input_context={},
+                duration_seconds=0.01,
+            )
+        )
+
+        replay = TaskReplay(history)
+
+        step_start_called = False
+        step_complete_called = False
+        replay_complete_called = False
+
+        async def on_start(step, index):
+            nonlocal step_start_called
+            step_start_called = True
+
+        async def on_complete(step, index):
+            nonlocal step_complete_called
+            step_complete_called = True
+
+        async def on_complete_all():
+            nonlocal replay_complete_called
+            replay_complete_called = True
+
+        replay.on_step_start(on_start)
+        replay.on_step_complete(on_complete)
+        replay.on_replay_complete(on_complete_all)
+
+        await replay.replay()
+
+        assert step_start_called is True
+        assert step_complete_called is True
+        assert replay_complete_called is True
+        assert replay.status.value == "completed"
+
+    def test_pause_and_resume(self):
+        """测试暂停和恢复"""
+        history = TaskHistory(
+            history_id="replay_005",
+            task_description="暂停测试",
+            workflow_name="test",
+        )
+        history.add_step(
+            StepExecution(
+                step_id="s1",
+                agent_name="A",
+                description="",
+                status=StepStatus.COMPLETED,
+                input_context={},
+            )
+        )
+
+        replay = TaskReplay(history)
+        assert replay.status.value == "ready"
+
+        replay.pause()
+        assert replay.status.value == "paused"
+
+        replay.resume()
+        assert replay.status.value == "playing"
+
+    def test_stop(self):
+        """测试停止"""
+        history = TaskHistory(
+            history_id="replay_006",
+            task_description="停止测试",
+            workflow_name="test",
+        )
+        history.add_step(
+            StepExecution(
+                step_id="s1",
+                agent_name="A",
+                description="",
+                status=StepStatus.COMPLETED,
+                input_context={},
+            )
+        )
+
+        replay = TaskReplay(history)
+        replay.stop()
+        assert replay.status.value == "failed"
+
+    @pytest.mark.asyncio
+    async def test_replay_step_by_step(self):
+        """测试单步回放"""
+        history = TaskHistory(
+            history_id="replay_007",
+            task_description="单步测试",
+            workflow_name="test",
+        )
+        for i in range(3):
+            history.add_step(
+                StepExecution(
+                    step_id=f"s{i}",
+                    agent_name=f"A{i}",
+                    description="",
+                    status=StepStatus.COMPLETED,
+                    input_context={},
+                    duration_seconds=0.01,
+                )
+            )
+
+        replay = TaskReplay(history)
+        await replay.replay(step_by_step=True)
+
+        # 只执行了第一步，然后暂停
+        assert replay.status.value == "paused"
+        assert replay.current_step_index == 1
+
+    @pytest.mark.asyncio
+    async def test_replay_from_middle(self):
+        """测试从中间开始回放"""
+        history = TaskHistory(
+            history_id="replay_008",
+            task_description="中间开始测试",
+            workflow_name="test",
+        )
+        for i in range(5):
+            history.add_step(
+                StepExecution(
+                    step_id=f"s{i}",
+                    agent_name=f"A{i}",
+                    description="",
+                    status=StepStatus.COMPLETED,
+                    input_context={},
+                    duration_seconds=0.01,
+                )
+            )
+
+        replay = TaskReplay(history)
+        await replay.replay(start_from=2)
+
+        assert replay.current_step_index == 5
+        assert replay.status.value == "completed"
+
+
+class TestHistoryManagerMissing:
+    """HistoryManager 缺失测试"""
+
+    def test_create_and_load_checkpoint(self):
+        """测试创建和加载检查点"""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            manager = HistoryManager(Path(tmpdir))
+            history = manager.create_history(
+                task_description="检查点测试",
+                workflow_name="test",
+            )
+            for i in range(5):
+                history.add_step(
+                    StepExecution(
+                        step_id=f"s{i}",
+                        agent_name=f"A{i}",
+                        description="",
+                        status=StepStatus.COMPLETED,
+                        input_context={},
+                    )
+                )
+            manager.save_history(history)
+
+            # 创建检查点
+            checkpoint = manager.create_checkpoint(history, step_index=3)
+            assert checkpoint.checkpoint_id is not None
+            assert checkpoint.step_index == 3
+
+            # 加载检查点
+            loaded = manager.load_checkpoint(checkpoint.checkpoint_id)
+            assert loaded is not None
+            assert loaded.checkpoint_id == checkpoint.checkpoint_id
+            assert loaded.step_index == 3
+
+    def test_load_nonexistent_checkpoint(self):
+        """测试加载不存在的检查点"""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            manager = HistoryManager(Path(tmpdir))
+            result = manager.load_checkpoint("nonexistent")
+            assert result is None
+
+    def test_load_checkpoint_with_invalid_history(self):
+        """测试加载检查点但历史不存在"""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            manager = HistoryManager(Path(tmpdir))
+
+            # 手动创建一个检查点文件，但历史不存在
+            checkpoint_file = Path(tmpdir) / "checkpoint_test123.json"
+            checkpoint_data = {
+                "checkpoint_id": "test123",
+                "history_id": "nonexistent",
+                "step_index": 0,
+                "created_at": "2024-01-01T00:00:00",
+            }
+            with open(checkpoint_file, "w") as f:
+                json.dump(checkpoint_data, f)
+
+            result = manager.load_checkpoint("test123")
+            assert result is None
+
+    def test_get_steps_by_agent(self):
+        """测试按 Agent 获取步骤"""
+        history = TaskHistory(
+            history_id="hist_006",
+            task_description="Agent 测试",
+            workflow_name="test",
+        )
+        history.add_step(
+            StepExecution(
+                step_id="s1",
+                agent_name="Planner",
+                description="",
+                status=StepStatus.COMPLETED,
+                input_context={},
+            )
+        )
+        history.add_step(
+            StepExecution(
+                step_id="s2",
+                agent_name="Executor",
+                description="",
+                status=StepStatus.COMPLETED,
+                input_context={},
+            )
+        )
+        history.add_step(
+            StepExecution(
+                step_id="s3",
+                agent_name="Planner",
+                description="",
+                status=StepStatus.COMPLETED,
+                input_context={},
+            )
+        )
+
+        planner_steps = history.get_steps_by_agent("Planner")
+        assert len(planner_steps) == 2
+        assert planner_steps[0].step_id == "s1"
+        assert planner_steps[1].step_id == "s3"
+
+    def test_get_step_by_id(self):
+        """测试按 ID 获取步骤"""
+        history = TaskHistory(
+            history_id="hist_007",
+            task_description="步骤 ID 测试",
+            workflow_name="test",
+        )
+        history.add_step(
+            StepExecution(
+                step_id="target_step",
+                agent_name="A",
+                description="",
+                status=StepStatus.COMPLETED,
+                input_context={},
+            )
+        )
+
+        step = history.get_step("target_step")
+        assert step is not None
+        assert step.step_id == "target_step"
+
+        missing = history.get_step("nonexistent")
+        assert missing is None
+
+    def test_list_histories_with_tags(self):
+        """测试按标签列出历史"""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            manager = HistoryManager(Path(tmpdir))
+
+            h1 = manager.create_history(
+                task_description="任务1",
+                workflow_name="build",
+                tags=["python", "web"],
+            )
+            h2 = manager.create_history(
+                task_description="任务2",
+                workflow_name="test",
+                tags=["python"],
+            )
+            h3 = manager.create_history(
+                task_description="任务3",
+                workflow_name="build",
+                tags=["rust"],
+            )
+
+            manager.save_history(h1)
+            manager.save_history(h2)
+            manager.save_history(h3)
+
+            # 按 python 标签过滤
+            python_histories = manager.list_histories(tags=["python"])
+            assert len(python_histories) == 2
+
+            # 按 rust 标签过滤
+            rust_histories = manager.list_histories(tags=["rust"])
+            assert len(rust_histories) == 1
+
+    def test_delete_and_verify(self):
+        """测试删除后验证"""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            manager = HistoryManager(Path(tmpdir))
+            history = manager.create_history(
+                task_description="待删除验证",
+                workflow_name="test",
+            )
+            manager.save_history(history)
+
+            # 删除
+            result = manager.delete_history(history.history_id)
+            assert result is True
+
+            # 确认已删除
+            loaded = manager.load_history(history.history_id)
+            assert loaded is None
+
+    def test_update_totals_auto_in_to_dict(self):
+        """测试 to_dict 自动更新总计"""
+        history = TaskHistory(
+            history_id="hist_008",
+            task_description="自动更新测试",
+            workflow_name="test",
+        )
+        history.add_step(
+            StepExecution(
+                step_id="s1",
+                agent_name="A",
+                description="",
+                status=StepStatus.COMPLETED,
+                input_context={},
+                tokens_used=100,
+                cost=0.01,
+                duration_seconds=10,
+            )
+        )
+
+        data = history.to_dict()
+        assert data["total_tokens"] == 100
+        assert data["total_cost"] == 0.01
+        assert data["total_duration"] == 10.0
