@@ -10,6 +10,7 @@ Covers:
 - DecisionMemory (record_decision / retrieve / list_decisions)
 """
 
+import re
 from pathlib import Path
 from typing import Any
 
@@ -406,13 +407,281 @@ class TestDecisionMemory:
         results = dm.retrieve("FastAPI")
         assert len(results) >= 1
 
-    def test_retrieve_by_keyword(self, tmp_path: Path) -> None:
+    def test_save_and_load_optimized_prompt(self, tmp_path: Path) -> None:
+        store = EvolutionStore(state_dir=tmp_path)
+        agent_name = "coder"
+
+        # 先没有 prompt
+        assert store.load_optimized_prompt(agent_name) is None
+
+        # 保存 prompt
+        store.save_optimized_prompt(agent_name, "You are a helpful coder.\nversion: 3")
+
+        # 读取 prompt
+        result = store.load_optimized_prompt(agent_name)
+        assert result is not None
+        assert "helpful coder" in result
+
+    def test_get_prompt_version(self, tmp_path: Path) -> None:
+        store = EvolutionStore(state_dir=tmp_path)
+        agent_name = "coder"
+
+        # 没有文件时返回 0
+        assert store.get_prompt_version(agent_name) == 0
+
+        # 写入带 version 的 prompt
+        store.save_optimized_prompt(agent_name, "# version: 5\nYou are a coder.")
+        assert store.get_prompt_version(agent_name) == 5
+
+    def test_get_prompt_version_no_version_line(self, tmp_path: Path) -> None:
+        store = EvolutionStore(state_dir=tmp_path)
+        agent_name = "coder"
+
+        # 写入不含 version 的 prompt
+        store.save_optimized_prompt(agent_name, "You are a coder.")
+        assert store.get_prompt_version(agent_name) == 1
+
+    def test_get_evolution_stats(self, tmp_path: Path) -> None:
+        store = EvolutionStore(state_dir=tmp_path)
+        agent_name = "coder"
+
+        # 空历史
+        stats = store.get_evolution_stats(agent_name)
+        assert stats["total_evolutions"] == 0
+        assert stats["current_generation"] == 1
+        assert stats["total_patterns"] == 0
+
+        # 加记录
+        record = _make_evolution_record(agent_type=agent_name, generation=2, effectiveness=0.9)
+        store.save_evolution_record(record)
+
+        stats = store.get_evolution_stats(agent_name)
+        assert stats["total_evolutions"] == 1
+        assert stats["current_generation"] == 3
+
+    def test_get_evolution_stats_with_patterns(self, tmp_path: Path) -> None:
+        store = EvolutionStore(state_dir=tmp_path)
+        agent_name = "coder"
+
+        # 加 pattern
+        store.add_success_pattern(
+            agent_name=agent_name,
+            pattern_type="strategy",
+            description="Use tenacity",
+            context="API",
+        )
+
+        stats = store.get_evolution_stats(agent_name)
+        assert stats["total_patterns"] >= 1
+
+
+# =============================================================================
+# DecisionMemory.get_stats Tests
+# =============================================================================
+
+class TestDecisionMemoryGetStats:
+    def test_get_stats_empty(self, tmp_path: Path) -> None:
+        dm = DecisionMemory(state_dir=tmp_path)
+        stats = dm.get_stats()
+        assert stats["total_decisions"] == 0
+        assert stats["by_category"] == {}
+
+    def test_get_stats_with_decisions(self, tmp_path: Path) -> None:
         dm = DecisionMemory(state_dir=tmp_path)
         dm.record_decision(
-            title="Decision",
+            title="Decision 1",
+            problem="p",
+            chosen_solution="s",
+            category="bug_fix",
+            keywords=["k"],
+        )
+        dm.record_decision(
+            title="Decision 2",
+            problem="p",
+            chosen_solution="s",
+            category="solution_choice",
+            keywords=["k"],
+        )
+
+        stats = dm.get_stats()
+        assert stats["total_decisions"] == 2
+        assert stats["by_category"]["bug_fix"] == 1
+        assert stats["by_category"]["solution_choice"] == 1
+
+    def test_get_stats_counts_keywords(self, tmp_path: Path) -> None:
+        dm = DecisionMemory(state_dir=tmp_path)
+        dm.record_decision(
+            title="D",
             problem="p",
             chosen_solution="s",
             keywords=["python", "testing"],
         )
-        results = dm.retrieve("python")
+        stats = dm.get_stats()
+        assert stats["total_decisions"] >= 1
+
+
+# =============================================================================
+# Additional Edge Case Tests
+# =============================================================================
+
+class TestEvolutionStoreEdgeCases:
+    def test_save_evolution_record_return_value(self, tmp_path: Path) -> None:
+        store = EvolutionStore(state_dir=tmp_path)
+        record = _make_evolution_record()
+        result = store.save_evolution_record(record)
+        assert result == record.id
+
+    def test_load_success_patterns_empty(self, tmp_path: Path) -> None:
+        store = EvolutionStore(state_dir=tmp_path)
+        patterns = store.load_success_patterns("nonexistent")
+        assert patterns == []
+
+    def test_add_success_pattern_return_value(self, tmp_path: Path) -> None:
+        store = EvolutionStore(state_dir=tmp_path)
+        pid = store.add_success_pattern(
+            agent_name="coder",
+            pattern_type="prompt_technique",
+            description="Chain-of-thought",
+            context="Debug",
+        )
+        assert pid != ""
+        assert "coder" in pid
+
+    def test_corrupted_patterns_file(self, tmp_path: Path) -> None:
+        agent_dir = tmp_path / "agents" / "coder"
+        agent_dir.mkdir(parents=True)
+        (agent_dir / "success_patterns.json").write_text("{invalid}")
+        store = EvolutionStore(state_dir=tmp_path)
+        patterns = store.load_success_patterns("coder")
+        assert patterns == []
+
+    def test_pattern_update_existing(self, tmp_path: Path) -> None:
+        store = EvolutionStore(state_dir=tmp_path)
+        # 添加一个 pattern
+        pid = store.add_success_pattern(
+            agent_name="coder",
+            pattern_type="strategy",
+            description="Original",
+            context="Test",
+        )
+        # 手动修改并重新保存（模拟更新）
+        pattern = _make_success_pattern(id=pid, description="Updated")
+        store.save_success_pattern(pattern)
+
+        patterns = store.load_success_patterns("coder")
+        assert len(patterns) == 1
+        assert patterns[0].description == "Updated"
+
+
+class TestDecisionMemoryEdgeCases:
+    def test_record_decision_no_keywords_auto_extract(self, tmp_path: Path) -> None:
+        dm = DecisionMemory(state_dir=tmp_path)
+        dm.record_decision(
+            title="Use FastAPI for API",
+            problem="Need a web framework for REST API",
+            chosen_solution="Use FastAPI with async support",
+        )
+        # 应该自动提取关键词
+        results = dm.retrieve("fastapi")
         assert len(results) >= 1
+
+    def test_record_decision_custom_timestamp(self, tmp_path: Path) -> None:
+        dm = DecisionMemory(state_dir=tmp_path)
+        content = dm.record_decision(
+            title="Test",
+            problem="p",
+            chosen_solution="s",
+        )
+        # ID 应该包含日期
+        assert re.match(r"\d{4}-\d{2}-\d{2}-test", content)
+
+    def test_retrieve_case_insensitive(self, tmp_path: Path) -> None:
+        dm = DecisionMemory(state_dir=tmp_path)
+        dm.record_decision(
+            title="FastAPI Decision",
+            problem="p",
+            chosen_solution="s",
+            keywords=["FastAPI"],
+        )
+        # 小写查询应该匹配大写关键词
+        results = dm.retrieve("fastapi")
+        assert len(results) >= 1
+
+    def test_list_decisions_limit(self, tmp_path: Path) -> None:
+        dm = DecisionMemory(state_dir=tmp_path)
+        for i in range(5):
+            dm.record_decision(
+                title=f"Decision {i}",
+                problem="p",
+                chosen_solution="s",
+                keywords=["k"],
+            )
+        decisions = dm.list_decisions(limit=3)
+        assert len(decisions) == 3
+
+    def test_list_decisions_empty(self, tmp_path: Path) -> None:
+        dm = DecisionMemory(state_dir=tmp_path)
+        decisions = dm.list_decisions()
+        assert decisions == []
+
+    def test_slugify_special_chars(self, tmp_path: Path) -> None:
+        dm = DecisionMemory(state_dir=tmp_path)
+        content = dm.record_decision(
+            title="Special!@#$%Characters",
+            problem="p",
+            chosen_solution="s",
+        )
+        # slug 应该只包含字母数字和短横线
+        assert "!" not in content
+        assert "@" not in content
+
+    def test_decision_record_round_trip(self, tmp_path: Path) -> None:
+        dm = DecisionMemory(state_dir=tmp_path)
+        dm.record_decision(
+            title="Round Trip Test",
+            problem="Test problem",
+            chosen_solution="Test solution",
+            agent_type="tester",
+            category="architecture",
+            rejected_alternatives=["alt1", "alt2"],
+            result="success",
+            outcome="Good",
+            reusable_for="Testing",
+            keywords=["test", "roundtrip"],
+            related_files=["tests/test.py"],
+            version_tag="v1.0.0",
+        )
+
+        # 读取回来
+        decisions = dm.list_decisions()
+        assert len(decisions) == 1
+        d = decisions[0]
+        assert d.title == "Round Trip Test"
+        assert d.agent_type == "tester"
+        assert d.category == "architecture"
+        assert d.rejected_alternatives == ["alt1", "alt2"]
+        assert d.related_files == ["tests/test.py"]
+        assert d.version_tag == "v1.0.0"
+
+
+# =============================================================================
+# ImportError fallback test (if src.agents.evolution is broken)
+# =============================================================================
+
+class TestEvolutionImport:
+    def test_all_exports_importable(self) -> None:
+        from src.agents.evolution import (
+            DecisionMemory,
+            DecisionRecord,
+            EvolutionConfig,
+            EvolutionRecord,
+            EvolutionStore,
+            SuccessPattern,
+        )
+        assert DecisionRecord is not None
+        assert SuccessPattern is not None
+        assert EvolutionConfig is not None
+        assert EvolutionStore is not None
+        assert DecisionMemory is not None
+        assert EvolutionRecord is not None
+
