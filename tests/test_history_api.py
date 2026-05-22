@@ -3,26 +3,24 @@ Tests for src/web/history_api.py
 
 Tests HistoryStore, AgentStatusManager, and FastAPI routes.
 """
+import asyncio
+import glob
 import json
 import os
-import glob
-import asyncio
-from datetime import datetime
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest.mock import patch
 
 import pytest
-from fastapi.testclient import TestClient
 from fastapi import FastAPI
+from fastapi.testclient import TestClient
 
 # 导入被测试模块
 from src.web.history_api import (
     HistoryStore,
-    AgentStatusManager,
-    history_router,
     agent_router,
     agent_status_manager,
+    history_router,
 )
 
 
@@ -392,7 +390,6 @@ class TestAgentStatusManager:
         """测试队列满时跳过"""
         agent_status_manager.register_agent("TestAgent", {})
 
-        queue = agent_status_manager.subscribe()
         # 填满队列（Queue 默认无限大，需要自定义）
         # 这个测试比较复杂，暂时跳过
         pytest.skip("Queue full test requires custom queue implementation")
@@ -559,8 +556,9 @@ class TestVerifyToken:
     async def test_verify_token_invalid(self):
         """测试无效 token"""
         from fastapi import HTTPException
-        from src.web.history_api import verify_api_token
         from fastapi.security import HTTPAuthorizationCredentials
+
+        from src.web.history_api import verify_api_token
 
         # Patch API_TOKEN to "test-token"
         with patch("src.web.history_api.API_TOKEN", "test-token"):
@@ -575,8 +573,9 @@ class TestVerifyToken:
     @pytest.mark.asyncio
     async def test_verify_token_valid(self):
         """测试有效 token"""
-        from src.web.history_api import verify_api_token
         from fastapi.security import HTTPAuthorizationCredentials
+
+        from src.web.history_api import verify_api_token
 
         # Patch API_TOKEN to "test-token"
         with patch("src.web.history_api.API_TOKEN", "test-token"):

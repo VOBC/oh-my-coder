@@ -3,8 +3,6 @@
 from pathlib import Path
 from unittest.mock import patch
 
-import pytest
-
 from src.context.workspace_scanner import FileNode, WorkspaceScanner
 
 
@@ -208,7 +206,7 @@ class TestWorkspaceScannerScan:
         scanner = WorkspaceScanner(tmp_path)
         # Mock iterdir() to raise PermissionError
         with patch.object(Path, "iterdir", side_effect=PermissionError("Permission denied")):
-            tree = scanner._scan_recursive(restricted_dir, depth=0, max_depth=3)
+            _ = scanner._scan_recursive(restricted_dir, depth=0, max_depth=3)
         assert len(scanner._scan_stats["errors"]) > 0
         assert "Permission denied" in scanner._scan_stats["errors"][0]
 
@@ -219,7 +217,7 @@ class TestWorkspaceScannerScan:
         scanner = WorkspaceScanner(tmp_path)
         # Mock iterdir() to raise OSError
         with patch.object(Path, "iterdir", side_effect=OSError("Mocked error")):
-            tree = scanner._scan_recursive(error_dir, depth=0, max_depth=3)
+            _ = scanner._scan_recursive(error_dir, depth=0, max_depth=3)
         assert len(scanner._scan_stats["errors"]) > 0
 
     def test_scan_excludes_extensions(self, tmp_path):
@@ -464,8 +462,8 @@ class TestWorkspaceScannerRenderTree:
         result = scanner.to_context_string(max_depth=3)
         # Directories should appear before files
         lines = result.split("\n")
-        dir_idx = next((i for i, l in enumerate(lines) if "dir_a" in l), 999)
-        file_idx = next((i for i, l in enumerate(lines) if "alpha.py" in l), 999)
+        dir_idx = next((i for i, line in enumerate(lines) if "dir_a" in line), 999)
+        file_idx = next((i for i, line in enumerate(lines) if "alpha.py" in line), 999)
         assert dir_idx < file_idx
 
 

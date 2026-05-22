@@ -105,7 +105,7 @@ def stats_command(
             )
             for ext, stats in sorted_types:
                 console.print(
-                    f"  {ext or '(无扩展名)'}: {stats.count} 个文件, {stats.total_size:,} 字节"
+                    f"  {ext or '(无扩展名)'}: {stats.count} 个文件, {stats.size:,} 字节"
                 )
         if result.errors:
             console.print(f"\n⚠️ {len(result.errors)} 个错误:", err=True)
@@ -283,7 +283,7 @@ def trace_latest() -> None:
     sid = store.get_latest_session()
     if not sid:
         console_trace.print("[dim]暂无执行记录[/dim]")
-        return
+        raise typer.Exit(0)
     console_trace.print(f"[green]最新 Session: {sid}[/green]")
     trace_list(session=sid, limit=10)
 
@@ -1593,7 +1593,7 @@ def cost_history(
         return
 
     filtered = usage_data
-    if model:
+    if isinstance(model, str) and model:
         filtered = [r for r in filtered if model.lower() in r.get("model", "").lower()]
 
     sorted_records = sorted(filtered, key=lambda x: x.get("timestamp", ""), reverse=True)[:limit]

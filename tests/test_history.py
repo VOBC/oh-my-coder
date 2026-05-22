@@ -3,9 +3,10 @@
 """
 
 import json
-import pytest
 import tempfile
 from pathlib import Path
+
+import pytest
 
 from src.core.history import (
     HistoryManager,

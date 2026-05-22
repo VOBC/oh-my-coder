@@ -103,10 +103,10 @@ class TestFileTreeScan:
         (sample_project / ".gitignore").write_text("*.pyc")
         (sample_project / ".dockerignore").write_text("node_modules")
         (sample_project / "normal.txt").write_text("visible")
-    
+
         scanner = WorkspaceScanner(sample_project)
         root = scanner.scan(max_depth=3)
-    
+
         names = [c.name for c in root.children]
         # .env 和 .gitignore 现在被保留（新行为）
         assert ".env" in names
