@@ -76,9 +76,12 @@ class HistoryStore:
             return None
 
         with open(file_path, encoding="utf-8") as f:
-            record = json.load(f)
-            self._cache[task_id] = record
-            return record
+            try:
+                record = json.load(f)
+                self._cache[task_id] = record
+                return record
+            except Exception:
+                return None
 
     def list_all(
         self,

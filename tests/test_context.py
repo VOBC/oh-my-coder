@@ -97,21 +97,20 @@ class TestFileTreeScan:
         names = [c.name for c in root.children]
         assert ".git" not in names
 
-    def test_scan_excludes_hidden_files(self, sample_project):
-        """测试排除隐藏文件（当前实现跳过所有 . 开头的文件）"""
+    def test_scan_includes_env_and_gitignore(self, sample_project):
+        """测试 .env 和 .gitignore 现在被保留在扫描结果中"""
         (sample_project / ".env").write_text("SECRET=value")
         (sample_project / ".gitignore").write_text("*.pyc")
         (sample_project / ".dockerignore").write_text("node_modules")
         (sample_project / "normal.txt").write_text("visible")
-
+    
         scanner = WorkspaceScanner(sample_project)
         root = scanner.scan(max_depth=3)
-
+    
         names = [c.name for c in root.children]
-        # 所有隐藏文件都被排除（当前实现行为）
-        assert ".env" not in names
-        assert ".gitignore" not in names
-        assert ".dockerignore" not in names
+        # .env 和 .gitignore 现在被保留（新行为）
+        assert ".env" in names
+        assert ".gitignore" in names
         # 普通文件应该存在
         assert "normal.txt" in names
 
@@ -200,7 +199,7 @@ class TestFileTreeScan:
         try:
             scanner = WorkspaceScanner(tmp_path)
             root = scanner.scan(max_depth=3)  # noqa: F841
-            # 应该不崩溃，只是报错
+            # 应该不崩溃,只是报错
             stats = scanner._scan_stats
             assert len(stats["errors"]) >= 1
         finally:
@@ -482,7 +481,7 @@ class TestBrowserAwareness:
     def test_detect_no_browser(self):
         """测试未安装浏览器时的检测"""
         awareness = BrowserAwareness()
-        # 应该不崩溃，返回某种类型
+        # 应该不崩溃,返回某种类型
         assert awareness._browser_type in ("none", "playwright", "selenium", "openclaw")
 
     def test_get_current_tab_returns_context(self):
