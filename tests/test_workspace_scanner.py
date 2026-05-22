@@ -136,6 +136,29 @@ class TestWorkspaceScannerScan:
         assert tree.is_dir is True
         assert len(tree.children) == 0
 
+    def test_scan_path_not_exists(self, tmp_path):
+        """Test scanning nonexistent path"""
+        nonexistent = tmp_path / "nonexistent"
+        scanner = WorkspaceScanner(tmp_path)
+        # Mock path.exists() to return False
+        with patch.object(Path, "exists", return_value=False):
+            tree = scanner._scan_recursive(nonexistent, depth=0, max_depth=3)
+        assert tree.name == nonexistent.name
+        assert tree.size == 0
+
+    def test_scan_os_error_on_stat(self, tmp_path):
+        """Test handling OSError when stat fails"""
+        test_file = tmp_path / "test.py"
+        test_file.write_text("print('hello')")
+        scanner = WorkspaceScanner(tmp_path)
+        # Mock exists()=True, is_dir()=False, stat() raises OSError
+        with patch.object(Path, "exists", return_value=True), \
+             patch.object(Path, "is_dir", return_value=False), \
+             patch.object(Path, "stat", side_effect=OSError("Mocked error")):
+            tree = scanner._scan_recursive(test_file, depth=0, max_depth=3)
+        assert tree.name == "test.py"
+        assert tree.size == 0  # stat failed, size not updated
+
     def test_scan_with_files(self, tmp_path):
         """Test scanning directory with files"""
         (tmp_path / "test.py").write_text("print('hello')")
@@ -178,6 +201,27 @@ class TestWorkspaceScannerScan:
         cache_nodes = [c for c in tree.children if c.name == "__pycache__"]
         assert len(cache_nodes) == 0
 
+    def test_scan_permission_error(self, tmp_path):
+        """Test scanning handles PermissionError"""
+        restricted_dir = tmp_path / "restricted"
+        restricted_dir.mkdir()
+        scanner = WorkspaceScanner(tmp_path)
+        # Mock iterdir() to raise PermissionError
+        with patch.object(Path, "iterdir", side_effect=PermissionError("Permission denied")):
+            tree = scanner._scan_recursive(restricted_dir, depth=0, max_depth=3)
+        assert len(scanner._scan_stats["errors"]) > 0
+        assert "Permission denied" in scanner._scan_stats["errors"][0]
+
+    def test_scan_os_error_on_iterdir(self, tmp_path):
+        """Test scanning handles OSError on iterdir"""
+        error_dir = tmp_path / "error_dir"
+        error_dir.mkdir()
+        scanner = WorkspaceScanner(tmp_path)
+        # Mock iterdir() to raise OSError
+        with patch.object(Path, "iterdir", side_effect=OSError("Mocked error")):
+            tree = scanner._scan_recursive(error_dir, depth=0, max_depth=3)
+        assert len(scanner._scan_stats["errors"]) > 0
+
     def test_scan_excludes_extensions(self, tmp_path):
         """Test scanning excludes .pyc, .so, etc."""
         (tmp_path / "test.pyc").write_text("")
@@ -188,6 +232,17 @@ class TestWorkspaceScannerScan:
         assert len(pyc_nodes) == 0
         py_nodes = [c for c in tree.children if c.name.endswith(".py")]
         assert len(py_nodes) == 1
+
+    def test_scan_hidden_files_excluded(self, tmp_path):
+        """Test scanning excludes hidden files (except special ones)"""
+        (tmp_path / ".hidden").write_text("secret")
+        (tmp_path / ".gitignore").write_text("*.pyc")
+        scanner = WorkspaceScanner(tmp_path)
+        tree = scanner.scan(max_depth=3)
+        hidden_nodes = [c for c in tree.children if c.name == ".hidden"]
+        assert len(hidden_nodes) == 0
+        gitignore_nodes = [c for c in tree.children if c.name == ".gitignore"]
+        assert len(gitignore_nodes) == 1  # .gitignore is kept
 
     def test_scan_detect_language(self, tmp_path):
         """Test scanning detects file language"""
@@ -254,6 +309,14 @@ class TestWorkspaceScannerGetFileSummary:
         result = scanner.get_file_summary(large_file, max_lines=50)
         # Should not read all 1000 lines
         assert result is not None
+
+    def test_summary_empty_file(self, tmp_path):
+        """Test summary for empty file"""
+        empty_file = tmp_path / "empty.py"
+        empty_file.write_text("")
+        scanner = WorkspaceScanner(tmp_path)
+        result = scanner.get_file_summary(empty_file)
+        assert "空文件" in result or "empty" in result.lower()
 
 
 class TestWorkspaceScannerToContextString:

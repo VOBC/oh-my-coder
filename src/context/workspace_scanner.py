@@ -298,7 +298,13 @@ class WorkspaceScanner:
                 ext = entry.suffix.lower()
                 if ext in EXCLUDE_EXTENSIONS:
                     continue
-                if name.startswith("."):
+                # 隐藏文件（但保留 .gitignore 等特殊文件）
+                if name.startswith(".") and name not in (
+                    ".gitignore",
+                    ".dockerignore",
+                    ".env.example",
+                    ".env",
+                ):
                     continue
 
             child = self._scan_recursive(entry, depth=depth + 1, max_depth=max_depth)
