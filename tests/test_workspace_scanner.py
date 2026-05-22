@@ -264,10 +264,11 @@ class TestWorkspaceScannerScan:
 class TestWorkspaceScannerGetFileSummary:
     """Test get_file_summary method"""
 
-    def test_summary_nonexistent(self):
+    def test_summary_nonexistent(self, tmp_path):
         """Test summary for nonexistent file"""
-        scanner = WorkspaceScanner(Path("/"))
-        result = scanner.get_file_summary(Path("/nonexistent"))
+        scanner = WorkspaceScanner(tmp_path)
+        nonexistent = tmp_path / "truly_nonexistent_file.txt"
+        result = scanner.get_file_summary(nonexistent)
         assert "不存在" in result
 
     def test_summary_directory(self, tmp_path):
@@ -317,6 +318,102 @@ class TestWorkspaceScannerGetFileSummary:
         scanner = WorkspaceScanner(tmp_path)
         result = scanner.get_file_summary(empty_file)
         assert "空文件" in result or "empty" in result.lower()
+
+    def test_summary_python_rich(self, tmp_path):
+        """Test summary extracts imports/classes/functions"""
+        py_file = tmp_path / "rich.py"
+        py_file.write_text("""import os
+import sys
+from flask import Flask
+
+class User:
+    def __init__(self):
+        pass
+
+class Admin(User):
+    pass
+
+def get_user():
+    return User()
+
+def create_admin():
+    return Admin()
+""")
+        scanner = WorkspaceScanner(tmp_path)
+        result = scanner.get_file_summary(py_file)
+        assert "导入" in result or "import" in result.lower()
+        assert "类" in result or "class" in result.lower()
+        assert "函数" in result or "def" in result.lower()
+
+    def test_summary_python_only_functions(self, tmp_path):
+        """Test summary for Python file with only functions"""
+        py_file = tmp_path / "funcs.py"
+        py_file.write_text("""def add(a, b):
+    return a + b
+
+def subtract(a, b):
+    return a - b
+""")
+        scanner = WorkspaceScanner(tmp_path)
+        result = scanner.get_file_summary(py_file)
+        assert "函数" in result or "def" in result.lower()
+
+    def test_summary_json_array(self, tmp_path):
+        """Test summary for JSON array"""
+        json_file = tmp_path / "list.json"
+        json_file.write_text('[1, 2, 3, 4, 5]')
+        scanner = WorkspaceScanner(tmp_path)
+        result = scanner.get_file_summary(json_file)
+        assert "数组" in result or "5" in result
+
+    def test_summary_json_invalid(self, tmp_path):
+        """Test summary for invalid JSON"""
+        json_file = tmp_path / "invalid.json"
+        json_file.write_text('{invalid json}')
+        scanner = WorkspaceScanner(tmp_path)
+        result = scanner.get_file_summary(json_file)
+        assert "失败" in result or "invalid" in result.lower()
+
+    def test_summary_js_file(self, tmp_path):
+        """Test summary for JavaScript file"""
+        js_file = tmp_path / "app.js"
+        js_file.write_text("""import React from 'react';
+export default App;
+function App() {
+  return <div>Hello</div>;
+}""")
+        scanner = WorkspaceScanner(tmp_path)
+        result = scanner.get_file_summary(js_file)
+        assert "javascript" in result.lower() or "import" in result.lower()
+
+    def test_summary_yaml_file(self, tmp_path):
+        """Test summary for YAML file"""
+        yaml_file = tmp_path / "config.yaml"
+        yaml_file.write_text("""name: test
+version: 1.0
+[database]
+host: localhost
+""")
+        scanner = WorkspaceScanner(tmp_path)
+        result = scanner.get_file_summary(yaml_file)
+        assert "yaml" in result.lower() or "name" in result.lower()
+
+    def test_summary_markdown_headers(self, tmp_path):
+        """Test summary extracts Markdown headers"""
+        md_file = tmp_path / "doc.md"
+        md_file.write_text("""# Title
+
+## Section 1
+
+Some text here.
+
+## Section 2
+
+More text.
+""")
+        scanner = WorkspaceScanner(tmp_path)
+        result = scanner.get_file_summary(md_file)
+        assert "# Title" in result or "markdown" in result.lower()
 
 
 class TestWorkspaceScannerToContextString:
