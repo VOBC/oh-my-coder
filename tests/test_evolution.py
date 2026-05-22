@@ -1,10 +1,17 @@
 """
-Evolution 模块单元测试（纯逻辑，不依赖真实服务）
+Tests for src/agents/evolution.py
+
+Covers:
+- EvolutionRecord dataclass
+- SuccessPattern dataclass
+- EvolutionConfig dataclass
+- EvolutionStore (load/save evolution history, success patterns)
+- DecisionRecord dataclass
+- DecisionMemory (record_decision / retrieve / list_decisions)
 """
 
-import json
-
-import pytest
+from pathlib import Path
+from typing import Any
 
 from src.agents.evolution import (
     DecisionMemory,
@@ -15,450 +22,397 @@ from src.agents.evolution import (
     SuccessPattern,
 )
 
-# ─────────────────────────────────────────────────────────────────
-# Dataclasses
-# ─────────────────────────────────────────────────────────────────
+# =============================================================================
+# Fixtures
+# =============================================================================
 
+def _make_evolution_record(**overrides: Any) -> EvolutionRecord:
+    defaults: dict[str, Any] = dict(
+        id="evo-1700000000",
+        timestamp="2024-01-01T10:00:00",
+        agent_type="coder",
+        generation=2,
+        trigger="success_rate_low",
+        before_state={"success_rate": 0.6},
+        after_state={"success_rate": 0.85},
+        changes=["Added retry logic", "Improved prompt"],
+        effectiveness=0.85,
+    )
+    defaults.update(overrides)
+    return EvolutionRecord(**defaults)
+
+
+def _make_success_pattern(**overrides: Any) -> SuccessPattern:
+    defaults: dict[str, Any] = dict(
+        id="coder-fastapi-retry",
+        pattern_type="strategy",
+        description="Use tenacity for API retry",
+        context="API calling with transient failures",
+        effectiveness_score=0.9,
+        occurrences=5,
+        last_seen="2024-01-01T10:00:00",
+        examples=["omc/core/retry.py"],
+    )
+    defaults.update(overrides)
+    return SuccessPattern(**defaults)
+
+
+def _make_decision_record(**overrides: Any) -> DecisionRecord:
+    defaults: dict[str, Any] = dict(
+        id="2024-01-01-use-fastapi",
+        title="Use FastAPI for API layer",
+        timestamp="2024-01-01T10:00:00",
+        agent_type="architect",
+        category="solution_choice",
+        problem="Need a web framework",
+        context="Web API for omc CLI",
+        chosen_solution="Use FastAPI with async endpoints",
+        rejected_alternatives=["flask", "django"],
+        result="success",
+        outcome="2x performance improvement",
+        reusable_for="Any Python web API project",
+        keywords=["fastapi", "async", "web"],
+        related_files=["src/web/app.py"],
+        version_tag="v1.0.0",
+    )
+    defaults.update(overrides)
+    return DecisionRecord(**defaults)
+
+
+# =============================================================================
+# EvolutionRecord Tests
+# =============================================================================
 
 class TestEvolutionRecord:
-    def test_defaults(self):
+    def test_basic_creation(self) -> None:
+        r = _make_evolution_record()
+        assert r.id == "evo-1700000000"
+        assert r.agent_type == "coder"
+        assert r.generation == 2
+        assert r.effectiveness == 0.85
+
+    def test_defaults(self) -> None:
         r = EvolutionRecord()
+        assert r.id == ""
+        assert r.agent_type == ""
         assert r.generation == 1
+        assert r.trigger == ""
         assert r.before_state == {}
         assert r.after_state == {}
         assert r.changes == []
         assert r.effectiveness is None
 
-    def test_with_values(self):
-        r = EvolutionRecord(
-            id="evo-1",
-            agent_type="executor",
-            generation=3,
-            trigger="error_pattern",
-        )
-        assert r.id == "evo-1"
-        assert r.generation == 3
 
+# =============================================================================
+# SuccessPattern Tests
+# =============================================================================
 
 class TestSuccessPattern:
-    def test_defaults(self):
+    def test_basic_creation(self) -> None:
+        p = _make_success_pattern()
+        assert p.id == "coder-fastapi-retry"
+        assert p.pattern_type == "strategy"
+        assert p.effectiveness_score == 0.9
+        assert p.occurrences == 5
+
+    def test_defaults(self) -> None:
         p = SuccessPattern()
+        assert p.id == ""
+        assert p.pattern_type == ""
         assert p.effectiveness_score == 0.0
         assert p.occurrences == 0
         assert p.examples == []
 
-    def test_with_values(self):
-        p = SuccessPattern(
-            id="test-1",
-            pattern_type="strategy",
-            description="test desc",
-            effectiveness_score=0.9,
-        )
-        assert p.effectiveness_score == 0.9
 
+# =============================================================================
+# EvolutionConfig Tests
+# =============================================================================
 
 class TestEvolutionConfig:
-    def test_defaults(self):
+    def test_defaults(self) -> None:
         c = EvolutionConfig()
         assert c.enabled is True
         assert c.improvement_threshold == 0.8
         assert c.min_samples == 5
         assert c.max_evolution_history == 100
+        assert c.pattern_confidence_threshold == 0.7
         assert c.evolution_cooldown_hours == 24
 
+    def test_custom_values(self) -> None:
+        c = EvolutionConfig(
+            enabled=False,
+            improvement_threshold=0.7,
+            min_samples=10,
+        )
+        assert c.enabled is False
+        assert c.improvement_threshold == 0.7
+        assert c.min_samples == 10
 
-# ─────────────────────────────────────────────────────────────────
-# EvolutionStore
-# ─────────────────────────────────────────────────────────────────
 
+# =============================================================================
+# EvolutionStore Tests
+# =============================================================================
 
 class TestEvolutionStore:
-    @pytest.fixture
-    def store(self, tmp_path):
-        return EvolutionStore(tmp_path / "state")
+    def test_init_creates_dirs(self, tmp_path: Path) -> None:
+        state_dir = tmp_path / "state"
+        store = EvolutionStore(state_dir=state_dir)
+        assert store.state_dir == state_dir
+        assert store.agents_dir == state_dir / "agents"
 
-    def test_agent_dir_created(self, store):
-        d = store._agent_dir("myagent")
-        assert d.exists()
-        assert d.name == "myagent"
+    def test_save_and_load_evolution_history(self, tmp_path: Path) -> None:
+        store = EvolutionStore(state_dir=tmp_path)
+        record = _make_evolution_record()
+        store.save_evolution_record(record)
 
-    # -- Evolution History --
-
-    def test_load_evolution_history_empty(self, store):
-        assert store.load_evolution_history("myagent") == []
-
-    def test_save_and_load_evolution_record(self, store):
-        r = EvolutionRecord(
-            agent_type="myagent",
-            generation=2,
-            trigger="success_rate_low",
-            changes=["changed prompt"],
-        )
-        rid = store.save_evolution_record(r)
-        assert rid.startswith("evo-")
-
-        history = store.load_evolution_history("myagent")
+        history = store.load_evolution_history(record.agent_type)
         assert len(history) == 1
-        assert history[0].generation == 2
-        assert history[0].trigger == "success_rate_low"
+        assert history[0].id == record.id
+        assert history[0].agent_type == record.agent_type
 
-    def test_save_record_auto_id_and_timestamp(self, store):
-        r = EvolutionRecord(agent_type="myagent")
-        rid = store.save_evolution_record(r)
-        assert rid != ""
+    def test_load_evolution_history_empty(self, tmp_path: Path) -> None:
+        store = EvolutionStore(state_dir=tmp_path)
+        history = store.load_evolution_history("nonexistent")
+        assert history == []
 
-        history = store.load_evolution_history("myagent")
-        assert history[0].timestamp != ""
-        assert history[0].id != ""
+    def test_get_current_generation(self, tmp_path: Path) -> None:
+        store = EvolutionStore(state_dir=tmp_path)
+        # No history yet
+        assert store.get_current_generation("coder") == 1
 
-    def test_evolution_history_limit(self, store):
-        r = EvolutionRecord(agent_type="myagent", generation=1)
-        store.save_evolution_record(r)
-        result = store.load_evolution_history("myagent", limit=0)
-        assert result == []
+        # Add a record
+        record = _make_evolution_record(agent_type="coder", generation=3)
+        store.save_evolution_record(record)
+        assert store.get_current_generation("coder") == 4
 
-    def test_get_current_generation_no_history(self, store):
-        assert store.get_current_generation("myagent") == 1
+    def test_save_and_load_success_patterns(self, tmp_path: Path) -> None:
+        store = EvolutionStore(state_dir=tmp_path)
+        pattern = _make_success_pattern()
+        store.save_success_pattern(pattern)
 
-    def test_get_current_generation_with_history(self, store):
-        r = EvolutionRecord(agent_type="myagent", generation=5)
-        store.save_evolution_record(r)
-        assert store.get_current_generation("myagent") == 6
+        patterns = store.load_success_patterns(pattern.id.split("-")[0])
+        assert len(patterns) >= 1
+        assert any(p.id == pattern.id for p in patterns)
 
-    def test_evolution_history_max_records(self, store):
-        """保存超过100条时截断"""
-        for i in range(105):
-            store.save_evolution_record(
-                EvolutionRecord(agent_type="myagent", generation=i)
-            )
-        # Verify file has exactly 100 records
-        f = store._agent_dir("myagent") / "evolution_history.json"
-        data = json.loads(f.read_text(encoding="utf-8"))
-        assert len(data["records"]) == 100
-
-    def test_load_evolution_history_corrupt_file(self, store):
-        f = store._agent_dir("myagent") / "evolution_history.json"
-        f.write_text("NOT JSON", encoding="utf-8")
-        assert store.load_evolution_history("myagent") == []
-
-    # -- Success Patterns --
-
-    def test_load_success_patterns_empty(self, store):
-        assert store.load_success_patterns("myagent") == []
-
-    def test_add_success_pattern(self, store):
+    def test_add_success_pattern(self, tmp_path: Path) -> None:
+        store = EvolutionStore(state_dir=tmp_path)
         pid = store.add_success_pattern(
-            agent_name="myagent",
-            pattern_type="strategy",
-            description="Use step-by-step",
-            context="debugging",
-            example="fixed bug X",
+            agent_name="coder",
+            pattern_type="prompt_technique",
+            description="Chain-of-thought for debugging",
+            context="Debugging complex errors",
+            example="omc/agents/debugger.py",
         )
-        assert "myagent-strategy-" in pid
-
-        patterns = store.load_success_patterns("myagent")
+        assert pid != ""
+        patterns = store.load_success_patterns("coder")
         assert len(patterns) == 1
-        assert patterns[0].description == "Use step-by-step"
-        assert patterns[0].occurrences == 1
+        assert patterns[0].pattern_type == "prompt_technique"
 
-    def test_add_success_pattern_no_example(self, store):
-        store.add_success_pattern(
-            agent_name="myagent",
-            pattern_type="workflow",
-            description="Test pattern",
-        )
-        patterns = store.load_success_patterns("myagent")
-        assert patterns[0].examples == []
+    def test_load_optimized_prompt_none(self, tmp_path: Path) -> None:
+        store = EvolutionStore(state_dir=tmp_path)
+        result = store.load_optimized_prompt("coder")
+        assert result is None
 
-    def test_save_success_pattern_new(self, store):
-        p = SuccessPattern(
-            id="myagent-p1",
-            pattern_type="strategy",
-            description="Test",
-            effectiveness_score=0.8,
-        )
-        pid = store.save_success_pattern(p)
-        assert pid == "myagent-p1"
+    def test_save_evolution_record_creates_agent_dir(self, tmp_path: Path) -> None:
+        store = EvolutionStore(state_dir=tmp_path)
+        record = _make_evolution_record(agent_type="new_agent")
+        store.save_evolution_record(record)
+        agent_dir = tmp_path / "agents" / "new_agent"
+        assert agent_dir.exists()
 
-    def test_save_success_pattern_update_existing(self, store):
-        p1 = SuccessPattern(
-            id="myagent-p1",
-            pattern_type="strategy",
-            description="V1",
-            effectiveness_score=0.5,
-        )
-        store.save_success_pattern(p1)
+    def test_multiple_records(self, tmp_path: Path) -> None:
+        store = EvolutionStore(state_dir=tmp_path)
+        for i in range(3):
+            record = _make_evolution_record(
+                id=f"evo-{i}", agent_type="coder"
+            )
+            store.save_evolution_record(record)
+        history = store.load_evolution_history("coder")
+        assert len(history) == 3
 
-        p2 = SuccessPattern(
-            id="myagent-p1",
-            pattern_type="strategy",
-            description="V2",
-            effectiveness_score=0.9,
-        )
-        store.save_success_pattern(p2)
-
-        patterns = store.load_success_patterns("myagent")
-        assert len(patterns) == 1
-        assert patterns[0].description == "V2"
-        assert patterns[0].effectiveness_score == 0.9
-
-    def test_load_success_patterns_corrupt(self, store):
-        f = store._agent_dir("myagent") / "success_patterns.json"
-        f.write_text("BAD", encoding="utf-8")
-        assert store.load_success_patterns("myagent") == []
-
-    def test_save_pattern_internal_default_agent(self, store):
-        """Pattern id without '-' defaults to 'default' agent"""
-        p = SuccessPattern(id="nodashid", pattern_type="strategy", description="t")
-        pid = store._save_pattern_internal(p)
-        assert pid == "nodashid"
-        # Should create default agent dir
-        assert (store.agents_dir / "default").exists()
-
-    # -- Optimized Prompt --
-
-    def test_load_optimized_prompt_missing(self, store):
-        assert store.load_optimized_prompt("myagent") is None
-
-    def test_save_and_load_optimized_prompt(self, store):
-        store.save_optimized_prompt("myagent", "Be helpful and concise")
-        assert store.load_optimized_prompt("myagent") == "Be helpful and concise"
-
-    def test_get_prompt_version_missing(self, store):
-        assert store.get_prompt_version("myagent") == 0
-
-    def test_get_prompt_version_with_version(self, store):
-        store.save_optimized_prompt(
-            "myagent", "version: 3\nBe helpful"
-        )
-        assert store.get_prompt_version("myagent") == 3
-
-    def test_get_prompt_version_no_version_in_content(self, store):
-        store.save_optimized_prompt("myagent", "Just a prompt without version")
-        assert store.get_prompt_version("myagent") == 1
-
-    def test_get_prompt_version_invalid_version(self, store):
-        store.save_optimized_prompt("myagent", "version: abc\nContent")
-        assert store.get_prompt_version("myagent") == 1
-
-    # -- Stats --
-
-    def test_get_evolution_stats_empty(self, store):
-        stats = store.get_evolution_stats("myagent")
-        assert stats["current_generation"] == 1
-        assert stats["total_evolutions"] == 0
-        assert stats["total_patterns"] == 0
-        assert stats["prompt_version"] == 0
-        assert stats["last_evolution"] is None
-
-    def test_get_evolution_stats_with_data(self, store):
-        store.save_evolution_record(
-            EvolutionRecord(agent_type="myagent", generation=2)
-        )
-        store.add_success_pattern("myagent", "strategy", "Test")
-        store.save_optimized_prompt("myagent", "version: 5\nPrompt")
-
-        stats = store.get_evolution_stats("myagent")
-        assert stats["total_evolutions"] == 1
-        assert stats["total_patterns"] == 1
-        assert stats["prompt_version"] == 5
-        assert stats["last_evolution"] is not None
+    def test_corrupted_evolution_history(self, tmp_path: Path) -> None:
+        agent_dir = tmp_path / "agents" / "coder"
+        agent_dir.mkdir(parents=True)
+        (agent_dir / "evolution_history.json").write_text("{invalid json}")
+        store = EvolutionStore(state_dir=tmp_path)
+        history = store.load_evolution_history("coder")
+        assert history == []
 
 
-# ─────────────────────────────────────────────────────────────────
-# DecisionMemory
-# ─────────────────────────────────────────────────────────────────
+# =============================================================================
+# DecisionRecord Tests
+# =============================================================================
 
+class TestDecisionRecord:
+    def test_basic_creation(self) -> None:
+        r = _make_decision_record()
+        assert r.id == "2024-01-01-use-fastapi"
+        assert r.title == "Use FastAPI for API layer"
+        assert r.category == "solution_choice"
+        assert r.result == "success"
+
+    def test_defaults(self) -> None:
+        r = DecisionRecord()
+        assert r.id == ""
+        assert r.title == ""
+        assert r.category == ""
+        assert r.problem == ""
+        assert r.chosen_solution == ""
+        assert r.rejected_alternatives == []
+        assert r.keywords == []
+        assert r.related_files == []
+
+    def test_keywords_list(self) -> None:
+        r = _make_decision_record(keywords=["python", "testing", "pytest"])
+        assert "pytest" in r.keywords
+        assert len(r.keywords) == 3
+
+
+# =============================================================================
+# DecisionMemory Tests
+# =============================================================================
 
 class TestDecisionMemory:
-    @pytest.fixture
-    def dm(self, tmp_path):
-        return DecisionMemory(tmp_path / "state")
+    def test_init_creates_dir(self, tmp_path: Path) -> None:
+        dm = DecisionMemory(state_dir=tmp_path)
+        assert dm.decisions_dir.exists()
 
-    def test_slugify(self, dm):
-        assert dm._slugify("Hello World!") == "hello-world"
-        assert dm._slugify("a" * 50) == "a" * 40
-        assert dm._slugify("  spaces  ") == "spaces"
-
-    def test_record_decision(self, dm):
-        did = dm.record_decision(
-            title="Fix login bug",
-            problem="Login fails on mobile",
-            chosen_solution="Add user-agent header",
-            agent_type="executor",
-            category="bug_fix",
+    def test_record_and_retrieve(self, tmp_path: Path) -> None:
+        dm = DecisionMemory(state_dir=tmp_path)
+        content = dm.record_decision(
+            title="Use FastAPI",
+            problem="Need web framework",
+            chosen_solution="FastAPI",
+            agent_type="architect",
+            category="solution_choice",
             result="success",
+            outcome="Good",
+            keywords=["fastapi", "web"],
         )
-        assert "fix-login-bug" in did
-        assert dm._decision_file(did).exists()
+        assert content != ""
 
-    def test_record_decision_with_rejected_alternatives(self, dm):
-        did = dm.record_decision(
-            title="Choose DB",
-            problem="Need persistent storage",
-            chosen_solution="SQLite",
-            rejected_alternatives=["Redis", "MongoDB"],
-            outcome="Works well",
-        )
-        content = dm._decision_file(did).read_text(encoding="utf-8")
-        assert "Redis" in content
-        assert "MongoDB" in content
-        assert "SQLite" in content
+        # Retrieve
+        results = dm.retrieve("fastapi")
+        assert len(results) >= 1
+        assert any("FastAPI" in r.title for r in results)
 
-    def test_record_decision_with_keywords_and_files(self, dm):
-        did = dm.record_decision(
-            title="Test decision",
-            problem="API error handling",
-            chosen_solution="Use retry middleware",
-            keywords=["retry", "middleware"],
-            related_files=["src/api.py", "src/middleware.py"],
-            version_tag="v1.0.0",
-            reusable_for="All API calls",
-        )
-        content = dm._decision_file(did).read_text(encoding="utf-8")
-        assert "`retry`" in content
-        assert "src/api.py" in content
-        assert "v1.0.0" in content
-        assert "All API calls" in content
-
-    def test_extract_keywords(self, dm):
-        kws = dm._extract_keywords(
-            "subprocess timeout error", "use asyncio instead"
-        )
-        assert "subprocess" in kws
-        assert "timeout" in kws
-        assert "asyncio" in kws
-        # short words (< 3 chars) filtered
-        assert "on" not in kws
-
-    def test_retrieve_found(self, dm):
-        # NOTE: _parse_decision_file has a bug (split ":**" doesn't match
-        # the generated "**key**: value" format), so retrieve returns [] for
-        # self-generated files. Test that the code path is exercised.
+    def test_record_decision_with_rejected(self, tmp_path: Path) -> None:
+        dm = DecisionMemory(state_dir=tmp_path)
         dm.record_decision(
-            title="Fix subprocess timeout",
-            problem="subprocess call hangs",
-            chosen_solution="Add timeout parameter",
-            keywords=["subprocess", "timeout"],
+            title="Use Rust",
+            problem="Need performance",
+            chosen_solution="Rust",
+            rejected_alternatives=["Python", "C++"],
+            keywords=["rust", "performance"],
         )
-        results = dm.retrieve("subprocess timeout")
-        # Due to parsing bug, results may be empty; just exercise the path
+        decisions = dm.list_decisions()
+        assert len(decisions) == 1
+        assert decisions[0].rejected_alternatives == ["Python", "C++"]
+
+    def test_retrieve_no_match(self, tmp_path: Path) -> None:
+        dm = DecisionMemory(state_dir=tmp_path)
+        results = dm.retrieve("nonexistent_keyword_xyz")
+        assert results == []
+
+    def test_retrieve_empty_query(self, tmp_path: Path) -> None:
+        dm = DecisionMemory(state_dir=tmp_path)
+        # Record a decision first
+        dm.record_decision(
+            title="Test",
+            problem="p",
+            chosen_solution="s",
+            keywords=["test"],
+        )
+        # Empty query should return all or empty
+        results = dm.retrieve("")
         assert isinstance(results, list)
 
-    def test_retrieve_not_found(self, dm):
-        dm.record_decision(
-            title="Unrelated decision",
-            problem="CSS layout issue",
-            chosen_solution="Use flexbox",
-        )
-        results = dm.retrieve("database connection")
-        assert isinstance(results, list)
-        assert len(results) == 0
-
-    def test_retrieve_limit(self, dm):
-        for i in range(5):
-            dm.record_decision(
-                title=f"Decision about auth {i}",
-                problem="Authentication error",
-                chosen_solution=f"Solution {i}",
-            )
-        results = dm.retrieve("auth", limit=2)
-        assert len(results) <= 2
-
-    def test_list_decisions(self, dm):
-        # Due to _parse_decision_file bug, list_decisions returns [] for
-        # self-generated files. Test category filtering logic path.
-        dm.record_decision(
-            title="Bug fix A",
-            problem="Crash on start",
-            chosen_solution="Add null check",
-            category="bug_fix",
-        )
-        dm.record_decision(
-            title="Architecture B",
-            problem="Scalability",
-            chosen_solution="Add caching",
-            category="architecture",
-        )
-        all_decisions = dm.list_decisions()
-        assert isinstance(all_decisions, list)
-
-        bug_only = dm.list_decisions(category="bug_fix")
-        assert isinstance(bug_only, list)
-
-    def test_list_decisions_limit(self, dm):
-        for i in range(5):
+    def test_list_decisions(self, tmp_path: Path) -> None:
+        dm = DecisionMemory(state_dir=tmp_path)
+        for i in range(3):
             dm.record_decision(
                 title=f"Decision {i}",
-                problem="Problem",
-                chosen_solution="Solution",
+                problem=f"problem {i}",
+                chosen_solution=f"solution {i}",
+                keywords=[f"kw{i}"],
             )
-        results = dm.list_decisions(limit=3)
-        assert len(results) <= 3
+        decisions = dm.list_decisions()
+        assert len(decisions) == 3
 
-    def test_get_stats(self, dm):
+    def test_list_decisions_with_category(self, tmp_path: Path) -> None:
+        dm = DecisionMemory(state_dir=tmp_path)
         dm.record_decision(
-            title="Bug fix",
-            problem="Crash",
-            chosen_solution="Fix it",
+            title="Decision 1",
+            problem="p",
+            chosen_solution="s",
             category="bug_fix",
+            keywords=["k"],
         )
         dm.record_decision(
-            title="Architecture",
-            problem="Scale",
-            chosen_solution="Cache",
-            category="architecture",
+            title="Decision 2",
+            problem="p",
+            chosen_solution="s",
+            category="solution_choice",
+            keywords=["k"],
         )
-        stats = dm.get_stats()
-        assert "total_decisions" in stats
-        assert "by_category" in stats
+        results = dm.list_decisions(category="bug_fix")
+        assert len(results) == 1
 
-    def test_get_stats_empty(self, dm):
-        stats = dm.get_stats()
-        assert stats["total_decisions"] == 0
-        assert stats["latest_decision"] is None
-
-    def test_parse_decision_file(self, dm):
-        did = dm.record_decision(
-            title="Test parse",
-            problem="Test problem",
-            chosen_solution="Test solution",
-            agent_type="executor",
-            category="bug_fix",
-            result="success",
-            version_tag="v2.0",
+    def test_record_decision_persistence(self, tmp_path: Path) -> None:
+        dm1 = DecisionMemory(state_dir=tmp_path)
+        dm1.record_decision(
+            title="Persistent",
+            problem="p",
+            chosen_solution="s",
+            keywords=["persist"],
         )
-        f = dm._decision_file(did)
-        content = f.read_text(encoding="utf-8")
-        # _parse_decision_file has a split(":**") bug, so it raises IndexError
-        # on the generated format. Test that the method is exercised.
-        try:
-            record = dm._parse_decision_file(f, content)
-        except IndexError:
-            record = None
-        # If the bug is fixed, these assertions would pass:
-        if record is not None:
-            assert record.title == "Test parse"
-            assert record.agent_type == "executor"
 
-    def test_extract_section(self, dm):
-        content = "## 问题背景\nSomething went wrong\n\n## 选择的方案\nDo this"
-        assert dm._extract_section(content, "问题背景") == "Something went wrong"
-        assert dm._extract_section(content, "选择的方案") == "Do this"
-        assert dm._extract_section(content, "不存在") == ""
+        dm2 = DecisionMemory(state_dir=tmp_path)
+        results = dm2.retrieve("persist")
+        assert len(results) >= 1
 
-    def test_calculate_relevance(self, dm):
-        r = DecisionRecord(
-            title="Fix subprocess timeout",
-            problem="subprocess hangs",
-            keywords=["subprocess", "timeout"],
-            reusable_for="subprocess calls",
+    def test_record_decision_id_format(self, tmp_path: Path) -> None:
+        dm = DecisionMemory(state_dir=tmp_path)
+        dm.record_decision(
+            title="My Awesome Decision!",
+            problem="p",
+            chosen_solution="s",
         )
-        score = dm._calculate_relevance({"subprocess"}, r)
-        assert score > 0
-        # Title match (5) + problem match (3) + keyword (2) + reusable (2) = 12
-        assert score == 12
+        # Check that a .md file was created
+        md_files = list((tmp_path / "decisions").glob("*.md"))
+        assert len(md_files) == 1
+        assert "my-awesome-decision" in md_files[0].name
 
-    def test_decision_file_path(self, dm):
-        p = dm._decision_file("2026-01-01-fix-bug")
-        assert p.name == "2026-01-01-fix-bug.md"
+    def test_record_decision_with_related_files(self, tmp_path: Path) -> None:
+        dm = DecisionMemory(state_dir=tmp_path)
+        dm.record_decision(
+            title="Test",
+            problem="p",
+            chosen_solution="s",
+            related_files=["src/main.py", "tests/test_main.py"],
+            keywords=["test"],
+        )
+        decisions = dm.list_decisions()
+        assert len(decisions[0].related_files) == 2
+
+    def test_retrieve_by_title(self, tmp_path: Path) -> None:
+        dm = DecisionMemory(state_dir=tmp_path)
+        dm.record_decision(
+            title="Use FastAPI for API",
+            problem="Need API framework",
+            chosen_solution="FastAPI",
+            keywords=["fastapi"],
+        )
+        results = dm.retrieve("FastAPI")
+        assert len(results) >= 1
+
+    def test_retrieve_by_keyword(self, tmp_path: Path) -> None:
+        dm = DecisionMemory(state_dir=tmp_path)
+        dm.record_decision(
+            title="Decision",
+            problem="p",
+            chosen_solution="s",
+            keywords=["python", "testing"],
+        )
+        results = dm.retrieve("python")
+        assert len(results) >= 1

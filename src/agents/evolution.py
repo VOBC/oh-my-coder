@@ -721,6 +721,26 @@ class DecisionMemory:
         outcome = self._extract_section(content, "效果")
         reusable_for = self._extract_section(content, "可复用性")
 
+        # 解析放弃的方案（Markdown 无序列表）
+        rejected_raw = self._extract_section(content, "放弃的方案")
+        rejected_alternatives = []
+        if rejected_raw:
+            rejected_alternatives = [
+                line.strip("- ").strip()
+                for line in rejected_raw.split("\n")
+                if line.strip().startswith("- ")
+            ]
+
+        # 解析相关文件（Markdown 无序列表）
+        related_raw = self._extract_section(content, "相关文件")
+        related_files = []
+        if related_raw:
+            related_files = [
+                line.strip("- ").strip()
+                for line in related_raw.split("\n")
+                if line.strip().startswith("- ")
+            ]
+
         # 解析关键词
         keywords_str = self._extract_section(content, "关键词")
         keywords = (
@@ -738,6 +758,8 @@ class DecisionMemory:
             result=result,
             outcome=outcome,
             reusable_for=reusable_for,
+            rejected_alternatives=rejected_alternatives,
+            related_files=related_files,
             keywords=keywords,
             version_tag=version_tag,
         )
