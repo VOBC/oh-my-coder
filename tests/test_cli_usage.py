@@ -9,7 +9,7 @@ import json
 from datetime import datetime, timedelta
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from unittest.mock import Mock, patch
+from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 import typer
@@ -1475,6 +1475,259 @@ def foo(): pass"""
         finally:
             # Restore original Syntax
             rich.syntax.Syntax = original_Syntax
+
+    def test_context_summary_markdown_file(self, tmp_path):
+        """context_summary for markdown file prints plain content without syntax highlight."""
+        from src.commands.cli_usage import context_summary
+
+        test_file = tmp_path / "README.md"
+        test_file.write_text("# Hello\n\nThis is markdown.")
+
+        mock_scanner = MagicMock()
+        mock_scanner.get_file_summary.return_value = """[markdown] README.md
+Lines: 2
+Size: 20 B
+---
+# Hello
+
+This is markdown."""
+
+        with patch("src.commands.cli_usage._get_scanner") as mock_get_scanner, \
+             patch("rich.console.Console") as mock_console_cls:
+            mock_get_scanner.return_value = lambda path: mock_scanner
+            mock_console = mock_console_cls.return_value
+
+            context_summary(path=str(test_file), max_lines=50, project_path=tmp_path)
+
+            # Panel should be printed
+            assert mock_console.print.called
+            # No Syntax should be created for markdown
+            calls = mock_console.print.call_args_list
+            panel_call = calls[0]
+            # First call is Panel(header)
+            assert panel_call[0][0].title == "📄 README.md"
+
+    def test_context_summary_rst_file(self, tmp_path):
+        """context_summary for rst file prints plain content without syntax highlight."""
+        from src.commands.cli_usage import context_summary
+
+        test_file = tmp_path / "doc.rst"
+        test_file.write_text("Title\n=====")
+
+        mock_scanner = MagicMock()
+        mock_scanner.get_file_summary.return_value = """[rst] doc.rst
+Lines: 1
+Size: 10 B
+---
+Title
+====="""
+
+        with patch("src.commands.cli_usage._get_scanner") as mock_get_scanner, \
+             patch("rich.console.Console") as mock_console_cls:
+            mock_get_scanner.return_value = lambda path: mock_scanner
+            mock_console = mock_console_cls.return_value
+
+            context_summary(path=str(test_file), max_lines=50, project_path=tmp_path)
+
+            # Should print plain content, not Syntax
+            assert mock_console.print.called
+            calls_str = str(mock_console.print.call_args_list)
+            assert "Title" in calls_str
+
+    def test_context_summary_syntax_highlight_success(self, tmp_path):
+        """context_summary uses Syntax for code files when Syntax works."""
+        from src.commands.cli_usage import context_summary
+
+        test_file = tmp_path / "test.js"
+        test_file.write_text("const x = 1;")
+
+        mock_scanner = MagicMock()
+        mock_scanner.get_file_summary.return_value = """[javascript] test.js
+Lines: 1
+Size: 14 B
+---
+const x = 1;"""
+
+        mock_syntax = MagicMock()
+
+        with patch("src.commands.cli_usage._get_scanner") as mock_get_scanner, \
+             patch("rich.syntax.Syntax") as mock_syntax_cls, \
+             patch("rich.console.Console") as mock_console_cls:
+            mock_get_scanner.return_value = lambda path: mock_scanner
+            mock_syntax_cls.return_value = mock_syntax
+            mock_console = mock_console_cls.return_value
+
+            context_summary(path=str(test_file), max_lines=50, project_path=tmp_path)
+
+            # Syntax should be created with correct args
+            mock_syntax_cls.assert_called_once()
+            call_args = mock_syntax_cls.call_args
+            assert call_args[0][0] == "const x = 1;"
+            assert call_args[0][1] == "javascript"
+            assert call_args[1]["theme"] == "monokai"
+            assert call_args[1]["line_numbers"] is True
+
+    def test_context_summary_relative_path(self, tmp_path):
+        """context_summary resolves relative path against project_path."""
+        from src.commands.cli_usage import context_summary
+
+        test_file = tmp_path / "relative.py"
+        test_file.write_text("pass")
+
+        mock_scanner = MagicMock()
+        mock_scanner.get_file_summary.return_value = """[python] relative.py
+Lines: 1
+Size: 4 B
+---
+pass"""
+
+        with patch("src.commands.cli_usage._get_scanner") as mock_get_scanner, \
+             patch("rich.console.Console"):
+            mock_get_scanner.return_value = lambda path: mock_scanner
+
+            # Pass relative path (not absolute)
+            context_summary(path="relative.py", max_lines=50, project_path=tmp_path)
+
+            # Scanner should be called with resolved absolute path
+            call_path = mock_scanner.get_file_summary.call_args[0][0]
+            assert call_path == test_file.resolve()
+
+    def test_context_summary_empty_content(self, tmp_path):
+        """context_summary handles empty content gracefully."""
+        from src.commands.cli_usage import context_summary
+
+        test_file = tmp_path / "empty.py"
+        test_file.write_text("")
+
+        mock_scanner = MagicMock()
+        mock_scanner.get_file_summary.return_value = """[python] empty.py
+Lines: 0
+Size: 0 B
+---"""
+
+        with patch("src.commands.cli_usage._get_scanner") as mock_get_scanner, \
+             patch("rich.console.Console") as mock_console_cls:
+            mock_get_scanner.return_value = lambda path: mock_scanner
+            mock_console = mock_console_cls.return_value
+
+            context_summary(path=str(test_file), max_lines=50, project_path=tmp_path)
+
+            # Panel should still be printed
+            assert mock_console.print.called
+
+    def test_context_summary_scanner_exception(self, tmp_path):
+        """context_summary propagates scanner exceptions."""
+        from src.commands.cli_usage import context_summary
+
+        test_file = tmp_path / "fail.py"
+        test_file.write_text("x")
+
+        mock_scanner = MagicMock()
+        mock_scanner.get_file_summary.side_effect = RuntimeError("Scanner error")
+
+        with patch("src.commands.cli_usage._get_scanner") as mock_get_scanner, \
+             patch("rich.console.Console"):
+            mock_get_scanner.return_value = lambda path: mock_scanner
+
+            with pytest.raises(RuntimeError, match="Scanner error"):
+                context_summary(path=str(test_file), max_lines=50, project_path=tmp_path)
+
+    def test_context_summary_max_lines_passed(self, tmp_path):
+        """context_summary passes max_lines to scanner.get_file_summary."""
+        from src.commands.cli_usage import context_summary
+
+        test_file = tmp_path / "lines.py"
+        test_file.write_text("pass")
+
+        mock_scanner = MagicMock()
+        mock_scanner.get_file_summary.return_value = """[python] lines.py
+Lines: 1
+Size: 4 B
+---
+pass"""
+
+        with patch("src.commands.cli_usage._get_scanner") as mock_get_scanner, \
+             patch("rich.console.Console"):
+            mock_get_scanner.return_value = lambda path: mock_scanner
+
+            context_summary(path=str(test_file), max_lines=20, project_path=tmp_path)
+
+            mock_scanner.get_file_summary.assert_called_once()
+            call_kwargs = mock_scanner.get_file_summary.call_args[1]
+            assert call_kwargs["max_lines"] == 20
+
+    def test_context_summary_panel_title_filename(self, tmp_path):
+        """context_summary Panel title contains the filename."""
+        from src.commands.cli_usage import context_summary
+
+        test_file = tmp_path / "my_module.py"
+        test_file.write_text("print('hi')")
+
+        mock_scanner = MagicMock()
+        mock_scanner.get_file_summary.return_value = """[python] my_module.py
+Lines: 1
+Size: 12 B
+---
+print('hi')"""
+
+        with patch("src.commands.cli_usage._get_scanner") as mock_get_scanner, \
+             patch("rich.panel.Panel") as mock_panel_cls, \
+             patch("rich.console.Console"):
+            mock_get_scanner.return_value = lambda path: mock_scanner
+
+            context_summary(path=str(test_file), max_lines=50, project_path=tmp_path)
+
+            # Verify Panel was called with correct title
+            mock_panel_cls.assert_called_once()
+            panel_title = mock_panel_cls.call_args[1].get("title") or mock_panel_cls.call_args[0][1]
+            assert "my_module.py" in panel_title
+
+    def test_context_summary_unknown_language(self, tmp_path):
+        """context_summary prints plain content for unknown language."""
+        from src.commands.cli_usage import context_summary
+
+        test_file = tmp_path / "data.xyz"
+        test_file.write_text("some content")
+
+        mock_scanner = MagicMock()
+        mock_scanner.get_file_summary.return_value = """[unknown] data.xyz
+Lines: 1
+Size: 12 B
+---
+some content"""
+
+        with patch("src.commands.cli_usage._get_scanner") as mock_get_scanner, \
+             patch("rich.console.Console") as mock_console_cls:
+            mock_get_scanner.return_value = lambda path: mock_scanner
+            mock_console = mock_console_cls.return_value
+
+            context_summary(path=str(test_file), max_lines=50, project_path=tmp_path)
+
+            # Should print content directly, not through Syntax
+            assert mock_console.print.called
+
+    def test_context_summary_header_only_no_content(self, tmp_path):
+        """context_summary handles summary with header but no content section."""
+        from src.commands.cli_usage import context_summary
+
+        test_file = tmp_path / "headeronly.txt"
+        test_file.write_text("info only")
+
+        mock_scanner = MagicMock()
+        # No --- separator, so all lines go to header_lines
+        mock_scanner.get_file_summary.return_value = """[text] headeronly.txt
+Lines: 1
+Size: 9 B"""
+
+        with patch("src.commands.cli_usage._get_scanner") as mock_get_scanner, \
+             patch("rich.console.Console") as mock_console_cls:
+            mock_get_scanner.return_value = lambda path: mock_scanner
+            mock_console = mock_console_cls.return_value
+
+            context_summary(path=str(test_file), max_lines=50, project_path=tmp_path)
+
+            # Should print Panel but no content (content_lines is empty)
+            assert mock_console.print.called
 
 
 class TestContextTree:
