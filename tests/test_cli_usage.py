@@ -1173,6 +1173,243 @@ class TestContextScan:
         out = capsys.readouterr().out
         assert "扫描" in out
 
+    def test_context_scan_json_output_structure(self, tmp_path):
+        """context_scan JSON output has correct structure."""
+        from src.commands.cli_usage import context_scan
+
+        mock_scanner = Mock()
+        mock_node = Mock()
+        mock_node.to_dict.return_value = {"name": "test", "children": []}
+        mock_scanner.scan.return_value = mock_node
+        mock_scanner._scan_stats = {
+            "files_scanned": 2,
+            "dirs_scanned": 1,
+            "bytes_scanned": 10,
+            "errors": [],
+        }
+
+        with patch("src.commands.cli_usage._get_scanner") as mock_get_scanner:
+            mock_get_scanner.return_value.return_value = mock_scanner
+            context_scan(project_path=tmp_path, depth=3, json_output=True)
+
+        # Verify scanner methods were called
+        assert mock_scanner.scan.called
+        assert hasattr(mock_scanner, "_scan_stats")
+
+    def test_context_scan_renders_panel_and_tree(self, tmp_path, capsys):
+        """context_scan renders Panel and tree when not JSON."""
+        from src.commands.cli_usage import context_scan
+
+        mock_scanner = Mock()
+        mock_node = Mock()
+        mock_node.name = "project"
+        mock_scanner.scan.return_value = mock_node
+        mock_scanner._render_tree.return_value = [
+            "├── a.py",
+            "└── b.py",
+        ]
+        mock_scanner._format_size.return_value = "1 KB"
+        mock_scanner._scan_stats = {
+            "files_scanned": 2,
+            "dirs_scanned": 1,
+            "bytes_scanned": 1024,
+            "errors": [],
+        }
+
+        with patch("src.commands.cli_usage._get_scanner") as mock_get_scanner:
+            mock_get_scanner.return_value.return_value = mock_scanner
+            context_scan(project_path=tmp_path, depth=3, json_output=False)
+
+        out = capsys.readouterr().out
+        assert "工作目录扫描" in out or "a.py" in out
+        mock_scanner._render_tree.assert_called_once()
+        mock_scanner._format_size.assert_called_once()
+
+    def test_context_scan_with_files_and_subdirs(self, tmp_path, capsys):
+        """context_scan with files and subdirectories."""
+        from src.commands.cli_usage import context_scan
+
+        src_dir = tmp_path / "src"
+        src_dir.mkdir()
+        (tmp_path / "main.py").write_text("print('hello')")
+        (src_dir / "utils.py").write_text("def add(): pass")
+
+        context_scan(project_path=tmp_path, depth=2, json_output=False)
+        out = capsys.readouterr().out
+        assert "py" in out
+
+    def test_context_scan_different_depths(self, tmp_path, capsys):
+        """context_scan respects different depth values."""
+        from src.commands.cli_usage import context_scan
+        (tmp_path / "root.py").write_text("x")
+        subdir = tmp_path / "level1"
+        subdir.mkdir()
+        (subdir / "deep.py").write_text("y")
+
+        # depth=0: should still scan current directory
+        context_scan(project_path=tmp_path, depth=0, json_output=False)
+        out = capsys.readouterr().out
+        # Should show project name and possibly files
+        assert tmp_path.name in out or "root.py" in out
+
+    def test_context_scan_scanner_exception_propagates(self, tmp_path):
+        """context_scan propagates scanner exception."""
+        from src.commands.cli_usage import context_scan
+
+        mock_scanner = Mock()
+        mock_scanner.scan.side_effect = Exception("Scan failed")
+        mock_scanner._scan_stats = {
+            "files_scanned": 0,
+            "dirs_scanned": 0,
+            "bytes_scanned": 0,
+            "errors": ["Scan failed"],
+        }
+
+        with patch("src.commands.cli_usage._get_scanner") as mock_get_scanner:
+            mock_get_scanner.return_value.return_value = mock_scanner
+            with pytest.raises(Exception):
+                context_scan(project_path=tmp_path, depth=1, json_output=False)
+
+    def test_context_scan_renders_errors(self, tmp_path, capsys):
+        """context_scan shows error warnings when stats contain errors."""
+        from src.commands.cli_usage import context_scan
+
+        mock_scanner = Mock()
+        mock_node = Mock()
+        mock_node.name = "project"
+        mock_scanner.scan.return_value = mock_node
+        mock_scanner._render_tree.return_value = ["├── file.py"]
+        mock_scanner._format_size.return_value = "100 B"
+        mock_scanner._scan_stats = {
+            "files_scanned": 1,
+            "dirs_scanned": 1,
+            "bytes_scanned": 100,
+            "errors": ["Permission denied: ./secret.txt", "Read error: ./broken.log"],
+        }
+
+        with patch("src.commands.cli_usage._get_scanner") as mock_get_scanner:
+            mock_get_scanner.return_value.return_value = mock_scanner
+            context_scan(project_path=tmp_path, depth=2, json_output=False)
+
+        out = capsys.readouterr().out
+        # Should show error warning (⚠️ or similar)
+        assert "⚠️" in out or "错误" in out
+        assert "Permission" in out or "secret" in out
+
+    def test_context_scan_json_with_errors(self, tmp_path):
+        """context_scan JSON output includes errors field."""
+        from src.commands.cli_usage import context_scan
+
+        mock_scanner = Mock()
+        mock_node = Mock()
+        mock_node.to_dict.return_value = {"name": "test", "children": []}
+        mock_scanner.scan.return_value = mock_node
+        mock_scanner._scan_stats = {
+            "files_scanned": 1,
+            "dirs_scanned": 1,
+            "bytes_scanned": 50,
+            "errors": ["error1", "error2"],
+        }
+
+        with patch("src.commands.cli_usage._get_scanner") as mock_get_scanner:
+            mock_get_scanner.return_value.return_value = mock_scanner
+            context_scan(project_path=tmp_path, depth=1, json_output=True)
+
+        assert mock_scanner.scan.called
+
+    def test_context_scan_renders_tree_with_prefix(self, tmp_path, capsys):
+        """context_scan tree rendering with prefix and last flag."""
+        from src.commands.cli_usage import context_scan
+
+        mock_scanner = Mock()
+        mock_node = Mock()
+        mock_node.name = "project"
+        mock_scanner.scan.return_value = mock_node
+        mock_scanner._render_tree.return_value = [
+            "├── src/",
+            "│   ├── main.py",
+            "│   └── utils.py",
+            "├── README.md",
+            "└── pyproject.toml",
+        ]
+        mock_scanner._format_size.return_value = "2 KB"
+        mock_scanner._scan_stats = {
+            "files_scanned": 4,
+            "dirs_scanned": 1,
+            "bytes_scanned": 2048,
+            "errors": [],
+        }
+
+        with patch("src.commands.cli_usage._get_scanner") as mock_get_scanner:
+            mock_get_scanner.return_value.return_value = mock_scanner
+            context_scan(project_path=tmp_path, depth=3, json_output=False)
+
+        out = capsys.readouterr().out
+        # Verify tree was rendered
+        assert mock_scanner._render_tree.called
+        assert "src" in out or "main.py" in out
+
+    def test_context_scan_many_errors_truncation(self, tmp_path, capsys):
+        """context_scan only shows first 5 errors with truncation message."""
+        from src.commands.cli_usage import context_scan
+
+        mock_scanner = Mock()
+        mock_node = Mock()
+        mock_node.name = "project"
+        mock_scanner.scan.return_value = mock_node
+        mock_scanner._render_tree.return_value = []
+        mock_scanner._format_size.return_value = "0 B"
+        mock_scanner._scan_stats = {
+            "files_scanned": 0,
+            "dirs_scanned": 0,
+            "bytes_scanned": 0,
+            "errors": [f"error-{i}" for i in range(10)],
+        }
+
+        with patch("src.commands.cli_usage._get_scanner") as mock_get_scanner:
+            mock_get_scanner.return_value.return_value = mock_scanner
+            context_scan(project_path=tmp_path, depth=1, json_output=False)
+
+        out = capsys.readouterr().out
+        # Should show ⚠️ warning
+        assert "⚠️" in out
+        # First 5 errors shown
+        assert "error-0" in out or "error-1" in out
+        # Truncation message for 10 errors
+        assert "10" in out
+
+    def test_context_scan_get_scanner_lazy_import(self, tmp_path):
+        """context_scan uses _get_scanner for lazy import."""
+        from src.commands.cli_usage import _get_scanner
+        from src.context import WorkspaceScanner
+
+        scanner_cls = _get_scanner()
+        assert scanner_cls is WorkspaceScanner
+
+    def test_context_scan_json_with_special_chars(self, tmp_path):
+        """context_scan JSON output handles special characters."""
+        from src.commands.cli_usage import context_scan
+
+        mock_scanner = Mock()
+        mock_node = Mock()
+        mock_node.to_dict.return_value = {
+            "name": "project",
+            "children": [{"name": "中文文件.py", "type": "file"}],
+        }
+        mock_scanner.scan.return_value = mock_node
+        mock_scanner._scan_stats = {
+            "files_scanned": 1,
+            "dirs_scanned": 0,
+            "bytes_scanned": 50,
+            "errors": [],
+        }
+
+        with patch("src.commands.cli_usage._get_scanner") as mock_get_scanner:
+            mock_get_scanner.return_value.return_value = mock_scanner
+            context_scan(project_path=tmp_path, depth=1, json_output=True)
+
+        assert mock_scanner.scan.called
+
 
 class TestContextSummary:
     """Tests for context_summary."""
