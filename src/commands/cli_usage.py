@@ -1358,11 +1358,16 @@ def cost_suggest(
     prefer_local: bool = typer.Option(True, "--prefer-local/--no-local", help="Prefer local models"),
 ) -> None:
     """Recommend optimal model based on task complexity"""
+    # Extract real bool from typer OptionInfo (OptionInfo is always truthy in Python)
+    _files = files.default if hasattr(files, 'default') else files
+    _list_models = list_models.default if hasattr(list_models, 'default') else list_models
+    _prefer_local = prefer_local.default if hasattr(prefer_local, 'default') else prefer_local
+
     from src.agents.cost_optimizer import CostOptimizer
 
-    optimizer = CostOptimizer(prefer_local=prefer_local)
+    optimizer = CostOptimizer(prefer_local=_prefer_local)
 
-    if list_models:
+    if _list_models:
         _cost_list_models(optimizer)
         return
 
@@ -1373,7 +1378,7 @@ def cost_suggest(
         console_cost.print("  omc cost suggest --files 15 'implement payment'")
         return
 
-    recommendation = optimizer.recommend(task, file_count=files if files > 0 else None)
+    recommendation = optimizer.recommend(task, file_count=_files if _files > 0 else None)
 
     complexity_colors = {"low": "green", "medium": "yellow", "high": "red"}
     cost_bars = "💰" * int(recommendation.estimated_cost)
