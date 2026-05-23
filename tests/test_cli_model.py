@@ -846,6 +846,34 @@ class TestLocalApp:
         # May fail if Ollama not running, that's ok
         assert result.exit_code in [0, 1]
 
+    @patch("src.core.ollama_health.OllamaHealthChecker")
+    def test_local_status_with_health_checker(self, mock_checker_class):
+        """测试 Ollama 服务运行中（使用 OllamaHealthChecker）"""
+        from dataclasses import dataclass
+
+        # 创建模拟的 OllamaHealthStatus
+        mock_status = type(
+            "OllamaHealthStatus",
+            (),
+            {
+                "running": True,
+                "version": "0.1.45",
+                "model_count": 2,
+                "available_models": ["qwen2:7b", "llama3:8b"],
+                "latency_ms": 50.0,
+                "last_check_time": None,
+            },
+        )()
+
+        mock_checker = MagicMock()
+        mock_checker.check_ollama.return_value = mock_status
+        mock_checker_class.return_value = mock_checker
+
+        # 让 discover_ollama_models 导入失败，测试 except 分支
+        with patch.dict("sys.modules", {"src.core.local_model_discovery": None}):
+            result = runner.invoke(app, ["local", "status"])
+            assert result.exit_code == 0
+
     def test_local_list(self):
         """omc model local list"""
         result = runner.invoke(app, ["local", "list"])
