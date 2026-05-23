@@ -1191,16 +1191,126 @@ class TestContextSummary:
         with pytest.raises(typer.Exit):
             context_summary(path="nonexistent.py", project_path=tmp_path)
 
+    def test_context_summary_syntax_highlight_error(self, tmp_path):
+        """context_summary falls back to console.print(content) when Syntax fails."""
+        import sys
+        from unittest.mock import patch, MagicMock, mock_open
+        from src.commands.cli_usage import context_summary
+
+        test_file = tmp_path / "test.py"
+        test_file.write_text("def foo(): pass")
+
+        # Mock scanner.get_file_summary to return a result with language info
+        mock_scanner = MagicMock()
+        mock_scanner.get_file_summary.return_value = """[python] test.py
+Lines: 1
+Size: 16 B
+---
+def foo(): pass"""
+
+        # Patch rich.syntax.Syntax to raise an exception
+        # Since Syntax is imported inside the function, we need to patch the module attribute
+        import rich.syntax
+        original_Syntax = rich.syntax.Syntax
+        rich.syntax.Syntax = MagicMock(side_effect=Exception("Syntax error"))
+
+        try:
+            with patch("src.commands.cli_usage._get_scanner") as mock_get_scanner, \
+                 patch("rich.console.Console") as mock_console_cls, \
+                 patch("builtins.open", mock_open(read_data="def foo(): pass")):
+
+                mock_get_scanner.return_value = lambda path: mock_scanner
+                mock_console = mock_console_cls.return_value
+
+                context_summary(path=str(test_file), max_lines=50, project_path=tmp_path)
+
+                # Check that console.print was called with content string
+                assert mock_console.print.called
+                # The except block should call console.print(content)
+                found = False
+                for c in mock_console.print.call_args_list:
+                    args = c[0]
+                    if args and isinstance(args[0], str) and "def foo()" in args[0]:
+                        found = True
+                        break
+                assert found, f"console.print was not called with file content. Calls: {mock_console.print.call_args_list}"
+        finally:
+            # Restore original Syntax
+            rich.syntax.Syntax = original_Syntax
+
 
 class TestContextTree:
-    """Tests for context_tree - note: typer commands can't be called directly."""
+    """Tests for context_tree."""
+
+    def test_context_tree_basic(self, tmp_path):
+        """context_tree displays file tree."""
+        from src.commands.cli_usage import context_tree
+        from unittest.mock import patch, MagicMock
+
+        # Create a mock FileNode structure
+        mock_child = MagicMock()
+        mock_child.is_dir = False
+        mock_child.name = "main.py"
+        mock_child.language = "Python"
+        mock_child.size = 100
+        mock_child.children = []
+
+        mock_root = MagicMock()
+        mock_root.is_dir = True
+        mock_root.name = "project"
+        mock_root.language = None
+        mock_root.size = 0
+        mock_root.children = [mock_child]
+
+        mock_scanner = MagicMock()
+        mock_scanner.scan.return_value = mock_root
+        mock_scanner.LANGUAGE_EXTENSIONS = {"py": "Python"}
+        mock_scanner._format_size.return_value = "100 B"
+
+        with patch("src.commands.cli_usage._get_scanner") as mock_get_scanner, \
+             patch("rich.console.Console") as mock_console_cls:
+            mock_get_scanner.return_value = lambda path: mock_scanner
+            mock_console = mock_console_cls.return_value
+
+            context_tree(project_path=tmp_path, depth=3, filter_ext=None)
+
+            # Verify console.print was called (tree was printed)
+            assert mock_console.print.called
 
     def test_context_tree_with_filter(self, tmp_path):
-        """context_tree function exists and accepts filter_ext param."""
+        """context_tree with filter_ext parameter."""
         from src.commands.cli_usage import context_tree
-        import inspect
-        sig = inspect.signature(context_tree)
-        assert "filter_ext" in sig.parameters
+        from unittest.mock import patch, MagicMock
+
+        # Create a mock FileNode structure with Python files
+        mock_child = MagicMock()
+        mock_child.is_dir = False
+        mock_child.name = "main.py"
+        mock_child.language = "Python"
+        mock_child.size = 100
+        mock_child.children = []
+
+        mock_root = MagicMock()
+        mock_root.is_dir = True
+        mock_root.name = "project"
+        mock_root.language = None
+        mock_root.size = 0
+        mock_root.children = [mock_child]
+
+        mock_scanner = MagicMock()
+        mock_scanner.scan.return_value = mock_root
+        mock_scanner.LANGUAGE_EXTENSIONS = {"py": "Python"}
+        mock_scanner._format_size.return_value = "100 B"
+
+        with patch("src.commands.cli_usage._get_scanner") as mock_get_scanner, \
+             patch("rich.console.Console") as mock_console_cls:
+            mock_get_scanner.return_value = lambda path: mock_scanner
+            mock_console = mock_console_cls.return_value
+
+            context_tree(project_path=tmp_path, depth=3, filter_ext="py")
+
+            # Verify console.print was called
+            assert mock_console.print.called
 
 
 class TestContextStats:
@@ -1218,25 +1328,92 @@ class TestContextStats:
 class TestContextBrowser:
     """Tests for context_browser."""
 
-    def test_context_browser_available(self, capsys):
+    def test_context_browser_available(self):
         """context_browser when browser available."""
-        from src.commands.cli_usage import context_browser
-        mock_ctx = type("C", (), {
-            "available": True,
-            "title": "Google",
-            "url": "https://google.com",
-            "content": "Search page",
-            "links": ["https://mail.google.com"],
-            "timestamp": "2026-05-22",
-        })()
+        import asyncio
+        from unittest.mock import AsyncMock, MagicMock, patch
 
-        async def _get_tab():
-            return mock_ctx
+        from src.commands.cli_usage import context_browser
+
+        # Mock ctx
+        mock_ctx = MagicMock()
+        mock_ctx.available = True
+        mock_ctx.title = "Google"
+        mock_ctx.url = "https://google.com"
+        mock_ctx.content = "Search page"
+        mock_ctx.links = ["https://mail.google.com"]
+        mock_ctx.timestamp = "2026-05-22"
+
+        # Mock awareness
+        mock_awareness = MagicMock()
+        mock_awareness.get_current_tab = AsyncMock(return_value=mock_ctx)
 
         with patch("src.context.BrowserAwareness") as mock_cls, \
-             patch("asyncio.run"):
-            mock_cls.return_value.get_current_tab = _get_tab
-            context_browser()
+             patch("asyncio.run") as mock_run, \
+             patch("rich.console.Console") as mock_console_cls:
+
+            mock_cls.return_value = mock_awareness
+
+            # Make asyncio.run actually run the coroutine
+            def _run(coroutine):
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                try:
+                    return loop.run_until_complete(coroutine)
+                finally:
+                    loop.close()
+                    asyncio.set_event_loop(None)
+
+            mock_run.side_effect = _run
+
+            # Mock Console to capture output
+            mock_console = mock_console_cls.return_value
+
+            context_browser(watch=False)
+
+            # Check that console.print was called with the expected output
+            assert mock_console.print.called
+
+    def test_context_browser_unavailable(self):
+        """context_browser when browser unavailable."""
+        import asyncio
+        from unittest.mock import AsyncMock, MagicMock, patch
+
+        from src.commands.cli_usage import context_browser
+
+        # Mock ctx with available=False
+        mock_ctx = MagicMock()
+        mock_ctx.available = False
+
+        # Mock awareness
+        mock_awareness = MagicMock()
+        mock_awareness.get_current_tab = AsyncMock(return_value=mock_ctx)
+
+        with patch("src.context.BrowserAwareness") as mock_cls, \
+             patch("asyncio.run") as mock_run, \
+             patch("rich.console.Console") as mock_console_cls:
+
+            mock_cls.return_value = mock_awareness
+
+            # Make asyncio.run actually run the coroutine
+            def _run(coroutine):
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                try:
+                    return loop.run_until_complete(coroutine)
+                finally:
+                    loop.close()
+                    asyncio.set_event_loop(None)
+
+            mock_run.side_effect = _run
+
+            # Mock Console to capture output
+            mock_console = mock_console_cls.return_value
+
+            context_browser(watch=False)
+
+            # Check that console.print was called with the expected output
+            assert mock_console.print.called
 
 
 # =============================================================================
