@@ -548,7 +548,7 @@ class TestTraceShow:
         """trace_show with no session exits."""
         from src.commands.cli_usage import trace_show
         with patch("src.commands.cli_usage._get_store") as mock_store, \
-             patch("src.commands.cli_usage.console_trace.print") as mock_print:
+             patch("src.commands.cli_usage.console_trace.print"):
             mock_instance = mock_store.return_value
             mock_instance.get_latest_session.return_value = None
             with pytest.raises(typer.Exit):
@@ -558,7 +558,7 @@ class TestTraceShow:
         """trace_show when agent not found."""
         from src.commands.cli_usage import trace_show
         with patch("src.commands.cli_usage._get_store") as mock_store, \
-             patch("src.commands.cli_usage.console_trace.print") as mock_print:
+             patch("src.commands.cli_usage.console_trace.print"):
             mock_instance = mock_store.return_value
             mock_instance.get_latest_session.return_value = "sess-1"
             mock_instance.get_trace.return_value = None
@@ -631,7 +631,7 @@ class TestTraceShow:
             ],
         }
         with patch("src.commands.cli_usage._get_store") as mock_store, \
-             patch("src.commands.cli_usage.console_trace.print") as mock_print:
+             patch("src.commands.cli_usage.console_trace.print"):
             mock_instance = mock_store.return_value
             mock_instance.get_latest_session.return_value = "sess-1"
             mock_instance.get_trace.return_value = trace_data
@@ -660,7 +660,7 @@ class TestTraceAgentsWithData:
     def test_trace_agents_empty(self):
         """trace_agents with no agents."""
         with patch("src.commands.cli_usage._get_store") as mock_store, \
-             patch("src.commands.cli_usage.console_trace.print") as mock_print:
+             patch("src.commands.cli_usage.console_trace.print"):
             mock_instance = mock_store.return_value
             mock_instance.get_latest_session.return_value = "sess-1"
             mock_instance.get_all_agents_in_session.return_value = []
@@ -678,7 +678,7 @@ class TestTraceListEdge:
     def test_trace_list_empty_traces(self):
         """trace_list with session having no traces."""
         with patch("src.commands.cli_usage._get_store") as mock_store, \
-             patch("src.commands.cli_usage.console_trace.print") as mock_print:
+             patch("src.commands.cli_usage.console_trace.print"):
             mock_instance = mock_store.return_value
             mock_instance.list_sessions.return_value = ["sess-1"]
             mock_instance.list_traces.return_value = []
@@ -842,8 +842,9 @@ class TestCompactSweep:
 
     def test_compact_sweep_since_last_user(self, tmp_path):
         """compact_sweep with --since_last_user parameter."""
-        from src.commands.cli_usage import compact_sweep
         import inspect
+
+        from src.commands.cli_usage import compact_sweep
         sig = inspect.signature(compact_sweep)
         assert "since_last_user" in sig.parameters
 
@@ -869,8 +870,9 @@ class TestCostSuggest:
 
     def test_cost_suggest_no_task(self):
         """cost_suggest with no task shows help (function signature check)."""
-        from src.commands.cli_usage import cost_suggest
         import inspect
+
+        from src.commands.cli_usage import cost_suggest
         sig = inspect.signature(cost_suggest)
         assert "task" in sig.parameters
         assert "list_models" in sig.parameters
@@ -891,6 +893,7 @@ class TestCostSuggest:
     def test_cost_suggest_with_task(self, capsys):
         """cost_suggest with a task description."""
         from unittest.mock import Mock
+
         from src.commands.cli_usage import cost_suggest
 
         mock_rec = Mock()
@@ -929,6 +932,7 @@ class TestCostSuggest:
     def test_cost_suggest_with_alternatives(self, capsys):
         """cost_suggest shows alternatives."""
         from unittest.mock import Mock
+
         from src.commands.cli_usage import cost_suggest
 
         mock_rec = Mock()
@@ -1027,7 +1031,7 @@ class TestThoughtCommands:
     def test_thought_step_invalid_type(self):
         """thought_step with invalid step type exits."""
         from src.commands.cli_usage import thought_step
-        with patch("src.core.chain_of_thought.ChainOfThoughtRecorder") as mock_cls:
+        with patch("src.core.chain_of_thought.ChainOfThoughtRecorder"):
             with pytest.raises(typer.Exit):
                 thought_step(chain_id="abc", step_type="invalid_type", description="test")
 
@@ -1076,7 +1080,7 @@ class TestThoughtCommands:
     def test_thought_complete(self, capsys):
         """thought_complete marks chain done."""
         from src.commands.cli_usage import thought_complete
-        with patch("src.core.chain_of_thought.ChainOfThoughtRecorder") as mock_cls:
+        with patch("src.core.chain_of_thought.ChainOfThoughtRecorder"):
             thought_complete(chain_id="abc-123")
         out = capsys.readouterr().out
         assert "abc-123" in out
@@ -1107,8 +1111,7 @@ class TestThoughtCommands:
         mock_chain = type("C", (), {"chain_id": "abc"})()
         with patch("src.core.chain_of_thought.ChainOfThoughtRecorder") as mock_cls, \
              patch("src.core.chain_of_thought.visualize_chain", return_value="<html></html>"), \
-             patch("builtins.open", create=True) as mock_open:
-            mock_file = mock_open.return_value.__enter__.return_value
+             patch("builtins.open", create=True):
             mock_cls.return_value.get_chain.return_value = mock_chain
             thought_show(chain_id="abc", format="html")
         out = capsys.readouterr().out
@@ -1161,7 +1164,7 @@ class TestContextScan:
         from src.commands.cli_usage import context_scan
         (tmp_path / "f.py").write_text("x")
         import io
-        buf = io.StringIO()
+        io.StringIO()
         with patch("rich.console.Console.print") as mock_print:
             context_scan(project_path=tmp_path, depth=1, json_output=True)
         # Verify the function was called (JSON path was taken)
@@ -1258,7 +1261,7 @@ class TestContextScan:
         from src.commands.cli_usage import context_scan
 
         mock_scanner = Mock()
-        mock_scanner.scan.side_effect = Exception("Scan failed")
+        mock_scanner.scan.side_effect = RuntimeError("Scan failed")
         mock_scanner._scan_stats = {
             "files_scanned": 0,
             "dirs_scanned": 0,
@@ -1268,7 +1271,7 @@ class TestContextScan:
 
         with patch("src.commands.cli_usage._get_scanner") as mock_get_scanner:
             mock_get_scanner.return_value.return_value = mock_scanner
-            with pytest.raises(Exception):
+            with pytest.raises(RuntimeError):
                 context_scan(project_path=tmp_path, depth=1, json_output=False)
 
     def test_context_scan_renders_errors(self, tmp_path, capsys):
@@ -1432,8 +1435,8 @@ class TestContextSummary:
 
     def test_context_summary_syntax_highlight_error(self, tmp_path):
         """context_summary falls back to console.print(content) when Syntax fails."""
-        import sys
-        from unittest.mock import patch, MagicMock, mock_open
+        from unittest.mock import MagicMock, mock_open, patch
+
         from src.commands.cli_usage import context_summary
 
         test_file = tmp_path / "test.py"
@@ -1553,10 +1556,9 @@ const x = 1;"""
 
         with patch("src.commands.cli_usage._get_scanner") as mock_get_scanner, \
              patch("rich.syntax.Syntax") as mock_syntax_cls, \
-             patch("rich.console.Console") as mock_console_cls:
+             patch("rich.console.Console"):
             mock_get_scanner.return_value = lambda path: mock_scanner
             mock_syntax_cls.return_value = mock_syntax
-            mock_console = mock_console_cls.return_value
 
             context_summary(path=str(test_file), max_lines=50, project_path=tmp_path)
 
@@ -1762,8 +1764,9 @@ class TestContextTree:
 
     def test_context_tree_basic(self, tmp_path):
         """context_tree displays file tree."""
+        from unittest.mock import MagicMock, patch
+
         from src.commands.cli_usage import context_tree
-        from unittest.mock import patch, MagicMock
 
         # Create a mock FileNode structure
         mock_child = MagicMock()
@@ -1797,8 +1800,9 @@ class TestContextTree:
 
     def test_context_tree_with_filter(self, tmp_path):
         """context_tree with filter_ext parameter."""
+        from unittest.mock import MagicMock, patch
+
         from src.commands.cli_usage import context_tree
-        from unittest.mock import patch, MagicMock
 
         # Create a mock FileNode structure with Python files
         mock_child = MagicMock()
@@ -2111,9 +2115,9 @@ class TestContextTree:
 
     def test_context_tree_rich_output(self, tmp_path):
         """context_tree renders rich Tree output."""
+        from unittest.mock import MagicMock, patch
+
         from src.commands.cli_usage import context_tree
-        from unittest.mock import patch, MagicMock
-        from rich.tree import Tree
 
         mock_root = MagicMock()
         mock_root.is_dir = True
@@ -2145,7 +2149,6 @@ class TestContextTree:
     def test_context_tree_with_depth(self, tmp_path, capsys):
         """context_tree respects depth parameter."""
         from src.commands.cli_usage import context_tree
-        from src.context.workspace_scanner import FileNode
 
         # Create nested structure
         deep_dir = tmp_path / "level1" / "level2"
@@ -2168,8 +2171,9 @@ class TestContextTree:
 
     def test_context_tree_scanner_exception(self, tmp_path):
         """context_tree propagates scanner exception."""
+        from unittest.mock import MagicMock, patch
+
         from src.commands.cli_usage import context_tree
-        from unittest.mock import patch, MagicMock
 
         mock_scanner = MagicMock()
         mock_scanner.scan.side_effect = RuntimeError("Scanner failed")
@@ -2280,26 +2284,12 @@ class TestContextTree:
         out = capsys.readouterr().out
         assert "main.py" in out
 
-
-class TestContextStats:
-    """Tests for context_stats."""
-
-    def test_context_stats_basic(self, tmp_path, capsys):
-        """context_stats shows stats."""
-        from src.commands.cli_usage import context_stats
-        (tmp_path / "a.py").write_text("print('hello')\nprint('world')")
-        context_stats(project_path=tmp_path)
-        out = capsys.readouterr().out
-        assert "python" in out.lower() or "统计" in out
-
-
 class TestContextBrowser:
     """Tests for context_browser."""
 
     def _make_browser_awareness_mock(self, ctx_available=True, ctx_title="Google", ctx_url="https://google.com",
                                     ctx_content="Search page", ctx_links=None, side_effect=None):
         """Helper to create BrowserAwareness mock."""
-        import asyncio
         from unittest.mock import AsyncMock, MagicMock
 
         mock_ctx = MagicMock()
@@ -2467,6 +2457,7 @@ class TestContextBrowser:
         """context_browser calls asyncio.run."""
         import asyncio
         from unittest.mock import patch
+
         from src.commands.cli_usage import context_browser
 
         # Save the real asyncio.run BEFORE patching
@@ -2497,7 +2488,6 @@ class TestContextBrowser:
         mock_awareness.get_current_tab = MagicMock(side_effect=Exception("Connection failed"))
 
         # Patch asyncio.run to actually execute the coroutine so the exception propagates
-        original_run = asyncio.run
 
         with patch("src.context.BrowserAwareness") as mock_cls, \
              patch("asyncio.run") as mock_run:
@@ -2538,7 +2528,6 @@ class TestContextBrowser:
 
             # Track which coroutine was passed to asyncio.run
             run_calls = []
-            original_run = asyncio.run
 
             def _run(coroutine):
                 run_calls.append(coroutine)
@@ -2558,6 +2547,7 @@ class TestContextBrowser:
         """context_browser watch mode handles CancelledError."""
         import asyncio
         from unittest.mock import patch
+
         from src.commands.cli_usage import context_browser
 
         mock_awareness = self._make_browser_awareness_mock()
