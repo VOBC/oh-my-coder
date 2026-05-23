@@ -23,6 +23,7 @@ from src.commands.cli_usage import (
     _cost_load_usage_data,
     # Stats helpers
     _get_manager,
+    context_stats,
     cost_history,
     cost_model,
     cost_report,
@@ -1637,3 +1638,154 @@ class TestCostHistoryEdge:
             ]))
             with patch("src.commands.cli_usage._COST_USAGE_FILE", usage_file):
                 cost_history(limit=20, model=None)
+
+
+# =============================================================================
+# Context Stats
+# =============================================================================
+
+
+class TestContextStats:
+    """Tests for context_stats function."""
+
+    def test_context_stats_empty_project(self, tmp_path, capsys):
+        """context_stats with empty project."""
+        context_stats(project_path=tmp_path)
+        out = capsys.readouterr().out
+        assert "项目统计" in out
+        assert "0" in out  # No files
+
+    def test_context_stats_with_python_files(self, tmp_path, capsys):
+        """context_stats with Python files."""
+        (tmp_path / "main.py").write_text("print('hello')\nprint('world')\n")
+        (tmp_path / "utils.py").write_text("def add(a, b):\n    return a + b\n")
+
+        context_stats(project_path=tmp_path)
+        out = capsys.readouterr().out
+        assert "项目统计" in out
+        assert "py" in out.lower() or "python" in out.lower()
+
+    def test_context_stats_multiple_languages(self, tmp_path, capsys):
+        """context_stats with multiple languages."""
+        (tmp_path / "script.py").write_text("# Python\nprint('hello')\n")
+        (tmp_path / "page.html").write_text("<html><body>Hello</body></html>\n")
+        (tmp_path / "style.css").write_text("body { color: red; }\n")
+        (tmp_path / "README.md").write_text("# README\n")
+
+        context_stats(project_path=tmp_path)
+        out = capsys.readouterr().out
+        assert "项目统计" in out
+        # Should show multiple languages
+        assert "py" in out.lower() or "html" in out.lower() or "css" in out.lower()
+
+    def test_context_stats_with_subdir(self, tmp_path, capsys):
+        """context_stats includes subdirectories."""
+        subdir = tmp_path / "src"
+        subdir.mkdir()
+        (tmp_path / "main.py").write_text("print('hello')\n")
+        (subdir / "utils.py").write_text("def add(a, b):\n    return a + b\n")
+
+        context_stats(project_path=tmp_path)
+        out = capsys.readouterr().out
+        assert "项目统计" in out
+        # Should count files in subdirectory (2 Python files)
+        assert "2" in out
+
+    def test_context_stats_with_nested_subdirs(self, tmp_path, capsys):
+        """context_stats handles nested subdirectories."""
+        subdir = tmp_path / "src" / "utils"
+        subdir.mkdir(parents=True)
+        (tmp_path / "main.py").write_text("print('hello')\n")
+        (subdir / "helpers.py").write_text("def helper(): pass\n")
+
+        context_stats(project_path=tmp_path)
+        out = capsys.readouterr().out
+        assert "项目统计" in out
+        # Should count files in nested subdirectory
+        assert "2" in out
+
+    def test_context_stats_language_ranking(self, tmp_path, capsys):
+        """context_stats shows languages sorted by file count."""
+        # Create more Python files than JavaScript files
+        for i in range(5):
+            (tmp_path / f"script{i}.py").write_text(f"# Script {i}\n")
+        for i in range(2):
+            (tmp_path / f"script{i}.js").write_text(f"// Script {i}\n")
+
+        context_stats(project_path=tmp_path)
+        out = capsys.readouterr().out
+        assert "项目统计" in out
+        # Python should be listed before JavaScript (more files)
+        py_pos = out.lower().find("py")
+        js_pos = out.lower().find("js")
+        if py_pos > 0 and js_pos > 0:
+            assert py_pos < js_pos
+
+    def test_context_stats_line_counting(self, tmp_path, capsys):
+        """context_stats counts non-empty lines."""
+        # File with 3 non-empty lines and 2 empty lines
+        (tmp_path / "test.py").write_text("line1\n\nline2\n\nline3\n")
+
+        context_stats(project_path=tmp_path)
+        out = capsys.readouterr().out
+        assert "项目统计" in out
+        # Should count 3 non-empty lines
+        assert "3" in out
+
+    def test_context_stats_unreadable_file(self, tmp_path, capsys):
+        """context_stats handles unreadable files gracefully."""
+        (tmp_path / "readable.py").write_text("print('hello')\n")
+        # Create a file that can't be read (permission denied)
+        unreadable = tmp_path / "unreadable.py"
+        unreadable.write_text("x")
+        unreadable.chmod(0o000)  # No permissions
+
+        try:
+            context_stats(project_path=tmp_path)
+            out = capsys.readouterr().out
+            assert "项目统计" in out
+            # Should still work despite unreadable file
+        except Exception as e:
+            # If exception occurs, it should be handled
+            pytest.fail(f"context_stats should handle unreadable files: {e}")
+        finally:
+            # Restore permissions for cleanup
+            unreadable.chmod(0o644)
+
+    def test_context_stats_unknown_language(self, tmp_path, capsys):
+        """context_stats handles files with unknown extensions."""
+        (tmp_path / "script.xyz").write_text("some content\n")
+        (tmp_path / "README").write_text("no extension\n")
+
+        context_stats(project_path=tmp_path)
+        out = capsys.readouterr().out
+        assert "项目统计" in out
+        # Should categorize as "other"
+        assert "other" in out.lower()
+
+    def test_context_stats_size_calculation(self, tmp_path, capsys):
+        """context_stats calculates file sizes correctly."""
+        # Create a file with known size
+        content = "x" * 100
+        (tmp_path / "test.py").write_text(content)
+
+        context_stats(project_path=tmp_path)
+        out = capsys.readouterr().out
+        assert "项目统计" in out
+        # Should show some size information
+        assert "B" in out or "KB" in out or "MB" in out
+
+    def test_context_stats_max_depth_handling(self, tmp_path, capsys):
+        """context_stats scans with max_depth=10."""
+        # Create nested directories
+        deep_dir = tmp_path / "a" / "b" / "c" / "d"
+        deep_dir.mkdir(parents=True)
+        (tmp_path / "shallow.py").write_text("print('shallow')\n")
+        (deep_dir / "deep.py").write_text("print('deep')\n")
+
+        context_stats(project_path=tmp_path)
+        out = capsys.readouterr().out
+        assert "项目统计" in out
+        # Both files should be counted (depth=10 is enough)
+        assert "2" in out
+
