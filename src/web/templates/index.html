@@ -4,15 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Oh My Coder - 多智能体 AI 编程助手</title>
-    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
-    <link rel="stylesheet" href="/static/style.css?v=1779616392">
+    <link rel="stylesheet" href="/static/style.css?v=20260506">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
     <style>
-
         /* Pipeline */
         .pipeline-container {
             display: flex;
@@ -84,7 +82,6 @@
         }
         .pipeline-icon.active .step-spinner { display: block; }
         .pipeline-icon.active .step-emoji { display: none; }
-        .step-emoji svg { width: 32px; height: 32px; display: inline-block; vertical-align: middle; }
 
         /* Task Card */
         .task-card {
@@ -254,7 +251,7 @@
     <nav class="nav">
         <div class="nav-content">
             <a href="/" class="nav-brand">
-                <span class="nav-brand-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36" width="36" height="36" style="vertical-align:middle;margin-right:4px"><defs><linearGradient id="gnw" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#f59e0b"/><stop offset="100%" style="stop-color:#06b6d4"/></linearGradient></defs><rect x="1" y="1" width="34" height="34" rx="6" ry="6" fill="#1a1a2e" stroke="url(#gnw)" stroke-width="1"/><text x="18" y="23" font-family="monospace" font-size="13" font-weight="bold" fill="url(#gnw)" text-anchor="middle" letter-spacing="1.5">OMC</text><line x1="5" y1="28" x2="31" y2="28" stroke="#f59e0b" stroke-width="1.2" opacity="0.6"/><rect x="31" y="17" width="2" height="10" rx="0.5" fill="#06b6d4"><animate attributeName="opacity" values="0.8;0.1;0.8" dur="1.2s" repeatCount="indefinite"/></rect></svg></span>
+                <span class="nav-brand-icon">🤖</span>
                 <span class="nav-brand-name">Oh My Coder</span>
             </a>
             <div class="nav-links" id="navLinks">
@@ -266,8 +263,8 @@
                 <a href="/settings" class="nav-link">设置</a>
             </div>
             <div class="nav-actions">
-                <div class="nav-toggle" id="themeToggle" title="切换主题"></div>
-                <button class="nav-hamburger" id="navHamburger"></button>
+                <div class="nav-toggle" id="themeToggle" title="切换主题">☀️</div>
+                <button class="nav-hamburger" id="navHamburger">☰</button>
             </div>
         </div>
     </nav>
@@ -285,7 +282,7 @@
 
         <!-- Model List -->
         <section class="models-section">
-            <h3 style="font-size:18px;font-weight:600;text-align:center;margin-bottom:20px;"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:6px;"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>可用模型</h3>
+            <h3 style="font-size:18px;font-weight:600;text-align:center;margin-bottom:20px;">🖥️ 可用模型</h3>
             <div class="models-grid" id="modelsGrid">
                 <!-- 动态加载 -->
             </div>
@@ -295,35 +292,35 @@
         <div class="pipeline-container">
             <div class="pipeline-step">
                 <div class="pipeline-icon waiting" id="step-explore" data-step="explore">
-                    <span class="step-emoji"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span><div class="step-spinner"></div>
+                    <span class="step-emoji">🔍</span><div class="step-spinner"></div>
                 </div>
                 <span class="pipeline-label">探索</span>
             </div>
             <div class="pipeline-arrow" id="arrow-1">→</div>
             <div class="pipeline-step">
                 <div class="pipeline-icon waiting" id="step-analyst" data-step="analyst">
-                    <span class="step-emoji"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" y1="1" x2="9" y2="4"/><line x1="15" y1="1" x2="15" y2="4"/><line x1="9" y1="20" x2="9" y2="23"/><line x1="15" y1="20" x2="15" y2="23"/><line x1="20" y1="9" x2="23" y2="9"/><line x1="20" y1="14" x2="23" y2="14"/><line x1="1" y1="9" x2="4" y2="9"/><line x1="1" y1="14" x2="4" y2="14"/></svg></span><div class="step-spinner"></div>
+                    <span class="step-emoji">🧠</span><div class="step-spinner"></div>
                 </div>
                 <span class="pipeline-label">分析</span>
             </div>
             <div class="pipeline-arrow" id="arrow-2">→</div>
             <div class="pipeline-step">
                 <div class="pipeline-icon waiting" id="step-architect" data-step="architect">
-                    <span class="step-emoji"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"/><line x1="9" y1="6" x2="9" y2="6.01"/><line x1="15" y1="6" x2="15" y2="6.01"/><line x1="9" y1="10" x2="9" y2="10.01"/><line x1="15" y1="10" x2="15" y2="10.01"/><line x1="9" y1="14" x2="9" y2="14.01"/><line x1="15" y1="14" x2="15" y2="14.01"/></svg></span><div class="step-spinner"></div>
+                    <span class="step-emoji">🏗️</span><div class="step-spinner"></div>
                 </div>
                 <span class="pipeline-label">设计</span>
             </div>
             <div class="pipeline-arrow" id="arrow-3">→</div>
             <div class="pipeline-step">
                 <div class="pipeline-icon waiting" id="step-executor" data-step="executor">
-                    <span class="step-emoji"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></span><div class="step-spinner"></div>
+                    <span class="step-emoji">💻</span><div class="step-spinner"></div>
                 </div>
                 <span class="pipeline-label">实现</span>
             </div>
             <div class="pipeline-arrow" id="arrow-4">→</div>
             <div class="pipeline-step">
                 <div class="pipeline-icon waiting" id="step-verifier" data-step="verifier">
-                    <span class="step-emoji"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg></span><div class="step-spinner"></div>
+                    <span class="step-emoji">✅</span><div class="step-spinner"></div>
                 </div>
                 <span class="pipeline-label">验证</span>
             </div>
@@ -332,30 +329,30 @@
         <!-- Task Form -->
         <div class="task-card">
             <div class="task-header">
-                <h2><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:6px;"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> 开始新任务</h2>
+                <h2>🚀 开始新任务</h2>
                 <p class="task-subtitle">描述你的需求，AI 团队将自动协作完成</p>
             </div>
             <form id="taskForm">
                 <div class="form-group">
                     <label for="taskInput" class="form-label">任务描述</label>
                     <textarea id="taskInput" class="form-textarea" placeholder="例如：实现一个用户认证系统，包括注册、登录、JWT 令牌、密码重置等功能" rows="4" required></textarea>
-                    <div class="form-hint"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="#f59e0b" stroke="none" style="vertical-align:middle;margin-right:4px;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12" stroke="white" stroke-width="2"/><line x1="12" y1="8" x2="12.01" y2="8" stroke="white" stroke-width="2"/></svg> 越详细的需求描述，AI 团队的理解和实现效果越好</div>
+                    <div class="form-hint">💡 越详细的需求描述，AI 团队的理解和实现效果越好</div>
                 </div>
                 <div class="form-row">
                     <div class="form-group">
                         <label class="form-label">分析目标</label>
                         <div class="target-tabs-row">
-                            <button type="button" id="tab-local" class="target-tab active" onclick="switchTargetTab('local')"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px;"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg> 本地路径</button>
-                            <button type="button" id="tab-github" class="target-tab" onclick="switchTargetTab('github')"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px;"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg> GitHub</button>
-                            <button type="button" id="tab-url" class="target-tab" onclick="switchTargetTab('url')"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px;"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg> 网页</button>
+                            <button type="button" id="tab-local" class="target-tab active" onclick="switchTargetTab('local')">📂 本地路径</button>
+                            <button type="button" id="tab-github" class="target-tab" onclick="switchTargetTab('github')">🔗 GitHub</button>
+                            <button type="button" id="tab-url" class="target-tab" onclick="switchTargetTab('url')">🌐 网页</button>
                         </div>
                         <div id="target-local" class="target-panel">
                             <input type="text" id="projectPath" class="form-input" placeholder="输入本地文件夹路径，或点击下方快捷按钮">
                             <div class="quick-buttons-row">
-                                <button type="button" onclick="setPath('~/Desktop')" class="quick-btn"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:3px;"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg> 桌面</button>
-                                <button type="button" onclick="setPath('~/Documents')" class="quick-btn"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:3px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> 文稿</button>
-                                <button type="button" onclick="setPath('~')" class="quick-btn"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:3px;"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg> 用户目录</button>
-                                <button type="button" onclick="setPath('.')" class="quick-btn"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:3px;"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg> 当前目录</button>
+                                <button type="button" onclick="setPath('~/Desktop')" class="quick-btn">📁 桌面</button>
+                                <button type="button" onclick="setPath('~/Documents')" class="quick-btn">📄 文稿</button>
+                                <button type="button" onclick="setPath('~')" class="quick-btn">🏠 用户目录</button>
+                                <button type="button" onclick="setPath('.')" class="quick-btn">📂 当前目录</button>
                             </div>
                             <div class="form-hint">你想让 AI 分析哪个代码文件夹？留空则分析当前目录</div>
                         </div>
@@ -381,25 +378,25 @@
                             <option value="Baichuan4">百川 4 (低成本)</option>
                             <!-- Custom models injected by JS -->
                         </select>
-                        <a href="/settings#apikeys" class="form-link" style="margin-top:6px;font-size:12px;"> 管理供应商/添加自定义模型</a>
+                        <a href="/settings#apikeys" class="form-link" style="margin-top:6px;font-size:12px;">⚙️ 管理供应商/添加自定义模型</a>
                     </div>
                     <div class="form-group">
                         <label for="workflowSelect" class="form-label">工作流</label>
                         <select id="workflowSelect" class="form-select">
-                            <option value="build" selected>完整开发 (build)</option>
-                            <option value="review">代码审查</option>
-                            <option value="debug">调试修复</option>
-                            <option value="test">测试用例</option>
-                            <option value="refactor"> 重构优化</option>
-                            <option value="doc">文档生成</option>
-                            <option value="pair">结对编程</option>
-                            <option value="autopilot">自动驾驶</option>
-                            <option value="sequential">顺序执行</option>
+                            <option value="build" selected>🚀 完整开发 (build)</option>
+                            <option value="review">🔍 代码审查</option>
+                            <option value="debug">🐛 调试修复</option>
+                            <option value="test">🧪 测试用例</option>
+                            <option value="refactor">♻️ 重构优化</option>
+                            <option value="doc">📖 文档生成</option>
+                            <option value="pair">👥 结对编程</option>
+                            <option value="autopilot">🤖 自动驾驶</option>
+                            <option value="sequential">📋 顺序执行</option>
                         </select>
                     </div>
                 </div>
                 <button type="submit" class="btn btn-primary btn-submit" id="submitBtn">
-                    <span class="btn-text"> 启动 AI 团队</span>
+                    <span class="btn-text">▶ 启动 AI 团队</span>
                     <div class="btn-spinner"></div>
                 </button>
             </form>
@@ -413,12 +410,12 @@
         <!-- Response (hidden) -->
         <div id="responseSection" class="response-container" style="display:none;">
             <div class="response-tabs">
-                <button class="response-tab active" data-tab="result"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px;"><polyline points="9 10 4 15 9 20"/><path d="M20 4v7a4 4 0 0 1-4 4H5"/></svg>执行结果</button>
-                <button class="response-tab" data-tab="explore">Explore</button>
-                <button class="response-tab" data-tab="analyst">Analyst</button>
-                <button class="response-tab" data-tab="architect">Architect</button>
-                <button class="response-tab" data-tab="executor">Executor</button>
-                <button class="response-tab" data-tab="stats"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px;"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>统计</button>
+                <button class="response-tab active" data-tab="result">📋 执行结果</button>
+                <button class="response-tab" data-tab="explore">🔍 Explore</button>
+                <button class="response-tab" data-tab="analyst">🧠 Analyst</button>
+                <button class="response-tab" data-tab="architect">🏗️ Architect</button>
+                <button class="response-tab" data-tab="executor">💻 Executor</button>
+                <button class="response-tab" data-tab="stats">📊 统计</button>
             </div>
             <div class="response-panel active" data-panel="result" id="panel-result"></div>
             <div class="response-panel" data-panel="explore" id="panel-explore"></div>
@@ -430,25 +427,25 @@
 
         <!-- Examples -->
         <section style="margin-bottom:40px;">
-            <h3 style="font-size:18px;font-weight:600;text-align:center;margin-bottom:20px;"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:6px;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>试试这些任务</h3>
+            <h3 style="font-size:18px;font-weight:600;text-align:center;margin-bottom:20px;">💡 试试这些任务</h3>
             <div class="examples-grid">
                 <button class="example-card" data-task="实现一个 REST API 用户管理接口，包含 CRUD 操作，使用 FastAPI 框架" data-workflow="build">
-                    <span class="example-icon"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></span>
+                    <span class="example-icon">🌐</span>
                     <span class="example-title">REST API 开发</span>
                     <span class="example-desc">FastAPI 用户管理 CRUD</span>
                 </button>
                 <button class="example-card" data-task="审查当前项目的代码质量和安全漏洞" data-workflow="review">
-                    <span class="example-icon"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
+                    <span class="example-icon">🔍</span>
                     <span class="example-title">代码审查</span>
                     <span class="example-desc">质量 + 安全检查</span>
                 </button>
                 <button class="example-card" data-task="修复登录页面无法正确跳转的问题" data-workflow="debug">
-                    <span class="example-icon"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2" width="8" height="4" rx="2" ry="2"/><path d="M4 8h16"/><path d="M4 12h16"/><path d="M8 16c0 2 1.5 4 4 4s4-2 4-4"/><line x1="12" y1="4" x2="12" y2="8"/><line x1="8" y1="12" x2="10" y2="14"/><line x1="16" y1="12" x2="14" y2="14"/></svg></span>
+                    <span class="example-icon">🐛</span>
                     <span class="example-title">Bug 调试</span>
                     <span class="example-desc">定位并修复问题</span>
                 </button>
                 <button class="example-card" data-task="为项目编写单元测试，覆盖核心业务逻辑" data-workflow="test">
-                    <span class="example-icon"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22h16"/><path d="M7 12h10"/><path d="M9 12V4h6v8"/><line x1="9" y1="4" x2="15" y2="4"/><line x1="11" y1="16" x2="13" y2="16"/><line x1="10" y1="18" x2="14" y2="18"/></svg></span>
+                    <span class="example-icon">🧪</span>
                     <span class="example-title">测试用例</span>
                     <span class="example-desc">核心逻辑全覆盖</span>
                 </button>
@@ -457,18 +454,18 @@
 
         <!-- Features -->
         <section style="margin-bottom:40px;">
-            <h3 style="font-size:18px;font-weight:600;text-align:center;margin-bottom:20px;"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#06b6d4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:6px;"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>核心能力</h3>
+            <h3 style="font-size:18px;font-weight:600;text-align:center;margin-bottom:20px;">⚡ 核心能力</h3>
             <div class="grid-4">
-                <div class="feature-card"><span class="feature-icon"><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#06b6d4" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 3h-2a2 2 0 0 0-2 2v1a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2z"/><path d="M13 9v2a2 2 0 0 1-2 2"/><path d="M19 15v-1a5 5 0 0 0-5-5h-4a5 5 0 0 0-5 5v1"/><path d="M11 17h2a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2h-2a2 2 0 0 1-2-2v-2a2 2 0 0 1 2-2z"/><line x1="10" y1="3" x2="10" y2="5"/><line x1="14" y1="3" x2="14" y2="5"/></svg></span><h4>智能路由</h4><p>按任务复杂度自动选模型，节省 30-50% Token</p></div>
-                <div class="feature-card"><span class="feature-icon"><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="f59e0b" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><circle cx="17.5" cy="7.5" r="2.5"/><path d="M14 14.7a4 4 0 0 1 6 .3v2"/></svg></span><h4>多 Agent 协作</h4><p>多个专业 Agent 分工协作</p></div>
-                <div class="feature-card"><span class="feature-icon"><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span><h4>零成本运行</h4><p>优先使用 GLM-4.7-Flash 免费额度</p></div>
-                <div class="feature-card"><span class="feature-icon"><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></span><h4>全流程覆盖</h4><p>从探索分析到代码实现、测试验证</p></div>
+                <div class="feature-card"><span class="feature-icon">🧠</span><h4>智能路由</h4><p>按任务复杂度自动选模型，节省 30-50% Token</p></div>
+                <div class="feature-card"><span class="feature-icon">🤝</span><h4>多 Agent 协作</h4><p>多个专业 Agent 分工协作</p></div>
+                <div class="feature-card"><span class="feature-icon">💰</span><h4>零成本运行</h4><p>优先使用 GLM-4.7-Flash 免费额度</p></div>
+                <div class="feature-card"><span class="feature-icon">🔄</span><h4>全流程覆盖</h4><p>从探索分析到代码实现、测试验证</p></div>
             </div>
         </section>
     </main>
 
     <footer class="footer">
-        <p>Made with <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="#ef4444" stroke="none" style="vertical-align:middle;display:inline-block;"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z"/></svg> by Oh My Coder · Powered by GLM-4.7-Flash & Multi-Agent Architecture</p>
+        <p>Made with ❤️ by Oh My Coder · Powered by GLM-4.7-Flash & Multi-Agent Architecture</p>
     </footer>
 
     <script>
@@ -477,10 +474,10 @@
 
         // ===== Toast =====
         function showToast(msg, type = 'info', ms = 4000) {
-            const icons = { success: '', error: '', info: '' };
+            const icons = { success: '✅', error: '❌', info: 'ℹ️' };
             const t = document.createElement('div');
             t.className = `toast ${type}`;
-            t.textContent = (icons[type] || '') + ' ' + msg;
+            t.textContent = (icons[type] || 'ℹ️') + ' ' + msg;
             document.getElementById('toastContainer').appendChild(t);
             setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translateX(20px)'; setTimeout(() => t.remove(), 300); }, ms);
         }
@@ -496,13 +493,13 @@
             const saved = localStorage.getItem('theme');
             const theme = saved || 'dark';
             document.documentElement.setAttribute('data-theme', theme);
-            document.getElementById('themeToggle').innerHTML = theme === 'dark' ? '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#06b6d4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>' : '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
+            document.getElementById('themeToggle').textContent = theme === 'dark' ? '☀️' : '🌙';
         }
         document.getElementById('themeToggle').addEventListener('click', () => {
             const cur = document.documentElement.getAttribute('data-theme');
             const next = cur === 'dark' ? 'light' : 'dark';
             document.documentElement.setAttribute('data-theme', next);
-            document.getElementById('themeToggle').innerHTML = next === 'dark' ? '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#06b6d4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>' : '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
+            document.getElementById('themeToggle').textContent = next === 'dark' ? '☀️' : '🌙';
             localStorage.setItem('theme', next);
         });
         loadTheme();
@@ -516,23 +513,24 @@
         async function loadModels() {
             const grid = document.getElementById('modelsGrid');
             const cloudModels = [
-                { name: 'DeepSeek V4', provider: 'DeepSeek', iconHtml: '<span style="display:inline-block;width:18px;height:18px;border-radius:50%;background:#10b981;"></span>', badge: '低成本', online: true },
-                { name: 'GLM-4.7-Flash', provider: '智谱', iconHtml: '<span style="display:inline-block;width:18px;height:18px;border-radius:50%;background:#3b82f6;"></span>', badge: '免费', online: true },
-                { name: 'MiMo Flash', provider: '小米 Xiaomi', iconHtml: '<span style="display:inline-block;width:18px;height:18px;border-radius:50%;background:#f59e0b;"></span>', badge: '免费', online: true },
-                { name: 'Kimi 128K', provider: '月之暗面', iconHtml: '<span style="display:inline-block;width:18px;height:18px;border-radius:50%;background:#8b5cf6;"></span>', badge: '低成本', online: true },
-                { name: 'Doubao-Pro', provider: '字节跳动', iconHtml: '<span style="display:inline-block;width:18px;height:18px;border-radius:50%;background:#eab308;"></span>', badge: '低成本', online: true },
-                { name: '天工 3.0', provider: '天工', iconHtml: '<span style="display:inline-block;width:18px;height:18px;border-radius:50%;background:#9ca3af;"></span>', badge: '低成本', online: true },
-                { name: '百川 4', provider: '百川智能', iconHtml: '<span style="display:inline-block;width:18px;height:18px;border-radius:50%;background:#a16207;"></span>', badge: '低成本', online: true },
+                { name: 'DeepSeek V4', provider: 'DeepSeek', icon: '🟢', badge: '低成本', online: true },
+
+                { name: 'GLM-4.7-Flash', provider: '智谱', icon: '🔵', badge: '免费', online: true },
+                { name: 'MiMo Flash', provider: '小米 Xiaomi', icon: '⚡', badge: '免费', online: true },
+                { name: 'Kimi 128K', provider: '月之暗面', icon: '🟣', badge: '低成本', online: true },
+                { name: 'Doubao-Pro', provider: '字节跳动', icon: '🟡', badge: '低成本', online: true },
+                { name: '天工 3.0', provider: '天工', icon: '⚪', badge: '低成本', online: true },
+                { name: '百川 4', provider: '百川智能', icon: '🟤', badge: '低成本', online: true },
             ];
 
             // 尝试加载本地模型
             let localModels = [];
             try {
-                const res = await fetch('/api/v1/local-models/status');
+                const res = await fetch('/api/local-models/status');
                 const data = await res.json();
                 if (data.available && data.models) {
                     localModels = data.models.map(m => ({
-                        name: m.name, provider: 'Ollama (本地)', icon: null, badge: '本地', online: true
+                        name: m.name, provider: 'Ollama (本地)', icon: '🖥️', badge: '本地', online: true
                     }));
                 }
             } catch (e) {}
@@ -543,13 +541,13 @@
             try {
                 const custom = JSON.parse(localStorage.getItem('omc-custom-models') || '[]');
                 custom.forEach(m => {
-                    all.push({ name: m.name, provider: m.provider || '自定义', icon: null, badge: '自定义', online: true });
+                    all.push({ name: m.name, provider: m.provider || '自定义', icon: '🔧', badge: '自定义', online: true });
                 });
             } catch {}
 
             grid.innerHTML = all.map(m => `
                 <div class="model-item">
-                    <div class="model-item-icon">${m.iconHtml || '<span style="display:inline-block;width:18px;height:18px;border-radius:50%;background:#94a3b8;"></span>'}</div>
+                    <div class="model-item-icon">${m.icon}</div>
                     <div class="model-item-info">
                         <div class="model-item-name">${escapeHtml(m.name)}</div>
                         <div class="model-item-provider">${escapeHtml(m.provider)} · <span class="badge badge-${m.badge === '免费' ? 'success' : m.badge === '本地' ? 'primary' : 'warning'}" style="font-size:11px;">${escapeHtml(m.badge)}</span></div>
@@ -643,14 +641,14 @@
         }
         // 动态步骤名称映射
         const STEP_LABELS = {
-            'explore': '探索', 'analyst': '分析', 'architect': '设计',
-            'executor': '实现', 'verifier': '验证',
-            'code-reviewer': '代码审查', 'security-reviewer': '安全审查',
-            'code-simplifier': '代码简化', 'planner': '规划',
-            'critic': '批判分析', 'writer': '文档',
-            'performance': '性能分析', 'database': '数据库审查',
+            'explore': '🔍 探索', 'analyst': '🧠 分析', 'architect': '🏗️ 设计',
+            'executor': '💻 实现', 'verifier': '✅ 验证',
+            'code-reviewer': '🔍 代码审查', 'security-reviewer': '🛡️ 安全审查',
+            'code-simplifier': '✂️ 代码简化', 'planner': '📋 规划',
+            'critic': '🔎 批判分析', 'writer': '📝 文档',
+            'performance': '⚡ 性能分析', 'database': '🗄️ 数据库审查',
         };
-        function getStepLabel(step) { return STEP_LABELS[step] || step; }
+        function getStepLabel(step) { return STEP_LABELS[step] || `🤖 ${step}`; }
 
         function updateDynamicStep(step, status) {
             const el = document.getElementById('stepProgressInner');
@@ -669,10 +667,10 @@
                 tag.innerHTML = getStepLabel(step) + ' <span style="width:14px;height:14px;border:2px solid var(--primary);border-top-color:transparent;border-radius:50%;animation:spin 0.8s linear infinite;display:inline-block;"></span>';
             } else if (status === 'completed') {
                 tag.style.background = 'rgba(16,185,129,0.1)'; tag.style.color = '#10b981'; tag.style.border = '1px solid #10b981';
-                tag.textContent = getStepLabel(step).replace(/^[^\s]+ /, '');
+                tag.textContent = '✅ ' + getStepLabel(step).replace(/^[^\s]+ /, '');
             } else if (status === 'failed') {
                 tag.style.background = 'rgba(239,68,68,0.1)'; tag.style.color = '#ef4444'; tag.style.border = '1px solid #ef4444';
-                tag.textContent = getStepLabel(step).replace(/^[^\s]+ /, '');
+                tag.textContent = '❌ ' + getStepLabel(step).replace(/^[^\s]+ /, '');
             }
         }
 
@@ -708,9 +706,9 @@
             else if (type === 'step_failed') {
                 setStepStatus(step, 'failed');
                 updateDynamicStep(step, 'failed');
-                showToast(`失败: ${escapeHtml(step)}`, 'error');
+                showToast(`❌ ${escapeHtml(step)} 失败`, 'error');
                 const panel = document.getElementById(`panel-${step}`);
-                if (panel) panel.innerHTML = `<div style="color:var(--danger);padding:16px;"> <b>${escapeHtml(step)}</b> 执行失败:<br><pre style="margin-top:8px;white-space:pre-wrap;font-size:13px;">${escapeHtml(content || '未知错误')}</pre></div>`;
+                if (panel) panel.innerHTML = `<div style="color:var(--danger);padding:16px;">❌ <b>${escapeHtml(step)}</b> 执行失败:<br><pre style="margin-top:8px;white-space:pre-wrap;font-size:13px;">${escapeHtml(content || '未知错误')}</pre></div>`;
             }
             else if (type === 'complete') { state.result = d.result || d; renderResult(); autoSaveReport(taskId); }
             else if (type === 'error') { showToast(`执行失败: ${content}`, 'error'); stopRunning(); }
@@ -730,16 +728,16 @@
             let resultHtml = '';
             if (allFailed) {
                 resultHtml = `<div style="text-align:center;padding:40px 20px;">
-                    <div style="font-size:48px;margin-bottom:16px;"></div>
+                    <div style="font-size:48px;margin-bottom:16px;">❌</div>
                     <h3 style="color:var(--danger);margin-bottom:8px;">任务执行失败</h3>
                     <p style="color:var(--text-muted);">所有步骤均失败，请检查 API 配置后重试</p>
-                    ${stats?.steps_failed?.map(s => `<div style="margin-top:12px;padding:8px 16px;background:var(--bg-secondary);border-radius:8px;display:inline-block;font-size:13px;"> ${s}: ${state.stepOutputs[s] || '未知错误'}</div>`).join('')}
+                    ${stats?.steps_failed?.map(s => `<div style="margin-top:12px;padding:8px 16px;background:var(--bg-secondary);border-radius:8px;display:inline-block;font-size:13px;">❌ ${s}: ${state.stepOutputs[s] || '未知错误'}</div>`).join('')}
                 </div>`;
             } else if (hasFailures) {
                 resultHtml = `<div class="markdown-body">${md(r?.result || '')}</div>
                     <div style="margin-top:16px;padding:12px 16px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:8px;">
-                        <b style="color:var(--danger);"> 部分步骤失败：</b>
-                        ${stats?.steps_failed?.map(s => `<div style="margin-top:6px;font-size:13px;"> <b>${escapeHtml(s)}</b>: ${escapeHtml(state.stepOutputs[s] || '未知错误')}</div>`).join('')}
+                        <b style="color:var(--danger);">⚠️ 部分步骤失败：</b>
+                        ${stats?.steps_failed?.map(s => `<div style="margin-top:6px;font-size:13px;">❌ <b>${escapeHtml(s)}</b>: ${escapeHtml(state.stepOutputs[s] || '未知错误')}</div>`).join('')}
                     </div>`;
             } else {
                 resultHtml = `<div class="markdown-body">${md(r?.result || r)}</div>`;
@@ -756,16 +754,16 @@
             renderStats(stats);
             document.querySelector('[data-tab="result"]').click();
             if (allFailed) {
-                showToast('任务执行失败，请检查 API 配置', 'error');
+                showToast('❌ 任务执行失败，请检查 API 配置', 'error');
             } else if (hasFailures) {
-                showToast('任务完成，部分步骤失败', 'error');
+                showToast('⚠️ 任务完成，部分步骤失败', 'error');
             } else {
-                showToast('执行完成', 'success');
+                showToast('执行完成！🎉', 'success');
             }
         }
         function renderStats(stats) {
             const p = document.getElementById('panel-stats');
-            if (!stats) { p.innerHTML = '<div class="empty-state"><span class="empty-state-icon"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></span><p>暂无统计信息</p></div>'; return; }
+            if (!stats) { p.innerHTML = '<div class="empty-state"><span class="empty-state-icon">📊</span><p>暂无统计信息</p></div>'; return; }
             p.innerHTML = `
                 <div class="stats-grid" style="margin-bottom:24px;">
                     <div class="stat-card"><div class="stat-value">${stats.total_tokens||0}</div><div class="stat-label">Tokens</div></div>
@@ -774,15 +772,15 @@
                     <div class="stat-card"><div class="stat-value">${(stats.steps_completed||[]).length}/${stats.steps_total||5}</div><div class="stat-label">完成步骤</div></div>
                 </div>
                 <div style="text-align:right;margin-top:8px;">
-                    <button class="btn btn-ghost btn-sm" onclick="deleteCurrentTask()" style="color:var(--danger);font-size:13px;"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:3px;"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>删除此任务</button>
-                    <a href="/history" class="btn btn-ghost btn-sm" style="font-size:13px;margin-left:8px;"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:3px;"><polyline points="9 10 4 15 9 20"/><path d="M20 4v7a4 4 0 0 1-4 4H5"/></svg>查看全部历史</a>
+                    <button class="btn btn-ghost btn-sm" onclick="deleteCurrentTask()" style="color:var(--danger);font-size:13px;">🗑️ 删除此任务</button>
+                    <a href="/history" class="btn btn-ghost btn-sm" style="font-size:13px;margin-left:8px;">📋 查看全部历史</a>
                 </div>`;
         }
         async function deleteCurrentTask() {
             if (!state.currentTask) return;
             if (!confirm('确定要删除这个任务吗？')) return;
             try {
-                await fetch(`/api/v1/tasks/${state.currentTask}`, { method: 'DELETE' });
+                await fetch(`/api/tasks/${state.currentTask}`, { method: 'DELETE' });
                 document.getElementById('responseSection').style.display = 'none';
                 showToast('已删除', 'info');
             } catch (e) {}
@@ -817,16 +815,16 @@
         // 任务完成后自动保存报告
         async function autoSaveReport(taskId) {
             try {
-                const res = await fetch(`/api/v1/tasks/${taskId}`);
+                const res = await fetch(`/api/tasks/${taskId}`);
                 const task = await res.json();
-                const saveRes = await fetch('/api/v1/save-report', {
+                const saveRes = await fetch('/api/save-report', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ task_id: taskId })
                 });
                 const data = await saveRes.json();
                 if (data.path) {
-                    showToast('报告已保存: ' + data.path, 'success', 5000);
+                    showToast(`📄 报告已保存: ${data.path}`, 'success', 5000);
                 }
             } catch (e) { console.error('自动保存报告失败:', e); }
         }
@@ -841,7 +839,7 @@
             document.getElementById('responseSection').style.display = 'none';
             try {
                 const target = getTargetInfo();
-                const res = await fetch('/api/v1/execute', {
+                const res = await fetch('/api/execute', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -908,7 +906,7 @@
             saveCustomModels(models);
             injectCustomModels();
             closeAddCustomModel();
-            showToast(' 已添加 ' + name, 'success');
+            showToast('✅ 已添加 ' + name, 'success');
         }
         async function testCustomModel() {
             const url = document.getElementById('cm-url').value.trim();
@@ -916,30 +914,30 @@
             const modelId = document.getElementById('cm-model-id').value.trim() || document.getElementById('cm-name').value.trim();
             const msgDiv = document.getElementById('cm-test-msg');
             const btn = document.getElementById('cm-test-btn');
-            if (!url) { msgDiv.textContent = ' 请先填写 API 地址'; msgDiv.style.display = 'block'; msgDiv.style.color = 'var(--danger)'; return; }
-            if (!modelId) { msgDiv.textContent = ' 请填写模型 ID 或模型名称'; msgDiv.style.display = 'block'; msgDiv.style.color = 'var(--danger)'; return; }
-            btn.disabled = true; btn.textContent = ' 测试中...';
+            if (!url) { msgDiv.textContent = '⚠️ 请先填写 API 地址'; msgDiv.style.display = 'block'; msgDiv.style.color = 'var(--danger)'; return; }
+            if (!modelId) { msgDiv.textContent = '⚠️ 请填写模型 ID 或模型名称'; msgDiv.style.display = 'block'; msgDiv.style.color = 'var(--danger)'; return; }
+            btn.disabled = true; btn.textContent = '⏳ 测试中...';
             msgDiv.style.display = 'none';
             try {
-                const res = await fetch('/api/v1/test-connection', {
+                const res = await fetch('/api/test-connection', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ base_url: url, api_key: key, model_id: modelId })
                 });
                 const data = await res.json();
                 if (data.ok) {
-                    msgDiv.textContent = ' ' + data.msg;
+                    msgDiv.textContent = '✅ ' + data.msg;
                     msgDiv.style.color = 'var(--success)';
                 } else {
-                    msgDiv.textContent = ' ' + data.msg;
+                    msgDiv.textContent = '❌ ' + data.msg;
                     msgDiv.style.color = 'var(--danger)';
                 }
             } catch (e) {
-                msgDiv.textContent = ' 测试失败: ' + e.message;
+                msgDiv.textContent = '❌ 测试失败: ' + e.message;
                 msgDiv.style.color = 'var(--danger)';
             }
             msgDiv.style.display = 'block';
-            btn.disabled = false; btn.textContent = '测试连接';
+            btn.disabled = false; btn.textContent = '🔗 测试连接';
         }
         function deleteCustomModel(id) {
             const models = getCustomModels().filter(m => m.id !== id);
@@ -989,7 +987,7 @@
                 <input type="password" class="form-input" id="cm-key" placeholder="本地模型可留空">
             </div>
             <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:24px">
-                <button type="button" class="btn btn-secondary" id="cm-test-btn" onclick="testCustomModel()">测试连接</button>
+                <button type="button" class="btn btn-secondary" id="cm-test-btn" onclick="testCustomModel()">🔗 测试连接</button>
                 <button type="button" class="btn btn-secondary" onclick="closeAddCustomModel()">取消</button>
                 <button type="button" class="btn btn-primary" onclick="addCustomModel()">添加</button>
             </div>

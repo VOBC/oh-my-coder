@@ -4,8 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>设置 - Oh My Coder</title>
-    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
-    <link rel="stylesheet" href="/static/style.css?v=1779616392">
+    <link rel="stylesheet" href="/static/style.css?v=20260506">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -245,7 +244,7 @@
     <nav class="nav">
         <div class="nav-content">
             <a href="/" class="nav-brand">
-                <span class="nav-brand-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36" width="36" height="36" style="vertical-align:middle;margin-right:4px"><defs><linearGradient id="gnw" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#f59e0b"/><stop offset="100%" style="stop-color:#06b6d4"/></linearGradient></defs><rect x="1" y="1" width="34" height="34" rx="6" ry="6" fill="#1a1a2e" stroke="url(#gnw)" stroke-width="1"/><text x="18" y="23" font-family="monospace" font-size="13" font-weight="bold" fill="url(#gnw)" text-anchor="middle" letter-spacing="1.5">OMC</text><line x1="5" y1="28" x2="31" y2="28" stroke="#f59e0b" stroke-width="1.2" opacity="0.6"/><rect x="31" y="17" width="2" height="10" rx="0.5" fill="#06b6d4"><animate attributeName="opacity" values="0.8;0.1;0.8" dur="1.2s" repeatCount="indefinite"/></rect></svg></span>
+                <span class="nav-brand-icon">🤖</span>
                 <span class="nav-brand-name">Oh My Coder</span>
             </a>
             <div class="nav-links" id="navLinks">
@@ -257,8 +256,8 @@
                 <a href="/settings" class="nav-link active">设置</a>
             </div>
             <div class="nav-actions">
-                <div class="nav-toggle" id="themeToggle" title="切换主题"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></div>
-                <button class="nav-hamburger" id="navHamburger"></button>
+                <div class="nav-toggle" id="themeToggle" title="切换主题">☀️</div>
+                <button class="nav-hamburger" id="navHamburger">☰</button>
             </div>
         </div>
     </nav>
@@ -266,10 +265,10 @@
     <div class="settings-layout">
         <!-- Sidebar -->
         <aside class="settings-sidebar">
-            <button class="settings-nav-item active" data-panel="models"> 模型选择</button>
-            <button class="settings-nav-item" data-panel="apikeys"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg> API Keys</button>
-            <button class="settings-nav-item" data-panel="preferences"> 偏好设置</button>
-            <button class="settings-nav-item" data-panel="workflows"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg> 工作流</button>
+            <button class="settings-nav-item active" data-panel="models">🖥️ 模型选择</button>
+            <button class="settings-nav-item" data-panel="apikeys">🔑 API Keys</button>
+            <button class="settings-nav-item" data-panel="preferences">⚙️ 偏好设置</button>
+            <button class="settings-nav-item" data-panel="workflows">🔄 工作流</button>
         </aside>
 
         <!-- Content -->
@@ -286,7 +285,7 @@
 
                 <div class="card" style="margin-bottom:24px;">
                     <div class="card-header">
-                        <div class="card-title"> 本地模型 (Ollama)</div>
+                        <div class="card-title">🖥️ 本地模型 (Ollama)</div>
                     </div>
                     <div class="model-grid" id="localModels">
                         <div style="color:var(--text-muted);font-size:14px;">检测中...</div>
@@ -295,7 +294,7 @@
 
                 <div class="card">
                     <div class="card-header">
-                        <div class="card-title"> 云端模型</div>
+                        <div class="card-title">☁️ 云端模型</div>
                     </div>
                     <div class="model-grid" id="cloudModels">
                         <div class="model-card" data-model="deepseek">
@@ -304,7 +303,7 @@
                                 <span class="badge badge-warning">低成本</span>
                             </div>
                             <div class="model-card-desc">高性能对话模型，支持函数调用</div>
-                            <div class="model-card-meta"><span> 国内直连</span></div>
+                            <div class="model-card-meta"><span>🇨🇳 国内直连</span></div>
                         </div>
 
                         <div class="model-card" data-model="glm">
@@ -313,7 +312,7 @@
                                 <span class="badge badge-success">免费</span>
                             </div>
                             <div class="model-card-desc">免费高性能，支持函数调用、视觉</div>
-                            <div class="model-card-meta"><span> 国内直连</span></div>
+                            <div class="model-card-meta"><span>🇨🇳 国内直连</span></div>
                         </div>
                         <div class="model-card" data-model="mimo">
                             <div class="model-card-header">
@@ -321,7 +320,7 @@
                                 <span class="badge badge-success">免费</span>
                             </div>
                             <div class="model-card-desc">小米 MiMo，免费超长上下文（256K）</div>
-                            <div class="model-card-meta"><span> 国内直连</span></div>
+                            <div class="model-card-meta"><span>🇨🇳 国内直连</span></div>
                         </div>
                         <div class="model-card" data-model="kimi">
                             <div class="model-card-header">
@@ -329,7 +328,7 @@
                                 <span class="badge badge-warning">低成本</span>
                             </div>
                             <div class="model-card-desc">月之暗面，128K 超长上下文</div>
-                            <div class="model-card-meta"><span> 国内直连</span></div>
+                            <div class="model-card-meta"><span>🇨🇳 国内直连</span></div>
                         </div>
                         <div class="model-card" data-model="doubao">
                             <div class="model-card-header">
@@ -337,7 +336,7 @@
                                 <span class="badge badge-warning">低成本</span>
                             </div>
                             <div class="model-card-desc">字节跳动大模型，性价比高</div>
-                            <div class="model-card-meta"><span> 国内直连</span></div>
+                            <div class="model-card-meta"><span>🇨🇳 国内直连</span></div>
                         </div>
                         <div class="model-card" data-model="tiangong">
                             <div class="model-card-header">
@@ -345,7 +344,7 @@
                                 <span class="badge badge-warning">低成本</span>
                             </div>
                             <div class="model-card-desc">天工大模型 3.0</div>
-                            <div class="model-card-meta"><span> 国内直连</span></div>
+                            <div class="model-card-meta"><span>🇨🇳 国内直连</span></div>
                         </div>
                         <div class="model-card" data-model="baichuan">
                             <div class="model-card-header">
@@ -353,7 +352,7 @@
                                 <span class="badge badge-warning">低成本</span>
                             </div>
                             <div class="model-card-desc">百川智能 4</div>
-                            <div class="model-card-meta"><span> 国内直连</span></div>
+                            <div class="model-card-meta"><span>🇨🇳 国内直连</span></div>
                         </div>
                     </div>
                 </div>
@@ -413,7 +412,7 @@
                 <div class="provider-card" id="card-deepseek" data-provider="deepseek">
                     <div class="provider-card-header">
                         <div class="provider-info">
-                            <span class="provider-emoji"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><path d="M12 2a10 10 0 0 1 7.07 17.07A10 10 0 1 1 12 2z"/><line x1="12" y1="6" x2="12" y2="12"/><line x1="12" y1="12" x2="16" y2="14"/></svg></span>
+                            <span class="provider-emoji">🔮</span>
                             <div>
                                 <div class="provider-name">DeepSeek</div>
                                 <div class="provider-models">V4 · R1（共享同一 API Key）</div>
@@ -422,7 +421,7 @@
                         <span class="badge badge-low">低成本</span>
                     </div>
                     <div class="provider-card-body">
-                        <span class="toggle-url" onclick="toggleUrl('deepseek')"> 修改 Base URL</span>
+                        <span class="toggle-url" onclick="toggleUrl('deepseek')">⚙️ 修改 Base URL</span>
                         <div class="url-group" id="url-group-deepseek">
                             <div class="form-group">
                                 <label class="form-label">Base URL</label>
@@ -448,7 +447,7 @@
                 <div class="provider-card" id="card-glm" data-provider="glm">
                     <div class="provider-card-header">
                         <div class="provider-info">
-                            <span class="provider-emoji"><span style="display:inline-block;width:16px;height:16px;border-radius:50%;background:#10b981;"></span></span>
+                            <span class="provider-emoji">🟢</span>
                             <div>
                                 <div class="provider-name">智谱 GLM</div>
                                 <div class="provider-models">GLM-4.7-Flash（免费额度）</div>
@@ -457,7 +456,7 @@
                         <span class="badge badge-free">免费</span>
                     </div>
                     <div class="provider-card-body">
-                        <span class="toggle-url" onclick="toggleUrl('glm')"> 修改 Base URL</span>
+                        <span class="toggle-url" onclick="toggleUrl('glm')">⚙️ 修改 Base URL</span>
                         <div class="url-group" id="url-group-glm">
                             <div class="form-group">
                                 <label class="form-label">Base URL <span style="font-size:11px;color:var(--text-muted)">（API 接口地址，非网页地址）</span></label>
@@ -483,7 +482,7 @@
                 <div class="provider-card" id="card-mimo" data-provider="mimo">
                     <div class="provider-card-header">
                         <div class="provider-info">
-                            <span class="provider-emoji"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg></span>
+                            <span class="provider-emoji">📱</span>
                             <div>
                                 <div class="provider-name">小米 MiMo</div>
                                 <div class="provider-models">MiMo Flash（100万 token 超长上下文）</div>
@@ -492,7 +491,7 @@
                         <span class="badge badge-free">免费</span>
                     </div>
                     <div class="provider-card-body">
-                        <span class="toggle-url" onclick="toggleUrl('mimo')"> 修改 Base URL</span>
+                        <span class="toggle-url" onclick="toggleUrl('mimo')">⚙️ 修改 Base URL</span>
                         <div class="url-group" id="url-group-mimo">
                             <div class="form-group">
                                 <label class="form-label">Base URL</label>
@@ -518,7 +517,7 @@
                 <div class="provider-card" id="card-kimi" data-provider="kimi">
                     <div class="provider-card-header">
                         <div class="provider-info">
-                            <span class="provider-emoji"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#06b6d4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg></span>
+                            <span class="provider-emoji">🌙</span>
                             <div>
                                 <div class="provider-name">Kimi</div>
                                 <div class="provider-models">Kimi 128K（超长上下文）</div>
@@ -527,7 +526,7 @@
                         <span class="badge badge-medium">中等</span>
                     </div>
                     <div class="provider-card-body">
-                        <span class="toggle-url" onclick="toggleUrl('kimi')"> 修改 Base URL</span>
+                        <span class="toggle-url" onclick="toggleUrl('kimi')">⚙️ 修改 Base URL</span>
                         <div class="url-group" id="url-group-kimi">
                             <div class="form-group">
                                 <label class="form-label">Base URL</label>
@@ -553,7 +552,7 @@
                 <div class="provider-card" id="card-doubao" data-provider="doubao">
                     <div class="provider-card-header">
                         <div class="provider-info">
-                            <span class="provider-emoji"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg></span>
+                            <span class="provider-emoji">🫘</span>
                             <div>
                                 <div class="provider-name">豆包</div>
                                 <div class="provider-models">Doubao-Pro-32K</div>
@@ -562,7 +561,7 @@
                         <span class="badge badge-medium">中等</span>
                     </div>
                     <div class="provider-card-body">
-                        <span class="toggle-url" onclick="toggleUrl('doubao')"> 修改 Base URL</span>
+                        <span class="toggle-url" onclick="toggleUrl('doubao')">⚙️ 修改 Base URL</span>
                         <div class="url-group" id="url-group-doubao">
                             <div class="form-group">
                                 <label class="form-label">Base URL</label>
@@ -588,7 +587,7 @@
                 <div class="provider-card" id="card-tiangong" data-provider="tiangong">
                     <div class="provider-card-header">
                         <div class="provider-info">
-                            <span class="provider-emoji"></span>
+                            <span class="provider-emoji">🏗️</span>
                             <div>
                                 <div class="provider-name">天工</div>
                                 <div class="provider-models">天工 3.0</div>
@@ -597,7 +596,7 @@
                         <span class="badge badge-medium">中等</span>
                     </div>
                     <div class="provider-card-body">
-                        <span class="toggle-url" onclick="toggleUrl('tiangong')"> 修改 Base URL</span>
+                        <span class="toggle-url" onclick="toggleUrl('tiangong')">⚙️ 修改 Base URL</span>
                         <div class="url-group" id="url-group-tiangong">
                             <div class="form-group">
                                 <label class="form-label">Base URL</label>
@@ -623,7 +622,7 @@
                 <div class="provider-card" id="card-baichuan" data-provider="baichuan">
                     <div class="provider-card-header">
                         <div class="provider-info">
-                            <span class="provider-emoji"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><path d="M2 6c.6.5 1.2 1 2.5 1C7 7 7 5 9.5 5c2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/><path d="M2 12c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/><path d="M2 18c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/></svg></span>
+                            <span class="provider-emoji">🌊</span>
                             <div>
                                 <div class="provider-name">百川</div>
                                 <div class="provider-models">百川 4</div>
@@ -632,7 +631,7 @@
                         <span class="badge badge-medium">中等</span>
                     </div>
                     <div class="provider-card-body">
-                        <span class="toggle-url" onclick="toggleUrl('baichuan')"> 修改 Base URL</span>
+                        <span class="toggle-url" onclick="toggleUrl('baichuan')">⚙️ 修改 Base URL</span>
                         <div class="url-group" id="url-group-baichuan">
                             <div class="form-group">
                                 <label class="form-label">Base URL</label>
@@ -725,7 +724,7 @@
 
                 <div class="wf-header">
                     <div></div>
-                    <button class="btn btn-primary" onclick="openCreateModal()"> 新建工作流</button>
+                    <button class="btn btn-primary" onclick="openCreateModal()">➕ 新建工作流</button>
                 </div>
 
                 <div id="wfList"><div class="wf-loading">加载中...</div></div>
@@ -799,7 +798,7 @@
         <div class="modal wf-modal" onclick="event.stopPropagation()">
             <h2 id="wfEditTitle"></h2>
             <div class="wf-modal-hint">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5C8.26 12.26 8.73 13.02 8.91 14"/></svg> 直接编辑 YAML 即可保存你的自定义配置。<code>name</code> 字段不可修改。
+                💡 直接编辑 YAML 即可保存你的自定义配置。<code>name</code> 字段不可修改。
             </div>
             <div class="wf-form-group">
                 <input type="text" class="form-input wf-name-input" id="wfEditName" readonly style="opacity:0.6;cursor:not-allowed" title="工作流名称不可修改">
@@ -819,7 +818,7 @@
         <div class="modal wf-modal wf-modal-sm" onclick="event.stopPropagation()">
             <h2>+ 新建工作流</h2>
             <div class="wf-modal-hint">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> 工作流名称只能包含小写字母、数字、中划线（<code>autopilot</code>、<code>my-workflow</code>）。
+                📝 工作流名称只能包含小写字母、数字、中划线（<code>autopilot</code>、<code>my-workflow</code>）。
                 保存后可在下方编辑器中填写完整的 YAML 配置。
             </div>
             <div class="wf-form-group">
@@ -848,10 +847,10 @@ steps:
     <!-- Confirm Delete Modal -->
     <div class="modal-overlay" id="wfDeleteModal" onclick="closeWfModals(event)">
         <div class="modal" style="width:400px" onclick="event.stopPropagation()">
-            <h2> 确认删除</h2>
+            <h2>⚠️ 确认删除</h2>
             <p style="color:var(--text-muted);margin-bottom:8px;">确定要删除工作流</p>
             <p style="font-weight:600;font-size:16px;margin-bottom:20px" id="wfDeleteName"></p>
-            <p style="color:var(--danger);font-size:13px;margin-bottom:20px"> 此操作不可撤销</p>
+            <p style="color:var(--danger);font-size:13px;margin-bottom:20px">⚠️ 此操作不可撤销</p>
             <div class="modal-actions">
                 <button class="btn btn-secondary" onclick="closeWfModals()">取消</button>
                 <button class="btn" style="background:var(--danger);color:#fff;border-color:var(--danger)" onclick="confirmDeleteWorkflow()">确认删除</button>
@@ -862,7 +861,7 @@ steps:
 
 
     <footer class="footer">
-        <p>Made with  by Oh My Coder</p>
+        <p>Made with ❤️ by Oh My Coder</p>
     </footer>
 
     <script>
@@ -873,13 +872,13 @@ steps:
         function loadTheme() {
             const t = localStorage.getItem('theme') || 'dark';
             document.documentElement.setAttribute('data-theme', t);
-            document.getElementById('themeToggle').textContent = t === 'dark' ? '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>' : '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#06b6d4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>';
+            document.getElementById('themeToggle').textContent = t === 'dark' ? '☀️' : '🌙';
         }
         document.getElementById('themeToggle').addEventListener('click', () => {
             const c = document.documentElement.getAttribute('data-theme');
             const n = c === 'dark' ? 'light' : 'dark';
             document.documentElement.setAttribute('data-theme', n);
-            document.getElementById('themeToggle').textContent = n === 'dark' ? '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>' : '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#06b6d4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>';
+            document.getElementById('themeToggle').textContent = n === 'dark' ? '☀️' : '🌙';
             localStorage.setItem('theme', n);
         });
         loadTheme();
@@ -906,10 +905,10 @@ steps:
 
         // Toast
         function showToast(msg, type = 'success') {
-            const icons = { success: '', error: '', info: '' };
+            const icons = { success: '✅', error: '❌', info: 'ℹ️' };
             const t = document.createElement('div');
             t.className = `toast ${type}`;
-            t.textContent = (icons[type] || '') + ' ' + msg;
+            t.textContent = (icons[type] || 'ℹ️') + ' ' + msg;
             document.getElementById('toastContainer').appendChild(t);
             setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, 3000);
         }
@@ -919,7 +918,7 @@ steps:
             const statusDiv = document.getElementById('ollamaStatus');
             const grid = document.getElementById('localModels');
             try {
-                const res = await fetch('/api/v1/local-models/status');
+                const res = await fetch('/api/local-models/status');
                 const data = await res.json();
                 const dot = statusDiv.querySelector('.status-dot');
                 const text = statusDiv.querySelector('span');
@@ -934,7 +933,7 @@ steps:
                         card.innerHTML = `
                             <div class="model-card-header"><span class="model-card-name">${m.name}</span><span class="badge badge-primary">本地</span></div>
                             <div class="model-card-desc">${m.description || '本地模型'}</div>
-                            <div class="model-card-meta"><span><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg> ${m.size || '未知'}</span></div>`;
+                            <div class="model-card-meta"><span>📦 ${m.size || '未知'}</span></div>`;
                         grid.appendChild(card);
                     });
                     if (!data.models.length) grid.innerHTML = '<div style="color:var(--text-muted);font-size:14px;">暂无本地模型，运行 <code style="background:var(--primary-light);padding:2px 6px;border-radius:4px;">ollama pull qwen2:7b</code> 拉取</div>';
@@ -963,7 +962,7 @@ steps:
         // Load settings
         async function loadSettings() {
             try {
-                const res = await fetch('/api/v1/settings');
+                const res = await fetch('/api/settings');
                 const data = await res.json();
                 const models = data.models || {};
                 // Update key statuses
@@ -1057,7 +1056,7 @@ steps:
             if (urlVal) {
                 const v = validateUrl(urlVal, id);
                 if (!v.ok) {
-                    showToastSmall(' ' + v.msg, 'error');
+                    showToastSmall('⚠️ ' + v.msg, 'error');
                     return;
                 }
             }
@@ -1069,14 +1068,14 @@ steps:
                 return;
             }
             try {
-                const res = await fetch('/api/v1/settings', {
+                const res = await fetch('/api/settings', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ models: { [id]: conf } })
                 });
                 if (res.ok) {
                     card.classList.add('saved');
-                    showToastSmall(' ' + id + ' 已保存');
+                    showToastSmall('✅ ' + id + ' 已保存');
                     setTimeout(() => card.classList.remove('saved'), 2000);
                     loadSettings();
                 } else {
@@ -1101,7 +1100,7 @@ steps:
             if (dot) dot.className = 'key-dot unset';
             if (status) status.textContent = '未配置';
             // Also delete from backend
-            fetch('/api/v1/settings', {
+            fetch('/api/settings', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ models: { [id]: { api_key: '', base_url: '' } } })
@@ -1126,7 +1125,7 @@ steps:
             const oldMsg = btn.parentElement.querySelector('.test-msg');
             if (oldMsg) oldMsg.remove();
             try {
-                const res = await fetch('/api/v1/test-connection', {
+                const res = await fetch('/api/test-connection', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ provider: id, api_key: keyVal, base_url: urlVal || undefined })
@@ -1135,7 +1134,7 @@ steps:
                 if (data.ok) {
                     btn.classList.add('ok');
                     btn.textContent = '✓ 成功';
-                    showToastSmall(' ' + data.msg);
+                    showToastSmall('✅ ' + data.msg);
                     // Auto-reset after 3 seconds
                     setTimeout(() => {
                         if (btn.classList.contains('ok')) {
@@ -1146,7 +1145,7 @@ steps:
                 } else {
                     btn.classList.add('err');
                     btn.textContent = '✗ 失败';
-                    showToastSmall(' ' + data.msg, 'error');
+                    showToastSmall('❌ ' + data.msg, 'error');
                     // Auto-reset after 3 seconds
                     setTimeout(() => {
                         if (btn.classList.contains('err')) {
@@ -1192,12 +1191,12 @@ steps:
                 if (Object.keys(conf).length > 0) keys['custom_' + cp.id] = conf;
             });
             try {
-                const res = await fetch('/api/v1/settings', {
+                const res = await fetch('/api/settings', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ models: keys })
                 });
-                if (res.ok) { showToastSmall(' 所有 API Keys 已保存'); loadSettings(); }
+                if (res.ok) { showToastSmall('✅ 所有 API Keys 已保存'); loadSettings(); }
                 else showToastSmall('保存失败', 'error');
             } catch (e) { showToastSmall('保存失败: ' + e.message, 'error'); }
         }
@@ -1238,7 +1237,7 @@ steps:
             saveCustomProviders(providers);
             renderCustomProviders();
             closeAddProviderModal();
-            showToastSmall(' 已添加 ' + name);
+            showToastSmall('✅ 已添加 ' + name);
         }
 
         function deleteCustomProvider(id) {
@@ -1258,7 +1257,7 @@ steps:
                 showToastSmall('请填写 API Key', 'error');
                 return;
             }
-            fetch('/api/v1/settings', {
+            fetch('/api/settings', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ models: { ['custom_' + id]: conf } })
@@ -1266,7 +1265,7 @@ steps:
                 if (r.ok) {
                     const card = document.getElementById('card-custom-' + id);
                     if (card) card.classList.add('saved');
-                    showToastSmall(' 已保存');
+                    showToastSmall('✅ 已保存');
                     setTimeout(() => card?.classList.remove('saved'), 2000);
                 }
             });
@@ -1293,7 +1292,7 @@ steps:
             btn.classList.remove('ok', 'err', 'testing');
             btn.textContent = '测试中...';
             try {
-                const res = await fetch('/api/v1/test-connection', {
+                const res = await fetch('/api/test-connection', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ base_url: urlVal, api_key: keyVal, model_id: modelVal || 'gpt-4o' })
@@ -1301,10 +1300,10 @@ steps:
                 const data = await res.json();
                 if (data.ok) {
                     btn.classList.add('ok'); btn.textContent = '✓ 成功';
-                    showToastSmall(' ' + data.msg);
+                    showToastSmall('✅ ' + data.msg);
                 } else {
                     btn.classList.add('err'); btn.textContent = '✗ 失败';
-                    showToastSmall(' ' + data.msg, 'error');
+                    showToastSmall('❌ ' + data.msg, 'error');
                 }
             } catch (e) {
                 btn.classList.add('err'); btn.textContent = '✗ 失败';
@@ -1321,7 +1320,7 @@ steps:
                 <div class="provider-card" id="card-custom-${p.id}" data-provider="custom:${p.id}">
                     <div class="provider-card-header">
                         <div class="provider-info">
-                            <span class="provider-emoji"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><path d="M4 14h16"/><path d="M5 10h14"/><path d="M9 14v6"/><path d="M15 14v6"/><path d="M6 10V7a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v3"/></svg></span>
+                            <span class="provider-emoji">🔌</span>
                             <div>
                                 <div class="provider-name">${esc(p.name)}</div>
                                 <div class="provider-models">${esc(p.model)}</div>
@@ -1366,7 +1365,7 @@ steps:
                 prefer_local: document.getElementById('prefer-local').value === 'true',
             };
             try {
-                const res = await fetch('/api/v1/settings', {
+                const res = await fetch('/api/settings', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ defaults: prefs })
@@ -1398,7 +1397,7 @@ steps:
             if (!container) return;
             container.innerHTML = '<div class="wf-loading">加载中...</div>';
             try {
-                const res = await fetch('/api/v1/workflows');
+                const res = await fetch('/api/workflows');
                 if (!res.ok) throw new Error(`API错误: ${res.status} ${await res.text()}`);
                 const data = await res.json();
                 const names = data.workflows || [];
@@ -1412,7 +1411,7 @@ steps:
                 let errorCount = 0;
                 for (const name of names) {
                     try {
-                        const r = await fetch(`/api/v1/workflows/${encodeURIComponent(name)}`);
+                        const r = await fetch(`/api/workflows/${encodeURIComponent(name)}`);
                         if (!r.ok) {
                             errorCount++;
                             console.warn(`Failed to load workflow ${name}: ${r.status}`);
@@ -1425,10 +1424,10 @@ steps:
                             ? '<span class="badge" style="background:var(--border);color:var(--text-muted)">内置</span>'
                             : '<span class="badge" style="background:var(--primary-light);color:var(--primary)">用户</span>';
                         const actions = wf.source === 'builtin'
-                            ? `<button class="btn btn-ghost btn-sm" onclick="openViewModal('${escHtml(name)}')"> 查看详情</button>`
-                            : `<button class="btn btn-ghost btn-sm" onclick="openViewModal('${escHtml(name)}')"> 查看</button>
-                               <button class="btn btn-ghost btn-sm" onclick="openEditModal('${escHtml(name)}')"> 编辑</button>
-                               <button class="btn btn-ghost btn-sm" style="color:var(--danger)" onclick="deleteWorkflow('${escHtml(name)}')"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg> 删除</button>`;
+                            ? `<button class="btn btn-ghost btn-sm" onclick="openViewModal('${escHtml(name)}')">🔍 查看详情</button>`
+                            : `<button class="btn btn-ghost btn-sm" onclick="openViewModal('${escHtml(name)}')">🔍 查看</button>
+                               <button class="btn btn-ghost btn-sm" onclick="openEditModal('${escHtml(name)}')">✏️ 编辑</button>
+                               <button class="btn btn-ghost btn-sm" style="color:var(--danger)" onclick="deleteWorkflow('${escHtml(name)}')">🗑️ 删除</button>`;
                         html += `<div class="wf-card">
   <div class="wf-card-header">
     <span class="wf-card-name">${escHtml(name)}</span>
@@ -1536,7 +1535,7 @@ steps:
             const yaml = document.getElementById('wfEditYaml')?.value || '';
             if (!name) { showToast('请填写工作流名称', 'error'); return; }
             try {
-                const res = await fetch(`/api/v1/workflows/${encodeURIComponent(name)}`, {
+                const res = await fetch(`/api/workflows/${encodeURIComponent(name)}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ yaml }),
@@ -1544,9 +1543,9 @@ steps:
                 if (!res.ok) throw new Error(await res.text());
                 closeAllModals();
                 await loadWorkflows();
-                showToast(' 工作流已保存');
+                showToast('✅ 工作流已保存');
             } catch (e) {
-                showToast(' 保存失败: ' + e, 'error');
+                showToast('❌ 保存失败: ' + e, 'error');
             }
         }
 
@@ -1555,7 +1554,7 @@ steps:
             const yaml = document.getElementById('wfCreateYaml')?.value || '';
             if (!name) { showToast('请填写工作流名称', 'error'); return; }
             try {
-                const res = await fetch(`/api/v1/workflows/${encodeURIComponent(name)}`, {
+                const res = await fetch(`/api/workflows/${encodeURIComponent(name)}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ yaml }),
@@ -1563,9 +1562,9 @@ steps:
                 if (!res.ok) throw new Error(await res.text());
                 closeAllModals();
                 await loadWorkflows();
-                showToast(' 工作流已创建');
+                showToast('✅ 工作流已创建');
             } catch (e) {
-                showToast(' 创建失败: ' + e, 'error');
+                showToast('❌ 创建失败: ' + e, 'error');
             }
         }
 
@@ -1573,14 +1572,14 @@ steps:
             const name = document.getElementById('wfDeleteName')?.textContent?.trim();
             if (!name) { closeAllModals(); return; }
             try {
-                const res = await fetch(`/api/v1/workflows/${encodeURIComponent(name)}`, { method: 'DELETE' });
+                const res = await fetch(`/api/workflows/${encodeURIComponent(name)}`, { method: 'DELETE' });
                 const data = await res.json();
                 if (!res.ok || !data.success) throw new Error(data.error || '删除失败');
                 closeAllModals();
                 await loadWorkflows();
-                showToast(' 已删除');
+                showToast('✅ 已删除');
             } catch (e) {
-                showToast(' ' + e, 'error');
+                showToast('❌ ' + e, 'error');
             }
         }
 
@@ -1609,7 +1608,7 @@ steps:
             if (models.length === 0) {
                 container.innerHTML = `
                     <div class="custom-model-empty">
-                        <div class="custom-model-empty-icon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg></div>
+                        <div class="custom-model-empty-icon">📦</div>
                         <div class="custom-model-empty-text">还没有自定义模型</div>
                         <button class="btn btn-primary" onclick="openAddCustomModelModal()">添加第一个模型</button>
                     </div>
@@ -1641,7 +1640,7 @@ steps:
         }
 
         function openAddCustomModelModal() {
-            document.getElementById('cmModalTitle').textContent = ' 添加自定义模型';
+            document.getElementById('cmModalTitle').textContent = '➕ 添加自定义模型';
             document.getElementById('cmName').value = '';
             document.getElementById('cmModelId').value = '';
             document.getElementById('cmUrl').value = '';
@@ -1661,7 +1660,7 @@ steps:
             const m = models.find(x => x.id === id);
             if (!m) return;
 
-            document.getElementById('cmModalTitle').textContent = ' 编辑自定义模型';
+            document.getElementById('cmModalTitle').textContent = '✏️ 编辑自定义模型';
             document.getElementById('cmName').value = m.name || '';
             document.getElementById('cmModelId').value = m.modelId || m.model_id || '';
             document.getElementById('cmUrl').value = m.url || '';
@@ -1710,7 +1709,7 @@ steps:
             saveCustomModels(models);
             renderCustomModels();
             closeCustomModelModal();
-            showToast(editId ? ' 已更新' : ' 已添加');
+            showToast(editId ? '✅ 已更新' : '✅ 已添加');
         }
 
         let _deleteCmId = null;
@@ -1747,7 +1746,7 @@ steps:
             const resultDiv = document.getElementById('cmTestResult');
 
             if (!url || !modelId) {
-                resultDiv.textContent = ' 请先填写 API 地址和模型 ID';
+                resultDiv.textContent = '⚠️ 请先填写 API 地址和模型 ID';
                 resultDiv.style.color = 'var(--danger)';
                 resultDiv.style.display = 'block';
                 return;
@@ -1755,11 +1754,11 @@ steps:
 
             const btn = document.getElementById('cmTestBtn');
             btn.disabled = true;
-            btn.textContent = ' 测试中...';
+            btn.textContent = '⏳ 测试中...';
             resultDiv.style.display = 'none';
 
             try {
-                const res = await fetch('/api/v1/test-connection', {
+                const res = await fetch('/api/test-connection', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ base_url: url, api_key: key, model_id: modelId })
@@ -1767,20 +1766,20 @@ steps:
                 const data = await res.json();
 
                 if (data.ok) {
-                    resultDiv.textContent = ' ' + data.msg;
+                    resultDiv.textContent = '✅ ' + data.msg;
                     resultDiv.style.color = 'var(--success)';
                 } else {
-                    resultDiv.textContent = ' ' + data.msg;
+                    resultDiv.textContent = '❌ ' + data.msg;
                     resultDiv.style.color = 'var(--danger)';
                 }
             } catch (e) {
-                resultDiv.textContent = ' 测试失败: ' + e.message;
+                resultDiv.textContent = '❌ 测试失败: ' + e.message;
                 resultDiv.style.color = 'var(--danger)';
             }
 
             resultDiv.style.display = 'block';
             btn.disabled = false;
-            btn.textContent = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg> 测试连接';
+            btn.textContent = '🔗 测试连接';
         }
 
         // Auto-load workflows when the workflows tab is opened (via MutationObserver)

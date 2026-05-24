@@ -28,39 +28,6 @@ from fastapi.responses import HTMLResponse, JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
-from starlette.middleware.base import BaseHTTPMiddleware
-
-# ========================================
-# Security Middleware
-# ========================================
-#
-# CSRF 保护说明:
-# 本项目为纯 API 服务，不使用 cookie-based session，所有 API 调用均通过
-# Authorization Header 或 body 中的 token 认证，因此无需 CSRF 保护。
-# 如果后续引入 Cookie-based 认证，需重新评估是否启用 CSRF。
-#
-# Session Cookie 配置:
-# Starlette SessionMiddleware 默认将 session 数据存在 cookie 中，
-# 已启用 httponly=True, samesite=Lax（通过 SessionMiddleware 默认行为）。
-#
-
-
-class SecurityHeadersMiddleware(BaseHTTPMiddleware):
-    """为所有 HTTP 响应添加安全相关的 HTTP 头"""
-
-    async def dispatch(self, request: Request, call_next):
-        response = await call_next(request)
-        # 防止 MIME 类型嗅探
-        response.headers["X-Content-Type-Options"] = "nosniff"
-        # 防止 Clickjacking
-        response.headers["X-Frame-Options"] = "DENY"
-        # XSS 过滤器（兼容旧浏览器）
-        response.headers["X-XSS-Protection"] = "1; mode=block"
-        # 强制 HTTPS（仅在生产环境生效）
-        response.headers["Strict-Transport-Security"] = "max-age=31536000"
-        # 内容安全策略
-        response.headers["Content-Security-Policy"] = "default-src 'self'"
-        return response
 
 # 确保可以导入 src 模块
 project_root = Path(__file__).parent.parent.parent
@@ -194,32 +161,6 @@ app = FastAPI(
     version="0.1.0",
 )
 
-# 注册安全中间件（后注册先执行，按栈顺序）
-app.add_middleware(SecurityHeadersMiddleware)
-
-
-# ========================================
-# Backward Compatibility Middleware（/api/ → /api/v1/）
-# ========================================
-class ApiV1RedirectMiddleware(BaseHTTPMiddleware):
-    """将旧 /api/ 请求重定向到 /api/v1/（向后兼容）"""
-
-    async def dispatch(self, request: Request, call_next):
-        path = request.url.path
-        # 只处理 /api/ 开头但不是 /api/v1/ 的请求
-        if path.startswith("/api/") and not path.startswith("/api/v1/"):
-            # 排除静态文件和特定路径
-            if not path.startswith("/api/") or path in ("/api", "/api/"):
-                return await call_next(request)
-            # 构造新路径
-            new_path = path.replace("/api/", "/api/v1/", 1)
-            from fastapi.responses import RedirectResponse
-            return RedirectResponse(url=new_path, status_code=307)
-        return await call_next(request)
-
-
-app.add_middleware(ApiV1RedirectMiddleware)
-
 # 挂载静态文件和模板
 web_dir = Path(__file__).parent
 app.mount("/static", StaticFiles(directory=web_dir / "static"), name="static")
@@ -231,13 +172,13 @@ async def favicon():
     from fastapi.responses import FileResponse
     return FileResponse(web_dir / "static" / "favicon.svg", media_type="image/svg+xml")
 
-# 注册增强路由（版本化 API）
-app.include_router(history_router, prefix="/api/v1")
-app.include_router(agent_router, prefix="/api/v1")
-app.include_router(dashboard_router, prefix="/api/v1")
-app.include_router(team_router, prefix="/api/v1")
-app.include_router(local_models_router, prefix="/api/v1")
-app.include_router(share_router, prefix="/api/v1")
+# 注册增强路由
+app.include_router(history_router)
+app.include_router(agent_router)
+app.include_router(dashboard_router)
+app.include_router(team_router)
+app.include_router(local_models_router)
+app.include_router(share_router)
 
 
 # ========================================
@@ -440,7 +381,7 @@ async def sse_execute(task_id: str):
     )
 
 
-@app.get("/api/v1/agent/live")
+@app.get("/api/agent/live")
 async def agent_live_stream():
     """
     SSE 实时推送当前 Agent 协作状态
@@ -513,13 +454,13 @@ async def dashboard_page(request: Request):
     return templates.TemplateResponse(request, "dashboard.html")
 
 
-@app.get("/api/v1/tasks")
+@app.get("/api/tasks")
 async def list_tasks():
     """列出所有任务"""
     return JSONResponse({"tasks": task_manager.list_tasks()})
 
 
-@app.get("/api/v1/tasks/{task_id}")
+@app.get("/api/tasks/{task_id}")
 async def get_task(task_id: str):
     """获取任务状态"""
     task = task_manager.get_task(task_id)
@@ -528,7 +469,7 @@ async def get_task(task_id: str):
     return JSONResponse(task)
 
 
-@app.delete("/api/v1/tasks/{task_id}")
+@app.delete("/api/tasks/{task_id}")
 async def delete_task(
     task_id: str,
     token: Optional[str] = Depends(verify_api_token),
@@ -539,7 +480,7 @@ async def delete_task(
     return JSONResponse({"status": "deleted"})
 
 
-@app.get("/api/v1/history")
+@app.get("/api/history")
 async def api_history():
     """获取任务历史（兼容 history.html）"""
     tasks = task_manager.list_tasks()
@@ -547,14 +488,14 @@ async def api_history():
     return JSONResponse({"records": tasks})
 
 
-@app.get("/api/v1/dashboard/stats")
+@app.get("/api/dashboard/stats")
 async def dashboard_stats():
     """仪表板统计数据 — 返回真实的任务统计"""
     stats = history_store.get_stats()
     return JSONResponse(stats)
 
 
-@app.get("/api/v1/dashboard/files")
+@app.get("/api/dashboard/files")
 async def dashboard_files():
     """仪表板项目文件列表 — 从最近任务获取项目路径并列出文件"""
     # 从最近任务获取项目路径
@@ -588,7 +529,7 @@ async def dashboard_files():
     return JSONResponse({"files": files, "project_path": project_path})
 
 
-@app.post("/api/v1/open-folder")
+@app.post("/api/open-folder")
 async def open_folder(payload: Optional[dict] = None):
     """打开指定路径的文件夹（在文件管理器中显示）"""
     if not payload or not payload.get("path"):
@@ -611,7 +552,7 @@ async def open_folder(payload: Optional[dict] = None):
         return JSONResponse({"status": "error", "message": str(e)}, status_code=500)
 
 
-@app.post("/api/v1/save-report")
+@app.post("/api/save-report")
 async def save_report(payload: Optional[dict] = None):
     """保存任务报告到文件"""
     if not payload or not payload.get("task_id"):
@@ -830,7 +771,7 @@ def _generate_task_summary(task: dict) -> str:
     return f"{wf_name} · {model_name} · {target_desc}"
 
 
-@app.post("/api/v1/chat")
+@app.post("/api/chat")
 async def chat_endpoint(request: ChatRequest):
     """
     对话式任务创建 API
@@ -899,7 +840,7 @@ class ChatCompletionResponse(BaseModel):
     usage: dict = {}
 
 
-@app.post("/api/v1/chat/completions")
+@app.post("/api/chat/completions")
 async def chat_completion_endpoint(request: ChatCompletionRequest):
     """
     真正的 AI 聊天接口 — 调用模型路由器生成回复
@@ -990,7 +931,7 @@ async def chat_completion_endpoint(request: ChatCompletionRequest):
             )
 
 
-@app.post("/api/v1/execute")
+@app.post("/api/execute")
 async def execute_task(background: BackgroundTasks, payload: Optional[dict] = None):
     """
     执行任务 API（异步，事件驱动）
@@ -1248,7 +1189,7 @@ class ExecuteRequest(BaseModel):
     workflow: str = "build"
 
 
-@app.post("/api/v1/execute-sync")
+@app.post("/api/execute-sync")
 async def execute_task_sync(req: ExecuteRequest):
     """同步执行任务（直接返回结果，适合小任务）"""
     import time
@@ -1324,7 +1265,7 @@ async def execute_task_sync(req: ExecuteRequest):
 
 
 # ===== 配置端点 =====
-@app.get("/api/v1/config")
+@app.get("/api/config")
 async def get_config():
     """获取可用配置"""
     return JSONResponse(
@@ -1451,7 +1392,7 @@ async def settings_page(request: Request):
     return templates.TemplateResponse(request, "settings.html")
 
 
-@app.get("/api/v1/settings")
+@app.get("/api/settings")
 async def get_settings():
     """获取当前设置（API Key 脱敏）"""
     settings = _read_settings()
@@ -1467,7 +1408,7 @@ async def get_settings():
     return JSONResponse(settings)
 
 
-@app.post("/api/v1/settings")
+@app.post("/api/settings")
 async def save_settings(payload: dict):
     """保存设置到 ~/.omc/config.json"""
     import json
@@ -1499,7 +1440,7 @@ async def save_settings(payload: dict):
 
 
 # ===== 连接测试 =====
-@app.post("/api/v1/test-connection")
+@app.post("/api/test-connection")
 async def test_connection(payload: dict):
     """测试 API Key 是否可用。
 
@@ -1696,7 +1637,7 @@ async def test_connection(payload: dict):
 # ===== 工作流管理 API（P1-6 Agent 子系统重构 Phase 1）=====
 
 
-@app.get("/api/v1/workflows")
+@app.get("/api/workflows")
 async def list_workflows():
     """列出所有可用工作流（内置 + 用户自定义）"""
     loader = WorkflowLoader()
@@ -1711,7 +1652,7 @@ async def list_workflows():
     )
 
 
-@app.get("/api/v1/workflows/{name}")
+@app.get("/api/workflows/{name}")
 async def get_workflow(name: str):
     """获取指定工作流完整配置"""
     loader = WorkflowLoader()
@@ -1735,7 +1676,7 @@ async def get_workflow(name: str):
     return JSONResponse({"name": name, **d})
 
 
-@app.put("/api/v1/workflows/{name}")
+@app.put("/api/workflows/{name}")
 async def save_workflow(name: str, payload: dict):
     """保存或更新自定义工作流（PUT 用于创建或覆盖）"""
     try:
@@ -1758,7 +1699,7 @@ async def save_workflow(name: str, payload: dict):
         )
 
 
-@app.delete("/api/v1/workflows/{name}")
+@app.delete("/api/workflows/{name}")
 async def delete_workflow(name: str):
     """删除自定义工作流（内置不可删除）"""
     loader = WorkflowLoader()
@@ -1791,7 +1732,7 @@ class SessionUpdate(BaseModel):
     messages: Optional[list] = None
 
 
-@app.get("/api/v1/sessions")
+@app.get("/api/sessions")
 async def list_sessions():
     """获取所有会话列表"""
     sessions = []
@@ -1814,7 +1755,7 @@ async def list_sessions():
     return JSONResponse({"sessions": sessions})
 
 
-@app.post("/api/v1/sessions")
+@app.post("/api/sessions")
 async def create_session(req: SessionCreate):
     """创建新会话"""
     session_id = str(uuid.uuid4())[:12]
@@ -1844,7 +1785,7 @@ async def create_session(req: SessionCreate):
     )
 
 
-@app.get("/api/v1/sessions/{session_id}")
+@app.get("/api/sessions/{session_id}")
 async def get_session(session_id: str):
     """获取单个会话详情"""
     filepath = SESSIONS_DIR / f"{session_id}.json"
@@ -1858,7 +1799,7 @@ async def get_session(session_id: str):
         raise HTTPException(status_code=500, detail="Failed to read session")
 
 
-@app.put("/api/v1/sessions/{session_id}")
+@app.put("/api/sessions/{session_id}")
 async def update_session(session_id: str, req: SessionUpdate):
     """更新会话（标题或消息）"""
     filepath = SESSIONS_DIR / f"{session_id}.json"
@@ -1880,7 +1821,7 @@ async def update_session(session_id: str, req: SessionUpdate):
         raise HTTPException(status_code=500, detail="Failed to update session")
 
 
-@app.delete("/api/v1/sessions/{session_id}")
+@app.delete("/api/sessions/{session_id}")
 async def delete_session(session_id: str):
     """删除会话"""
     filepath = SESSIONS_DIR / f"{session_id}.json"
@@ -1895,7 +1836,7 @@ async def delete_session(session_id: str):
 
 
 # ===== 覆盖率 API =====
-@app.get("/api/v1/coverage")
+@app.get("/api/coverage")
 async def get_coverage():
     """获取测试覆盖率数据"""
     try:
@@ -1912,7 +1853,7 @@ async def get_coverage():
         )
 
 
-@app.post("/api/v1/coverage/run")
+@app.post("/api/coverage/run")
 async def run_coverage():
     """重新运行覆盖率分析"""
     try:
@@ -1959,7 +1900,6 @@ def run():
     print("  🤖 Oh My Coder Web Interface")
     print("  📍 http://localhost:8000")
     print("  📖 API Docs: http://localhost:8000/docs")
-    print("  💡 提示: 使用 'omc server start' 可在端口被占用时自动切换端口")
     print("=" * 50)
     uvicorn.run(app, host="0.0.0.0", port=8000, reload=False)  # nosec B104
 

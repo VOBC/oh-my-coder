@@ -4,8 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>任务历史 - Oh My Coder</title>
-    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
-    <link rel="stylesheet" href="/static/style.css?v=1779616392">
+    <link rel="stylesheet" href="/static/style.css?v=20260506">
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         .history-toolbar {
@@ -103,7 +102,7 @@
     <nav class="nav">
         <div class="nav-content">
             <a href="/" class="nav-brand">
-                <span class="nav-brand-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36" width="36" height="36" style="vertical-align:middle;margin-right:4px"><defs><linearGradient id="gnw" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#f59e0b"/><stop offset="100%" style="stop-color:#06b6d4"/></linearGradient></defs><rect x="1" y="1" width="34" height="34" rx="6" ry="6" fill="#1a1a2e" stroke="url(#gnw)" stroke-width="1"/><text x="18" y="23" font-family="monospace" font-size="13" font-weight="bold" fill="url(#gnw)" text-anchor="middle" letter-spacing="1.5">OMC</text><line x1="5" y1="28" x2="31" y2="28" stroke="#f59e0b" stroke-width="1.2" opacity="0.6"/><rect x="31" y="17" width="2" height="10" rx="0.5" fill="#06b6d4"><animate attributeName="opacity" values="0.8;0.1;0.8" dur="1.2s" repeatCount="indefinite"/></rect></svg></span>
+                <span class="nav-brand-icon">🤖</span>
                 <span class="nav-brand-name">Oh My Coder</span>
             </a>
             <div class="nav-links" id="navLinks">
@@ -114,25 +113,25 @@
                 <a href="/settings" class="nav-link">设置</a>
             </div>
             <div class="nav-actions">
-                <div class="nav-toggle" id="themeToggle" title="切换主题"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></div>
-                <button class="nav-hamburger" id="navHamburger"></button>
+                <div class="nav-toggle" id="themeToggle" title="切换主题">☀️</div>
+                <button class="nav-hamburger" id="navHamburger">☰</button>
             </div>
         </div>
     </nav>
 
     <main class="container">
-        <h1 class="page-title"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg> 任务历史</h1>
+        <h1 class="page-title">📋 任务历史</h1>
         <p class="page-desc">查看所有已执行的任务和结果。</p>
 
         <div class="history-toolbar">
-            <input type="text" class="history-search" id="searchInput" placeholder=" 搜索任务...">
+            <input type="text" class="history-search" id="searchInput" placeholder="🔍 搜索任务...">
             <button class="btn btn-ghost btn-sm" onclick="loadHistory()">刷新</button>
             <button class="btn btn-ghost btn-sm" onclick="clearAllTasks()" style="color:var(--danger);">清除全部</button>
         </div>
 
         <div class="history-list" id="historyList">
             <div class="empty-state">
-                <span class="empty-state-icon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><path d="M22 12h-6l-2 3H10l-2-3H2"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg></span>
+                <span class="empty-state-icon">📭</span>
                 <div class="empty-state-title">暂无历史记录</div>
                 <div class="empty-state-desc">执行任务后，历史记录会出现在这里。</div>
             </div>
@@ -151,12 +150,12 @@
             </div>
             <div class="modal-actions">
                 <button class="btn btn-ghost" onclick="closeModal()">关闭</button>
-                <button class="btn btn-primary" id="saveReportBtn" onclick="saveReportToDesktop()"> 保存报告到桌面</button>
+                <button class="btn btn-primary" id="saveReportBtn" onclick="saveReportToDesktop()">📄 保存报告到桌面</button>
             </div>
         </div>
     </div>
 
-    <footer class="footer"><p>Made with  by Oh My Coder</p></footer>
+    <footer class="footer"><p>Made with ❤️ by Oh My Coder</p></footer>
 
     <script>
         // XSS escape helper
@@ -166,13 +165,13 @@
         function loadTheme() {
             const t = localStorage.getItem('theme') || 'dark';
             document.documentElement.setAttribute('data-theme', t);
-            document.getElementById('themeToggle').textContent = t === 'dark' ? '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>' : '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#06b6d4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>';
+            document.getElementById('themeToggle').textContent = t === 'dark' ? '☀️' : '🌙';
         }
         document.getElementById('themeToggle').addEventListener('click', () => {
             const c = document.documentElement.getAttribute('data-theme');
             const n = c === 'dark' ? 'light' : 'dark';
             document.documentElement.setAttribute('data-theme', n);
-            document.getElementById('themeToggle').textContent = n === 'dark' ? '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>' : '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#06b6d4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>';
+            document.getElementById('themeToggle').textContent = n === 'dark' ? '☀️' : '🌙';
             localStorage.setItem('theme', n);
         });
         loadTheme();
@@ -187,11 +186,11 @@
             const list = document.getElementById('historyList');
             list.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:40px;">加载中...</div>';
             try {
-                const res = await fetch('/api/v1/history');
+                const res = await fetch('/api/history');
                 const data = await res.json();
                 const records = data.records || data.history || [];
                 if (!records.length) {
-                    list.innerHTML = `<div class="empty-state"><span class="empty-state-icon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><path d="M22 12h-6l-2 3H10l-2-3H2"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg></span><div class="empty-state-title">暂无历史记录</div><div class="empty-state-desc">执行任务后，历史记录会出现在这里。</div></div>`;
+                    list.innerHTML = `<div class="empty-state"><span class="empty-state-icon">📭</span><div class="empty-state-title">暂无历史记录</div><div class="empty-state-desc">执行任务后，历史记录会出现在这里。</div></div>`;
                     return;
                 }
                 list.innerHTML = records.map(r => {
@@ -213,19 +212,19 @@
                                 <span class="history-item-title">${title}</span>
                                 <div style="display:flex;align-items:center;gap:8px;">
                                     ${statusBadge}
-                                    <button class="btn-delete-task" onclick="event.stopPropagation();deleteTask('${taskId}')" title="删除任务"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
+                                    <button class="btn-delete-task" onclick="event.stopPropagation();deleteTask('${taskId}')" title="删除任务">🗑️</button>
                                 </div>
                             </div>
                             <div class="history-item-meta">
-                                <span><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> ${ts}</span>
-                                <span> ${wf}</span>
-                                <span> ${model}</span>
-                                ${r.stats ? `<span> ${(r.stats.total_tokens || 0).toLocaleString()} tokens</span>` : ''}
+                                <span>🕐 ${ts}</span>
+                                <span>⚡ ${wf}</span>
+                                <span>🤖 ${model}</span>
+                                ${r.stats ? `<span>🪙 ${(r.stats.total_tokens || 0).toLocaleString()} tokens</span>` : ''}
                             </div>
                         </div>`;
                 }).join('');
             } catch (e) {
-                list.innerHTML = `<div class="empty-state"><span class="empty-state-icon"></span><div class="empty-state-title">加载失败</div><div class="empty-state-desc">无法获取历史记录。</div></div>`;
+                list.innerHTML = `<div class="empty-state"><span class="empty-state-icon">⚠️</span><div class="empty-state-title">加载失败</div><div class="empty-state-desc">无法获取历史记录。</div></div>`;
             }
         }
 
@@ -244,7 +243,7 @@
         async function deleteTask(taskId) {
             if (!confirm('确定要删除这个任务吗？')) return;
             try {
-                const res = await fetch(`/api/v1/tasks/${taskId}`, { method: 'DELETE' });
+                const res = await fetch(`/api/tasks/${taskId}`, { method: 'DELETE' });
                 if (res.ok) {
                     const item = document.querySelector(`[data-task-id="${taskId}"]`);
                     if (item) { item.style.opacity = '0'; item.style.transform = 'translateX(20px)'; setTimeout(() => item.remove(), 300); }
@@ -261,11 +260,11 @@
         async function clearAllTasks() {
             if (!confirm('确定要清除所有任务记录吗？此操作不可恢复。')) return;
             try {
-                const res = await fetch('/api/v1/tasks');
+                const res = await fetch('/api/tasks');
                 const data = await res.json();
                 const tasks = data.tasks || [];
                 for (const t of tasks) {
-                    await fetch(`/api/v1/tasks/${t.task_id}`, { method: 'DELETE' });
+                    await fetch(`/api/tasks/${t.task_id}`, { method: 'DELETE' });
                 }
                 loadHistory();
             } catch (e) {
@@ -288,20 +287,20 @@
             modalBody.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted)">加载中...</div>';
 
             try {
-                const res = await fetch(`/api/v1/history/${taskId}`);
+                const res = await fetch(`/api/history/${taskId}`);
                 if (!res.ok) throw new Error('任务不存在');
                 const task = await res.json();
 
                 modalTitle.textContent = task.task || '任务详情';
                 
-                let html = `<div style="margin-bottom:16px;">\n                    <p><strong>状态：</strong>${task.status === 'completed' ? ' 成功' : ' 失败'}</p>\n                    <p><strong>工作流：</strong>${esc(task.workflow || '-')}</p>\n                    <p><strong>模型：</strong>${esc(task.model || '-')}</p>\n                    <p><strong>项目路径：</strong>${esc(task.project_path || '-')}</p>\n                    <p><strong>开始时间：</strong>${esc(task.started_at || '-')}</p>\n                    <p><strong>完成时间：</strong>${esc(task.completed_at || '-')}</p>\n                </div>`;
+                let html = `<div style="margin-bottom:16px;">\n                    <p><strong>状态：</strong>${task.status === 'completed' ? '✅ 成功' : '❌ 失败'}</p>\n                    <p><strong>工作流：</strong>${esc(task.workflow || '-')}</p>\n                    <p><strong>模型：</strong>${esc(task.model || '-')}</p>\n                    <p><strong>项目路径：</strong>${esc(task.project_path || '-')}</p>\n                    <p><strong>开始时间：</strong>${esc(task.started_at || '-')}</p>\n                    <p><strong>完成时间：</strong>${esc(task.completed_at || '-')}</p>\n                </div>`;
 
                 if (task.stats) {
-                    html += `<h3 style="margin:16px 0 8px;font-size:15px;"> 统计</h3>\n                    <p>Tokens: ${(task.stats.total_tokens || 0).toLocaleString()}</p>\n                    <p>执行时间: ${task.stats.execution_time || 0}s</p>\n                    <p>完成步骤: ${esc((task.stats.steps_completed || []).join(', ') || '-')}</p>`;
+                    html += `<h3 style="margin:16px 0 8px;font-size:15px;">📊 统计</h3>\n                    <p>Tokens: ${(task.stats.total_tokens || 0).toLocaleString()}</p>\n                    <p>执行时间: ${task.stats.execution_time || 0}s</p>\n                    <p>完成步骤: ${esc((task.stats.steps_completed || []).join(', ') || '-')}</p>`;
                 }
 
                 if (task.result) {
-                    html += `<h3 style="margin:16px 0 8px;font-size:15px;"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> 结果</h3>`;
+                    html += `<h3 style="margin:16px 0 8px;font-size:15px;">📝 结果</h3>`;
                     if (typeof task.result === 'object') {
                         html += `<pre>${esc(JSON.stringify(task.result, null, 2))}</pre>`;
                     } else {
@@ -310,7 +309,7 @@
                 }
 
                 if (task.error) {
-                    html += `<h3 style="margin:16px 0 8px;font-size:15px;color:var(--danger)"> 错误</h3>\n                    <pre style="color:var(--danger)">${esc(task.error)}</pre>`;
+                    html += `<h3 style="margin:16px 0 8px;font-size:15px;color:var(--danger)">⚠️ 错误</h3>\n                    <pre style="color:var(--danger)">${esc(task.error)}</pre>`;
                 }
 
                 modalBody.innerHTML = html;
@@ -334,20 +333,20 @@
             btn.textContent = '保存中...';
 
             try {
-                const res = await fetch('/api/v1/save-report', {
+                const res = await fetch('/api/save-report', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ task_id: currentTaskId })
                 });
                 const data = await res.json();
                 if (res.ok) {
-                    btn.textContent = ' 已保存';
+                    btn.textContent = '✅ 已保存';
                     alert(`报告已保存到: ${data.path}`);
                 } else {
                     throw new Error(data.detail || '保存失败');
                 }
             } catch (e) {
-                btn.textContent = ' 保存报告到桌面';
+                btn.textContent = '📄 保存报告到桌面';
                 btn.disabled = false;
                 alert('保存失败: ' + e.message);
             }

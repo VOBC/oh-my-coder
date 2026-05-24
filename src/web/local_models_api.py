@@ -11,7 +11,7 @@ from typing import Any, Optional
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
-router = APIRouter(prefix="/local-models", tags=["local-models"])
+router = APIRouter(prefix="/api/local-models", tags=["local-models"])
 
 
 class LocalModelInfo(BaseModel):
