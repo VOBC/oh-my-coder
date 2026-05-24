@@ -72,19 +72,19 @@
             </div>
             <div class="nav-actions">
                 <div class="nav-toggle" id="themeToggle" title="切换主题"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></div>
-                <button class="nav-hamburger" id="navHamburger">☰</button>
+                <button class="nav-hamburger" id="navHamburger"></button>
             </div>
         </div>
     </nav>
 
     <main class="container">
-        <h1 class="page-title">🤖 Agent 状态</h1>
+        <h1 class="page-title"> Agent 状态</h1>
         <p class="page-desc">查看所有 Agent 的当前状态和详细信息。</p>
 
         <div class="agents-grid" id="agentsGrid">
             <div class="agent-card">
                 <div class="agent-card-top">
-                    <div class="agent-avatar">🔍</div>
+                    <div class="agent-avatar"></div>
                     <div><div class="agent-card-name">Explorer</div><div class="agent-card-role">探索者</div></div>
                 </div>
                 <div class="agent-card-desc">探索项目结构，理解代码库，收集上下文信息。</div>
@@ -116,7 +116,7 @@
             </div>
             <div class="agent-card">
                 <div class="agent-card-top">
-                    <div class="agent-avatar">✅</div>
+                    <div class="agent-avatar"></div>
                     <div><div class="agent-card-name">Verifier</div><div class="agent-card-role">验证者</div></div>
                 </div>
                 <div class="agent-card-desc">验证结果，运行测试，确认代码质量。</div>
@@ -124,7 +124,7 @@
             </div>
             <div class="agent-card">
                 <div class="agent-card-top">
-                    <div class="agent-avatar">🐛</div>
+                    <div class="agent-avatar"></div>
                     <div><div class="agent-card-name">Debugger</div><div class="agent-card-role">调试者</div></div>
                 </div>
                 <div class="agent-card-desc">定位 Bug，分析错误，修复问题。</div>
@@ -186,7 +186,7 @@
                         return `
                         <div class="agent-card">
                             <div class="agent-card-top">
-                                <div class="agent-avatar">${a.icon || '🤖'}</div>
+                                <div class="agent-avatar">${a.icon || ''}</div>
                                 <div><div class="agent-card-name">${a.name}</div><div class="agent-card-role">${a.role || ''}</div></div>
                             </div>
                             <div class="agent-card-desc">${a.description || ''}</div>

@@ -266,8 +266,8 @@
                 <a href="/settings" class="nav-link">设置</a>
             </div>
             <div class="nav-actions">
-                <div class="nav-toggle" id="themeToggle" title="切换主题">☀️</div>
-                <button class="nav-hamburger" id="navHamburger">☰</button>
+                <div class="nav-toggle" id="themeToggle" title="切换主题"></div>
+                <button class="nav-hamburger" id="navHamburger"></button>
             </div>
         </div>
     </nav>
@@ -381,7 +381,7 @@
                             <option value="Baichuan4">百川 4 (低成本)</option>
                             <!-- Custom models injected by JS -->
                         </select>
-                        <a href="/settings#apikeys" class="form-link" style="margin-top:6px;font-size:12px;">⚙️ 管理供应商/添加自定义模型</a>
+                        <a href="/settings#apikeys" class="form-link" style="margin-top:6px;font-size:12px;"> 管理供应商/添加自定义模型</a>
                     </div>
                     <div class="form-group">
                         <label for="workflowSelect" class="form-label">工作流</label>
@@ -477,10 +477,10 @@
 
         // ===== Toast =====
         function showToast(msg, type = 'info', ms = 4000) {
-            const icons = { success: '✅', error: '❌', info: 'ℹ️' };
+            const icons = { success: '', error: '', info: '' };
             const t = document.createElement('div');
             t.className = `toast ${type}`;
-            t.textContent = (icons[type] || 'ℹ️') + ' ' + msg;
+            t.textContent = (icons[type] || '') + ' ' + msg;
             document.getElementById('toastContainer').appendChild(t);
             setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translateX(20px)'; setTimeout(() => t.remove(), 300); }, ms);
         }
@@ -669,10 +669,10 @@
                 tag.innerHTML = getStepLabel(step) + ' <span style="width:14px;height:14px;border:2px solid var(--primary);border-top-color:transparent;border-radius:50%;animation:spin 0.8s linear infinite;display:inline-block;"></span>';
             } else if (status === 'completed') {
                 tag.style.background = 'rgba(16,185,129,0.1)'; tag.style.color = '#10b981'; tag.style.border = '1px solid #10b981';
-                tag.textContent = '✅ ' + getStepLabel(step).replace(/^[^\s]+ /, '');
+                tag.textContent = ' ' + getStepLabel(step).replace(/^[^\s]+ /, '');
             } else if (status === 'failed') {
                 tag.style.background = 'rgba(239,68,68,0.1)'; tag.style.color = '#ef4444'; tag.style.border = '1px solid #ef4444';
-                tag.textContent = '❌ ' + getStepLabel(step).replace(/^[^\s]+ /, '');
+                tag.textContent = ' ' + getStepLabel(step).replace(/^[^\s]+ /, '');
             }
         }
 
@@ -710,7 +710,7 @@
                 updateDynamicStep(step, 'failed');
                 showToast(`失败: ${escapeHtml(step)}`, 'error');
                 const panel = document.getElementById(`panel-${step}`);
-                if (panel) panel.innerHTML = `<div style="color:var(--danger);padding:16px;">❌ <b>${escapeHtml(step)}</b> 执行失败:<br><pre style="margin-top:8px;white-space:pre-wrap;font-size:13px;">${escapeHtml(content || '未知错误')}</pre></div>`;
+                if (panel) panel.innerHTML = `<div style="color:var(--danger);padding:16px;"> <b>${escapeHtml(step)}</b> 执行失败:<br><pre style="margin-top:8px;white-space:pre-wrap;font-size:13px;">${escapeHtml(content || '未知错误')}</pre></div>`;
             }
             else if (type === 'complete') { state.result = d.result || d; renderResult(); autoSaveReport(taskId); }
             else if (type === 'error') { showToast(`执行失败: ${content}`, 'error'); stopRunning(); }
@@ -730,16 +730,16 @@
             let resultHtml = '';
             if (allFailed) {
                 resultHtml = `<div style="text-align:center;padding:40px 20px;">
-                    <div style="font-size:48px;margin-bottom:16px;">❌</div>
+                    <div style="font-size:48px;margin-bottom:16px;"></div>
                     <h3 style="color:var(--danger);margin-bottom:8px;">任务执行失败</h3>
                     <p style="color:var(--text-muted);">所有步骤均失败，请检查 API 配置后重试</p>
-                    ${stats?.steps_failed?.map(s => `<div style="margin-top:12px;padding:8px 16px;background:var(--bg-secondary);border-radius:8px;display:inline-block;font-size:13px;">❌ ${s}: ${state.stepOutputs[s] || '未知错误'}</div>`).join('')}
+                    ${stats?.steps_failed?.map(s => `<div style="margin-top:12px;padding:8px 16px;background:var(--bg-secondary);border-radius:8px;display:inline-block;font-size:13px;"> ${s}: ${state.stepOutputs[s] || '未知错误'}</div>`).join('')}
                 </div>`;
             } else if (hasFailures) {
                 resultHtml = `<div class="markdown-body">${md(r?.result || '')}</div>
                     <div style="margin-top:16px;padding:12px 16px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:8px;">
-                        <b style="color:var(--danger);">⚠️ 部分步骤失败：</b>
-                        ${stats?.steps_failed?.map(s => `<div style="margin-top:6px;font-size:13px;">❌ <b>${escapeHtml(s)}</b>: ${escapeHtml(state.stepOutputs[s] || '未知错误')}</div>`).join('')}
+                        <b style="color:var(--danger);"> 部分步骤失败：</b>
+                        ${stats?.steps_failed?.map(s => `<div style="margin-top:6px;font-size:13px;"> <b>${escapeHtml(s)}</b>: ${escapeHtml(state.stepOutputs[s] || '未知错误')}</div>`).join('')}
                     </div>`;
             } else {
                 resultHtml = `<div class="markdown-body">${md(r?.result || r)}</div>`;
@@ -908,7 +908,7 @@
             saveCustomModels(models);
             injectCustomModels();
             closeAddCustomModel();
-            showToast('✅ 已添加 ' + name, 'success');
+            showToast(' 已添加 ' + name, 'success');
         }
         async function testCustomModel() {
             const url = document.getElementById('cm-url').value.trim();
@@ -916,8 +916,8 @@
             const modelId = document.getElementById('cm-model-id').value.trim() || document.getElementById('cm-name').value.trim();
             const msgDiv = document.getElementById('cm-test-msg');
             const btn = document.getElementById('cm-test-btn');
-            if (!url) { msgDiv.textContent = '⚠️ 请先填写 API 地址'; msgDiv.style.display = 'block'; msgDiv.style.color = 'var(--danger)'; return; }
-            if (!modelId) { msgDiv.textContent = '⚠️ 请填写模型 ID 或模型名称'; msgDiv.style.display = 'block'; msgDiv.style.color = 'var(--danger)'; return; }
+            if (!url) { msgDiv.textContent = ' 请先填写 API 地址'; msgDiv.style.display = 'block'; msgDiv.style.color = 'var(--danger)'; return; }
+            if (!modelId) { msgDiv.textContent = ' 请填写模型 ID 或模型名称'; msgDiv.style.display = 'block'; msgDiv.style.color = 'var(--danger)'; return; }
             btn.disabled = true; btn.textContent = '⏳ 测试中...';
             msgDiv.style.display = 'none';
             try {
@@ -928,14 +928,14 @@
                 });
                 const data = await res.json();
                 if (data.ok) {
-                    msgDiv.textContent = '✅ ' + data.msg;
+                    msgDiv.textContent = ' ' + data.msg;
                     msgDiv.style.color = 'var(--success)';
                 } else {
-                    msgDiv.textContent = '❌ ' + data.msg;
+                    msgDiv.textContent = ' ' + data.msg;
                     msgDiv.style.color = 'var(--danger)';
                 }
             } catch (e) {
-                msgDiv.textContent = '❌ 测试失败: ' + e.message;
+                msgDiv.textContent = ' 测试失败: ' + e.message;
                 msgDiv.style.color = 'var(--danger)';
             }
             msgDiv.style.display = 'block';

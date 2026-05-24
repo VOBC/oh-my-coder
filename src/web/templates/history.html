@@ -115,7 +115,7 @@
             </div>
             <div class="nav-actions">
                 <div class="nav-toggle" id="themeToggle" title="切换主题"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></div>
-                <button class="nav-hamburger" id="navHamburger">☰</button>
+                <button class="nav-hamburger" id="navHamburger"></button>
             </div>
         </div>
     </nav>
@@ -125,7 +125,7 @@
         <p class="page-desc">查看所有已执行的任务和结果。</p>
 
         <div class="history-toolbar">
-            <input type="text" class="history-search" id="searchInput" placeholder="🔍 搜索任务...">
+            <input type="text" class="history-search" id="searchInput" placeholder=" 搜索任务...">
             <button class="btn btn-ghost btn-sm" onclick="loadHistory()">刷新</button>
             <button class="btn btn-ghost btn-sm" onclick="clearAllTasks()" style="color:var(--danger);">清除全部</button>
         </div>
@@ -219,13 +219,13 @@
                             <div class="history-item-meta">
                                 <span><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> ${ts}</span>
                                 <span>⚡ ${wf}</span>
-                                <span>🤖 ${model}</span>
+                                <span> ${model}</span>
                                 ${r.stats ? `<span>🪙 ${(r.stats.total_tokens || 0).toLocaleString()} tokens</span>` : ''}
                             </div>
                         </div>`;
                 }).join('');
             } catch (e) {
-                list.innerHTML = `<div class="empty-state"><span class="empty-state-icon">⚠️</span><div class="empty-state-title">加载失败</div><div class="empty-state-desc">无法获取历史记录。</div></div>`;
+                list.innerHTML = `<div class="empty-state"><span class="empty-state-icon"></span><div class="empty-state-title">加载失败</div><div class="empty-state-desc">无法获取历史记录。</div></div>`;
             }
         }
 
@@ -294,7 +294,7 @@
 
                 modalTitle.textContent = task.task || '任务详情';
                 
-                let html = `<div style="margin-bottom:16px;">\n                    <p><strong>状态：</strong>${task.status === 'completed' ? '✅ 成功' : '❌ 失败'}</p>\n                    <p><strong>工作流：</strong>${esc(task.workflow || '-')}</p>\n                    <p><strong>模型：</strong>${esc(task.model || '-')}</p>\n                    <p><strong>项目路径：</strong>${esc(task.project_path || '-')}</p>\n                    <p><strong>开始时间：</strong>${esc(task.started_at || '-')}</p>\n                    <p><strong>完成时间：</strong>${esc(task.completed_at || '-')}</p>\n                </div>`;
+                let html = `<div style="margin-bottom:16px;">\n                    <p><strong>状态：</strong>${task.status === 'completed' ? ' 成功' : ' 失败'}</p>\n                    <p><strong>工作流：</strong>${esc(task.workflow || '-')}</p>\n                    <p><strong>模型：</strong>${esc(task.model || '-')}</p>\n                    <p><strong>项目路径：</strong>${esc(task.project_path || '-')}</p>\n                    <p><strong>开始时间：</strong>${esc(task.started_at || '-')}</p>\n                    <p><strong>完成时间：</strong>${esc(task.completed_at || '-')}</p>\n                </div>`;
 
                 if (task.stats) {
                     html += `<h3 style="margin:16px 0 8px;font-size:15px;"> 统计</h3>\n                    <p>Tokens: ${(task.stats.total_tokens || 0).toLocaleString()}</p>\n                    <p>执行时间: ${task.stats.execution_time || 0}s</p>\n                    <p>完成步骤: ${esc((task.stats.steps_completed || []).join(', ') || '-')}</p>`;
@@ -310,7 +310,7 @@
                 }
 
                 if (task.error) {
-                    html += `<h3 style="margin:16px 0 8px;font-size:15px;color:var(--danger)">⚠️ 错误</h3>\n                    <pre style="color:var(--danger)">${esc(task.error)}</pre>`;
+                    html += `<h3 style="margin:16px 0 8px;font-size:15px;color:var(--danger)"> 错误</h3>\n                    <pre style="color:var(--danger)">${esc(task.error)}</pre>`;
                 }
 
                 modalBody.innerHTML = html;
@@ -341,7 +341,7 @@
                 });
                 const data = await res.json();
                 if (res.ok) {
-                    btn.textContent = '✅ 已保存';
+                    btn.textContent = ' 已保存';
                     alert(`报告已保存到: ${data.path}`);
                 } else {
                     throw new Error(data.detail || '保存失败');

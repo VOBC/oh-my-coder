@@ -258,7 +258,7 @@
             </div>
             <div class="nav-actions">
                 <div class="nav-toggle" id="themeToggle" title="切换主题"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></div>
-                <button class="nav-hamburger" id="navHamburger">☰</button>
+                <button class="nav-hamburger" id="navHamburger"></button>
             </div>
         </div>
     </nav>
@@ -266,9 +266,9 @@
     <div class="settings-layout">
         <!-- Sidebar -->
         <aside class="settings-sidebar">
-            <button class="settings-nav-item active" data-panel="models">🖥️ 模型选择</button>
+            <button class="settings-nav-item active" data-panel="models"> 模型选择</button>
             <button class="settings-nav-item" data-panel="apikeys"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg> API Keys</button>
-            <button class="settings-nav-item" data-panel="preferences">⚙️ 偏好设置</button>
+            <button class="settings-nav-item" data-panel="preferences"> 偏好设置</button>
             <button class="settings-nav-item" data-panel="workflows"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg> 工作流</button>
         </aside>
 
@@ -286,7 +286,7 @@
 
                 <div class="card" style="margin-bottom:24px;">
                     <div class="card-header">
-                        <div class="card-title">🖥️ 本地模型 (Ollama)</div>
+                        <div class="card-title"> 本地模型 (Ollama)</div>
                     </div>
                     <div class="model-grid" id="localModels">
                         <div style="color:var(--text-muted);font-size:14px;">检测中...</div>
@@ -422,7 +422,7 @@
                         <span class="badge badge-low">低成本</span>
                     </div>
                     <div class="provider-card-body">
-                        <span class="toggle-url" onclick="toggleUrl('deepseek')">⚙️ 修改 Base URL</span>
+                        <span class="toggle-url" onclick="toggleUrl('deepseek')"> 修改 Base URL</span>
                         <div class="url-group" id="url-group-deepseek">
                             <div class="form-group">
                                 <label class="form-label">Base URL</label>
@@ -457,7 +457,7 @@
                         <span class="badge badge-free">免费</span>
                     </div>
                     <div class="provider-card-body">
-                        <span class="toggle-url" onclick="toggleUrl('glm')">⚙️ 修改 Base URL</span>
+                        <span class="toggle-url" onclick="toggleUrl('glm')"> 修改 Base URL</span>
                         <div class="url-group" id="url-group-glm">
                             <div class="form-group">
                                 <label class="form-label">Base URL <span style="font-size:11px;color:var(--text-muted)">（API 接口地址，非网页地址）</span></label>
@@ -492,7 +492,7 @@
                         <span class="badge badge-free">免费</span>
                     </div>
                     <div class="provider-card-body">
-                        <span class="toggle-url" onclick="toggleUrl('mimo')">⚙️ 修改 Base URL</span>
+                        <span class="toggle-url" onclick="toggleUrl('mimo')"> 修改 Base URL</span>
                         <div class="url-group" id="url-group-mimo">
                             <div class="form-group">
                                 <label class="form-label">Base URL</label>
@@ -527,7 +527,7 @@
                         <span class="badge badge-medium">中等</span>
                     </div>
                     <div class="provider-card-body">
-                        <span class="toggle-url" onclick="toggleUrl('kimi')">⚙️ 修改 Base URL</span>
+                        <span class="toggle-url" onclick="toggleUrl('kimi')"> 修改 Base URL</span>
                         <div class="url-group" id="url-group-kimi">
                             <div class="form-group">
                                 <label class="form-label">Base URL</label>
@@ -562,7 +562,7 @@
                         <span class="badge badge-medium">中等</span>
                     </div>
                     <div class="provider-card-body">
-                        <span class="toggle-url" onclick="toggleUrl('doubao')">⚙️ 修改 Base URL</span>
+                        <span class="toggle-url" onclick="toggleUrl('doubao')"> 修改 Base URL</span>
                         <div class="url-group" id="url-group-doubao">
                             <div class="form-group">
                                 <label class="form-label">Base URL</label>
@@ -597,7 +597,7 @@
                         <span class="badge badge-medium">中等</span>
                     </div>
                     <div class="provider-card-body">
-                        <span class="toggle-url" onclick="toggleUrl('tiangong')">⚙️ 修改 Base URL</span>
+                        <span class="toggle-url" onclick="toggleUrl('tiangong')"> 修改 Base URL</span>
                         <div class="url-group" id="url-group-tiangong">
                             <div class="form-group">
                                 <label class="form-label">Base URL</label>
@@ -632,7 +632,7 @@
                         <span class="badge badge-medium">中等</span>
                     </div>
                     <div class="provider-card-body">
-                        <span class="toggle-url" onclick="toggleUrl('baichuan')">⚙️ 修改 Base URL</span>
+                        <span class="toggle-url" onclick="toggleUrl('baichuan')"> 修改 Base URL</span>
                         <div class="url-group" id="url-group-baichuan">
                             <div class="form-group">
                                 <label class="form-label">Base URL</label>
@@ -848,10 +848,10 @@ steps:
     <!-- Confirm Delete Modal -->
     <div class="modal-overlay" id="wfDeleteModal" onclick="closeWfModals(event)">
         <div class="modal" style="width:400px" onclick="event.stopPropagation()">
-            <h2>⚠️ 确认删除</h2>
+            <h2> 确认删除</h2>
             <p style="color:var(--text-muted);margin-bottom:8px;">确定要删除工作流</p>
             <p style="font-weight:600;font-size:16px;margin-bottom:20px" id="wfDeleteName"></p>
-            <p style="color:var(--danger);font-size:13px;margin-bottom:20px">⚠️ 此操作不可撤销</p>
+            <p style="color:var(--danger);font-size:13px;margin-bottom:20px"> 此操作不可撤销</p>
             <div class="modal-actions">
                 <button class="btn btn-secondary" onclick="closeWfModals()">取消</button>
                 <button class="btn" style="background:var(--danger);color:#fff;border-color:var(--danger)" onclick="confirmDeleteWorkflow()">确认删除</button>
@@ -906,10 +906,10 @@ steps:
 
         // Toast
         function showToast(msg, type = 'success') {
-            const icons = { success: '✅', error: '❌', info: 'ℹ️' };
+            const icons = { success: '', error: '', info: '' };
             const t = document.createElement('div');
             t.className = `toast ${type}`;
-            t.textContent = (icons[type] || 'ℹ️') + ' ' + msg;
+            t.textContent = (icons[type] || '') + ' ' + msg;
             document.getElementById('toastContainer').appendChild(t);
             setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, 3000);
         }
@@ -1057,7 +1057,7 @@ steps:
             if (urlVal) {
                 const v = validateUrl(urlVal, id);
                 if (!v.ok) {
-                    showToastSmall('⚠️ ' + v.msg, 'error');
+                    showToastSmall(' ' + v.msg, 'error');
                     return;
                 }
             }
@@ -1076,7 +1076,7 @@ steps:
                 });
                 if (res.ok) {
                     card.classList.add('saved');
-                    showToastSmall('✅ ' + id + ' 已保存');
+                    showToastSmall(' ' + id + ' 已保存');
                     setTimeout(() => card.classList.remove('saved'), 2000);
                     loadSettings();
                 } else {
@@ -1135,7 +1135,7 @@ steps:
                 if (data.ok) {
                     btn.classList.add('ok');
                     btn.textContent = '✓ 成功';
-                    showToastSmall('✅ ' + data.msg);
+                    showToastSmall(' ' + data.msg);
                     // Auto-reset after 3 seconds
                     setTimeout(() => {
                         if (btn.classList.contains('ok')) {
@@ -1146,7 +1146,7 @@ steps:
                 } else {
                     btn.classList.add('err');
                     btn.textContent = '✗ 失败';
-                    showToastSmall('❌ ' + data.msg, 'error');
+                    showToastSmall(' ' + data.msg, 'error');
                     // Auto-reset after 3 seconds
                     setTimeout(() => {
                         if (btn.classList.contains('err')) {
@@ -1197,7 +1197,7 @@ steps:
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ models: keys })
                 });
-                if (res.ok) { showToastSmall('✅ 所有 API Keys 已保存'); loadSettings(); }
+                if (res.ok) { showToastSmall(' 所有 API Keys 已保存'); loadSettings(); }
                 else showToastSmall('保存失败', 'error');
             } catch (e) { showToastSmall('保存失败: ' + e.message, 'error'); }
         }
@@ -1238,7 +1238,7 @@ steps:
             saveCustomProviders(providers);
             renderCustomProviders();
             closeAddProviderModal();
-            showToastSmall('✅ 已添加 ' + name);
+            showToastSmall(' 已添加 ' + name);
         }
 
         function deleteCustomProvider(id) {
@@ -1266,7 +1266,7 @@ steps:
                 if (r.ok) {
                     const card = document.getElementById('card-custom-' + id);
                     if (card) card.classList.add('saved');
-                    showToastSmall('✅ 已保存');
+                    showToastSmall(' 已保存');
                     setTimeout(() => card?.classList.remove('saved'), 2000);
                 }
             });
@@ -1301,10 +1301,10 @@ steps:
                 const data = await res.json();
                 if (data.ok) {
                     btn.classList.add('ok'); btn.textContent = '✓ 成功';
-                    showToastSmall('✅ ' + data.msg);
+                    showToastSmall(' ' + data.msg);
                 } else {
                     btn.classList.add('err'); btn.textContent = '✗ 失败';
-                    showToastSmall('❌ ' + data.msg, 'error');
+                    showToastSmall(' ' + data.msg, 'error');
                 }
             } catch (e) {
                 btn.classList.add('err'); btn.textContent = '✗ 失败';
@@ -1425,8 +1425,8 @@ steps:
                             ? '<span class="badge" style="background:var(--border);color:var(--text-muted)">内置</span>'
                             : '<span class="badge" style="background:var(--primary-light);color:var(--primary)">用户</span>';
                         const actions = wf.source === 'builtin'
-                            ? `<button class="btn btn-ghost btn-sm" onclick="openViewModal('${escHtml(name)}')">🔍 查看详情</button>`
-                            : `<button class="btn btn-ghost btn-sm" onclick="openViewModal('${escHtml(name)}')">🔍 查看</button>
+                            ? `<button class="btn btn-ghost btn-sm" onclick="openViewModal('${escHtml(name)}')"> 查看详情</button>`
+                            : `<button class="btn btn-ghost btn-sm" onclick="openViewModal('${escHtml(name)}')"> 查看</button>
                                <button class="btn btn-ghost btn-sm" onclick="openEditModal('${escHtml(name)}')">✏️ 编辑</button>
                                <button class="btn btn-ghost btn-sm" style="color:var(--danger)" onclick="deleteWorkflow('${escHtml(name)}')"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg> 删除</button>`;
                         html += `<div class="wf-card">
@@ -1544,9 +1544,9 @@ steps:
                 if (!res.ok) throw new Error(await res.text());
                 closeAllModals();
                 await loadWorkflows();
-                showToast('✅ 工作流已保存');
+                showToast(' 工作流已保存');
             } catch (e) {
-                showToast('❌ 保存失败: ' + e, 'error');
+                showToast(' 保存失败: ' + e, 'error');
             }
         }
 
@@ -1563,9 +1563,9 @@ steps:
                 if (!res.ok) throw new Error(await res.text());
                 closeAllModals();
                 await loadWorkflows();
-                showToast('✅ 工作流已创建');
+                showToast(' 工作流已创建');
             } catch (e) {
-                showToast('❌ 创建失败: ' + e, 'error');
+                showToast(' 创建失败: ' + e, 'error');
             }
         }
 
@@ -1578,9 +1578,9 @@ steps:
                 if (!res.ok || !data.success) throw new Error(data.error || '删除失败');
                 closeAllModals();
                 await loadWorkflows();
-                showToast('✅ 已删除');
+                showToast(' 已删除');
             } catch (e) {
-                showToast('❌ ' + e, 'error');
+                showToast(' ' + e, 'error');
             }
         }
 
@@ -1710,7 +1710,7 @@ steps:
             saveCustomModels(models);
             renderCustomModels();
             closeCustomModelModal();
-            showToast(editId ? '✅ 已更新' : '✅ 已添加');
+            showToast(editId ? ' 已更新' : ' 已添加');
         }
 
         let _deleteCmId = null;
@@ -1747,7 +1747,7 @@ steps:
             const resultDiv = document.getElementById('cmTestResult');
 
             if (!url || !modelId) {
-                resultDiv.textContent = '⚠️ 请先填写 API 地址和模型 ID';
+                resultDiv.textContent = ' 请先填写 API 地址和模型 ID';
                 resultDiv.style.color = 'var(--danger)';
                 resultDiv.style.display = 'block';
                 return;
@@ -1767,14 +1767,14 @@ steps:
                 const data = await res.json();
 
                 if (data.ok) {
-                    resultDiv.textContent = '✅ ' + data.msg;
+                    resultDiv.textContent = ' ' + data.msg;
                     resultDiv.style.color = 'var(--success)';
                 } else {
-                    resultDiv.textContent = '❌ ' + data.msg;
+                    resultDiv.textContent = ' ' + data.msg;
                     resultDiv.style.color = 'var(--danger)';
                 }
             } catch (e) {
-                resultDiv.textContent = '❌ 测试失败: ' + e.message;
+                resultDiv.textContent = ' 测试失败: ' + e.message;
                 resultDiv.style.color = 'var(--danger)';
             }
 
