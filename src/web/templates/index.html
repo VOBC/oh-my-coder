@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Oh My Coder - 多智能体 AI 编程助手</title>
     <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
-    <link rel="stylesheet" href="/static/style.css?v=1779595030">
+    <link rel="stylesheet" href="/static/style.css?v=1779613284">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -390,7 +390,7 @@
                             <option value="review">代码审查</option>
                             <option value="debug">调试修复</option>
                             <option value="test">测试用例</option>
-                            <option value="refactor">♻️ 重构优化</option>
+                            <option value="refactor"> 重构优化</option>
                             <option value="doc">文档生成</option>
                             <option value="pair">结对编程</option>
                             <option value="autopilot">自动驾驶</option>
@@ -399,7 +399,7 @@
                     </div>
                 </div>
                 <button type="submit" class="btn btn-primary btn-submit" id="submitBtn">
-                    <span class="btn-text">▶ 启动 AI 团队</span>
+                    <span class="btn-text"> 启动 AI 团队</span>
                     <div class="btn-spinner"></div>
                 </button>
             </form>
@@ -918,7 +918,7 @@
             const btn = document.getElementById('cm-test-btn');
             if (!url) { msgDiv.textContent = ' 请先填写 API 地址'; msgDiv.style.display = 'block'; msgDiv.style.color = 'var(--danger)'; return; }
             if (!modelId) { msgDiv.textContent = ' 请填写模型 ID 或模型名称'; msgDiv.style.display = 'block'; msgDiv.style.color = 'var(--danger)'; return; }
-            btn.disabled = true; btn.textContent = '⏳ 测试中...';
+            btn.disabled = true; btn.textContent = ' 测试中...';
             msgDiv.style.display = 'none';
             try {
                 const res = await fetch('/api/v1/test-connection', {

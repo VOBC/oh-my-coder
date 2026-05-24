@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>任务历史 - Oh My Coder</title>
     <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
-    <link rel="stylesheet" href="/static/style.css?v=1779595030">
+    <link rel="stylesheet" href="/static/style.css?v=1779613284">
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         .history-toolbar {
@@ -156,7 +156,7 @@
         </div>
     </div>
 
-    <footer class="footer"><p>Made with ❤️ by Oh My Coder</p></footer>
+    <footer class="footer"><p>Made with  by Oh My Coder</p></footer>
 
     <script>
         // XSS escape helper
@@ -218,9 +218,9 @@
                             </div>
                             <div class="history-item-meta">
                                 <span><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> ${ts}</span>
-                                <span>⚡ ${wf}</span>
+                                <span> ${wf}</span>
                                 <span> ${model}</span>
-                                ${r.stats ? `<span>🪙 ${(r.stats.total_tokens || 0).toLocaleString()} tokens</span>` : ''}
+                                ${r.stats ? `<span> ${(r.stats.total_tokens || 0).toLocaleString()} tokens</span>` : ''}
                             </div>
                         </div>`;
                 }).join('');

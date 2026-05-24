@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>设置 - Oh My Coder</title>
     <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
-    <link rel="stylesheet" href="/static/style.css?v=1779595030">
+    <link rel="stylesheet" href="/static/style.css?v=1779613284">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -295,7 +295,7 @@
 
                 <div class="card">
                     <div class="card-header">
-                        <div class="card-title">☁️ 云端模型</div>
+                        <div class="card-title"> 云端模型</div>
                     </div>
                     <div class="model-grid" id="cloudModels">
                         <div class="model-card" data-model="deepseek">
@@ -304,7 +304,7 @@
                                 <span class="badge badge-warning">低成本</span>
                             </div>
                             <div class="model-card-desc">高性能对话模型，支持函数调用</div>
-                            <div class="model-card-meta"><span>🇨🇳 国内直连</span></div>
+                            <div class="model-card-meta"><span> 国内直连</span></div>
                         </div>
 
                         <div class="model-card" data-model="glm">
@@ -313,7 +313,7 @@
                                 <span class="badge badge-success">免费</span>
                             </div>
                             <div class="model-card-desc">免费高性能，支持函数调用、视觉</div>
-                            <div class="model-card-meta"><span>🇨🇳 国内直连</span></div>
+                            <div class="model-card-meta"><span> 国内直连</span></div>
                         </div>
                         <div class="model-card" data-model="mimo">
                             <div class="model-card-header">
@@ -321,7 +321,7 @@
                                 <span class="badge badge-success">免费</span>
                             </div>
                             <div class="model-card-desc">小米 MiMo，免费超长上下文（256K）</div>
-                            <div class="model-card-meta"><span>🇨🇳 国内直连</span></div>
+                            <div class="model-card-meta"><span> 国内直连</span></div>
                         </div>
                         <div class="model-card" data-model="kimi">
                             <div class="model-card-header">
@@ -329,7 +329,7 @@
                                 <span class="badge badge-warning">低成本</span>
                             </div>
                             <div class="model-card-desc">月之暗面，128K 超长上下文</div>
-                            <div class="model-card-meta"><span>🇨🇳 国内直连</span></div>
+                            <div class="model-card-meta"><span> 国内直连</span></div>
                         </div>
                         <div class="model-card" data-model="doubao">
                             <div class="model-card-header">
@@ -337,7 +337,7 @@
                                 <span class="badge badge-warning">低成本</span>
                             </div>
                             <div class="model-card-desc">字节跳动大模型，性价比高</div>
-                            <div class="model-card-meta"><span>🇨🇳 国内直连</span></div>
+                            <div class="model-card-meta"><span> 国内直连</span></div>
                         </div>
                         <div class="model-card" data-model="tiangong">
                             <div class="model-card-header">
@@ -345,7 +345,7 @@
                                 <span class="badge badge-warning">低成本</span>
                             </div>
                             <div class="model-card-desc">天工大模型 3.0</div>
-                            <div class="model-card-meta"><span>🇨🇳 国内直连</span></div>
+                            <div class="model-card-meta"><span> 国内直连</span></div>
                         </div>
                         <div class="model-card" data-model="baichuan">
                             <div class="model-card-header">
@@ -353,7 +353,7 @@
                                 <span class="badge badge-warning">低成本</span>
                             </div>
                             <div class="model-card-desc">百川智能 4</div>
-                            <div class="model-card-meta"><span>🇨🇳 国内直连</span></div>
+                            <div class="model-card-meta"><span> 国内直连</span></div>
                         </div>
                     </div>
                 </div>
@@ -588,7 +588,7 @@
                 <div class="provider-card" id="card-tiangong" data-provider="tiangong">
                     <div class="provider-card-header">
                         <div class="provider-info">
-                            <span class="provider-emoji">🏗️</span>
+                            <span class="provider-emoji"></span>
                             <div>
                                 <div class="provider-name">天工</div>
                                 <div class="provider-models">天工 3.0</div>
@@ -725,7 +725,7 @@
 
                 <div class="wf-header">
                     <div></div>
-                    <button class="btn btn-primary" onclick="openCreateModal()">➕ 新建工作流</button>
+                    <button class="btn btn-primary" onclick="openCreateModal()"> 新建工作流</button>
                 </div>
 
                 <div id="wfList"><div class="wf-loading">加载中...</div></div>
@@ -862,7 +862,7 @@ steps:
 
 
     <footer class="footer">
-        <p>Made with ❤️ by Oh My Coder</p>
+        <p>Made with  by Oh My Coder</p>
     </footer>
 
     <script>
@@ -1427,7 +1427,7 @@ steps:
                         const actions = wf.source === 'builtin'
                             ? `<button class="btn btn-ghost btn-sm" onclick="openViewModal('${escHtml(name)}')"> 查看详情</button>`
                             : `<button class="btn btn-ghost btn-sm" onclick="openViewModal('${escHtml(name)}')"> 查看</button>
-                               <button class="btn btn-ghost btn-sm" onclick="openEditModal('${escHtml(name)}')">✏️ 编辑</button>
+                               <button class="btn btn-ghost btn-sm" onclick="openEditModal('${escHtml(name)}')"> 编辑</button>
                                <button class="btn btn-ghost btn-sm" style="color:var(--danger)" onclick="deleteWorkflow('${escHtml(name)}')"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg> 删除</button>`;
                         html += `<div class="wf-card">
   <div class="wf-card-header">
@@ -1641,7 +1641,7 @@ steps:
         }
 
         function openAddCustomModelModal() {
-            document.getElementById('cmModalTitle').textContent = '➕ 添加自定义模型';
+            document.getElementById('cmModalTitle').textContent = ' 添加自定义模型';
             document.getElementById('cmName').value = '';
             document.getElementById('cmModelId').value = '';
             document.getElementById('cmUrl').value = '';
@@ -1661,7 +1661,7 @@ steps:
             const m = models.find(x => x.id === id);
             if (!m) return;
 
-            document.getElementById('cmModalTitle').textContent = '✏️ 编辑自定义模型';
+            document.getElementById('cmModalTitle').textContent = ' 编辑自定义模型';
             document.getElementById('cmName').value = m.name || '';
             document.getElementById('cmModelId').value = m.modelId || m.model_id || '';
             document.getElementById('cmUrl').value = m.url || '';
@@ -1755,7 +1755,7 @@ steps:
 
             const btn = document.getElementById('cmTestBtn');
             btn.disabled = true;
-            btn.textContent = '⏳ 测试中...';
+            btn.textContent = ' 测试中...';
             resultDiv.style.display = 'none';
 
             try {
