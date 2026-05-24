@@ -144,16 +144,12 @@ pip3 install oh-my-coder
 ### 2. 启动 Web 服务
 
 ```bash
-omc server start
+python -m src.web.app
 ```
 
-默认端口 8080，浏览器打开：[http://localhost:8080](http://localhost:8080)
+默认端口 8000，浏览器打开：[http://localhost:8000](http://localhost:8000)
 
-指定端口：
-
-```bash
-omc server start --port 9090
-```
+> 💡 已安装过的用户：先 `git pull` 拉取最新代码再运行。
 
 ### 3. 在界面里配置 API Key
 
