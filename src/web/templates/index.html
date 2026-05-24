@@ -669,10 +669,10 @@
                 tag.innerHTML = getStepLabel(step) + ' <span style="width:14px;height:14px;border:2px solid var(--primary);border-top-color:transparent;border-radius:50%;animation:spin 0.8s linear infinite;display:inline-block;"></span>';
             } else if (status === 'completed') {
                 tag.style.background = 'rgba(16,185,129,0.1)'; tag.style.color = '#10b981'; tag.style.border = '1px solid #10b981';
-                tag.textContent = ' ' + getStepLabel(step).replace(/^[^\s]+ /, '');
+                tag.textContent = getStepLabel(step).replace(/^[^\s]+ /, '');
             } else if (status === 'failed') {
                 tag.style.background = 'rgba(239,68,68,0.1)'; tag.style.color = '#ef4444'; tag.style.border = '1px solid #ef4444';
-                tag.textContent = ' ' + getStepLabel(step).replace(/^[^\s]+ /, '');
+                tag.textContent = getStepLabel(step).replace(/^[^\s]+ /, '');
             }
         }
 
