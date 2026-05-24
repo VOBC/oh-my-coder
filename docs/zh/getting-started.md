@@ -2,11 +2,25 @@
 
 ## 第一步：安装
 
+**推荐：使用虚拟环境（避免权限警告）**
+
 ```bash
 git clone https://github.com/VOBC/oh-my-coder.git
 cd oh-my-coder
-pip install -e .
+python3 -m venv venv
+source venv/bin/activate
+pip install -e ".[web]"
 ```
+
+激活虚拟环境后，所有 `pip` 和 `omc` 命令都会在隔离环境中运行，不会触发权限警告。
+
+**或者使用用户安装（会有权限警告，可忽略）**：
+
+```bash
+pip install -e ".[web]"
+```
+
+> 💡 如果不使用虚拟环境，会出现 `Defaulting to user installation because normal site-packages is not writeable` 警告，这是正常的，可以安全忽略。
 
 ## 第二步：配置 API Key
 
@@ -34,6 +48,14 @@ omc quest start "重构用户模块"
 ```
 
 ## Web 界面
+
+**如果使用虚拟环境**，请先激活：
+
+```bash
+source venv/bin/activate
+```
+
+然后启动 Web 服务：
 
 ```bash
 # 方式一：直接启动（开发，端口 8000）
