@@ -1,47 +1,106 @@
-# 快速开始
+# 快速开始详细指南
 
-## 安装
+> 本文从 README.md 迁移而来，提供完整的环境配置与使用说明。
+
+## 🚀 快速开始
+
+### 1. 安装依赖
 
 ```bash
 git clone https://github.com/VOBC/oh-my-coder.git
 cd oh-my-coder
 
-# 创建虚拟环境（避免 pip 权限警告）
+# 推荐创建虚拟环境（已有可跳过）
 python3 -m venv venv
 source venv/bin/activate  # Windows: venv\Scripts\activate
 
-# 安装
+pip install --upgrade pip
 pip install -e .
 ```
 
-## 配置 API Key
+
+> ⚠️ **首次使用**：请将 `examples/.env.example` 复制为 `.env` 并填入真实 API Key，再运行以下命令加载：
+> ```bash
+> cp examples/.env.example .env
+> # 编辑 .env，填入真实 Key 后：
+> export $(cat .env | grep -v '^#' | xargs)
+> ```
+>
+> 或直接在终端设置环境变量（见下方）。
 
 ```bash
-# 复制配置模板
-cp examples/.env.example .env
+# DeepSeek（推荐，性价比高）
+export DEEPSEEK_API_KEY=your_key_here
 
-# 编辑 .env，填入你的 API Key
-# 最少只需配置一个：
-# DEEPSEEK_API_KEY=sk-xxx
-# GLM_API_KEY=xxx
-# MIMO_API_KEY=xxx
+# 可选：其他模型（按生产就绪度排序）
+export MIMO_API_KEY=your_key             # 小米 MiMo
+export GLM_API_KEY=your_key              # 智谱 GLM
+export KIMI_API_KEY=your_key             # Kimi
+export DOUBAO_API_KEY=your_key           # 字节豆包
+export TIANGONG_API_KEY=your_key         # 天工AI
+export BAICHUAN_API_KEY=your_key         # 百川智能
+export TONGYI_API_KEY=your_key           # 通义千问（Beta：高并发偶发超时）
+export MINIMAX_API_KEY=your_key          # MiniMax（Beta：无函数调用）
+export SPARK_API_KEY=your_key            # 讯飞星火（Beta：需同时配置 SPARK_APP_ID 和 SPARK_SECRET_KEY）
+export SPARK_APP_ID=your_app_id          # 讯飞星火 APP ID
+export SPARK_SECRET_KEY=your_secret     # 讯飞星火 SECRET KEY
+export WENXIN_API_KEY=your_key           # 文心一言（待完善：需同时配置 WENXIN_SECRET_KEY）
+export WENXIN_SECRET_KEY=your_secret    # 文心一言 SECRET KEY
+export HUNYUAN_API_KEY=your_key          # 腾讯混元（待完善：需同时配置 HUNYUAN_SECRET_KEY）
+export HUNYUAN_SECRET_KEY=your_secret   # 腾讯混元 SECRET KEY
 ```
 
-## 启动
+<details>
+<summary>📖 详细配置说明</summary>
+
+### 模型特定配置
+
+**DeepSeek**
+```bash
+export DEEPSEEK_API_KEY=sk-xxxxx
+# API 地址: https://api.deepseek.com
+# 模型: deepseek-chat
+```
+
+**文心一言**
+```bash
+export WENXIN_API_KEY=your_api_key
+export WENXIN_SECRET_KEY=your_secret_key
+# 需要在百度智能云控制台获取
+```
+
+**腾讯混元**
+```bash
+export HUNYUAN_API_KEY=your_api_key
+export HUNYUAN_SECRET_KEY=your_secret_key
+# 需要在腾讯云控制台获取
+```
+
+### 自定义 API 地址
+
+如果需要使用代理或私有部署：
+```bash
+export DEEPSEEK_API_BASE=https://your-proxy.com/v1
+```
+
+</details>
+
+### 3. 运行
 
 ```bash
-# Web 界面（推荐）
+# 🌐 Web 界面（推荐，新手友好）
+# 方式一：CLI 启动（推荐，端口被占用时自动切换）
 omc server start
-# 浏览器打开: http://localhost:8080
+# 默认 http://localhost:8080，也可能显示为 8081/8082/...
 
-# CLI 模式
-omc run "帮我实现一个 REST API"
+# 方式二：直接启动（开发用，固定端口 8000）
+python3 -m src.web.app
+# 浏览器打开: http://localhost:8000
+
+# 💻 CLI
+omc explore .
+omc run "实现一个 REST API"
 ```
 
 ---
 
-**常见问题**：
-
-- **端口被占用**：`omc server start` 会自动切换到 8081/8082/...
-- **pip 警告**：确保已激活虚拟环境（`source venv/bin/activate`）
-- **更多模型配置**：见 [模型配置文档](configuration.md)
