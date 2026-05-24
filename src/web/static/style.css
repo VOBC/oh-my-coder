@@ -8,9 +8,9 @@ body {
     font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Segoe UI', 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;
 }
 
-/* 强制 Emoji 渲染（Safari 兼容）*/
-*, *::before, *::after {
-    font-family: inherit;
+/* Emoji 渲染：仅对含 emoji 的元素生效，不用全局 * 选择器 */
+.step-emoji, .sidebar-emoji, .menu-icon, [class*="emoji"], [class*="icon"] {
+    font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;
 }
 
 /* ===== CSS Variables ===== */
@@ -83,7 +83,7 @@ html {
 }
 
 body {
-    font-family: var(--font-sans);
+    font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Segoe UI', 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;
     background: var(--bg);
     color: var(--text);
     line-height: 1.6;
