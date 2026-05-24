@@ -82,6 +82,7 @@ ignore_missing_imports = true
 [tool.ruff]
 line-length = 88
 target-version = "py310"
+exclude = ["*.css", "*.html", "*.js", "*.ts", "*.tsx", "*.vue", "*.json", "*.yaml", "*.yml", "*.md"]
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I"]

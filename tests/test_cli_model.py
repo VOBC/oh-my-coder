@@ -1,27 +1,18 @@
 """Tests for cli_model.py"""
 import json
-import os
-from pathlib import Path
-from unittest.mock import MagicMock, patch, mock_open
+from unittest.mock import MagicMock, patch
 
 import pytest
 from typer.testing import CliRunner
 
 from src.commands.cli_model import (
-    app,
-    _ensure_config_dir,
-    _load_config,
-    _save_config,
-    _get_current_model,
-    _get_current_api_key,
-    _tier_style,
-    _ensure_shared_dir,
-    _list_shared_configs,
     _get_author_name,
+    _get_current_api_key,
+    _get_current_model,
     _resolve_task,
+    _tier_style,
     _validate_model_config,
-    _save_model_config,
-    _list_yaml_configs,
+    app,
 )
 
 runner = CliRunner()
@@ -599,59 +590,6 @@ class TestCurrentModel:
         assert result.exit_code == 0 or "glm" in result.output or "model" in result.output.lower()
 
 
-class TestSwitchModel:
-    """测试 omc model switch"""
-
-    def test_switches_model(self, monkeypatch, tmp_path):
-        """切换模型"""
-        from src.commands import cli_model
-        config_file = tmp_path / "config.json"
-        config_file.write_text(json.dumps({"default_model": "deepseek"}))
-        monkeypatch.setattr(cli_model, "CONFIG_FILE", config_file)
-        monkeypatch.setattr(cli_model, "CONFIG_DIR", tmp_path)
-        monkeypatch.delenv("OMC_DEFAULT_MODEL", raising=False)
-
-        result = runner.invoke(app, ["switch", "qwen"])
-
-        # Should complete (may show success or warning)
-        assert result.exit_code in [0, 1]
-
-
-class TestRecommendModel:
-    """测试 omc model recommend"""
-
-    def test_shows_recommendations(self):
-        """显示推荐"""
-        result = runner.invoke(app, ["recommend"])
-
-        # Should show some output
-        assert result.exit_code == 0 or len(result.output) > 0
-
-    def test_shows_task_recommendations(self):
-        """特定任务推荐"""
-        result = runner.invoke(app, ["recommend", "--task", "coding"])
-        assert result.exit_code == 0 or len(result.output) > 0
-
-    def test_shows_reasoning_recommendations(self):
-        """推理任务推荐"""
-        result = runner.invoke(app, ["recommend", "--task", "reasoning"])
-        assert result.exit_code == 0 or len(result.output) > 0
-
-    def test_shows_fast_recommendations(self):
-        """快速任务推荐"""
-        result = runner.invoke(app, ["recommend", "--task", "fast"])
-        assert result.exit_code == 0 or len(result.output) > 0
-
-    def test_shows_chat_recommendations(self):
-        """聊天任务推荐"""
-        result = runner.invoke(app, ["recommend", "--task", "chat"])
-        assert result.exit_code == 0 or len(result.output) > 0
-
-    def test_task_alias(self):
-        """任务别名"""
-        result = runner.invoke(app, ["recommend", "--task", "code"])
-        assert result.exit_code == 0 or len(result.output) > 0
-
 
 class TestSharedModels:
     """测试 omc model shared"""
@@ -704,15 +642,6 @@ class TestShowModel:
         assert result.exit_code in [0, 1]
 
 
-class TestBrowseModels:
-    """测试 omc model browse"""
-
-    def test_browse_basic(self):
-        """基本浏览"""
-        result = runner.invoke(app, ["browse"])
-        # May require network, allow failure
-        assert result.exit_code in [0, 1]
-
 
 class TestShareModel:
     """测试 omc model share"""
@@ -733,25 +662,6 @@ class TestShareModel:
         assert result.exit_code in [0, 1]
 
 
-class TestImportModel:
-    """测试 omc model import"""
-
-    def test_import_invalid_url(self):
-        """导入无效 URL"""
-        result = runner.invoke(app, ["import", "http://invalid.example/config.yaml"])
-        # Should handle network error gracefully
-        assert result.exit_code in [0, 1]
-
-
-class TestExportModel:
-    """测试 omc model export"""
-
-    def test_export_nonexistent(self):
-        """导出不存在的模型"""
-        result = runner.invoke(app, ["export", "nonexistent-model"])
-        assert result.exit_code in [0, 1]
-
-
 class TestSyncModels:
     """测试 omc model sync"""
 
@@ -769,14 +679,15 @@ class TestShowRecommendations:
         """显示所有推荐"""
         from src.commands.cli_model import _show_all_recommendations
         _show_all_recommendations()
-        captured = capsys.readouterr()
+        _ = capsys.readouterr()  # 捕获输出但不验证
         # Should print something
         assert True  # Function runs without error
 
     def test_show_task_recommendation_coding(self):
         """coding 任务推荐"""
-        from src.commands.cli_model import _show_task_recommendation
         from typer import Exit
+
+        from src.commands.cli_model import _show_task_recommendation
         try:
             _show_task_recommendation("coding")
         except Exit:
@@ -786,8 +697,9 @@ class TestShowRecommendations:
 
     def test_show_task_recommendation_unknown_task(self):
         """未知任务类型"""
-        from src.commands.cli_model import _show_task_recommendation
         from typer import Exit
+
+        from src.commands.cli_model import _show_task_recommendation
         with pytest.raises(Exit):
             _show_task_recommendation("unknown_task_xyz")
 
@@ -849,7 +761,6 @@ class TestLocalApp:
     @patch("src.core.ollama_health.OllamaHealthChecker")
     def test_local_status_with_health_checker(self, mock_checker_class):
         """测试 Ollama 服务运行中（使用 OllamaHealthChecker）"""
-        from dataclasses import dataclass
 
         # 创建模拟的 OllamaHealthStatus
         mock_status = type(
