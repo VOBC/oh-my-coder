@@ -12,6 +12,13 @@
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
     <style>
+        /* Global emoji fix - force emoji characters to use emoji-specific fonts */
+        @font-face {
+            font-family: 'Emoji Fallback';
+            src: local('Apple Color Emoji'), local('Segoe UI Emoji'), local('Noto Color Emoji');
+            unicode-range: U+1F300-1F9FF, U+2600-26FF, U+2700-27BF, U+FE00-FE0F, U+1F900-1F9FF, U+2614, U+2615, U+2639, U+26A0, U+26A1, U+267F, U+2693, U+26AA, U+26AB, U+26BD, U+26BE, U+26C4, U+26C5, U+26CE, U+26D4, U+26EA, U+26F2, U+26F3, U+26F5, U+26FA, U+26FD, U+2702, U+2705, U+2708-270D, U+270F;
+        }
+
         /* Pipeline */
         .pipeline-container {
             display: flex;
