@@ -64,6 +64,8 @@ omc explore .          # 探索当前项目
 omc run "实现一个 REST API"   # 执行任务
 ```
 
+> 💡 **已安装过的用户**：先 `git pull` 拉取最新代码再运行。
+
 ## GLM（免费）
 
 ```bash

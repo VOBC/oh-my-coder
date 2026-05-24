@@ -9,6 +9,7 @@
 ```bash
 git clone https://github.com/VOBC/oh-my-coder.git
 cd oh-my-coder
+# 已安装过的用户：git pull 拉取最新代码
 
 # 推荐创建虚拟环境（已有可跳过）
 python -m venv .venv
