@@ -90,6 +90,11 @@ export DEEPSEEK_API_BASE=https://your-proxy.com/v1
 
 ```bash
 # 🌐 Web 界面（推荐，新手友好）
+# 方式一：CLI 启动（推荐，端口被占用时自动切换）
+omc server start
+# 默认 http://localhost:8080，也可能显示为 8081/8082/...
+
+# 方式二：直接启动（开发用，固定端口 8000）
 python -m src.web.app
 # 浏览器打开: http://localhost:8000
 

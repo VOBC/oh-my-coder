@@ -36,8 +36,13 @@ omc quest start "重构用户模块"
 ## Web 界面
 
 ```bash
+# 方式一：直接启动（开发，端口 8000）
 python -m src.web.app
-# 打开浏览器访问 http://localhost:8000
+# 浏览器打开: http://localhost:8000
+
+# 方式二：通过 CLI 启动（推荐，支持自动端口切换）
+omc server start
+# 默认 http://localhost:8080，端口被占用时自动切换（8081, 8082...）
 ```
 
 ## 常见任务示例

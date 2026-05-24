@@ -46,6 +46,14 @@ dev = [
     "ruff==0.15.9",
     "mypy>=1.8.0",
 ]
+web = [
+    "fastapi>=0.104.0",
+    "uvicorn>=0.24.0",
+    "jinja2>=3.0.0",
+    "websockets>=10.0",
+    "aiofiles>=23.0.0",
+    "python-multipart>=0.0.6",
+]
 
 [project.scripts]
 omc = "src.commands.cli:app"
