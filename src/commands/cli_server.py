@@ -85,9 +85,9 @@ def start(
     # 确认端口占用
     if _is_port_in_use(port):
         free = _find_free_port(port)
-        console.print(f"[yellow]⚠ 端口 {port} 已被占用[/yellow]")
+        console.print(f"[yellow]警告：端口 {port} 已被占用[/yellow]")
         if free != port:
-            console.print(f"[green]→ 自动切换到端口 {free}[/green]")
+            console.print(f"[green]→ 已自动切换到端口 {free}，请访问 http://localhost:{free}[/green]")
             port = free
         else:
             console.print("[red]✗ 无法找到可用端口[/red]")
