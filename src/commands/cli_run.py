@@ -648,6 +648,25 @@ def _display_result(result):
     console.print(f"执行时间: {result.execution_time:.2f}s")
     console.print(f"Token 使用: {result.total_tokens:,}")
 
+    # 显示每个 Agent 的实际输出
+    if result.outputs:
+        for agent_name, output in result.outputs.items():
+            if hasattr(output, 'result') and output.result:
+                console.print(f"\n[bold]📋 {agent_name} 输出:[/bold]")
+                # 使用 Panel 美化显示
+                console.print(
+                    Panel(
+                        output.result[:2000] + ("..." if len(output.result) > 2000 else ""),
+                        title=f"{agent_name} 结果",
+                        border_style="cyan",
+                    )
+                )
+                # 如果结果太长，提示查看完整文件
+                if len(output.result) > 2000:
+                    console.print(
+                        f"[dim]💡 完整结果已保存至: .omc/state/workflow_{result.workflow_id}.json[/dim]"
+                    )
+
     if result.steps_completed:
         console.print("\n[green]✓ 已完成步骤:[/green]")
         for step in result.steps_completed:
