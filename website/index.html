@@ -1207,12 +1207,9 @@
                     git clone https://github.com/vobc/oh-my-coder.git<br>
                     cd oh-my-coder<br><br>
                     <span class="comment"># 第 2 步：安装依赖（大概 30 秒）</span><br>
-                    pip3 install -e ".[web]"<br><br>
-                    <span class="comment"># 第 3 步：注册到系统（让 omc 命令全局可用）</span><br>
-                    pip3 install -e .<br>
-                    <span class="comment"># （如果提示 omc 找不到，运行下面这行再试）</span><br>
-                    <span class="comment"># export PATH="$HOME/Library/Python/3.9/bin:$PATH"</span><br><br>
-                    <span class="comment"># 第 4 步：启动 Web 服务（浏览器会自动打开）</span><br>
+                    pip3 install -e ".[web]"<br>
+                    <span class="comment"># ⚠️ 如果看到 "Defaulting to user installation" 警告，这是正常的，可以安全忽略</span><br><br>
+                    <span class="comment"># 第 3 步：启动 Web 服务（浏览器会自动打开）</span><br>
                     omc server start<br>
                     <span class="comment"># 如果浏览器没自动打开，手动访问 http://localhost:8080</span><br><br>
                     <span class="comment"># 第 4 步：在网页中配置 API Key（点击右上角 ⚙️ 设置）</span><br>
