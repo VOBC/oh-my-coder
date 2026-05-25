@@ -9,7 +9,8 @@ const { transcribeAudio } = require('./voice');
 
 // ── Paths ────────────────────────────────────────────────────────────────────
 const isDev = !app.isPackaged;
-const OMC_ROOT = path.join(__dirname, '..');
+// OMC_ROOT: 项目根目录（desktop 的父目录）
+const OMC_ROOT = path.join(__dirname, '..', '..');
 const CONFIG_PATH = path.join(OMC_ROOT, '.omc');
 
 // ── State ────────────────────────────────────────────────────────────────────
