@@ -235,9 +235,15 @@ class DeepSeekModel(BaseModel):
             error_detail = ""
             try:
                 error_body = e.response.json()
-                error_detail = error_body.get("error", {}).get("message", "HTTP error")
-            except Exception:
-                error_detail = f"HTTP {e.response.status_code}"
+                error_detail = error_body.get("error", {}).get("message", str(error_body))
+                # 打印完整错误信息用于调试
+                print(f"\n🔴 DeepSeek API 错误详情:")
+                print(f"   状态码: {e.response.status_code}")
+                print(f"   错误内容: {error_body}")
+                print(f"   请求体: {json.dumps(request_body, ensure_ascii=False, indent=2)[:500]}...")
+            except Exception as parse_err:
+                error_detail = f"HTTP {e.response.status_code} (无法解析错误详情: {parse_err})"
+                print(f"\n🔴 DeepSeek API 错误 (无法解析): {e.response.text[:500]}")
 
             raise DeepSeekAPIError(
                 f"DeepSeek API 错误 ({e.response.status_code}): {error_detail}"
@@ -299,9 +305,14 @@ class DeepSeekModel(BaseModel):
             error_detail = ""
             try:
                 error_body = e.response.json()
-                error_detail = error_body.get("error", {}).get("message", "HTTP error")
-            except Exception:
-                error_detail = f"HTTP {e.response.status_code}"
+                error_detail = error_body.get("error", {}).get("message", str(error_body))
+                # 打印完整错误信息用于调试
+                print(f"\n🔴 DeepSeek API 错误详情 (stream):")
+                print(f"   状态码: {e.response.status_code}")
+                print(f"   错误内容: {error_body}")
+            except Exception as parse_err:
+                error_detail = f"HTTP {e.response.status_code} (无法解析错误详情: {parse_err})"
+                print(f"\n🔴 DeepSeek API 错误 (stream, 无法解析): {e.response.text[:500]}")
 
             raise DeepSeekAPIError(
                 f"DeepSeek API 错误 ({e.response.status_code}): {error_detail}"
