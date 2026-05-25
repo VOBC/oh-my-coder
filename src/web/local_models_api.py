@@ -134,10 +134,20 @@ async def list_local_models() -> list[LocalModelInfo]:
         elif ":70b" in name or ":72b" in name or ":33b" in name:
             tier = "high"
 
+        # 格式化大小
+        size_bytes = m.get("size", 0)
+        if size_bytes:
+            if size_bytes > 1e9:
+                size = f"{size_bytes / 1e9:.1f} GB"
+            else:
+                size = f"{size_bytes / 1e6:.0f} MB"
+        else:
+            size = None
+
         models.append(
             LocalModelInfo(
                 name=name,
-                size=m.get("size"),
+                size=size,
                 modified_at=m.get("modified_at"),
                 tier=tier,
                 description=_get_model_description(name),
