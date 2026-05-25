@@ -402,10 +402,11 @@ class BaseAgent(ABC):
                     result = f"Error: unknown tool {func_name}"
 
                 # 追加 assistant 消息和 tool 结果
+                # ⚠️ 注意：assistant 消息不带 tool_calls，避免 DeepSeek 等 API 报
+                # "assistant message with tool_calls must be followed by tool messages"
                 current_messages.append(Message(
                     role="assistant",
                     content=response.content or "",
-                    tool_calls=response.tool_calls,
                 ))
                 current_messages.append(Message(
                     role="tool",
