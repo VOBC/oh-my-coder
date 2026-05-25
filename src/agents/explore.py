@@ -228,6 +228,9 @@ class ExploreAgent(BaseAgent):
 
         return "\n".join(lines)
 
+    # 最大扫描文件数，超过后仅统计文件类型不再逐行读行数
+    _MAX_SCAN_FILES = 500
+
     def _collect_file_stats(
         self,
         root_path: Path,
@@ -246,6 +249,14 @@ class ExploreAgent(BaseAgent):
                 ".idea",
                 ".vscode",
                 ".pytest_cache",
+                ".omc",
+                ".mypy_cache",
+                ".ruff_cache",
+                "htmlcov",
+                "site-packages",
+                ".tox",
+                "eggs",
+                ".eggs",
             }
 
         language_map = {}
@@ -282,12 +293,17 @@ class ExploreAgent(BaseAgent):
                 language_map[lang] = language_map.get(lang, 0) + 1
                 total_files += 1
 
-                # 统计行数
+                # 统计行数（超过上限后跳过逐行读取，用文件大小估算）
+                file_path = Path(root) / file
                 try:
-                    file_path = Path(root) / file
-                    with open(file_path, encoding="utf-8", errors="ignore") as f:
-                        lines = sum(1 for _ in f)
-                        total_lines += lines
+                    if total_files <= self._MAX_SCAN_FILES:
+                        with open(file_path, encoding="utf-8", errors="ignore") as f:
+                            lines = sum(1 for _ in f)
+                            total_lines += lines
+                    else:
+                        # 快速估算：每 50 字节约 1 行
+                        size = file_path.stat().st_size
+                        total_lines += size // 50
                 except Exception:
                     pass
 
