@@ -314,9 +314,10 @@ function setupIpc() {
       const outputFile = path.join(taskDir, `task_${timestamp}.md`);
 
       const cmdArgs = [command, ...args];
-      cmdArgs.push(actualPath);
+      // Note: actualPath is used as cwd, NOT appended as an argument
+      // (omc run/explore etc. don't accept a path argument)
 
-      log('[task:execute] running:', omcBin, cmdArgs.join(' '));
+      log('[task:execute] running:', omcBin, cmdArgs.join(' '), 'in', actualPath);
       const child = spawn(omcBin, cmdArgs, {
         cwd: actualPath,
         stdio: ['ignore', 'pipe', 'pipe'],
