@@ -7,15 +7,14 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import httpx
 import pytest
 
-from src.models.base import Message, ModelConfig, ModelTier
+from src.models.base import Message, ModelTier
 from src.models.ollama import (
-    OLLAMA_MODELS,
-    OLLAMA_DEFAULT_URL,
     _MODEL_TIER_MAP,
+    OLLAMA_DEFAULT_URL,
+    OLLAMA_MODELS,
     OllamaModel,
     create_ollama_model,
 )
-
 
 # ============================================================================
 # 1. 模块级数据结构测试
@@ -71,7 +70,6 @@ def test_model_tier_map_consistency():
 
 def test_ollama_model_init_with_default_config():
     """测试默认配置初始化"""
-    config = ModelConfig()
     # 使用 create_ollama_model 工厂函数来避免抽象类实例化问题
     model = create_ollama_model(model_name="qwen2:7b")
 

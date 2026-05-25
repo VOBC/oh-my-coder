@@ -8,14 +8,12 @@ tests/test_mcp_resources.py
 from __future__ import annotations
 
 import json
-import sys
 from pathlib import Path
 
 import pytest
 
 # 导入被测模块（注意：直接 import 后修改全局状态，需要每次测试独立设置）
 import src.mcp.resources as mcp_resources
-
 
 # ---------------------------------------------------------------------------
 # 辅助：重置全局 _WORKSPACE 状态

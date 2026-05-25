@@ -4,12 +4,11 @@
 覆盖所有公开函数和 handler，目标覆盖率 > 80%。
 """
 
-import pytest
 import sys
-import os
 from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock, PropertyMock
+from unittest.mock import MagicMock, Mock, patch
 
+import pytest
 
 # ------------------------------------------------------------------
 # Mock 类定义
@@ -53,7 +52,7 @@ class TestSetWorkspaceAndGetWorkspace:
 
     def test_set_workspace_and_get_workspace(self):
         """测试设置并获取工作区路径"""
-        from src.mcp.tools import set_workspace, get_workspace
+        from src.mcp.tools import get_workspace, set_workspace
 
         # 保存原始工作区
         original_workspace = get_workspace()
@@ -72,15 +71,14 @@ class TestSetWorkspaceAndGetWorkspace:
 
     def test_get_workspace_default(self):
         """测试获取默认工作区（未设置时返回 cwd）"""
-        from src.mcp.tools import set_workspace, get_workspace
+        import src.mcp.tools as tools_module
+        from src.mcp.tools import get_workspace
 
         # 保存原始工作区
-        original_workspace = get_workspace()
+        original_workspace_value = tools_module._WORKSPACE
 
         try:
             # 设置为 None 来模拟未设置状态
-            import src.mcp.tools as tools_module
-            original_workspace_value = tools_module._WORKSPACE
             tools_module._WORKSPACE = None
 
             # 验证返回 cwd
@@ -96,7 +94,7 @@ class TestResolvePath:
 
     def test_resolve_path_none(self):
         """测试 path 为 None 时返回工作区路径"""
-        from src.mcp.tools import _resolve_path, set_workspace, get_workspace
+        from src.mcp.tools import _resolve_path, get_workspace, set_workspace
 
         # 保存原始工作区
         original_workspace = get_workspace()
@@ -115,7 +113,7 @@ class TestResolvePath:
 
     def test_resolve_path_relative(self):
         """测试相对路径拼接工作区"""
-        from src.mcp.tools import _resolve_path, set_workspace, get_workspace
+        from src.mcp.tools import _resolve_path, get_workspace, set_workspace
 
         # 保存原始工作区
         original_workspace = get_workspace()
@@ -384,7 +382,6 @@ class TestVisionHandler:
 
     def test_vision_handler_no_image_path(self):
         """测试没有 image_path 的情况"""
-        from src.mcp.tools import _vision_handler
 
         # 这个测试只是确保函数能处理没有 image_path 的情况
         # 由于需要 mock Agent，这里只测试参数处理
