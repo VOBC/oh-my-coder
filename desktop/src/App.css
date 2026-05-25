@@ -1058,6 +1058,28 @@ html, body, #root {
 .input-area__input::placeholder { color: var(--gray-3); }
 .input-area__input:disabled { opacity: 0.5; }
 
+.input-area__task {
+  width: 34px;
+  height: 34px;
+  border: none;
+  border-radius: var(--radius);
+  background: linear-gradient(135deg, #06b6d4, #0891b2);
+  color: #fff;
+  font-size: 15px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background var(--transition), transform var(--transition), box-shadow var(--transition);
+}
+.input-area__task:hover:not(:disabled) {
+  background: linear-gradient(135deg, #22d3ee, #06b6d4);
+  transform: scale(1.08);
+  box-shadow: 0 0 12px rgba(6, 182, 212, 0.4);
+}
+.input-area__task:disabled { background: var(--bg-4); cursor: not-allowed; opacity: 0.5; }
+
 .input-area__send {
   width: 34px;
   height: 34px;

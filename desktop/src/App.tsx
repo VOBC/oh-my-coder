@@ -911,13 +911,29 @@ export default function App() {
     await handleSendMessage(text);
   }, [input, loading, handleSendMessage]);
 
+  // Force task mode: always run as task (via 🚀 button or ⌘+Enter)
+  const handleSendTask = useCallback(async () => {
+    if (!input.trim() || loading) return;
+    const text = input.trim();
+    setInput('');
+    // Force task classification by prepending a task trigger
+    await handleSendMessage('/run ' + text);
+  }, [input, loading, handleSendMessage]);
+
   const handleExampleClick = useCallback(async (task: string) => {
     if (loading) return;
     await handleSendMessage(task);
   }, [loading, handleSendMessage]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); }
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      if (e.metaKey || e.ctrlKey) {
+        handleSendTask(); // ⌘+Enter → task mode
+      } else {
+        handleSend(); // Enter → chat mode
+      }
+    }
   };
 
   const handleServerToggle = async () => {
@@ -1131,11 +1147,19 @@ export default function App() {
               }}
               disabled={loading}
             />
+            <button
+              className="input-area__task"
+              onClick={handleSendTask}
+              disabled={loading || !input.trim()}
+              title="运行任务 (⌘+Enter)"
+            >
+              🚀
+            </button>
             <button className="input-area__send" onClick={handleSend} disabled={loading || !input.trim()}>
               {loading ? '◐' : '↑'}
             </button>
           </div>
-          <div className="input-area__hint">omc · desktop MVP · {currentModel}</div>
+          <div className="input-area__hint">↑ 发送（聊天）· 🚀 运行任务（⌘+Enter）· {currentModel}</div>
         </div>
       </main>
 
