@@ -237,7 +237,7 @@ class DeepSeekModel(BaseModel):
                 error_body = e.response.json()
                 error_detail = error_body.get("error", {}).get("message", str(error_body))
                 # 打印完整错误信息用于调试
-                print(f"\n🔴 DeepSeek API 错误详情:")
+                print("\n🔴 DeepSeek API 错误详情:")
                 print(f"   状态码: {e.response.status_code}")
                 print(f"   错误内容: {error_body}")
                 print(f"   请求体: {json.dumps(request_body, ensure_ascii=False, indent=2)[:500]}...")
@@ -307,7 +307,7 @@ class DeepSeekModel(BaseModel):
                 error_body = e.response.json()
                 error_detail = error_body.get("error", {}).get("message", str(error_body))
                 # 打印完整错误信息用于调试
-                print(f"\n🔴 DeepSeek API 错误详情 (stream):")
+                print("\n🔴 DeepSeek API 错误详情 (stream):")
                 print(f"   状态码: {e.response.status_code}")
                 print(f"   错误内容: {error_body}")
             except Exception as parse_err:
