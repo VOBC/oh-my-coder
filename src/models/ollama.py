@@ -109,15 +109,20 @@ class OllamaModel(BaseModel):
         if config.base_url is None:
             config.base_url = OLLAMA_DEFAULT_URL
 
-        self.model_name = model_name
+        self._model_name = model_name
         self.base_url = config.base_url.rstrip("/")
         self._client: Optional[httpx.AsyncClient] = None
 
-        # 推断 tier
-        if model_name in _MODEL_TIER_MAP:
+        # 推断 tier（仅当传入的是默认 MEDIUM 且模型在映射中时才覆盖）
+        if tier == ModelTier.MEDIUM and model_name in _MODEL_TIER_MAP:
             tier = _MODEL_TIER_MAP[model_name]
 
         super().__init__(config, tier)
+
+    @property
+    def model_name(self) -> str:
+        """返回实际使用的模型名称"""
+        return self._model_name
 
     async def _get_client(self) -> httpx.AsyncClient:
         """获取 HTTP 客户端"""
@@ -281,6 +286,10 @@ class OllamaModel(BaseModel):
         """流式完成对话"""
         async for chunk in self._generate_stream(messages, **kwargs):
             yield chunk
+
+    async def generate(self, messages: list[Message], **kwargs) -> ModelResponse:
+        """非流式生成（调用 complete）"""
+        return await self.complete(messages, **kwargs)
 
     @staticmethod
     def is_available(base_url: str = OLLAMA_DEFAULT_URL) -> bool:
