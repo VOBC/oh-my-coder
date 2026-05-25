@@ -1059,17 +1059,19 @@ html, body, #root {
 .input-area__input:disabled { opacity: 0.5; }
 
 .input-area__task {
-  width: 34px;
   height: 34px;
+  padding: 0 10px;
   border: none;
   border-radius: var(--radius);
   background: linear-gradient(135deg, #06b6d4, #0891b2);
   color: #fff;
-  font-size: 15px;
+  font-size: 13px;
+  white-space: nowrap;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 4px;
   flex-shrink: 0;
   transition: background var(--transition), transform var(--transition), box-shadow var(--transition);
 }

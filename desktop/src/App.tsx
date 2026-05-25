@@ -1153,7 +1153,7 @@ export default function App() {
               disabled={loading || !input.trim()}
               title="运行任务 (⌘+Enter)"
             >
-              🚀
+              🚀 运行任务
             </button>
             <button className="input-area__send" onClick={handleSend} disabled={loading || !input.trim()}>
               {loading ? '◐' : '↑'}
