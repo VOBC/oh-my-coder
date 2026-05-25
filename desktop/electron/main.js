@@ -371,7 +371,24 @@ function setupIpc() {
           }
           fs.writeFileSync(outputFile, mdContent, 'utf-8');
           log('[task:execute] done, saved to', outputFile);
-          resolve({ code, stdout, stderr, outputFile });
+
+          // Also save a copy to Desktop for easy access
+          const desktopPath = path.join(require('os').homedir(), 'Desktop');
+          let desktopFile = null;
+          try {
+            if (fs.existsSync(desktopPath)) {
+              // Use task description from args for filename
+              const taskLabel = (args && args.length > 0) ? args[0].slice(0, 30).replace(/[^\w\u4e00-\u9fff-]/g, '_') : 'task';
+              const ts = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 10); // just date
+              desktopFile = path.join(desktopPath, `omc_${ts}_${taskLabel}.md`);
+              fs.writeFileSync(desktopFile, mdContent, 'utf-8');
+              log('[task:execute] also saved to Desktop:', desktopFile);
+            }
+          } catch (e) {
+            log('[task:execute] warning: could not save to Desktop:', e.message);
+          }
+
+          resolve({ code, stdout, stderr, outputFile, desktopFile: desktopFile || '' });
         });
 
         child.on('error', (e) => {

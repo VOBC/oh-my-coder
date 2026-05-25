@@ -620,65 +620,19 @@ export default function App() {
   useEffect(() => {
     if (!loading) {
       setAgentState({ name: 'Idle', status: '待机中', color: '#71717a', icon: '💤' });
-      // Reset task progress
-      setTaskStages(prev => prev.map((s, i) => ({ ...s, status: i === 0 ? 'pending' : 'pending' })));
+      setTaskStages(prev => prev.map((s, i) => ({ ...s, status: 'pending' as const })));
       setCurrentStage(0);
       return;
     }
-
-    const agents: AgentName[] = ['Planner', 'Coder', 'Reviewer', 'Executor'];
-    let idx = 0;
-
-    // Start with Planner
-    const startAgent = agents[0];
+    // Set initial state — real updates come from onTaskChunk
+    const startAgent = 'Planner';
     const startCfg = AGENT_CONFIG[startAgent];
     setAgentState({ name: startAgent, status: startCfg.statuses[0], color: startCfg.color, icon: startCfg.icon });
-    
-    // Update task progress - mark first stage active
-    setTaskStages(prev => prev.map((s, i) => ({ ...s, status: i === 0 ? 'active' : 'pending' })));
+    setTaskStages(prev => prev.map((s, i) => ({ ...s, status: i === 0 ? ('active' as const) : ('pending' as const) })));
     setCurrentStage(0);
-    
-    // Add initial log
-    setLiveLogs(prev => [...prev, {
-      level: 'info',
-      message: '任务开始执行...',
-      timestamp: Date.now(),
-    }]);
-
-    const interval = setInterval(() => {
-      idx = (idx + 1) % agents.length;
-      const name = agents[idx];
-      const cfg = AGENT_CONFIG[name];
-      setAgentState({ name, status: cfg.statuses[0], color: cfg.color, icon: cfg.icon });
-      
-      // Update task progress
-      const stageIdx = Math.min(idx, taskStages.length - 1);
-      setTaskStages(prev => prev.map((s, i) => ({
-        ...s,
-        status: i < stageIdx ? 'completed' : i === stageIdx ? 'active' : 'pending'
-      })));
-      setCurrentStage(stageIdx);
-      
-      // Add agent step
-      const actions = ['分析需求', '编写代码', '审查代码', '执行测试'];
-      setAgentSteps(prev => [...prev, {
-        agent: name,
-        action: actions[idx % actions.length],
-        detail: `${name} 正在${actions[idx % actions.length]}...`,
-        timestamp: Date.now(),
-        status: 'running',
-      }]);
-      
-      // Add log
-      setLiveLogs(prev => [...prev, {
-        level: 'info',
-        message: `${name} ${actions[idx % actions.length]}`,
-        timestamp: Date.now(),
-      }]);
-    }, 2500);
-
-    return () => clearInterval(interval);
+    setLiveLogs(prev => [...prev, { level: 'info' as const, message: '🚀 任务启动，等待 omc CLI...', timestamp: Date.now() }]);
   }, [loading]);
+
 
   // Diff acceptance/rejection
   const [diffFiles, setDiffFiles] = useState<Map<string, { old: string; new_: string }>>(new Map());
@@ -816,14 +770,59 @@ export default function App() {
           setLoading(false);
           return;
         }
-        // Listen for real-time output
+        // ── Real-time progress driven by omc CLI stdout ────
+        // Parse omc output to extract agent stage transitions
+        const STAGE_MAP: Record<string, number> = {
+          'explore': 0, 'analyst': 1, 'planner': 2, 'architect': 3,
+          'executor': 4, 'verifier': 5, 'coder': 3, 'reviewer': 4,
+        };
+        const AGENT_DISPLAY: Record<string, { name: AgentName; action: string }> = {
+          'explore':   { name: 'Planner',   action: '探索项目结构' },
+          'analyst':   { name: 'Planner',   action: '分析需求' },
+          'planner':   { name: 'Planner',   action: '制定计划' },
+          'architect': { name: 'Coder',     action: '设计架构' },
+          'coder':     { name: 'Coder',     action: '编写代码' },
+          'reviewer':  { name: 'Reviewer',  action: '审查代码' },
+          'executor':  { name: 'Executor',  action: '执行任务' },
+          'verifier':  { name: 'Executor',  action: '验证结果' },
+        };
+        
+        let currentAgentStep = '';
         const unsubChunk = window.omc.onTaskChunk((chunk: string) => {
           setLiveLogs(prev => [...prev, { timestamp: Date.now(), message: chunk }]);
+          // Detect agent transitions from omc stdout (e.g. "🔄 正在执行: coder")
+          const execMatch = chunk.match(/正在执行[:\s]+(\w+)/);
+          const doneMatch = chunk.match(/已完成[:\s]+(\w+)/);
+          const failMatch = chunk.match(/失败[:\s]+(\w+)/);
+          const agentName = (execMatch || doneMatch || failMatch)?.[1]?.toLowerCase();
+          
+          if (agentName && agentName !== currentAgentStep) {
+            currentAgentStep = agentName;
+            const display = AGENT_DISPLAY[agentName] || { name: 'Planner' as AgentName, action: '处理中...' };
+            const cfg = AGENT_CONFIG[display.name];
+            setAgentState({ name: display.name, status: display.action, color: cfg.color, icon: cfg.icon });
+            
+            const stageIdx = STAGE_MAP[agentName] ?? Math.min(Object.keys(STAGE_MAP).length - 1, taskStages.length - 1);
+            setTaskStages(prev => prev.map((s, i) => ({
+              ...s,
+              status: i < stageIdx ? ('completed' as const) : i === stageIdx ? ('active' as const) : ('pending' as const)
+            })));
+            setCurrentStage(stageIdx);
+            
+            const statusEmoji = failMatch ? '❌' : doneMatch ? '✅' : '🔄';
+            setAgentSteps(prev => [...prev, {
+              agent: display.name,
+              action: display.action,
+              detail: `${statusEmoji} ${display.name} ${display.action}...`,
+              timestamp: Date.now(),
+              status: failMatch ? ('failed' as const) : doneMatch ? ('completed' as const) : ('running' as const),
+            }]);
+          }
         });
         const unsubError = window.omc.onTaskError((err: string) => {
           setLiveLogs(prev => [...prev, { timestamp: Date.now(), message: `⚠️ ${err}`, isError: true }]);
         });
-        // Advance task stages progressively
+        // Set initial stage
         setTaskStages(prev => prev.map((s, i) => i === 0 ? { ...s, status: 'active' as const } : s));
         setCurrentStage(0);
 
@@ -831,10 +830,8 @@ export default function App() {
         let projectPath = undefined;
         const urlMatch = text.match(/https?:\/\/github\.com\/[\w.-]+\/[\w.-]+/);
         if (urlMatch) {
-          // GitHub URL provided — will clone first
           projectPath = urlMatch[0];
         } else if (window.omc?.appInfo) {
-          // Default to the omc project root
           try {
             const info = await window.omc.appInfo();
             projectPath = info?.omcRoot || undefined;
@@ -850,14 +847,18 @@ export default function App() {
         unsubChunk();
         unsubError();
 
-        // Mark stages complete
+        // Mark all stages complete
         setTaskStages(prev => prev.map(s => ({ ...s, status: 'completed' as const })));
         setCurrentStage(taskStages.length);
 
         responseContent = taskResult.stdout || taskResult.stderr || 'Task completed with no output.';
         if (taskResult.outputFile) {
-          responseContent += `\n\n📄 **Result saved**: \`${taskResult.outputFile}\``;
+          responseContent += `\n\n📁 **结果已保存**:\n- 本地: \`${taskResult.outputFile}\``;
+          if ((taskResult as any).desktopFile) {
+            responseContent += `\n- 桌面: \`${(taskResult as any).desktopFile}\``;
+          }
         }
+
         if (taskResult.code !== 0) {
           responseContent = `❌ Task failed (exit code ${taskResult.code})\n\n${responseContent}`;
         } else {
