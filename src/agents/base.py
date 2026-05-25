@@ -384,6 +384,13 @@ class BaseAgent(ABC):
             if not response.tool_calls:
                 return response
 
+            # 先追加 assistant 消息（带 tool_calls），DeepSeek 要求这个顺序
+            current_messages.append(Message(
+                role="assistant",
+                content=response.content or "",
+                tool_calls=response.tool_calls,
+            ))
+
             # 执行工具调用
             for tc in response.tool_calls:
                 func_name = tc.get("function", {}).get("name", "")
@@ -407,13 +414,6 @@ class BaseAgent(ABC):
                     tool_call_id=tc.get("id", ""),
                     name=func_name,
                 ))
-
-            # 追加 assistant 消息（带 tool_calls）
-            current_messages.append(Message(
-                role="assistant",
-                content=response.content or "",
-                tool_calls=response.tool_calls,
-            ))
 
             # 后续轮次不再传 tools
             kwargs = {k: v for k, v in kwargs.items() if k != "tools"}
