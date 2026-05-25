@@ -39,8 +39,8 @@ def temp_store():
 def app():
     """创建测试 FastAPI app"""
     test_app = FastAPI()
-    test_app.include_router(history_router, prefix="/api/v1")
-    test_app.include_router(agent_router, prefix="/api/v1")
+    test_app.include_router(history_router)
+    test_app.include_router(agent_router)
     return test_app
 
 
@@ -413,7 +413,7 @@ class TestHistoryAPI:
 
     def test_list_history_empty(self, client):
         """测试列出空历史"""
-        response = client.get("/api/v1/history")
+        response = client.get("/api/history")
         assert response.status_code == 200
         data = response.json()
         assert data["records"] == []
@@ -431,7 +431,7 @@ class TestHistoryAPI:
             }
             self.history_store.save(f"task-{i}", record)
 
-        response = client.get("/api/v1/history")
+        response = client.get("/api/history")
         assert response.status_code == 200
         data = response.json()
         assert len(data["records"]) == 3
@@ -443,7 +443,7 @@ class TestHistoryAPI:
             record = {"task_id": f"task-{i}"}
             self.history_store.save(f"task-{i}", record)
 
-        response = client.get("/api/v1/history?limit=2")
+        response = client.get("/api/history?limit=2")
         assert response.status_code == 200
         data = response.json()
         assert len(data["records"]) == 2
@@ -457,7 +457,7 @@ class TestHistoryAPI:
             }
             self.history_store.save(f"task-{i}", record)
 
-        response = client.get("/api/v1/history?status=completed")
+        response = client.get("/api/history?status=completed")
         assert response.status_code == 200
         data = response.json()
         assert len(data["records"]) == 2
@@ -467,14 +467,14 @@ class TestHistoryAPI:
         record = {"task_id": "task-1", "status": "completed"}
         self.history_store.save("task-1", record)
 
-        response = client.get("/api/v1/history/task-1")
+        response = client.get("/api/history/task-1")
         assert response.status_code == 200
         data = response.json()
         assert data["task_id"] == "task-1"
 
     def test_get_history_detail_not_found(self, client):
         """测试获取不存在的历史"""
-        response = client.get("/api/v1/history/nonexistent")
+        response = client.get("/api/history/nonexistent")
         assert response.status_code == 404
 
     def test_delete_history(self, client):
@@ -482,7 +482,7 @@ class TestHistoryAPI:
         record = {"task_id": "task-del", "status": "completed"}
         self.history_store.save("task-del", record)
 
-        response = client.delete("/api/v1/history/task-del")
+        response = client.delete("/api/history/task-del")
         assert response.status_code == 200
         data = response.json()
         assert data["success"] is True
@@ -500,7 +500,7 @@ class TestHistoryAPI:
         for r in records:
             self.history_store.save(r["task_id"], r)
 
-        response = client.get("/api/v1/history/stats/summary")
+        response = client.get("/api/history/stats/summary")
         assert response.status_code == 200
         data = response.json()
         assert data["total_tasks"] == 3
@@ -514,7 +514,7 @@ class TestAgentAPI:
 
     def test_list_agents(self, client):
         """测试列出所有 Agent"""
-        response = client.get("/api/v1/agents")
+        response = client.get("/api/agents")
         assert response.status_code == 200
         data = response.json()
         assert "agents" in data
@@ -523,14 +523,14 @@ class TestAgentAPI:
     def test_get_agent_status(self, client):
         """测试获取 Agent 状态"""
         # Agent Planner 应该已经注册
-        response = client.get("/api/v1/agents/Planner")
+        response = client.get("/api/agents/Planner")
         assert response.status_code == 200
         data = response.json()
         assert data["name"] == "Planner"
 
     def test_get_agent_status_not_found(self, client):
         """测试获取不存在的 Agent"""
-        response = client.get("/api/v1/agents/NonExistentAgent")
+        response = client.get("/api/agents/NonExistentAgent")
         assert response.status_code == 404
 
 

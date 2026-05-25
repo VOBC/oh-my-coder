@@ -75,10 +75,13 @@ class HistoryStore:
         if not file_path.exists():
             return None
 
-        with open(file_path, encoding="utf-8") as f:
-            record = json.load(f)
-            self._cache[task_id] = record
-            return record
+        try:
+            with open(file_path, encoding="utf-8") as f:
+                record = json.load(f)
+                self._cache[task_id] = record
+                return record
+        except (json.JSONDecodeError, OSError):
+            return None
 
     def list_all(
         self,
