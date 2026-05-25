@@ -596,6 +596,7 @@ class Orchestrator:
         context: dict[str, Any],
         mode: ExecutionMode = ExecutionMode.SEQUENTIAL,
         skip_checkpoint: bool = False,
+        progress_callback: Optional[Callable[[str, str], None]] = None,
     ) -> WorkflowResult:
         """
         执行工作流
@@ -604,6 +605,8 @@ class Orchestrator:
             workflow_name: 工作流名称或步骤列表
             context: 执行上下文
             mode: 执行模式
+            progress_callback: 进度回调函数，签名为 (step_name, status) -> None
+                              status 可选值: "started", "completed", "failed"
 
         Returns:
             WorkflowResult: 执行结果
@@ -661,6 +664,9 @@ class Orchestrator:
             except Exception:
                 pass  # 静默，不阻塞工作流
 
+        # 保存 progress_callback 到 result，供内部方法使用
+        result._progress_callback = progress_callback  # type: ignore
+
         try:
             # 根据模式执行
             if mode == ExecutionMode.SEQUENTIAL:
@@ -707,6 +713,9 @@ class Orchestrator:
     ):
         """顺序执行步骤（集成健康检查与自动重试）"""
 
+        # 获取进度回调
+        progress_callback = getattr(result, '_progress_callback', None)
+
         for step in steps:
             # 检查依赖
             for dep in step.dependencies:
@@ -714,6 +723,11 @@ class Orchestrator:
                     raise ValueError(f"步骤 {step.agent_name} 的依赖 {dep} 未完成")
 
             agent_name = step.agent_name
+
+            # 报告进度：步骤开始
+            if progress_callback:
+                progress_callback(agent_name, "started")
+
             retry_count = 0
             max_retries = getattr(self, "_health_checker", None)
             max_retries = max_retries.max_retries if max_retries else 3
@@ -746,11 +760,20 @@ class Orchestrator:
                         result.steps_completed.append(agent_name)
                         result.outputs[agent_name] = output
                         result.total_tokens += output.usage.get("total_tokens", 0)
+
+                        # 报告进度：步骤完成
+                        if progress_callback:
+                            progress_callback(agent_name, "completed")
+
                         break  # 进入下一步
                     else:
                         raise Exception(f"Agent {agent_name} 执行失败: {output.error}")
 
                 except TimeoutError:
+                    # 报告进度：步骤失败
+                    if progress_callback:
+                        progress_callback(agent_name, "failed")
+
                     error = f"Agent {agent_name} 执行超时（>{step.timeout}s）"
                     hc.unregister_agent(agent_name)
 
@@ -775,6 +798,10 @@ class Orchestrator:
                     # 重试
 
                 except Exception as step_err:
+                    # 报告进度：步骤失败
+                    if progress_callback:
+                        progress_callback(agent_name, "failed")
+
                     hc.unregister_agent(agent_name)
                     error_msg = str(step_err)
 

@@ -119,7 +119,18 @@ def run(
         TextColumn("[progress.description]{task.description}"),
         console=console,
     ) as progress:
-        progress.add_task("执行工作流...", total=None)
+        # 进度回调：显示当前执行的 Agent
+        main_task = progress.add_task("🚀 正在启动...", total=None)
+
+        def _progress_callback(step_name: str, status: str):
+            """更新进度显示"""
+            nonlocal main_task
+            if status == "started":
+                progress.update(main_task, description=f"🔄 正在执行: {step_name}")
+            elif status == "completed":
+                progress.update(main_task, description=f"✅ 已完成: {step_name}")
+            elif status == "failed":
+                progress.update(main_task, description=f"❌ 失败: {step_name}")
 
         try:
             result = asyncio.run(
@@ -131,6 +142,7 @@ def run(
                         "use_sourcegraph": use_sourcegraph,
                     },
                     skip_checkpoint=no_checkpoint,
+                    progress_callback=_progress_callback,
                 )
             )
 
