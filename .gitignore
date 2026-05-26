@@ -85,7 +85,7 @@ desktop/.parcel-cache/
 
 # Workspace private files
 projects/
-memory/
+/memory/
 task-summary_*.md
 
 

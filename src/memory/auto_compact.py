@@ -483,21 +483,19 @@ class AutoCompact:
             return messages, 0
 
         # 将消息按回合分组
-        # 回合 = 从当前 user 到下一个 user（含当前 user，不含下一个）
-        # 最后一段不含 user 的 trailing 内容 → 合并到最后一回合
+        # 回合 = 从上一个 user 到下一个 user 之前（含开头 user，不含下一个 user）
+        # 最后一个 user 之后的内容（trailing）→ 单独作为最后一个 round
         rounds: list[list[Message]] = []
         current_round: list[Message] = []
 
         for msg in messages:
-            current_round.append(msg)
-            if msg.role == "user":
+            if msg.role == "user" and current_round:
                 rounds.append(current_round)
                 current_round = []
+            current_round.append(msg)
 
-        # trailing 内容合并到最后一回合
-        if current_round and rounds:
-            rounds[-1].extend(current_round)
-        elif current_round and not rounds:
+        # trailing 内容作为最后一个 round 追加
+        if current_round:
             rounds.append(current_round)
 
         total_rounds = len(rounds)
@@ -523,7 +521,7 @@ class AutoCompact:
             m for round_msgs in old_rounds for m in round_msgs
             if not self._is_error_message(m)
         ]
-        removed_count = len(old_error_msgs)
+        removed_count = len(old_error_msgs) - len(preserved_last_error)
 
         # 重建：旧回合保留非 error + 最后 1 条 error + 近 max_age_rounds 回合（全部保留）
         purged = old_kept + preserved_last_error + [
