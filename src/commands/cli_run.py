@@ -351,8 +351,11 @@ def _load_config() -> dict:
     if not config_path.exists():
         return {}
     import json
-    with open(config_path, encoding="utf-8") as f:
-        return json.load(f)
+    try:
+        with open(config_path, encoding="utf-8") as f:
+            return json.load(f)
+    except Exception:
+        return {}
 
 
 def _resolve_default_model(config: dict) -> str:
