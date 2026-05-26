@@ -415,8 +415,8 @@ class TestAutoCompactErrorPurge:
 
     def test_purge_removes_old_errors_beyond_threshold(self, auto_compact):
         """超过 4 回合的 error 被清理"""
-        # 6 rounds: user1-6 each followed by error1-6
-        # With max_age_rounds=4, old_rounds = 2 (rounds 1-2)
+        # 6 rounds: user1-6 each followed by error1-6; trailing assistant merges into round 6
+        # With max_age_rounds=4, old_rounds = 2 (rounds 1-2), keep_rounds = 4 (rounds 3-6)
         # old_errors = errors in rounds 1-2 = 2 errors
         msgs = []
         for r in range(1, 7):  # rounds 1-6
@@ -427,10 +427,9 @@ class TestAutoCompactErrorPurge:
         result, count = auto_compact._purge_old_errors(msgs, max_age_rounds=4)
         error_msgs = [m for m in result if auto_compact._is_error_message(m)]
         # 6 rounds, old=2, keep=4. Old errors=2 but 1 preserved -> 1 removed.
-        # Keep has 4 errors + preserved=1 = 5
-        # BUT: errors in keep rounds appear in result, so 6 total
+        # Keep has 4 errors + preserved err2 = 5 total
         assert count == 1
-        assert len(error_msgs) == 6
+        assert len(error_msgs) == 5
 
 
 class TestCompactResultFields:

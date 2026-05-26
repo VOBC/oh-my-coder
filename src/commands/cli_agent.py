@@ -721,7 +721,7 @@ def restore_agent(
             )
 
 
-@app.command("export")
+@app.command("export-state")
 def export_agent_state(
     name: str = typer.Argument(..., help="Agent 名称"),
     output: Path = typer.Argument(..., help="输出 JSON 文件路径"),
@@ -754,7 +754,7 @@ def export_agent_state(
         raise typer.Exit(1)
 
 
-@app.command("import")
+@app.command("import-state")
 def import_agent_state(
     source: Path = typer.Argument(..., help="JSON 配置文件路径"),
     new_name: Optional[str] = typer.Option(None, "--name", "-n", help="新 Agent 名称"),

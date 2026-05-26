@@ -17,6 +17,7 @@ const CONFIG_PATH = path.join(OMC_ROOT, '.omc');
 let mainWindow = null;
 let omcProcess = null; // omc server child process
 let omcReady = false;
+let taskChild = null; // current task child process (for kill support)
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function log(...args) {
@@ -340,6 +341,7 @@ function setupIpc() {
         },
         shell: false,
       });
+      taskChild = child; // store reference so it can be killed
 
       let stdout = '';
       let stderr = '';
@@ -363,11 +365,15 @@ function setupIpc() {
 
       return new Promise((resolve) => {
         child.on('close', (code) => {
+          taskChild = null;
           // Save result to MD file
           const header = `# Task Report\n\n- **Command**: \`omc ${cmdArgs.join(' ')}\`\n- **Time**: ${new Date().toLocaleString('zh-CN')}\n- **Status**: ${code === 0 ? '✅ Success' : '❌ Failed (exit ' + code + ')'}\n- **Project**: ${projectPath || './'}\n\n---\n\n`;
           let mdContent = header + '## Output\n\n' + stdout;
-          if (stderr) {
-            mdContent += '\n\n## Errors\n\n```\n' + stderr + '\n```';
+          // Filter out noisy retry logs (e.g. 429 rate-limit retries)
+          const errorLines = stderr.split('\n').filter(l => !l.match(/请求失败.*attempt=\d+\/\d+\)/));
+          const cleanErrors = errorLines.filter(l => l.trim()).join('\n');
+          if (cleanErrors) {
+            mdContent += '\n\n## Errors\n\n```\n' + cleanErrors + '\n```';
           }
           fs.writeFileSync(outputFile, mdContent, 'utf-8');
           log('[task:execute] done, saved to', outputFile);
@@ -447,6 +453,22 @@ function setupIpc() {
     } catch (e) {
       return { error: e.message };
     }
+  });
+
+  // Task — kill running task
+  ipcMain.handle('omc:task:kill', async () => {
+    if (taskChild && taskChild.pid) {
+      log('[task:kill] killing task process', taskChild.pid);
+      taskChild.kill('SIGTERM');
+      // Give it a moment then SIGKILL
+      setTimeout(() => {
+        if (taskChild && taskChild.pid) {
+          try { taskChild.kill('SIGKILL'); } catch {}
+        }
+      }, 2000);
+      return { killed: true };
+    }
+    return { killed: false, reason: 'No task running' };
   });
 
   // Chat — direct connection to model API endpoint (OpenAI-compatible)

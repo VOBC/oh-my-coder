@@ -71,6 +71,7 @@ contextBridge.exposeInMainWorld('omc', {
     ipcRenderer.on('omc:task:error', h);
     return () => ipcRenderer.removeListener('omc:task:error', h);
   },
+  taskKill: () => ipcRenderer.invoke('omc:task:kill'),
 
   // Whisper
   whisper: {

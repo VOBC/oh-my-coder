@@ -42,12 +42,13 @@ export function AgentSteps({ steps }: AgentStepsProps) {
       <div className="agent-steps__list">
         {steps.map((step, idx) => {
           const isExpanded = expanded.has(idx);
+          const isLast = idx === steps.length - 1;
           const color = AGENT_COLORS[step.agent] || '#71717a';
           
           return (
             <div
               key={idx}
-              className={`agent-steps__item ${step.status}`}
+              className={`agent-steps__item ${step.status} ${isLast ? 'agent-steps__item--latest' : ''}`}
               onClick={() => toggleExpand(idx)}
             >
               <div className="agent-steps__row">

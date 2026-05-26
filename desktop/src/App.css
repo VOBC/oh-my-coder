@@ -1082,6 +1082,29 @@ html, body, #root {
 }
 .input-area__task:disabled { background: var(--bg-4); cursor: not-allowed; opacity: 0.5; }
 
+.input-area__stop {
+  height: 34px;
+  padding: 0 10px;
+  border: none;
+  border-radius: var(--radius);
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: #fff;
+  font-size: 13px;
+  white-space: nowrap;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  flex-shrink: 0;
+  transition: background var(--transition), transform var(--transition), box-shadow var(--transition);
+}
+.input-area__stop:hover {
+  background: linear-gradient(135deg, #f87171, #ef4444);
+  transform: scale(1.08);
+  box-shadow: 0 0 12px rgba(239, 68, 68, 0.4);
+}
+
 .input-area__send {
   width: 34px;
   height: 34px;
@@ -2964,6 +2987,16 @@ html, body, #root {
   word-break: break-word;
 }
 
+.agent-steps__item--latest {
+  border-color: rgba(245, 158, 11, 0.35);
+  animation: latestStepPulse 2s ease-in-out infinite;
+}
+
+@keyframes latestStepPulse {
+  0%, 100% { box-shadow: 0 0 4px rgba(245, 158, 11, 0.1); }
+  50%       { box-shadow: 0 0 10px rgba(245, 158, 11, 0.25); }
+}
+
 /* ── LiveLog ──────────────────────────────────────────────────────────────── */
 .live-log {
   padding: 12px 16px;
@@ -3027,6 +3060,24 @@ html, body, #root {
   color: var(--gray-1);
   flex: 1;
   word-break: break-word;
+}
+
+.live-log__entry--latest .live-log__message {
+  color: var(--amber);
+  font-weight: 500;
+}
+
+.live-log__carousel {
+  font-size: 12px;
+  min-width: 14px;
+  text-align: center;
+  animation: carouselSpin 0.8s steps(1) infinite;
+}
+
+@keyframes carouselSpin {
+  0%   { content: "⠋"; }
+  33%  { content: "⠙"; }
+  66%  { content: "⠹"; }
 }
 
 

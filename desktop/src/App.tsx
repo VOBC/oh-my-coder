@@ -1156,6 +1156,21 @@ export default function App() {
             >
               🚀 运行任务
             </button>
+            {loading && isTaskMode && (
+              <button
+                className="input-area__stop"
+                onClick={async () => {
+                  try {
+                    await window.omc?.taskKill();
+                  } catch {}
+                  setLoading(false);
+                  setLiveLogs(prev => [...prev, { timestamp: Date.now(), message: '🛑 任务已停止', isError: false }]);
+                }}
+                title="停止任务"
+              >
+                ⏹ 停止
+              </button>
+            )}
             <button className="input-area__send" onClick={handleSend} disabled={loading || !input.trim()}>
               {loading ? '◐' : '↑'}
             </button>
