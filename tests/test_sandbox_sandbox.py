@@ -2,6 +2,7 @@
 补充测试：覆盖 src/sandbox/sandbox.py 中未覆盖的分支和异常路径
 """
 
+import sys
 from pathlib import Path
 
 import pytest
@@ -361,6 +362,7 @@ class TestSandboxInit:
 class TestEdgeCases:
     """测试边缘情况"""
 
+    @pytest.mark.skipif(sys.platform != "darwin", reason="macOS /tmp→/private/tmp symlink")
     def test_validate_path_private_tmp(self) -> None:
         """测试 /private/tmp (macOS)"""
         sandbox = Sandbox()
@@ -396,6 +398,7 @@ class TestEdgeCases:
         ok, _ = sandbox.validate_path_with_reason("/tmp/test.txt")
         assert ok is True
 
+    @pytest.mark.skipif(sys.platform != "darwin", reason="macOS /tmp→/private/tmp symlink")
     def test_validate_path_tmp_private_tmp_branch(self) -> None:
         """测试 /private/tmp 分支"""
         config = SandboxConfig(allowed_dirs=["/private/tmp"])

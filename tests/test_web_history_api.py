@@ -890,7 +890,7 @@ class TestEdgeCases:
 
         with patch("src.web.history_api.API_TOKEN", None):
             # 模拟没有 credentials 的情况
-            result = asyncio.get_event_loop().run_until_complete(
+            result = asyncio.run(
                 verify_api_token(None)
             )
             assert result is None
@@ -1086,7 +1086,7 @@ class TestAdditionalEdgeCases:
             credentials = HTTPAuthorizationCredentials(
                 scheme="Bearer", credentials="secret-token"
             )
-            result = asyncio.get_event_loop().run_until_complete(
+            result = asyncio.run(
                 verify_api_token(credentials)
             )
             assert result == "secret-token"
@@ -1105,7 +1105,7 @@ class TestAdditionalEdgeCases:
                 scheme="Bearer", credentials="wrong-token"
             )
             try:
-                asyncio.get_event_loop().run_until_complete(
+                asyncio.run(
                     verify_api_token(credentials)
                 )
                 raise AssertionError("Should have raised exception")
