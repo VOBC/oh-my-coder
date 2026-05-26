@@ -29,8 +29,6 @@ def _load_gateway():
     """懒加载 Gateway（避免未安装依赖时 import 报错）"""
     from src.gateway.gateway import Gateway
 
-    return Gateway
-
     telegram_token = os.getenv("TELEGRAM_BOT_TOKEN")
     discord_token = os.getenv("DISCORD_BOT_TOKEN")
 
