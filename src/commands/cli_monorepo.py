@@ -84,13 +84,17 @@ def _find_packages(root: Path, repo_type: str) -> list[Path]:
         lerna_file = root / "lerna.json"
         if lerna_file.exists():
             import json
+            from glob import glob
 
             data = json.loads(lerna_file.read_text(encoding="utf-8"))
-            packages_dir = root / data.get("packages", ["packages"])[0]
-            if packages_dir.is_dir():
-                for sub in packages_dir.iterdir():
-                    if sub.is_dir():
-                        packages.append(sub)
+            package_patterns = data.get("packages", ["packages/*"])
+            for pattern in package_patterns:
+                # Handle glob patterns
+                matched_dirs = glob(str(root / pattern), recursive=True)
+                for matched in matched_dirs:
+                    pkg_path = Path(matched)
+                    if pkg_path.is_dir():
+                        packages.append(pkg_path)
 
     elif repo_type == "nx":
         # nx: packages/ 目录
