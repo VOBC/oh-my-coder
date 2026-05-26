@@ -16,7 +16,7 @@ from src.commands.cli_mcp import app
 
 # Rich Console writes to stderr by default; mix_stderr=False keeps stdout and
 # stderr separate so we can inspect each stream.
-runner = CliRunner(mix_stderr=False)
+runner = CliRunner()
 
 # ---------------------------------------------------------------------------
 # Helpers

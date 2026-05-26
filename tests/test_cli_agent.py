@@ -16,7 +16,7 @@ from src.commands.cli_agent import app
 @pytest.fixture
 def runner():
     """创建 Typer CliRunner"""
-    return CliRunner(mix_stderr=False)
+    return CliRunner()
 
 
 @pytest.fixture

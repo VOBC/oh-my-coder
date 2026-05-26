@@ -16,7 +16,7 @@ from src.multiagent.coordinator import (
 
 @pytest.fixture
 def runner():
-    return CliRunner(mix_stderr=False)
+    return CliRunner()
 
 
 @pytest.fixture
