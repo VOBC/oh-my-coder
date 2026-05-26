@@ -10,15 +10,14 @@ from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
-import typer
 from typer.testing import CliRunner
 
 from src.commands.cli_monorepo import (
     MONOREPO_CONFIGS,
     MonorepoInfo,
+    _find_packages,
     app,
     detect_monorepo,
-    _find_packages,
 )
 
 

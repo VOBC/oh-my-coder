@@ -9,7 +9,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 from typer.testing import CliRunner
 
-from src.commands.cli_profile import app, console
+from src.commands.cli_profile import app
 from src.core.profile_manager import (
     PREDEFINED_PROFILES,
     AgentProfile,
@@ -310,7 +310,7 @@ class TestDeleteProfile:
 class TestListTemplates:
     def test_list_templates(self):
         """列出所有预定义模板"""
-        with patch("src.commands.cli_profile.console") as mock_console:
+        with patch("src.commands.cli_profile.console"):
             # 直接运行命令，检查它访问了 PREDEFINED_PROFILES
             result = runner.invoke(app, ["templates"])
 

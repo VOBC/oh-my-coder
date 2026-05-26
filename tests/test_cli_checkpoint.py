@@ -1,10 +1,8 @@
 """测试 cli_checkpoint.py — Checkpoint CLI 命令"""
 
-from datetime import datetime
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-import pytest
 from typer.testing import CliRunner
 
 from src.commands.cli_checkpoint import app

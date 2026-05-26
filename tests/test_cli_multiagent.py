@@ -1,13 +1,11 @@
 """测试 src/commands/cli_multiagent.py 中的 Typer 命令"""
 
-import json
 from unittest.mock import MagicMock, patch
-import asyncio
 
 import pytest
 from typer.testing import CliRunner
 
-from src.commands.cli_multiagent import app, _agent_status_color
+from src.commands.cli_multiagent import _agent_status_color, app
 from src.multiagent.coordinator import (
     CoordinationResult,
     SubAgent,
@@ -238,7 +236,7 @@ class TestRemove:
         mock_coordinator.get_agent.return_value = a1
         mock_coordinator.remove_agent.return_value = True
 
-        with patch("src.commands.cli_multiagent.Confirm", create=True) as mock_confirm:
+        with patch("src.commands.cli_multiagent.Confirm", create=True):
             # We need to patch the import inside the function
             pass
 

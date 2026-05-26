@@ -187,7 +187,6 @@ class TestQuestStatus:
     @patch("src.quest.QuestManager")
     @patch("commands.cli_quest.console")
     def test_status_success(self, mock_console, mock_qm_class):
-        import typer
         mock_quest = MagicMock()
         mock_quest.id = "abc12345"
         mock_quest.title = "Test Quest"
@@ -268,6 +267,7 @@ class TestQuestExec:
     @patch("commands.cli_quest.console")
     def test_exec_wrong_status(self, mock_console, mock_qm_class):
         import typer
+
         from src.quest import QuestStatus
 
         mock_quest = MagicMock()

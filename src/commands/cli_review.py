@@ -39,7 +39,6 @@ def _init_router() -> ModelRouter:
 
 def _check_env() -> bool:
     """检查环境配置"""
-    import os
 
     keys = [
         "DEEPSEEK_API_KEY",
@@ -90,7 +89,7 @@ def _fetch_pr_diff(pr_url: str) -> tuple[bool, str]:
             return True, result.stdout
         # 如果 gh 失败，尝试用 curl
         diff_url = f"https://github.com/{owner}/{repo}/pull/{pr_number}.diff"
-        
+
         resp = httpx.get(diff_url, timeout=15.0)
         if resp.status_code == 200:
             return True, resp.text
@@ -98,7 +97,7 @@ def _fetch_pr_diff(pr_url: str) -> tuple[bool, str]:
     except FileNotFoundError:
         # gh 未安装，直接用 HTTP
         diff_url = f"https://github.com/{owner}/{repo}/pull/{pr_number}.diff"
-        
+
         try:
             resp = httpx.get(diff_url, timeout=15.0)
             if resp.status_code == 200:
@@ -119,7 +118,7 @@ def _read_local_diff(diff_file: str) -> tuple[bool, str]:
     返回: (成功, diff内容或错误信息)
     """
     diff_path = Path(diff_file)
-    
+
     # 如果是文件路径且存在，读取文件
     if diff_path.exists() and diff_path.is_file():
         try:

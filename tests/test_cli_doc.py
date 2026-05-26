@@ -1,16 +1,12 @@
 """测试 cli_doc.py — 文档生成与管理命令"""
 
 import json
-import tempfile
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-import pytest
 from typer.testing import CliRunner
 
 from src.commands.cli_doc import (
-    DOCS_DIR,
-    README_PATH,
     _collect_cli_commands,
     _collect_web_api,
     _write_json_docs,

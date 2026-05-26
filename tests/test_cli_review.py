@@ -14,15 +14,16 @@ import pytest
 from typer.testing import CliRunner
 
 from src.commands.cli_review import (
-    SYSTEM_PROMPT_PATH,
     __file__ as _,  # noqa: F401
-    app,
+)
+from src.commands.cli_review import (
     _check_env,
     _fetch_pr_diff,
     _init_router,
     _load_system_prompt,
     _read_local_diff,
     _review_with_llm,
+    app,
 )
 
 runner = CliRunner()

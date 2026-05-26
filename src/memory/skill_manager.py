@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 # mypy: disable-error-code="abstract, arg-type, assignment, attr-defined, call-arg, call-overload, dict-item, func-returns-value, import-untyped, index, misc, no-any-return, no-redef, operator, override, return, return-value, syntax, union-attr, var-annotated"
 
 """
@@ -46,7 +47,7 @@ import re
 import shutil
 import time
 from pathlib import Path
-from typing import Optional, Any
+from typing import Any, Optional
 
 import yaml
 

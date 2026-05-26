@@ -4,23 +4,22 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 import pytest
-import typer.testing
 from typer.testing import CliRunner
 
 from src.commands.cli_self_config import (
-    app,
-    parse_config_intent,
-    detect_api_key_in_text,
-    execute_config,
+    CONFIG_INTENTS,
+    MODEL_PROVIDERS,
     _set_api_key,
     _set_default_model,
     _set_proxy,
     _set_temperature,
-    CONFIG_INTENTS,
-    MODEL_PROVIDERS,
+    app,
+    detect_api_key_in_text,
+    execute_config,
+    parse_config_intent,
 )
 
 runner = CliRunner()
@@ -145,7 +144,7 @@ class TestExecuteConfig:
         config = {"action": "set_default_model"}
         with patch(
             "src.commands.cli_self_config._set_default_model", return_value=True
-        ) as mock:
+        ):
             result = await execute_config(config)
             assert result is True
 
@@ -154,7 +153,7 @@ class TestExecuteConfig:
         config = {"action": "set_proxy"}
         with patch(
             "src.commands.cli_self_config._set_proxy", return_value=True
-        ) as mock:
+        ):
             result = await execute_config(config)
             assert result is True
 
@@ -163,7 +162,7 @@ class TestExecuteConfig:
         config = {"action": "set_temperature"}
         with patch(
             "src.commands.cli_self_config._set_temperature", return_value=True
-        ) as mock:
+        ):
             result = await execute_config(config)
             assert result is True
 
@@ -174,7 +173,7 @@ class TestExecuteConfig:
 class TestSetApiKey:
     @pytest.mark.asyncio
     async def test_with_provider_and_key(self, tmp_path):
-        env_file = tmp_path / ".env"
+        tmp_path / ".env"
         config = {"action": "set_api_key", "provider": "glm", "raw_text": "glm"}
         with patch("src.commands.cli_self_config.Path") as mock_path_cls:
             mock_home = tmp_path
@@ -424,7 +423,7 @@ class TestConstants:
         assert "api_key_env" in MODEL_PROVIDERS["glm"]
 
     def test_config_intents(self):
-        for intent_id, info in CONFIG_INTENTS.items():
+        for _intent_id, info in CONFIG_INTENTS.items():
             assert "patterns" in info
             assert "action" in info
             assert len(info["patterns"]) > 0

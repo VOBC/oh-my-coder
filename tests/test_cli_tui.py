@@ -6,12 +6,17 @@ import sys
 from pathlib import Path
 from unittest.mock import patch
 
-import pytest
-
 # Ensure src/ is importable
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
-from commands.cli_tui import AGENT_CATEGORIES, MODELS, WORKFLOWS, list_agents, list_models, list_workflows
+from commands.cli_tui import (
+    AGENT_CATEGORIES,
+    MODELS,
+    WORKFLOWS,
+    list_agents,
+    list_models,
+    list_workflows,
+)
 
 
 class TestListAgents:

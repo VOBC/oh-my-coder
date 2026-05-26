@@ -75,7 +75,7 @@ class TestMcpInstall:
         project = tmp_path / "myproject"
         project.mkdir()
 
-        with patch("src.commands.cli_mcp.console") as mock_console:
+        with patch("src.commands.cli_mcp.console"):
             result = runner.invoke(
                 app,
                 ["install", "--client", "dify", "--project", str(project)],

@@ -3,12 +3,10 @@
 """
 
 import json
-import time
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch, PropertyMock
+from unittest.mock import Mock, patch
 
 import pytest
-import typer
 from typer.testing import CliRunner
 
 # 导入被测试的 app
@@ -28,8 +26,8 @@ def mock_console():
         yield m
 
 
-def create_mock_agent(name="test-agent", description="A test agent", 
-                      lane_value="code", default_tier="smart", 
+def create_mock_agent(name="test-agent", description="A test agent",
+                      lane_value="code", default_tier="smart",
                       icon="🤖", tools=None, system_prompt="You are a test agent",
                       model="deepseek", max_tokens=8000, temperature=0.7, timeout=60):
     """创建模拟的 agent 对象"""
@@ -40,11 +38,11 @@ def create_mock_agent(name="test-agent", description="A test agent",
     mock_agent.max_tokens = max_tokens
     mock_agent.temperature = temperature
     mock_agent.timeout = timeout
-    
+
     # 使用 PropertyMock 来处理 lane
     type(mock_agent).lane = Mock()
     type(mock_agent).lane.value = lane_value
-    
+
     mock_agent.default_tier = default_tier
     mock_agent.icon = icon
     mock_agent.tools = tools if tools is not None else ["tool1", "tool2"]
@@ -90,7 +88,7 @@ class TestListAgents:
     ):
         """测试 monorepo 有子项目的情况"""
         mock_list_all.return_value = []
-        
+
         # Mock monorepo info
         mock_info = Mock()
         mock_info.root = Path("/test")
@@ -188,7 +186,7 @@ class TestExportAgent:
         assert output_file.exists()
 
         # 验证导出的 JSON
-        with open(output_file, "r", encoding="utf-8") as f:
+        with open(output_file, encoding="utf-8") as f:
             data = json.load(f)
             assert data["name"] == "test-agent"
             assert data["model"] == "deepseek"
@@ -645,9 +643,9 @@ class TestRestoreAgent:
         mock_config.model = "deepseek"
         mock_config.lane = "code"
         mock_config.tools = []
-        
+
         mock_history = [Mock(role="user", content="Hello", spec=["role", "content"])]
-        
+
         mock_state = Mock()
         mock_state.session_id = "sess-123"
         mock_state.total_tokens = 1000

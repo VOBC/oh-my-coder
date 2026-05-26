@@ -1,26 +1,25 @@
 """Tests for src/commands/cli_run.py helper functions."""
 
+import os
+
+# Import helpers under test
+import sys
 from pathlib import Path
 from unittest.mock import patch
 
 import pytest
 
-# Import helpers under test
-import sys
-import os
-
 # Add src to path for import
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 from commands.cli_run import (  # noqa: E402
+    _check_env,
     _detect_project_name,
+    _get_api_key,
     _load_config,
     _resolve_default_model,
-    _get_api_key,
-    _check_env,
     _status_color,
 )
-
 
 # ─────────────────────────────────────────────
 # _detect_project_name
@@ -28,7 +27,7 @@ from commands.cli_run import (  # noqa: E402
 
 class TestDetectProjectName:
     def test_from_pyproject_toml(self, tmp_path):
-        tomllib = pytest.importorskip("tomllib")
+        pytest.importorskip("tomllib")
 
         toml_content = '[project]\nname = "my-cool-project"\nversion = "0.1.0"\n'
         (tmp_path / "pyproject.toml").write_text(toml_content)

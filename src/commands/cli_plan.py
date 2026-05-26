@@ -26,7 +26,7 @@ console = Console()
 
 def _init_router() -> ModelRouter:
     """初始化模型路由器"""
-    config = RouterConfig.from_env()
+    config = RouterConfig()
     return ModelRouter(config)
 
 

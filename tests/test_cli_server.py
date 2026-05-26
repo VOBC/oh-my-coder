@@ -5,14 +5,11 @@ Uses typer.testing.CliRunner and mock to isolate external dependencies.
 Target coverage: ≥80%
 """
 
-import os
 import signal
 import socket
-from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import patch
 
 import pytest
-import typer
 from typer.testing import CliRunner
 
 from src.commands.cli_server import (

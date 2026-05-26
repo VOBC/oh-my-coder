@@ -3,11 +3,11 @@ Tests for cli_gateway.py
 """
 from __future__ import annotations
 
-from unittest.mock import MagicMock, patch
-from typer.testing import CliRunner
-
 import sys
 from pathlib import Path
+from unittest.mock import MagicMock, patch
+
+from typer.testing import CliRunner
 
 # Add src to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
