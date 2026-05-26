@@ -1127,7 +1127,7 @@ class TestVerifyApiToken:
 
         from src.web.history_api import verify_api_token
 
-        result = asyncio.get_event_loop().run_until_complete(
+        result = asyncio.run(
             verify_api_token(None)
         )
         assert result is None
@@ -1142,7 +1142,7 @@ class TestVerifyApiToken:
         from src.web.history_api import verify_api_token
 
         try:
-            asyncio.get_event_loop().run_until_complete(
+            asyncio.run(
                 verify_api_token(None)
             )
             raise AssertionError("Should have raised exception")
@@ -1161,7 +1161,7 @@ class TestVerifyApiToken:
         credentials = HTTPAuthorizationCredentials(
             scheme="Bearer", credentials="test-token"
         )
-        result = asyncio.get_event_loop().run_until_complete(
+        result = asyncio.run(
             verify_api_token(credentials)
         )
         assert result == "test-token"
@@ -1180,7 +1180,7 @@ class TestVerifyApiToken:
             scheme="Bearer", credentials="wrong-token"
         )
         try:
-            asyncio.get_event_loop().run_until_complete(
+            asyncio.run(
                 verify_api_token(credentials)
             )
             raise AssertionError("Should have raised exception")
