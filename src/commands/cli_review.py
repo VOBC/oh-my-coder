@@ -12,10 +12,12 @@ omc review - 代码审查命令
 """
 
 import asyncio
+import os
 import subprocess
 from pathlib import Path
 from typing import Optional
 
+import httpx
 import typer
 from rich.console import Console
 from rich.panel import Panel
@@ -88,8 +90,7 @@ def _fetch_pr_diff(pr_url: str) -> tuple[bool, str]:
             return True, result.stdout
         # 如果 gh 失败，尝试用 curl
         diff_url = f"https://github.com/{owner}/{repo}/pull/{pr_number}.diff"
-        import httpx
-
+        
         resp = httpx.get(diff_url, timeout=15.0)
         if resp.status_code == 200:
             return True, resp.text
@@ -97,8 +98,7 @@ def _fetch_pr_diff(pr_url: str) -> tuple[bool, str]:
     except FileNotFoundError:
         # gh 未安装，直接用 HTTP
         diff_url = f"https://github.com/{owner}/{repo}/pull/{pr_number}.diff"
-        import httpx
-
+        
         try:
             resp = httpx.get(diff_url, timeout=15.0)
             if resp.status_code == 200:
@@ -119,11 +119,9 @@ def _read_local_diff(diff_file: str) -> tuple[bool, str]:
     返回: (成功, diff内容或错误信息)
     """
     diff_path = Path(diff_file)
-    if not diff_path.exists():
-        return False, f"文件不存在: {diff_file}"
-
-    # 如果是文件路径，读取文件
-    if diff_path.is_file():
+    
+    # 如果是文件路径且存在，读取文件
+    if diff_path.exists() and diff_path.is_file():
         try:
             content = diff_path.read_text(encoding="utf-8")
             return True, content
@@ -140,6 +138,7 @@ def _read_local_diff(diff_file: str) -> tuple[bool, str]:
         )
         if result.returncode == 0:
             return True, result.stdout
+        # git diff 失败，返回错误信息
         return False, f"git diff 失败: {result.stderr}"
     except Exception as e:
         return False, f"执行 git diff 失败: {e}"
