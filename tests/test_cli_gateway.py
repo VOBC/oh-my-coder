@@ -252,9 +252,12 @@ class TestGatewayCLI:
         result = runner.invoke(app, ["start", "--help"])
 
         assert result.exit_code == 0
-        assert "启动网关" in result.output
-        assert "--telegram" in result.output
-        assert "--discord" in result.output
+        # Strip ANSI color codes before checking for flag strings
+        import re
+        clean_output = re.sub(r"\x1b\[[0-9;]*m", "", result.output)
+        assert "启动网关" in clean_output
+        assert "--telegram" in clean_output
+        assert "--discord" in clean_output
 
 
 class TestLoadGateway:
