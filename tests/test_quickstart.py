@@ -1,6 +1,7 @@
 """Tests for src/commands/quickstart.py"""
 from __future__ import annotations
 
+import asyncio
 import json
 import os
 from pathlib import Path
@@ -8,6 +9,7 @@ from unittest.mock import MagicMock, patch
 
 import httpx
 import pytest
+import typer
 
 from src.commands.quickstart import (
     MODEL_CATEGORIES,
@@ -314,3 +316,405 @@ class TestCallModelDemo:
         with patch("httpx.post", return_value=mock_resp):
             result = await _call_model_demo({"id": "kimi", "api_key_env": "KIMI_API_KEY"})
         assert result["success"] is True
+
+    @pytest.mark.asyncio
+    async def test_doubao_success(self, monkeypatch):
+        monkeypatch.setenv("DOUBAO_API_KEY", "dk123456789012")
+        mock_resp = MagicMock(status_code=200)
+        mock_resp.json.return_value = {
+            "choices": [{"message": {"content": "sort code"}}]
+        }
+        with patch("httpx.post", return_value=mock_resp):
+            result = await _call_model_demo({"id": "doubao", "api_key_env": "DOUBAO_API_KEY"})
+        assert result["success"] is True
+
+    @pytest.mark.asyncio
+    async def test_tongyi_success(self, monkeypatch):
+        monkeypatch.setenv("TONGYI_API_KEY", "tk123456789012")
+        mock_resp = MagicMock(status_code=200)
+        mock_resp.json.return_value = {
+            "choices": [{"message": {"content": "sort code"}}]
+        }
+        with patch("httpx.post", return_value=mock_resp):
+            result = await _call_model_demo({"id": "tongyi", "api_key_env": "TONGYI_API_KEY"})
+        assert result["success"] is True
+
+    @pytest.mark.asyncio
+    async def test_minimax_success(self, monkeypatch):
+        monkeypatch.setenv("MINIMAX_API_KEY", "mk123456789012")
+        mock_resp = MagicMock(status_code=200)
+        mock_resp.json.return_value = {
+            "choices": [{"message": {"content": "sort code"}}]
+        }
+        with patch("httpx.post", return_value=mock_resp):
+            result = await _call_model_demo({"id": "minimax", "api_key_env": "MINIMAX_API_KEY"})
+        assert result["success"] is True
+
+    @pytest.mark.asyncio
+    async def test_hunyuan_no_token(self, monkeypatch):
+        monkeypatch.setenv("HUNYUAN_API_KEY", "hk1234567890")
+        with patch("src.commands.quickstart._get_hunyuan_access_token", return_value=None):
+            result = await _call_model_demo({"id": "hunyuan", "api_key_env": "HUNYUAN_API_KEY"})
+        assert result["success"] is False
+        assert "access_token" in result["error"]
+
+    @pytest.mark.asyncio
+    async def test_server_error_with_text_body(self, monkeypatch):
+        monkeypatch.setenv("DEEPSEEK_API_KEY", "sk-test1234567890")
+        mock_resp = MagicMock(status_code=502)
+        mock_resp.json.side_effect = Exception("not json")
+        mock_resp.text = "bad gateway"
+        with patch("httpx.post", return_value=mock_resp):
+            result = await _call_model_demo({"id": "deepseek", "api_key_env": "DEEPSEEK_API_KEY"})
+        assert result["success"] is False
+        assert "502" in result["error"]
+
+    @pytest.mark.asyncio
+    async def test_generic_exception(self, monkeypatch):
+        monkeypatch.setenv("DEEPSEEK_API_KEY", "sk-test1234567890")
+        with patch("httpx.post", side_effect=RuntimeError("unexpected")):
+            result = await _call_model_demo({"id": "deepseek", "api_key_env": "DEEPSEEK_API_KEY"})
+        assert result["success"] is False
+        assert "请求失败" in result["error"]
+
+    @pytest.mark.asyncio
+    async def test_response_result_field(self, monkeypatch):
+        """Test wenxin-style result field"""
+        monkeypatch.setenv("WENXIN_API_KEY", "wk1234567890")
+        monkeypatch.setenv("WENXIN_SECRET_KEY", "ws1234567890")
+        mock_resp = MagicMock(status_code=200)
+        mock_resp.json.return_value = {"result": "def qs(a): pass"}
+        with patch("src.commands.quickstart._get_wenxin_access_token", return_value="tok"):
+            with patch("httpx.post", return_value=mock_resp):
+                result = await _call_model_demo({"id": "wenxin", "api_key_env": "WENXIN_API_KEY"})
+        assert result["success"] is True
+        assert result["code"] == "def qs(a): pass"
+
+    @pytest.mark.asyncio
+    async def test_server_error_message_in_error_field(self, monkeypatch):
+        """Test error message extraction from error.message"""
+        monkeypatch.setenv("KIMI_API_KEY", "kk123456789012")
+        mock_resp = MagicMock(status_code=403)
+        mock_resp.json.return_value = {"error": {"message": "forbidden"}}
+        with patch("httpx.post", return_value=mock_resp):
+            result = await _call_model_demo({"id": "kimi", "api_key_env": "KIMI_API_KEY"})
+        assert result["success"] is False
+        assert "forbidden" in result["error"]
+
+
+# ── _step1_select_model ────────────────────────────────────────
+
+from src.commands.quickstart import app, _step1_select_model, _step2_config_apikey, _step3_run_demo, _show_summary
+
+
+class TestStep1SelectModel:
+    def test_user_selects_valid(self):
+        with patch("src.commands.quickstart.Prompt.ask", return_value="1"):
+            result = _step1_select_model()
+        assert result is not None
+        assert result["id"] == "deepseek"
+
+    def test_user_skips_with_enter(self):
+        with patch("src.commands.quickstart.Prompt.ask", return_value=""):
+            result = _step1_select_model()
+        assert result is None
+
+    def test_user_skips_with_whitespace(self):
+        with patch("src.commands.quickstart.Prompt.ask", return_value="   "):
+            result = _step1_select_model()
+        assert result is None
+
+    def test_invalid_choice(self):
+        with patch("src.commands.quickstart.Prompt.ask", return_value="999"):
+            result = _step1_select_model()
+        assert result is None
+
+    def test_select_second_model(self):
+        with patch("src.commands.quickstart.Prompt.ask", return_value="2"):
+            result = _step1_select_model()
+        assert result is not None
+        assert result["id"] == "glm"
+
+    def test_select_last_paid_model(self):
+        total = sum(len(v) for v in MODEL_CATEGORIES.values())
+        last = MODEL_CATEGORIES["国产付费"][-1]
+        with patch("src.commands.quickstart.Prompt.ask", return_value=str(total)):
+            result = _step1_select_model()
+        assert result is not None
+        assert result["id"] == last["id"]
+
+
+# ── _step2_config_apikey ────────────────────────────────────────
+
+class TestStep2ConfigApikey:
+    def test_new_key_input(self, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        model_info = MODEL_CATEGORIES["国产免费"][0]
+        monkeypatch.delenv(model_info["api_key_env"], raising=False)
+        with patch("src.commands.quickstart.Prompt.ask", return_value="sk-new-key-12345"):
+            with patch("src.commands.quickstart.Confirm.ask", return_value=False):
+                result = _step2_config_apikey(model_info)
+        assert result is True
+
+    def test_empty_key_skipped(self, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        model_info = MODEL_CATEGORIES["国产免费"][0]
+        monkeypatch.delenv(model_info["api_key_env"], raising=False)
+        with patch("src.commands.quickstart.Prompt.ask", return_value=""):
+            result = _step2_config_apikey(model_info)
+        assert result is False
+
+    def test_existing_key_keep(self, monkeypatch):
+        model_info = MODEL_CATEGORIES["国产免费"][0]
+        monkeypatch.setenv(model_info["api_key_env"], "sk-existing-key-12345")
+        with patch("src.commands.quickstart.Confirm.ask", return_value=False):
+            result = _step2_config_apikey(model_info)
+        assert result is True
+
+    def test_existing_key_update(self, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        model_info = MODEL_CATEGORIES["国产免费"][0]
+        monkeypatch.setenv(model_info["api_key_env"], "sk-existing-key-12345")
+        with patch("src.commands.quickstart.Confirm.ask", return_value=True):
+            with patch("src.commands.quickstart.Prompt.ask", return_value="sk-updated-67890"):
+                result = _step2_config_apikey(model_info)
+        assert result is True
+
+
+# ── _step3_run_demo ────────────────────────────────────────────
+
+class TestStep3RunDemo:
+    def test_user_skips(self):
+        model_info = MODEL_CATEGORIES["国产免费"][0]
+        with patch("src.commands.quickstart.Confirm.ask", return_value=False):
+            result = _step3_run_demo(model_info)
+        assert result is False
+
+    @pytest.mark.asyncio
+    async def _fake_call_model_demo(self, model_info):
+        return {"success": False, "error": "bad key"}
+
+    def test_success(self):
+        model_info = MODEL_CATEGORIES["国产免费"][0]
+        async def fake_call(mi):
+            return {"success": True, "code": "def qs(a): pass"}
+        with patch("src.commands.quickstart.Confirm.ask", return_value=True):
+            with patch("src.commands.quickstart._call_model_demo", side_effect=fake_call):
+                result = _step3_run_demo(model_info)
+        assert result is True
+
+    def test_failure(self):
+        model_info = MODEL_CATEGORIES["国产免费"][0]
+        with patch("src.commands.quickstart.Confirm.ask", return_value=True):
+            async def fake(mi):
+                return {"success": False, "error": "bad key"}
+            with patch("src.commands.quickstart._call_model_demo", side_effect=fake):
+                result = _step3_run_demo(model_info)
+        assert result is False
+
+    def test_exception_during_call(self):
+        model_info = MODEL_CATEGORIES["国产免费"][0]
+        with patch("src.commands.quickstart.Confirm.ask", return_value=True):
+            async def fake(mi):
+                raise RuntimeError("boom")
+            with patch("src.commands.quickstart._call_model_demo", side_effect=fake):
+                result = _step3_run_demo(model_info)
+        assert result is False
+
+
+# ── _show_summary ──────────────────────────────────────────────
+
+class TestShowSummary:
+    def test_shows_without_error(self):
+        model_info = MODEL_CATEGORIES["国产免费"][0]
+        _show_summary(model_info, {"model": True, "apikey": True, "verify": True})
+
+    def test_partial_completion(self):
+        model_info = MODEL_CATEGORIES["国产免费"][0]
+        _show_summary(model_info, {"model": True, "apikey": False, "verify": False})
+
+
+# ── main command ────────────────────────────────────────────────
+from typer.testing import CliRunner
+
+runner = CliRunner()
+
+
+class TestMainCommand:
+    def _run(self, args, **patch_kwargs):
+        """Helper: run quickstart with mocked dependencies. Returns (exit_code, output)."""
+        patches = patch_kwargs.pop("patches", {})
+        with patch("src.commands.quickstart.Confirm.ask", return_value=True):
+            with patch("src.commands.quickstart.Prompt.ask", return_value=""):
+                with patch("src.commands.quickstart.detect_completed_steps", return_value={"model": False, "apikey": False, "verify": False}):
+                    with patch("src.commands.quickstart._step1_select_model", return_value=None):
+                        for target, retval in patches.items():
+                            pass  # handled below
+                        # Apply custom patches via context managers
+                        from contextlib import ExitStack
+                        stack = ExitStack()
+                        for target, retval in patches.items():
+                            stack.enter_context(patch(target, return_value=retval))
+                        with stack:
+                            result = runner.invoke(app, args, catch_exceptions=False)
+        return result.exit_code, result.output
+
+    def test_model_flag_unknown(self):
+        result = runner.invoke(app, ["--model", "nonexistent"], catch_exceptions=False)
+        assert result.exit_code == 1
+
+    def test_model_flag_with_key(self, monkeypatch):
+        monkeypatch.setenv("DEEPSEEK_API_KEY", "sk-longkey12345678")
+        with patch("src.commands.quickstart._step3_run_demo", return_value=True):
+            with patch("src.commands.quickstart._show_summary"):
+                result = runner.invoke(app, ["--model", "deepseek"], catch_exceptions=False)
+        assert result.exit_code == 0
+
+    def test_model_flag_verify_fails(self, monkeypatch):
+        monkeypatch.setenv("DEEPSEEK_API_KEY", "sk-longkey12345678")
+        with patch("src.commands.quickstart._step3_run_demo", return_value=False):
+            with patch("src.commands.quickstart._show_summary"):
+                result = runner.invoke(app, ["--model", "deepseek"], catch_exceptions=False)
+        assert result.exit_code == 1
+
+    def test_model_flag_no_key_runs_step2(self, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        monkeypatch.delenv("DEEPSEEK_API_KEY", raising=False)
+        with patch("src.commands.quickstart._step2_config_apikey", return_value=True):
+            with patch("src.commands.quickstart._step3_run_demo", return_value=True):
+                with patch("src.commands.quickstart._show_summary"):
+                    result = runner.invoke(app, ["--model", "deepseek"], catch_exceptions=False)
+        assert result.exit_code == 0
+
+    def test_step_model(self):
+        with patch("src.commands.quickstart._step1_select_model", return_value=None):
+            result = runner.invoke(app, ["--step", "model"], catch_exceptions=False)
+        assert result.exit_code == 0
+
+    def test_step_apikey_no_model(self):
+        result = runner.invoke(app, ["--step", "apikey"], catch_exceptions=False)
+        assert result.exit_code == 1
+
+    def test_step_verify_no_key(self, monkeypatch):
+        for env in ["DEEPSEEK_API_KEY", "KIMI_API_KEY", "DOUBAO_API_KEY", "ZHIPUAI_API_KEY",
+                     "TONGYI_API_KEY", "MINIMAX_API_KEY", "WENXIN_API_KEY", "HUNYUAN_API_KEY",
+                     "BAICHUAN_API_KEY"]:
+            monkeypatch.delenv(env, raising=False)
+        result = runner.invoke(app, ["--step", "verify"], catch_exceptions=False)
+        assert result.exit_code == 1
+
+    def test_step_verify_success(self, monkeypatch):
+        monkeypatch.setenv("DEEPSEEK_API_KEY", "sk-longkey12345678")
+        with patch("src.commands.quickstart._step3_run_demo", return_value=True):
+            result = runner.invoke(app, ["--step", "verify"], catch_exceptions=False)
+        assert result.exit_code == 0
+
+    def test_step_verify_failure(self, monkeypatch):
+        monkeypatch.setenv("DEEPSEEK_API_KEY", "sk-longkey12345678")
+        with patch("src.commands.quickstart._step3_run_demo", return_value=False):
+            result = runner.invoke(app, ["--step", "verify"], catch_exceptions=False)
+        assert result.exit_code == 1
+
+    def test_unknown_step(self):
+        result = runner.invoke(app, ["--step", "badstep"], catch_exceptions=False)
+        assert result.exit_code == 1
+
+    def test_full_flow_cancel(self):
+        with patch("src.commands.quickstart.Confirm.ask", return_value=False):
+            result = runner.invoke(app, [], catch_exceptions=False)
+        assert result.exit_code == 0
+
+    def test_full_flow_no_model_selected(self):
+        with patch("src.commands.quickstart.Confirm.ask", return_value=True):
+            with patch("src.commands.quickstart.detect_completed_steps", return_value={"model": False, "apikey": False, "verify": False}):
+                with patch("src.commands.quickstart._step1_select_model", return_value=None):
+                    result = runner.invoke(app, [], catch_exceptions=False)
+        assert result.exit_code == 0
+
+    def test_full_flow_all_steps(self):
+        model_info = MODEL_CATEGORIES["国产免费"][0]
+        with patch("src.commands.quickstart.Confirm.ask", return_value=True):
+            with patch("src.commands.quickstart.detect_completed_steps", return_value={"model": False, "apikey": False, "verify": False}):
+                with patch("src.commands.quickstart._step1_select_model", return_value=model_info):
+                    with patch("src.commands.quickstart._step2_config_apikey", return_value=True):
+                        with patch("src.commands.quickstart._step3_run_demo", return_value=True):
+                            with patch("src.commands.quickstart._show_summary"):
+                                result = runner.invoke(app, [], catch_exceptions=False)
+        assert result.exit_code == 0
+
+    def test_full_flow_verify_fails(self):
+        model_info = MODEL_CATEGORIES["国产免费"][0]
+        with patch("src.commands.quickstart.Confirm.ask", return_value=True):
+            with patch("src.commands.quickstart.detect_completed_steps", return_value={"model": False, "apikey": False, "verify": False}):
+                with patch("src.commands.quickstart._step1_select_model", return_value=model_info):
+                    with patch("src.commands.quickstart._step2_config_apikey", return_value=True):
+                        with patch("src.commands.quickstart._step3_run_demo", return_value=False):
+                            with patch("src.commands.quickstart._show_summary"):
+                                result = runner.invoke(app, [], catch_exceptions=False)
+        assert result.exit_code == 1
+
+    def test_full_flow_skip_step1_detected_model(self, monkeypatch):
+        model_info = MODEL_CATEGORIES["国产免费"][0]
+        monkeypatch.setenv(model_info["api_key_env"], "sk-longkey12345678")
+        with patch("src.commands.quickstart.Confirm.ask", return_value=True):
+            with patch("src.commands.quickstart.detect_completed_steps", return_value={"model": True, "apikey": True, "verify": True}):
+                with patch("src.commands.quickstart._step3_run_demo", return_value=True) as mock_run:
+                    with patch("src.commands.quickstart._show_summary"):
+                        result = runner.invoke(app, [], catch_exceptions=False)
+        assert result.exit_code == 0
+        mock_run.assert_not_called()
+
+    def test_force_flag(self):
+        model_info = MODEL_CATEGORIES["国产免费"][0]
+        with patch("src.commands.quickstart.Confirm.ask", return_value=True):
+            with patch("src.commands.quickstart.detect_completed_steps", return_value={"model": False, "apikey": False, "verify": False}):
+                with patch("src.commands.quickstart._step1_select_model", return_value=model_info):
+                    with patch("src.commands.quickstart._step2_config_apikey", return_value=True):
+                        with patch("src.commands.quickstart._step3_run_demo", return_value=True):
+                            with patch("src.commands.quickstart._show_summary"):
+                                result = runner.invoke(app, ["--force"], catch_exceptions=False)
+        assert result.exit_code == 0
+
+    def test_full_flow_user_skips_then_detected_key(self, monkeypatch):
+        """User presses enter in step1, but a key is already configured"""
+        model_info = MODEL_CATEGORIES["国产免费"][0]
+        monkeypatch.setenv(model_info["api_key_env"], "sk-longkey12345678")
+        with patch("src.commands.quickstart.Confirm.ask", return_value=True):
+            with patch("src.commands.quickstart.detect_completed_steps", return_value={"model": False, "apikey": False, "verify": False}):
+                with patch("src.commands.quickstart._step1_select_model", return_value=None):
+                    with patch("src.commands.quickstart._step2_config_apikey", return_value=True):
+                        with patch("src.commands.quickstart._step3_run_demo", return_value=True):
+                            with patch("src.commands.quickstart._show_summary"):
+                                result = runner.invoke(app, [], catch_exceptions=False)
+        assert result.exit_code == 0
+
+    def test_full_flow_completed_model_but_no_key(self):
+        """model step completed but apikey not"""
+        with patch("src.commands.quickstart.Confirm.ask", return_value=True):
+            with patch("src.commands.quickstart.detect_completed_steps", return_value={"model": True, "apikey": False, "verify": False}):
+                with patch("src.commands.quickstart._step2_config_apikey", return_value=True):
+                    with patch("src.commands.quickstart._step3_run_demo", return_value=True):
+                        with patch("src.commands.quickstart._show_summary"):
+                            result = runner.invoke(app, [], catch_exceptions=False)
+        assert result.exit_code == 0
+
+    def test_model_flag_kimi(self, monkeypatch):
+        monkeypatch.setenv("KIMI_API_KEY", "sk-longkey12345678")
+        with patch("src.commands.quickstart._step3_run_demo", return_value=True):
+            with patch("src.commands.quickstart._show_summary"):
+                result = runner.invoke(app, ["--model", "kimi"], catch_exceptions=False)
+        assert result.exit_code == 0
+
+    def test_model_flag_doubao(self, monkeypatch):
+        monkeypatch.setenv("DOUBAO_API_KEY", "sk-longkey12345678")
+        with patch("src.commands.quickstart._step3_run_demo", return_value=True):
+            with patch("src.commands.quickstart._show_summary"):
+                result = runner.invoke(app, ["--model", "doubao"], catch_exceptions=False)
+        assert result.exit_code == 0
+
+    def test_model_flag_glm(self, monkeypatch):
+        monkeypatch.setenv("ZHIPUAI_API_KEY", "sk-longkey12345678")
+        with patch("src.commands.quickstart._step3_run_demo", return_value=True):
+            with patch("src.commands.quickstart._show_summary"):
+                result = runner.invoke(app, ["--model", "glm"], catch_exceptions=False)
+        assert result.exit_code == 0

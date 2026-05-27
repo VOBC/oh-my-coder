@@ -389,13 +389,11 @@ def _step3_run_demo(model_info: dict) -> bool:
         Panel.fit(
             f"[bold red]❌ 验证失败[/bold red]\n\n"
             f"错误：{result.get('error', '未知错误')}\n\n"
-            "[dim]常见问题：\n"
-            "  1. API Key 错误或已过期\n"
-            "  2. 账户余额不足\n"
-            "  3. 网络无法访问该平台\n\n"
-            "请访问 {model_info['register_url']} 检查[/dim]".format_map(
-                {"model_info": str(model_info)}
-            ),
+            f"[dim]常见问题：\n"
+            f"  1. API Key 错误或已过期\n"
+            f"  2. 账户余额不足\n"
+            f"  3. 网络无法访问该平台\n\n"
+            f"请访问 {model_info['register_url']} 检查[/dim]",
             title="⚠️ 验证未通过",
             border_style="red",
         )
@@ -671,7 +669,7 @@ def main(
       omc quickstart --step verify  # 只验证配置
     """
     # 检测已完成步骤
-    completed = {} if force else detect_completed_steps()
+    completed = {"model": False, "apikey": False, "verify": False} if force else detect_completed_steps()
 
     # 统计跳过数
     skipped = sum(1 for v in completed.values() if v)
