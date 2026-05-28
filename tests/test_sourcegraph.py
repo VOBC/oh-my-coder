@@ -953,7 +953,7 @@ class TestAdditionalCoverage:
         """Test cache handles corrupt JSON."""
         client = SourcegraphClient(cache_dir=tmp_path, cache_ttl=1000)
         # Write invalid JSON
-        cache_file = tmp_path / f"{hashlib.sha256('key'.encode()).hexdigest()}.json"
+        cache_file = tmp_path / f"{hashlib.sha256(b'key').hexdigest()}.json"
         cache_file.write_text("not valid json", encoding="utf-8")
         assert client._cache_get("key") is None
 
@@ -1149,8 +1149,9 @@ class TestAdditionalCoverage:
 
     def test_close_with_existing_client(self) -> None:
         """Test close() properly closes httpx client."""
+        from unittest.mock import patch
+
         import httpx
-        from unittest.mock import Mock, patch
 
         client = SourcegraphClient()
 
