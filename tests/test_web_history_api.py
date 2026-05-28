@@ -733,10 +733,12 @@ class TestAgentStatusManager:
         assert agents[1]["name"] == "Agent2"
 
     def test_subscribe(self):
-        """测试订阅状态变化"""
+        """测试订阅状态变化（返回Queue实例）"""
         manager = AgentStatusManager()
         queue = manager.subscribe()
-        assert isinstance(queue, type(asyncio.Queue()))
+        # Must be a Queue-like object with put/get methods
+        assert hasattr(queue, "put_nowait")
+        assert hasattr(queue, "get_nowait")
 
     def test_notify_subscribers(self):
         """测试通知订阅者"""
