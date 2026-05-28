@@ -580,6 +580,22 @@ class TestFixCommand:
         assert result.exit_code == 0
         assert "执行失败" in result.output or result.exit_code == 0
 
+    @patch("src.commands.cli_lsp.subprocess.run")
+    @patch.object(Path, "cwd")
+    def test_fix_ruff_fix_failure(self, mock_cwd, mock_run, tmp_path):
+        """Test fix command when ruff --fix fails (covers line 327)"""
+        mock_cwd.return_value = tmp_path
+        # First call: ruff check succeeds (returncode 0)
+        # Second call: ruff check --fix fails (returncode 1)
+        mock_run.side_effect = [
+            fake_completed(0, stdout="Some issues found"),  # ruff check
+            fake_completed(1, stderr="Fix failed"),  # ruff check --fix
+        ]
+
+        result = runner.invoke(app, ["fix", "--no-dry-run"])
+        assert result.exit_code == 0
+        assert "修复失败" in result.output
+
 
 # ---------------------------------------------------------------------------
 # setup command tests
@@ -715,6 +731,7 @@ class TestSetupCommand:
         assert result.exit_code == 0
         assert "ESLint 未安装" in result.output
         assert "npm install" in result.output
+        assert "omc pkg install eslint" in result.output  # Covers line 439
 
     def test_setup_unsupported_tool(self):
         """Test setup with unsupported tool"""
