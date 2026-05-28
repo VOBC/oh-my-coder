@@ -855,13 +855,11 @@ class TestQuestNotifyWatchLoop:
 
         from commands.cli_quest import quest_notify
 
-        # Actually run the async watch loop but patch asyncio.sleep to be instant
-        with patch("asyncio.sleep", return_value=real_asyncio.coroutine(lambda: None)()):
-            real_asyncio.run = lambda coro: real_asyncio.run(coro) if not isinstance(coro, real_asyncio.coroutines) else None
-
-        # Simpler approach: just mock asyncio.run and verify setup
-        with patch("asyncio.run"):
-            quest_notify(quest_id="abc12345", project_path=Path("."))
+        # Patch asyncio.sleep with AsyncMock (compatible with all Python versions, including 3.12+)
+        with patch("asyncio.sleep", new_callable=AsyncMock):
+            # Simpler approach: just mock asyncio.run and verify setup
+            with patch("asyncio.run"):
+                quest_notify(quest_id="abc12345", project_path=Path("."))
 
         mock_nc_class.assert_called_once()
 

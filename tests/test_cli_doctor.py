@@ -327,11 +327,14 @@ def _invoke_run(**overrides):
 class TestRunCommand:
     """Tests for `omc doctor run` CLI command."""
 
+    @patch("src.commands.cli_doctor._check_python_version", return_value=(True, "Python 3.12.0", ""))
+    @patch("src.commands.cli_doctor._check_package", return_value=(True, "pkg 1.0", ""))
+    @patch("src.commands.cli_doctor._check_config_file", return_value=(True, "~/.omc/.env", ""))
+    @patch("src.commands.cli_doctor._check_network", return_value=(True, "HTTP 200"))
+    @patch("src.commands.cli_doctor.os.getenv", return_value="sk-demo1234567890abcdef")
     def test_run_all_ok(self, *mocks):
         """All checks pass → normal return (no exception raised)."""
-        # Also patch os.getenv at 'os' module level so _check_network can read the env var.
-        with patch('os.getenv', return_value='sk-demo1234567890abcdef'):
-            run(verbose=False, skip_network=False)
+        run(verbose=False, skip_network=False)
 
     @patch("src.commands.cli_doctor._check_python_version", return_value=(False, "Python 3.8.0", "fix py"))
     @patch("src.commands.cli_doctor._check_package", return_value=(True, "pkg 1.0", ""))
