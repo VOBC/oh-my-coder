@@ -45,6 +45,7 @@ dev = [
     "black==24.10.0",
     "ruff==0.15.9",
     "mypy>=1.8.0",
+    "requests>=2.31.0",
 ]
 web = [
     "fastapi>=0.104.0",
