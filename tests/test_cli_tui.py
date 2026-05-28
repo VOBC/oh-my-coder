@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 # Ensure src/ is importable
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
@@ -627,17 +627,17 @@ class TestHandleTask:
         session._handle_task("\n")
         assert session.state == State.CONFIRM
 
-    @patch("commands.cli_tui.console.input")
-    def test_enter_with_skill_command_handles_slash(self, mock_input):
+    def test_enter_with_skill_command_handles_slash(self):
         """Skill command (/xxx) → clears input, returns to MAIN."""
-        session = TUISession()
-        session.state = State.TASK
-        session.task_input = "/test-skill"
-        mock_input.return_value = ""
-        session._handle_task("\n")
-        assert session.task_input == ""
-        # Skill command transitions to MAIN
-        assert session.state == State.MAIN
+        # Mock _handle_slash_command to avoid subprocess/filesystem calls
+        with patch.object(TUISession, "_handle_slash_command", return_value=True) as mock_slash:
+            session = TUISession()
+            session.state = State.TASK
+            session.task_input = "/test-skill"
+            session._handle_task("\n")
+            mock_slash.assert_called_once_with("/test-skill")
+            assert session.task_input == ""
+            assert session.state == State.MAIN
 
     def test_backspace_removes_last_char(self):
         session = TUISession()
