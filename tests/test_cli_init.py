@@ -10,11 +10,9 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest
-import typer
 from typer.testing import CliRunner
 
 from src.commands.cli_init import (
@@ -40,7 +38,7 @@ def test_supported_models_defined():
     assert isinstance(SUPPORTED_MODELS, dict)
     assert len(SUPPORTED_MODELS) > 0
     # Every entry should have required fields
-    for model_id, info in SUPPORTED_MODELS.items():
+    for _model_id, info in SUPPORTED_MODELS.items():
         assert "name" in info
         assert "tier" in info
         assert "api_key_env" in info
@@ -385,7 +383,7 @@ class TestInitWizard:
              patch("src.commands.cli_init.Prompt", mock_prompt), \
              patch("src.commands.cli_init.Confirm", mock_confirm), \
              patch("src.commands.cli_init.os.getenv", return_value="sk-existing-key-12345678"):
-            result = runner.invoke(app, [], standalone_mode=False)
+            runner.invoke(app, [], standalone_mode=False)
 
         # os.getenv was called at least once
         assert mock_confirm.ask.call_count >= 1
@@ -434,7 +432,7 @@ class TestInitWizard:
              patch("src.commands.cli_init.Prompt", mock_prompt), \
              patch("src.commands.cli_init.Confirm", mock_confirm), \
              patch("src.commands.cli_init.os.getenv", return_value=None):
-            result = runner.invoke(app, [], standalone_mode=False, catch_exceptions=False)
+            runner.invoke(app, [], standalone_mode=False, catch_exceptions=False)
 
         assert config_file.exists()
         loaded = json.loads(config_file.read_text(encoding="utf-8"))
@@ -454,7 +452,7 @@ class TestInitWizard:
              patch("src.commands.cli_init.Prompt", mock_prompt), \
              patch("src.commands.cli_init.Confirm", mock_confirm), \
              patch("src.commands.cli_init.os.getenv", return_value=None):
-            result = runner.invoke(app, [], standalone_mode=False, catch_exceptions=False)
+            runner.invoke(app, [], standalone_mode=False, catch_exceptions=False)
 
         assert new_work_dir.exists()
         assert config_file.exists()
@@ -497,7 +495,7 @@ class TestInitWizard:
              patch("src.commands.cli_init.Prompt", mock_prompt), \
              patch("src.commands.cli_init.Confirm", mock_confirm), \
              patch("src.commands.cli_init.os.getenv", return_value=None):
-            result = runner.invoke(app, [], standalone_mode=False, catch_exceptions=False)
+            runner.invoke(app, [], standalone_mode=False, catch_exceptions=False)
 
         loaded = json.loads(config_file.read_text(encoding="utf-8"))
         assert "api_keys" in loaded

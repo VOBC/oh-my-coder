@@ -1,7 +1,8 @@
 """测试 local_model_discovery.py — 本地模型发现"""
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 
 from src.core.local_model_discovery import (
     OllamaModelInfo,

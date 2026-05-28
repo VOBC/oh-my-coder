@@ -1,8 +1,6 @@
 """Tests for src/config/agent_config.py"""
 import json
-import tempfile
 from pathlib import Path
-from unittest.mock import patch
 
 import pytest
 
@@ -289,7 +287,6 @@ class TestLoadConfigFile:
 class TestLoadConfigDir:
     def test_load_multiple_configs(self, tmp_path: Path):
         config1 = {"name": "agent1", "description": "First"}
-        config2 = {"name": "agent2", "description": "Second"}
 
         (tmp_path / "agent1.json").write_text(json.dumps(config1))
         (tmp_path / "agent2.yaml").write_text("name: agent2\ndescription: Second\n")

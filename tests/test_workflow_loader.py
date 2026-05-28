@@ -6,16 +6,12 @@ import time
 from pathlib import Path
 from unittest.mock import MagicMock, mock_open, patch
 
-import pytest
-import yaml
-
 from src.config.workflow_loader import (
     StepConfig,
     WorkflowConfig,
     WorkflowLoader,
 )
-from src.core.orchestrator import WORKFLOW_TEMPLATES, WorkflowStep
-
+from src.core.orchestrator import WORKFLOW_TEMPLATES
 
 # ---------------------------------------------------------------------------
 # StepConfig & WorkflowConfig
@@ -321,7 +317,7 @@ steps:
 
     def test_delete_workflow_user(self):
         user_path_str = str(self.loader._user_dir / "myflow.yaml")
-        default_path_str = str(self.loader._default_dir / "myflow.yaml")
+        str(self.loader._default_dir / "myflow.yaml")
         def exists_se(p):
             s = str(p)
             return s == user_path_str

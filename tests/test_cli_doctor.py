@@ -5,8 +5,6 @@ Target: raise coverage from 21% to 70%+.
 All network/import/system calls are mocked.
 """
 
-import importlib
-import os
 import sys
 from pathlib import Path
 from unittest.mock import MagicMock, Mock, PropertyMock, patch
@@ -25,14 +23,13 @@ from src.commands.cli_doctor import (
     API_TEST_URLS,
     OPTIONAL_PACKAGES,
     REQUIRED_PACKAGES,
-    app,
     _check_config_file,
     _check_network,
     _check_package,
     _check_python_version,
+    app,
     run,
 )
-
 
 # ============================================================
 # _check_python_version
@@ -147,8 +144,8 @@ class TestCheckConfigFile:
             # Then mock the specific file existence checks needed by _check_config_file
             with patch("pathlib.Path.home", return_value=tmp):
                 user_env_path = tmp / ".omc" / ".env"
-                project_env_path = Path(".") / ".env"
-                user_config_path = tmp / ".config" / "oh-my-coder" / "config.json"
+                Path(".") / ".env"
+                tmp / ".config" / "oh-my-coder" / "config.json"
 
                 def mock_exists(self_path):
                     return self_path == user_env_path

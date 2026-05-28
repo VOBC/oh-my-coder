@@ -2,12 +2,10 @@
 
 from __future__ import annotations
 
-import asyncio
-import json
 import os
 import sys
 from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
+from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 import typer.testing
@@ -399,8 +397,8 @@ class TestRunCommand:
         mock_orch_cls.execute_workflow = AsyncMock(return_value=mock_result)
         mock_orch_cls.return_value = mock_orch_cls
 
-        with patch("src.utils.notify.notify_workflow_complete") as mock_notify:
-            with patch("src.utils.notify.notify_workflow_complete_dingtalk") as mock_dingtalk:
+        with patch("src.utils.notify.notify_workflow_complete"):
+            with patch("src.utils.notify.notify_workflow_complete_dingtalk"):
                 result = runner.invoke(
                     app,
                     ["run", "build a login page", "--notify"],

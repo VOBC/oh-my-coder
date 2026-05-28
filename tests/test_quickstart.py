@@ -1,7 +1,6 @@
 """Tests for src/commands/quickstart.py"""
 from __future__ import annotations
 
-import asyncio
 import json
 import os
 from pathlib import Path
@@ -9,7 +8,6 @@ from unittest.mock import MagicMock, patch
 
 import httpx
 import pytest
-import typer
 
 from src.commands.quickstart import (
     MODEL_CATEGORIES,
@@ -404,7 +402,13 @@ class TestCallModelDemo:
 
 # ── _step1_select_model ────────────────────────────────────────
 
-from src.commands.quickstart import app, _step1_select_model, _step2_config_apikey, _step3_run_demo, _show_summary
+from src.commands.quickstart import (
+    _show_summary,
+    _step1_select_model,
+    _step2_config_apikey,
+    _step3_run_demo,
+    app,
+)
 
 
 class TestStep1SelectModel:
@@ -548,7 +552,7 @@ class TestMainCommand:
             with patch("src.commands.quickstart.Prompt.ask", return_value=""):
                 with patch("src.commands.quickstart.detect_completed_steps", return_value={"model": False, "apikey": False, "verify": False}):
                     with patch("src.commands.quickstart._step1_select_model", return_value=None):
-                        for target, retval in patches.items():
+                        for _target, _retval in patches.items():
                             pass  # handled below
                         # Apply custom patches via context managers
                         from contextlib import ExitStack

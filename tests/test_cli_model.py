@@ -1292,13 +1292,9 @@ class TestCatwalk:
         assert result.exit_code == 0
 """Additional tests to improve coverage for cli_model.py"""
 
-import json
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
-import pytest
 from typer.testing import CliRunner
-
-from src.commands.cli_model import app
 
 runner = CliRunner()
 
@@ -1312,34 +1308,33 @@ class TestGetDiscoverySummary:
         # Mock model_discovery as not importable
         with patch.dict(sys.modules, {'model_discovery': None, 'src.model_discovery': None}):
             # Force reload to pick up the mock
-            import importlib
-            import src.commands.cli_model as cli_model
-            
+
             # Clear cached imports
             for mod in list(sys.modules.keys()):
                 if 'model_discovery' in mod:
                     del sys.modules[mod]
-            
+
             # Now re-import
             try:
-                from model_discovery import ModelDiscovery, get_discovery_summary
+                from model_discovery import ModelDiscovery
             except ImportError:
                 try:
-                    from src.model_discovery import ModelDiscovery, get_discovery_summary
+                    from src.model_discovery import (
+                        ModelDiscovery,
+                    )
                 except ImportError:
                     ModelDiscovery = None
-                    get_discovery_summary = None
-            
+
             # Test that operations work despite missing discovery
             assert ModelDiscovery is None or True  # If import works, skip
-        
+
     def test_list_with_discovery_summary_check(self, monkeypatch):
         """Test list command when get_discovery_summary is unavailable"""
         # Mock the discovery functions as None
         import src.commands.cli_model as cli_model
-        
+
         monkeypatch.setattr(cli_model, 'get_discovery_summary', None)
-        
+
         result = runner.invoke(cli_model.app, ["list"])
         assert result.exit_code == 0
 
@@ -1385,8 +1380,8 @@ class TestCatwalkCoverage:
     def test_catwalk_list_command(self, mock_ask, monkeypatch):
         """Test catwalk with 'l' to list all"""
         monkeypatch.setattr("src.commands.cli_model.BUILTIN_CATWALK_MODELS", [
-            {"name": "Model A", "provider": "deepseek", "tier": "free", 
-             "model": "a", "endpoint": "https://a.com", "context": 4096, 
+            {"name": "Model A", "provider": "deepseek", "tier": "free",
+             "model": "a", "endpoint": "https://a.com", "context": 4096,
              "pricing": {"input": 0, "output": 0}, "features": ["chat"]},
         ])
         result = runner.invoke(app, ["catwalk"])
@@ -1397,8 +1392,8 @@ class TestCatwalkCoverage:
         """Test catwalk with 's' to save filtered"""
         from src.commands import cli_model
         monkeypatch.setattr(cli_model, "BUILTIN_CATWALK_MODELS", [
-            {"name": "Model A", "provider": "deepseek", "tier": "free", 
-             "model": "a", "endpoint": "https://a.com", "context": 4096, 
+            {"name": "Model A", "provider": "deepseek", "tier": "free",
+             "model": "a", "endpoint": "https://a.com", "context": 4096,
              "pricing": {"input": 0, "output": 0}, "features": ["chat"]},
         ])
         result = runner.invoke(app, ["catwalk", "--tier", "free"])
@@ -1409,8 +1404,8 @@ class TestCatwalkCoverage:
         """Test catwalk selection then decline save"""
         from src.commands import cli_model
         monkeypatch.setattr(cli_model, "BUILTIN_CATWALK_MODELS", [
-            {"name": "Model A", "provider": "deepseek", "tier": "free", 
-             "model": "a", "endpoint": "https://a.com", "context": 4096, 
+            {"name": "Model A", "provider": "deepseek", "tier": "free",
+             "model": "a", "endpoint": "https://a.com", "context": 4096,
              "pricing": {"input": 0, "output": 0}, "features": ["chat"]},
         ])
         with patch("src.commands.cli_model.Prompt.ask", return_value="1"):
@@ -1423,8 +1418,8 @@ class TestCatwalkCoverage:
         """Test catwalk selection then accept save"""
         from src.commands import cli_model
         monkeypatch.setattr(cli_model, "BUILTIN_CATWALK_MODELS", [
-            {"name": "Model A", "provider": "deepseek", "tier": "free", 
-             "model": "a", "endpoint": "https://a.com", "context": 4096, 
+            {"name": "Model A", "provider": "deepseek", "tier": "free",
+             "model": "a", "endpoint": "https://a.com", "context": 4096,
              "pricing": {"input": 0, "output": 0}, "features": ["chat"]},
         ])
         with patch("src.commands.cli_model.Prompt.ask", return_value="1"):
@@ -1550,22 +1545,21 @@ if __name__ == "__main__":
 
 class TestLocalChatModelInteraction:
     """More coverage for local chat model's interaction loop"""
-    
+
     @patch("src.models.ollama.OllamaModel.is_available", return_value=True)
     @patch("src.models.ollama.OllamaModel.list_models")
     @patch("src.models.ollama.OllamaModel.__init__", return_value=None)
     @patch("src.models.ollama.OllamaModel.complete")
     def test_chat_model_with_response(self, mock_complete, mock_init, mock_list, mock_available):
         """Test chat receiving a complete response"""
-        import sys
-        
+
         mock_complete.return_value = MagicMock(content="Hello!")
         mock_list.return_value = [{"name": "qwen2:7b"}]
-        
+
         # Simulate user input then exit
         with patch("src.commands.cli_model.Console.input", side_effect=["Hello", "/exit"]):
             result = runner.invoke(app, ["local", "chat", "qwen2:7b"])
-        
+
         # Should not crash
         assert result.exit_code in [0, 1]
 
@@ -1575,10 +1569,10 @@ class TestLocalChatModelInteraction:
     def test_chat_model_short_name_match(self, mock_init, mock_list, mock_available):
         """Test chat with short model name finds full name"""
         mock_list.return_value = [{"name": "qwen2:7b"}]
-        
+
         with patch("src.commands.cli_model.Console.input", side_effect=["/exit"]):
             result = runner.invoke(app, ["local", "chat", "qwen2"])
-        
+
         assert result.exit_code in [0, 1]
 
     @patch("src.models.ollama.OllamaModel.is_available", return_value=True)
@@ -1586,9 +1580,9 @@ class TestLocalChatModelInteraction:
     def test_chat_model_not_installed(self, mock_list, mock_available):
         """Test chat when model not installed"""
         mock_list.return_value = [{"name": "llama3:8b"}]
-        
+
         result = runner.invoke(app, ["local", "chat", "nonexistent"])
-        
+
         assert result.exit_code == 1
 
     @patch("src.models.ollama.OllamaModel.is_available", return_value=True)
@@ -1599,10 +1593,10 @@ class TestLocalChatModelInteraction:
         """Test chat with system prompt"""
         mock_complete.return_value = MagicMock(content="Response")
         mock_list.return_value = [{"name": "qwen2:7b"}]
-        
+
         with patch("src.commands.cli_model.Console.input", side_effect=["/exit"]):
             result = runner.invoke(app, ["local", "chat", "qwen2:7b", "--system", "You are a helpful assistant"])
-        
+
         assert result.exit_code in [0, 1]
 
     @patch("src.models.ollama.OllamaModel.is_available", return_value=True)
@@ -1614,13 +1608,13 @@ class TestLocalChatModelInteraction:
         async def mock_gen():
             yield "Hello"
             yield " World"
-        
+
         mock_stream.return_value = mock_gen()
         mock_list.return_value = [{"name": "qwen2:7b"}]
-        
+
         with patch("src.commands.cli_model.Console.input", side_effect=["Hi", "/exit"]):
             result = runner.invoke(app, ["local", "chat", "qwen2:7b"])
-        
+
         assert result.exit_code in [0, 1]
 
     @patch("src.models.ollama.OllamaModel.is_available", return_value=True)
@@ -1631,10 +1625,10 @@ class TestLocalChatModelInteraction:
         """Test /clear command clears history"""
         mock_complete.return_value = MagicMock(content="Hi")
         mock_list.return_value = [{"name": "qwen2:7b"}]
-        
+
         with patch("src.commands.cli_model.Console.input", side_effect=["Hi", "/clear", "History Cleared", "/exit"]):
             result = runner.invoke(app, ["local", "chat", "qwen2:7b"])
-        
+
         assert result.exit_code in [0, 1]
 
     @patch("src.models.ollama.OllamaModel.is_available", return_value=True)
@@ -1645,38 +1639,38 @@ class TestLocalChatModelInteraction:
         """Test /help command"""
         mock_complete.return_value = MagicMock(content="Hi")
         mock_list.return_value = [{"name": "qwen2:7b"}]
-        
+
         with patch("src.commands.cli_model.Console.input", side_effect=["/help", "/exit"]):
             result = runner.invoke(app, ["local", "chat", "qwen2:7b"])
-        
+
         assert result.exit_code in [0, 1]
-        
+
     @patch("src.models.ollama.OllamaModel.is_available", return_value=True)
     @patch("src.models.ollama.OllamaModel.list_models")
     def test_chat_empty_input_loop(self, mock_list, mock_available):
         """Test chat ignores empty input"""
         mock_list.return_value = [{"name": "qwen2:7b"}]
-        
+
         with patch("src.commands.cli_model.Console.input", side_effect=["", "", "/exit"]):
             result = runner.invoke(app, ["local", "chat", "qwen2:7b"])
-        
+
         assert result.exit_code in [0, 1]
 
 
 class TestLocalInfoModelDetails:
     """More coverage for local info command"""
-    
+
     @patch("src.models.ollama.OllamaModel.is_available", return_value=True)
     @patch("src.models.ollama.OllamaModel.list_models")
     def test_local_info_with_matching_model(self, mock_list, mock_available):
         """Test local info with model"""
         mock_list.return_value = [{"name": "test"}]
-        
+
         result = runner.invoke(app, ["local", "info", "qwen2:7b"])
-        
+
         # May run or exit, shouldn't crash
         assert result.exit_code in [0, 1]
-        
+
     @patch("src.models.ollama.OllamaModel.is_available", return_value=True)
     def test_local_info_command(self, mock_available):
         """local info command parsing"""
@@ -1686,32 +1680,32 @@ class TestLocalInfoModelDetails:
 
 class TestPullModelCommand:
     """More coverage for pull command"""
-    
+
     @patch("src.models.ollama.OllamaModel.is_available", return_value=True)
     @patch("src.models.ollama.OllamaModel.pull_model")
     def test_pull_model_success(self, mock_pull, mock_available):
         """Test successful model pull"""
         mock_pull.return_value = True
-        
+
         result = runner.invoke(app, ["local", "pull", "qwen2:7b"])
-        
+
         # May succeed or exit, shouldn't crash
         assert result.exit_code in [0, 1]
-        
+
     @patch("src.models.ollama.OllamaModel.is_available", return_value=True)
     @patch("src.models.ollama.OllamaModel.pull_model")
     def test_pull_model_failure(self, mock_pull, mock_available):
         """Test failed model pull"""
         mock_pull.return_value = False
-        
+
         result = runner.invoke(app, ["local", "pull", "badmodel"])
-        
+
         assert result.exit_code in [0, 1]
 
 
 class TestSwitchCommandCoverage:
     """Additional switch command coverage"""
-    
+
     def test_switch_shows_old_and_new_model(self, tmp_path, monkeypatch):
         """Switch displays both models"""
         from src.commands import cli_model
@@ -1719,9 +1713,9 @@ class TestSwitchCommandCoverage:
         config_file.write_text(json.dumps({"default_model": "glm-4"}))
         monkeypatch.setattr(cli_model, "CONFIG_FILE", config_file)
         monkeypatch.setattr(cli_model, "SUPPORTED_MODELS", {"deepseek": {"name": "DeepSeek V3"}, "glm-4": {"name": "GLM-4"}})
-        
+
         result = runner.invoke(app, ["switch", "deepseek"])
-        
+
         assert result.exit_code == 0
         output = result.output
         assert "deepseek" in output.lower()
@@ -1729,7 +1723,7 @@ class TestSwitchCommandCoverage:
 
 class TestModelBrowseCommands:
     """Additional browse command scenarios"""
-    
+
     def test_browse_multiple_filters(self, tmp_path, monkeypatch):
         """Browse with multiple filters"""
         from src.commands import cli_model
@@ -1739,7 +1733,7 @@ class TestModelBrowseCommands:
             '{"name": "TestModel", "provider": "deepseek", "author": "Tester", "model": "chat"}'
         )
         monkeypatch.setattr(cli_model, "SHARED_MODELS_DIR", shared_dir)
-        
+
         result = runner.invoke(app, ["browse", "--author", "Tester", "--provider", "deepseek"])
-        
+
         assert result.exit_code == 0

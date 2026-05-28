@@ -235,7 +235,6 @@ class TestSearch:
 
     def test_search_success(self, tmp_path: Path) -> None:
         """Test successful search with streaming response."""
-        import json
         from unittest.mock import Mock, patch
 
         client = SourcegraphClient(cache_dir=tmp_path, cache_ttl=1000)
@@ -288,7 +287,6 @@ class TestSearch:
 
     def test_search_cache_disabled(self, tmp_path: Path) -> None:
         """Test search with cache disabled."""
-        import json
         from unittest.mock import Mock, patch
 
         client = SourcegraphClient(cache_dir=tmp_path, cache_ttl=1000)
@@ -322,6 +320,7 @@ class TestSearch:
     def test_search_rate_limit(self, tmp_path: Path) -> None:
         """Test search handles 429 rate limiting."""
         from unittest.mock import Mock, patch
+
         import httpx
 
         client = SourcegraphClient(cache_dir=tmp_path)
@@ -346,6 +345,7 @@ class TestSearch:
     def test_search_timeout(self, tmp_path: Path) -> None:
         """Test search handles timeout."""
         from unittest.mock import Mock, patch
+
         import httpx
 
         client = SourcegraphClient(cache_dir=tmp_path)
@@ -362,6 +362,7 @@ class TestSearch:
     def test_search_http_error(self, tmp_path: Path) -> None:
         """Test search handles generic HTTP errors."""
         from unittest.mock import Mock, patch
+
         import httpx
 
         client = SourcegraphClient(cache_dir=tmp_path)
@@ -387,7 +388,6 @@ class TestSearch:
 
     def test_search_error_line_in_stream(self, tmp_path: Path) -> None:
         """Test search handles error lines in streaming response."""
-        import json
         from unittest.mock import Mock, patch
 
         client = SourcegraphClient(cache_dir=tmp_path)
@@ -415,7 +415,6 @@ class TestSearch:
 
     def test_search_limit_enforced(self, tmp_path: Path) -> None:
         """Test that search stops after reaching limit."""
-        import json
         from unittest.mock import Mock, patch
 
         client = SourcegraphClient(cache_dir=tmp_path)
@@ -445,7 +444,6 @@ class TestSearch:
 
     def test_search_caches_result(self, tmp_path: Path) -> None:
         """Test that search caches successful results."""
-        import json
         from unittest.mock import Mock, patch
 
         client = SourcegraphClient(cache_dir=tmp_path, cache_ttl=1000)
@@ -465,7 +463,7 @@ class TestSearch:
         mock_client.__exit__ = Mock(return_value=False)
 
         with patch.object(client, '_get_client', return_value=mock_client):
-            result = client.search("cache test", limit=10)
+            client.search("cache test", limit=10)
 
         # Verify it was cached
         cached = client._cache_get("search:cache test count:10")
@@ -507,6 +505,7 @@ class TestGetFile:
     def test_get_file_404(self, tmp_path: Path) -> None:
         """Test file not found."""
         from unittest.mock import Mock, patch
+
         import httpx
 
         client = SourcegraphClient(cache_dir=tmp_path)
@@ -528,6 +527,7 @@ class TestGetFile:
     def test_get_file_other_http_error(self, tmp_path: Path) -> None:
         """Test other HTTP errors raise exception."""
         from unittest.mock import Mock, patch
+
         import httpx
 
         client = SourcegraphClient(cache_dir=tmp_path)
@@ -544,7 +544,7 @@ class TestGetFile:
         with patch.object(client, '_get_client', return_value=mock_client):
             try:
                 client.get_file("github.com/test/repo", "main.go")
-                assert False, "Should have raised an exception"
+                raise AssertionError("Should have raised an exception")
             except httpx.HTTPStatusError:
                 pass
 
@@ -606,7 +606,7 @@ class TestGetFile:
         mock_client.get.return_value = mock_response
 
         with patch.object(client, '_get_client', return_value=mock_client):
-            result = client.get_file("github.com/test/repo", "main.go")
+            client.get_file("github.com/test/repo", "main.go")
 
         # Verify it was cached
         cached = client._cache_get("file:github.com/test/repo:main.go")
@@ -775,7 +775,7 @@ class TestListRepos:
         mock_client.__exit__ = Mock(return_value=False)
 
         with patch.object(client, '_get_client', return_value=mock_client):
-            repos = client.list_repos("test", limit=10)
+            client.list_repos("test", limit=10)
 
         # Verify it was cached
         cached = client._cache_get("repos:test:10")
@@ -835,6 +835,7 @@ class TestConvenienceFunctions:
     def test_search_function(self, tmp_path: Path) -> None:
         """Test the search() convenience function."""
         from unittest.mock import Mock, patch
+
         from src.integrations.sourcegraph import search
 
         mock_client = Mock()
@@ -855,6 +856,7 @@ class TestConvenienceFunctions:
     def test_get_file_function(self, tmp_path: Path) -> None:
         """Test the get_file() convenience function."""
         from unittest.mock import Mock, patch
+
         from src.integrations.sourcegraph import get_file
 
         mock_client = Mock()
@@ -876,6 +878,7 @@ class TestConvenienceFunctions:
     def test_list_repos_function(self, tmp_path: Path) -> None:
         """Test the list_repos() convenience function."""
         from unittest.mock import Mock, patch
+
         from src.integrations.sourcegraph import list_repos
 
         mock_client = Mock()

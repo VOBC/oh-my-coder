@@ -5,9 +5,8 @@ from __future__ import annotations
 import json
 import subprocess
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import patch
 
-import pytest
 from typer.testing import CliRunner
 
 from src.commands.cli_lsp import (
@@ -232,7 +231,7 @@ class TestFindLspDiagnostics:
         # Manually set severity in output
         for i, item in enumerate(ruff_output):
             item["severity"] = [3, 1, 2][i]
-        
+
         mock_run.return_value = fake_completed(0, stdout=json.dumps(ruff_output))
 
         with patch.object(Path, "cwd", return_value=tmp_path):
@@ -619,7 +618,7 @@ class TestSetupCommand:
         """Test setup ruff when config already exists"""
         mock_cwd.return_value = tmp_path
         mock_run.return_value = fake_completed(0)
-        
+
         # Create existing config
         config_file = tmp_path / "ruff.toml"
         config_file.write_text("# existing config")
@@ -673,7 +672,7 @@ class TestSetupCommand:
         """Test setup mypy when config already exists"""
         mock_cwd.return_value = tmp_path
         mock_run.return_value = fake_completed(0)
-        
+
         # Create existing config
         config_file = tmp_path / "mypy.ini"
         config_file.write_text("[mypy]")

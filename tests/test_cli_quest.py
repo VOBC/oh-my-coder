@@ -338,6 +338,7 @@ class TestQuestMainCommand:
     @patch("commands.cli_quest.console")
     def test_quest_nonexistent_path(self, mock_console):
         import typer
+
         from commands.cli_quest import quest
 
         with pytest.raises(typer.Exit):
@@ -377,6 +378,7 @@ class TestQuestMainCommand:
     @patch("commands.cli_quest.console")
     def test_quest_exception_handling(self, mock_console, mock_qm_class, mock_asyncio_run):
         import typer
+
         from commands.cli_quest import quest
 
         mock_qm_class.return_value = MagicMock()
@@ -615,8 +617,8 @@ class TestShowAcceptanceReportExtended:
         assert mock_console.print.called
 
     def test_show_with_failed_steps(self):
-        from src.quest import QuestStatus
         from commands.cli_quest import _show_acceptance_report
+        from src.quest import QuestStatus
 
         mock_step = MagicMock()
         mock_step.step_id = "1"
@@ -662,7 +664,6 @@ class TestQuestMainWithAsync:
     @patch("commands.cli_quest.console")
     def test_quest_no_auto_confirm_exits(self, mock_console, mock_qm_class, mock_asyncio_run):
         """Without auto_confirm and skip_spec, should exit after showing SPEC."""
-        import typer
         from commands.cli_quest import quest
 
         # The inner run() calls raise typer.Exit(0) when !auto_confirm
@@ -824,7 +825,7 @@ class TestQuestNotifyWatchLoop:
     def test_notify_watch_completes(self, mock_console, mock_qm_class, mock_nc_class, mock_nm_class, mock_cn_class):
         """Test that watch loop detects completed quest."""
         import asyncio as real_asyncio
-        from src.quest import QuestStatus
+
 
         # Create a quest that's already completed on second check
         call_count = [0]
@@ -926,7 +927,6 @@ class TestQuestNotifyAsyncWatch:
     @patch("asyncio.sleep", new_callable=AsyncMock)
     def test_notify_watch_detects_completed(self, mock_sleep, mock_console, mock_qm_class, mock_nc_class, mock_nm_class, mock_cn_class):
         """Watch loop should detect completed quest and break."""
-        from src.quest import QuestStatus
 
         # Quest starts executing, then becomes completed
         call_count = [0]

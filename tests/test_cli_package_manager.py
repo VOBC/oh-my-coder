@@ -4,9 +4,8 @@ Tests for cli_package_manager.py
 Target: Increase coverage from 23% to 70%+
 """
 
-import platform
 import subprocess
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import Mock, patch
 
 import pytest
 from typer.testing import CliRunner
@@ -15,19 +14,15 @@ from src.commands.cli_package_manager import (
     RECOMMENDED_PACKAGES,
     PackageManager,
     Platform,
-    app,
     _build_install_command,
     _is_command_available,
     _list_with_manager,
     _run_command,
     _search_with_manager,
     _select_best_manager,
-    check,
+    app,
     get_available_managers,
     get_current_platform,
-    install,
-    recommend,
-    update,
 )
 
 
@@ -657,10 +652,9 @@ class TestMainBlock:
         """Test the __main__ block execution"""
         # Simulate running as main module
         import src.commands.cli_package_manager as module
-        
+
         # Save original __name__
-        original_name = module.__name__
-        
+
         try:
             # This is a bit tricky to test directly, but we can verify
             # that the app has a run method (which would be called)
@@ -690,7 +684,7 @@ class TestBuildInstallCommandExtended:
 
     def test_build_pnpm_command_with_sudo(self):
         """Test building pnpm install command with sudo"""
-        # pnpm doesn't use sudo in command  
+        # pnpm doesn't use sudo in command
         result = _build_install_command("pnpm", "typescript", sudo=True)
         assert result == ["pnpm", "add", "-g", "typescript"]
 
@@ -867,17 +861,17 @@ class TestPlatformDetection:
         with patch("src.commands.cli_package_manager.get_current_platform") as mock_platform:
             with patch("src.commands.cli_package_manager._is_command_available") as mock_available:
                 mock_available.return_value = True
-                
+
                 # Test macOS
                 mock_platform.return_value = Platform.MACOS
                 managers = get_available_managers()
                 assert PackageManager.HOMEBREW in managers
-                
+
                 # Test Linux
                 mock_platform.return_value = Platform.LINUX
                 managers = get_available_managers()
                 assert PackageManager.AUR in managers
-                
+
                 # Test Windows
                 mock_platform.return_value = Platform.WINDOWS
                 managers = get_available_managers()
