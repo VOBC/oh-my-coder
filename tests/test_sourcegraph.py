@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 from pathlib import Path
 from unittest.mock import MagicMock
 
@@ -823,6 +824,35 @@ class TestListRepos:
 
         assert len(repos) == 0
 
+    def test_list_repos_limit_enforced(self, tmp_path: Path) -> None:
+        """Test that list_repos stops after reaching limit."""
+        from unittest.mock import Mock, patch
+
+        client = SourcegraphClient(cache_dir=tmp_path)
+
+        # Generate 5 repos but limit to 2
+        lines = [
+            f'data: {{"__typename":"Repository","name":"github.com/repo{i}","description":"Test","stars":10,"primaryLanguage":{{"name":"Go"}}}}'
+            for i in range(5)
+        ]
+
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.iter_lines.return_value = lines
+        mock_response.__enter__ = Mock(return_value=mock_response)
+        mock_response.__exit__ = Mock(return_value=False)
+        mock_response.raise_for_status = Mock()
+
+        mock_client = Mock()
+        mock_client.stream.return_value = mock_response
+        mock_client.__enter__ = Mock(return_value=mock_client)
+        mock_client.__exit__ = Mock(return_value=False)
+
+        with patch.object(client, '_get_client', return_value=mock_client):
+            repos = client.list_repos("test", limit=2)
+
+        assert len(repos) == 2
+
 
 # ---------------------------------------------------------------------------
 # Convenience functions
@@ -894,3 +924,474 @@ class TestConvenienceFunctions:
         assert len(result) == 1
         assert result[0].name == "test/repo"
         mock_client.list_repos.assert_called_once_with("test", limit=5)
+
+
+# ---------------------------------------------------------------------------
+# Additional coverage tests
+# ---------------------------------------------------------------------------
+
+
+class TestAdditionalCoverage:
+    """Additional tests to improve coverage."""
+
+    def test_close_with_none_client(self) -> None:
+        """Test close() when client is None."""
+        client = SourcegraphClient()
+        # _client is None by default
+        assert client._client is None
+        client.close()  # Should not raise
+        assert client._client is None
+
+    def test_cache_expired(self, tmp_path: Path) -> None:
+        """Test cache returns None when TTL expired."""
+        client = SourcegraphClient(cache_dir=tmp_path, cache_ttl=-1)  # TTL already expired
+        client._cache_set("key", {"value": 42})
+        # Cache should be expired immediately
+        assert client._cache_get("key") is None
+
+    def test_cache_corrupt_json(self, tmp_path: Path) -> None:
+        """Test cache handles corrupt JSON."""
+        client = SourcegraphClient(cache_dir=tmp_path, cache_ttl=1000)
+        # Write invalid JSON
+        cache_file = tmp_path / f"{hashlib.sha256('key'.encode()).hexdigest()}.json"
+        cache_file.write_text("not valid json", encoding="utf-8")
+        assert client._cache_get("key") is None
+
+    def test_search_401_error(self, tmp_path: Path) -> None:
+        """Test search handles 401 unauthorized."""
+        from unittest.mock import Mock, patch
+
+        import httpx
+
+        client = SourcegraphClient(cache_dir=tmp_path)
+
+        mock_response = Mock()
+        mock_response.status_code = 401
+        mock_response.raise_for_status.side_effect = httpx.HTTPStatusError(
+            "Unauthorized", request=Mock(), response=mock_response
+        )
+
+        mock_client = Mock()
+        stream_response = Mock()
+        stream_response.__enter__ = Mock(return_value=stream_response)
+        stream_response.__exit__ = Mock(return_value=False)
+        stream_response.raise_for_status = mock_response.raise_for_status
+        mock_client.stream.return_value = stream_response
+
+        with patch.object(client, '_get_client', return_value=mock_client):
+            result = client.search("test", limit=10)
+
+        assert "需要认证" in result.warnings[0]
+        assert result.total == 0
+
+    def test_search_generic_exception(self, tmp_path: Path) -> None:
+        """Test search handles generic exceptions."""
+        from unittest.mock import Mock, patch
+
+        client = SourcegraphClient(cache_dir=tmp_path)
+
+        mock_client = Mock()
+        mock_client.stream.side_effect = RuntimeError("Something went wrong")
+
+        with patch.object(client, '_get_client', return_value=mock_client):
+            result = client.search("test", limit=10)
+
+        assert "请求失败" in result.warnings[0]
+        assert result.total == 0
+
+    def test_search_no_cache_when_no_matches(self, tmp_path: Path) -> None:
+        """Test that search does not cache when no matches found."""
+        from unittest.mock import Mock, patch
+
+        client = SourcegraphClient(cache_dir=tmp_path, cache_ttl=1000)
+
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.iter_lines.return_value = []  # No results
+        mock_response.__enter__ = Mock(return_value=mock_response)
+        mock_response.__exit__ = Mock(return_value=False)
+        mock_response.raise_for_status = Mock()
+
+        mock_client = Mock()
+        mock_client.stream.return_value = mock_response
+        mock_client.__enter__ = Mock(return_value=mock_client)
+        mock_client.__exit__ = Mock(return_value=False)
+
+        with patch.object(client, '_get_client', return_value=mock_client):
+            client.search("test", limit=10)
+
+        # Verify it was NOT cached (no matches)
+        cached = client._cache_get("search:test count:10")
+        assert cached is None
+
+    def test_list_repos_no_cache_when_empty(self, tmp_path: Path) -> None:
+        """Test that list_repos does not cache when no repos found."""
+        from unittest.mock import Mock, patch
+
+        client = SourcegraphClient(cache_dir=tmp_path, cache_ttl=1000)
+
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.iter_lines.return_value = []  # No results
+        mock_response.__enter__ = Mock(return_value=mock_response)
+        mock_response.__exit__ = Mock(return_value=False)
+        mock_response.raise_for_status = Mock()
+
+        mock_client = Mock()
+        mock_client.stream.return_value = mock_response
+        mock_client.__enter__ = Mock(return_value=mock_client)
+        mock_client.__exit__ = Mock(return_value=False)
+
+        with patch.object(client, '_get_client', return_value=mock_client):
+            client.list_repos("test", limit=10)
+
+        # Verify it was NOT cached (no repos)
+        cached = client._cache_get("repos:test:10")
+        assert cached is None
+
+    def test_get_file_caches_success(self, tmp_path: Path) -> None:
+        """Test that get_file caches successful result."""
+        from unittest.mock import Mock, patch
+
+        client = SourcegraphClient(cache_dir=tmp_path, cache_ttl=1000)
+
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.text = "package main"
+        mock_response.raise_for_status = Mock()
+
+        mock_client = Mock()
+        mock_client.get.return_value = mock_response
+
+        with patch.object(client, '_get_client', return_value=mock_client):
+            client.get_file("github.com/test/repo", "main.go")
+
+        # Verify it was cached
+        cached = client._cache_get("file:github.com/test/repo:main.go")
+        assert cached is not None
+        assert cached["content"] == "package main"
+
+    def test_get_client_creates_client(self) -> None:
+        """Test that _get_client creates httpx.Client when None."""
+        import httpx
+
+        client = SourcegraphClient(timeout=60.0)
+        assert client._client is None
+
+        result = client._get_client()
+        assert result is not None
+        assert isinstance(result, httpx.Client)
+        assert client._client is not None
+
+        # Calling again returns the same client
+        result2 = client._get_client()
+        assert result is result2
+
+        client.close()
+
+    def test_search_timeout_exception(self, tmp_path: Path) -> None:
+        """Test search handles timeout exception."""
+        from unittest.mock import Mock, patch
+
+        import httpx
+
+        client = SourcegraphClient(cache_dir=tmp_path)
+
+        mock_client = Mock()
+        mock_client.stream.side_effect = httpx.TimeoutException("Request timed out")
+
+        with patch.object(client, '_get_client', return_value=mock_client):
+            result = client.search("test", limit=10)
+
+        assert "请求超时" in result.warnings[0]
+        assert result.total == 0
+
+    def test_search_base_exception(self, tmp_path: Path) -> None:
+        """Test search handles base exception."""
+        from unittest.mock import Mock, patch
+
+        client = SourcegraphClient(cache_dir=tmp_path)
+
+        mock_client = Mock()
+        mock_client.stream.side_effect = RuntimeError("Something unexpected")
+
+        with patch.object(client, '_get_client', return_value=mock_client):
+            result = client.search("test", limit=10)
+
+        assert "请求失败" in result.warnings[0]
+        assert result.total == 0
+
+    def test_list_repos_exception_in_stream(self, tmp_path: Path) -> None:
+        """Test list_repos handles exception during stream processing."""
+        from unittest.mock import Mock, patch
+
+        client = SourcegraphClient(cache_dir=tmp_path)
+
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.iter_lines.return_value = [
+            'data: valid json',  # Will cause JSONDecodeError and continue
+        ]
+        mock_response.__enter__ = Mock(return_value=mock_response)
+        mock_response.__exit__ = Mock(return_value=False)
+        mock_response.raise_for_status = Mock()
+
+        mock_client = Mock()
+        mock_client.stream.return_value = mock_response
+        mock_client.__enter__ = Mock(return_value=mock_client)
+        mock_client.__exit__ = Mock(return_value=False)
+
+        with patch.object(client, '_get_client', return_value=mock_client):
+            repos = client.list_repos("test", limit=10)
+
+        # Invalid JSON lines are skipped, no repos
+        assert len(repos) == 0
+
+    def test_close_with_existing_client(self) -> None:
+        """Test close() properly closes httpx client."""
+        import httpx
+        from unittest.mock import Mock, patch
+
+        client = SourcegraphClient()
+
+        # Create client first
+        http_client = client._get_client()
+        assert http_client is not None
+
+        # Mock the close method
+        original_close = httpx.Client.close
+        close_called = []
+
+        def mock_close(self):
+            close_called.append(True)
+            return original_close(self)
+
+        with patch.object(httpx.Client, 'close', mock_close):
+            client.close()
+
+        assert len(close_called) == 1
+        assert client._client is None
+
+    def test_double_close_safe(self) -> None:
+        """Test that close() can be called multiple times safely."""
+        client = SourcegraphClient()
+        client.close()  # First close
+        client.close()  # Second close (should not raise)
+        assert client._client is None
+
+    def test_get_file_500_error_raises(self, tmp_path: Path) -> None:
+        """Test get_file with 500 error (non-404 HTTP error should raise)."""
+        from unittest.mock import Mock, patch
+
+        import httpx
+
+        client = SourcegraphClient(cache_dir=tmp_path)
+
+        mock_response = Mock()
+        mock_response.status_code = 500
+        mock_response.raise_for_status.side_effect = httpx.HTTPStatusError(
+            "Server Error", request=Mock(), response=mock_response
+        )
+
+        mock_client = Mock()
+        mock_client.get.return_value = mock_response
+
+        with patch.object(client, '_get_client', return_value=mock_client):
+            try:
+                client.get_file("github.com/test/repo", "main.go")
+                raise AssertionError("Should have raised an exception")
+            except httpx.HTTPStatusError:
+                pass
+
+    def test_search_empty_lines_skipped(self, tmp_path: Path) -> None:
+        """Test that empty lines in stream are skipped."""
+        from unittest.mock import Mock, patch
+
+        client = SourcegraphClient(cache_dir=tmp_path)
+
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.iter_lines.return_value = [
+            '',  # Empty line - skipped
+            '   ',  # Whitespace only - skipped
+            'data: {"__typename":"FileMatch","repository":{"name":"github.com/test/repo"},"file":{"path":"main.go"}}',
+        ]
+        mock_response.__enter__ = Mock(return_value=mock_response)
+        mock_response.__exit__ = Mock(return_value=False)
+        mock_response.raise_for_status = Mock()
+
+        mock_client = Mock()
+        mock_client.stream.return_value = mock_response
+        mock_client.__enter__ = Mock(return_value=mock_client)
+        mock_client.__exit__ = Mock(return_value=False)
+
+        with patch.object(client, '_get_client', return_value=mock_client):
+            result = client.search("test", limit=10)
+
+        assert len(result.matches) == 1
+
+    def test_search_non_data_lines_skipped(self, tmp_path: Path) -> None:
+        """Test that non-data lines (without 'data:' prefix) are skipped."""
+        from unittest.mock import Mock, patch
+
+        client = SourcegraphClient(cache_dir=tmp_path)
+
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.iter_lines.return_value = [
+            'some random text',  # Not data: - skipped
+            'data: {"__typename":"FileMatch","repository":{"name":"github.com/test/repo"},"file":{"path":"main.go"}}',
+        ]
+        mock_response.__enter__ = Mock(return_value=mock_response)
+        mock_response.__exit__ = Mock(return_value=False)
+        mock_response.raise_for_status = Mock()
+
+        mock_client = Mock()
+        mock_client.stream.return_value = mock_response
+        mock_client.__enter__ = Mock(return_value=mock_client)
+        mock_client.__exit__ = Mock(return_value=False)
+
+        with patch.object(client, '_get_client', return_value=mock_client):
+            result = client.search("test", limit=10)
+
+        assert len(result.matches) == 1
+
+    def test_infer_language_all_extensions(self) -> None:
+        """Test _infer_language for all supported extensions."""
+        client = SourcegraphClient()
+
+        # Test all supported extensions
+        assert client._infer_language("test.py") == "Python"
+        assert client._infer_language("app.js") == "JavaScript"
+        assert client._infer_language("app.ts") == "TypeScript"
+        assert client._infer_language("app.tsx") == "TypeScript"
+        assert client._infer_language("app.jsx") == "JavaScript"
+        assert client._infer_language("main.go") == "Go"
+        assert client._infer_language("main.rs") == "Rust"
+        assert client._infer_language("Main.java") == "Java"
+        assert client._infer_language("main.kt") == "Kotlin"
+        assert client._infer_language("main.swift") == "Swift"
+        assert client._infer_language("main.c") == "C"
+        assert client._infer_language("main.cpp") == "C++"
+        assert client._infer_language("main.cc") == "C++"
+        assert client._infer_language("main.h") == "C"
+        assert client._infer_language("main.hpp") == "C++"
+        assert client._infer_language("main.cs") == "C#"
+        assert client._infer_language("main.rb") == "Ruby"
+        assert client._infer_language("main.php") == "PHP"
+        assert client._infer_language("main.scala") == "Scala"
+        assert client._infer_language("main.clj") == "Clojure"
+        assert client._infer_language("main.ex") == "Elixir"
+        assert client._infer_language("main.erl") == "Erlang"
+        assert client._infer_language("main.hs") == "Haskell"
+        assert client._infer_language("main.ml") == "OCaml"
+        assert client._infer_language("main.fs") == "F#"
+        assert client._infer_language("app.vue") == "Vue"
+        assert client._infer_language("app.svelte") == "Svelte"
+        assert client._infer_language("script.sh") == "Shell"
+        assert client._infer_language("script.bash") == "Shell"
+        assert client._infer_language("script.zsh") == "Shell"
+        assert client._infer_language("script.ps1") == "PowerShell"
+        assert client._infer_language("main.lua") == "Lua"
+        assert client._infer_language("main.r") == "R"
+        assert client._infer_language("main.m") == "MATLAB"
+        assert client._infer_language("query.sql") == "SQL"
+        assert client._infer_language("index.html") == "HTML"
+        assert client._infer_language("style.css") == "CSS"
+        assert client._infer_language("style.scss") == "SCSS"
+        assert client._infer_language("style.less") == "Less"
+        assert client._infer_language("data.json") == "JSON"
+        assert client._infer_language("config.yaml") == "YAML"
+        assert client._infer_language("config.yml") == "YAML"
+        assert client._infer_language("data.xml") == "XML"
+        assert client._infer_language("config.toml") == "TOML"
+        assert client._infer_language("README.md") == "Markdown"
+        assert client._infer_language("doc.rst") == "reStructuredText"
+        assert client._infer_language("unknown.xyz") == ""
+
+    def test_search_json_decode_error_in_line(self, tmp_path: Path) -> None:
+        """Test search handles JSON decode errors in stream lines."""
+        from unittest.mock import Mock, patch
+
+        client = SourcegraphClient(cache_dir=tmp_path)
+
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.iter_lines.return_value = [
+            'data: {invalid json}',  # Will cause JSONDecodeError
+            'data: {"__typename":"FileMatch","repository":{"name":"github.com/test/repo"},"file":{"path":"main.go"}}',
+        ]
+        mock_response.__enter__ = Mock(return_value=mock_response)
+        mock_response.__exit__ = Mock(return_value=False)
+        mock_response.raise_for_status = Mock()
+
+        mock_client = Mock()
+        mock_client.stream.return_value = mock_response
+        mock_client.__enter__ = Mock(return_value=mock_client)
+        mock_client.__exit__ = Mock(return_value=False)
+
+        with patch.object(client, '_get_client', return_value=mock_client):
+            result = client.search("test", limit=10)
+
+        # First line is invalid JSON, second is valid
+        assert len(result.matches) == 1
+
+    def test_list_repos_exception_caught(self, tmp_path: Path) -> None:
+        """Test list_repos catches and ignores exceptions."""
+        from unittest.mock import Mock, patch
+
+        client = SourcegraphClient(cache_dir=tmp_path)
+
+        # Create a streaming response that raises an exception
+        mock_response = Mock()
+        mock_response.status_code = 200
+
+        def iter_lines_with_exception():
+            # Raise immediately in generator
+            raise RuntimeError("Connection lost")
+            yield  # Never reached
+
+        mock_response.iter_lines.return_value = iter_lines_with_exception()
+        mock_response.__enter__ = Mock(return_value=mock_response)
+        mock_response.__exit__ = Mock(return_value=False)
+        mock_response.raise_for_status = Mock()
+
+        mock_client = Mock()
+        mock_client.stream.return_value = mock_response
+        mock_client.__enter__ = Mock(return_value=mock_client)
+        mock_client.__exit__ = Mock(return_value=False)
+
+        with patch.object(client, '_get_client', return_value=mock_client):
+            repos = client.list_repos("test", limit=10)
+
+        # Exception is caught, empty repos returned
+        assert len(repos) == 0
+
+    def test_list_repos_json_decode_error(self, tmp_path: Path) -> None:
+        """Test list_repos handles JSON decode errors."""
+        from unittest.mock import Mock, patch
+
+        client = SourcegraphClient(cache_dir=tmp_path)
+
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.iter_lines.return_value = [
+            'some random text',  # Not 'data: ' prefix - will be skipped via continue on line 446
+            'data: {invalid json}',  # JSONDecodeError - will be skipped via continue
+            'data: {"__typename":"Repository","name":"github.com/test/repo"}',
+        ]
+        mock_response.__enter__ = Mock(return_value=mock_response)
+        mock_response.__exit__ = Mock(return_value=False)
+        mock_response.raise_for_status = Mock()
+
+        mock_client = Mock()
+        mock_client.stream.return_value = mock_response
+        mock_client.__enter__ = Mock(return_value=mock_client)
+        mock_client.__exit__ = Mock(return_value=False)
+
+        with patch.object(client, '_get_client', return_value=mock_client):
+            repos = client.list_repos("test", limit=10)
+
+        # First line is skipped (no 'data: ' prefix), second line is invalid JSON, third is valid
+        assert len(repos) == 1
+        assert repos[0].name == "github.com/test/repo"
