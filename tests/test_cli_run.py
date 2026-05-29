@@ -559,7 +559,7 @@ class TestInitRouter:
         mock_get_key.return_value = ""  # no key
         mock_load.return_value = {}
 
-        from click.exceptions import Exit
+        from typer import Exit
         with pytest.raises(Exit):
             _init_router()
 
@@ -745,8 +745,8 @@ class TestRunSimpleTask:
         mock_router = Mock()
         mock_router.route_and_call = AsyncMock(side_effect=RuntimeError("Model unavailable"))
 
-        # typer.Exit(1) raises click.exceptions.Exit
-        from click.exceptions import Exit
+        # typer.Exit inherits from RuntimeError (click), not SystemExit
+        from typer import Exit
         with pytest.raises(Exit):
             _run_simple_task(mock_router, "some task")
 

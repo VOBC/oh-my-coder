@@ -697,9 +697,9 @@ class TestShowRecommendations:
 
     def test_show_task_recommendation_unknown_task(self):
         """未知任务类型"""
+        from src.commands.cli_model import _show_task_recommendation
         from typer import Exit
 
-        from src.commands.cli_model import _show_task_recommendation
         with pytest.raises(Exit):
             _show_task_recommendation("unknown_task_xyz")
 
