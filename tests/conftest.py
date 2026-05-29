@@ -4,6 +4,7 @@ conftest.py - pytest 全局 fixtures
 提供可复用的 fixture 工厂函数，减少测试代码重复。
 """
 
+import asyncio
 import json
 
 import pytest
@@ -201,3 +202,19 @@ def mock_model_response():
         }
 
     return _mock
+
+
+# ---------------------------------------------------------------------------
+# Event Loop 修复（asyncio.run 导致 Python 3.9 get_event_loop 失败）
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture(autouse=True)
+def _restore_event_loop():
+    """每个测试后重置 event loop，避免 asyncio.run() 污染后续测试。"""
+    yield
+    try:
+        asyncio.get_event_loop()
+    except RuntimeError:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)

@@ -14,20 +14,24 @@ from unittest.mock import MagicMock, Mock, patch
 import pytest
 import typer
 
-from src.commands.cli_usage import (
+from src.commands.cli_cost import (
     _cost_calculate_cost,
     _cost_format_cost,
     _cost_format_datetime,
     # Cost suggest helpers
     _cost_load_prices,
     _cost_load_usage_data,
+    # Cost command aliases
+    cost_history,
+    cost_model,
+    cost_report,
+)
+
+from src.commands.cli_usage import (
     # Stats helpers
     _get_manager,
     context_browser,
     context_stats,
-    cost_history,
-    cost_model,
-    cost_report,
     memory_stats,
     memory_summary,
     memory_tier0,
@@ -49,7 +53,7 @@ class TestCostHelpers:
 
     def test_cost_format_cost_free(self):
         """Format cost when it's zero (free tier)."""
-        assert _cost_format_cost(0.0) == "Free"
+        assert _cost_format_cost(0.0) == "[green]Free[/green]"
 
     def test_cost_format_cost_small(self):
         """Format cost when it's less than 0.01."""
@@ -59,18 +63,18 @@ class TestCostHelpers:
     def test_cost_format_cost_normal(self):
         """Format cost with normal value."""
         result = _cost_format_cost(0.035)
-        assert result == "0.035"
+        assert result == "0.0350"
 
     def test_cost_format_cost_large(self):
         """Format cost with large value."""
         result = _cost_format_cost(12.5)
-        assert result == "12.500"
+        assert result == "12.5000"
 
     def test_cost_format_datetime_valid(self):
         """Format valid ISO datetime string."""
         dt_str = "2026-05-22T16:44:00"
         result = _cost_format_datetime(dt_str)
-        assert result == "2026-05-22 16:44"
+        assert result == "05-22 16:44"
 
     def test_cost_format_datetime_invalid(self):
         """Format invalid datetime string returns as-is."""
@@ -81,7 +85,7 @@ class TestCostHelpers:
         """Format datetime with microseconds."""
         dt_str = "2026-05-22T10:30:45.123456"
         result = _cost_format_datetime(dt_str)
-        assert result == "2026-05-22 10:30"
+        assert result == "05-22 10:30"
 
     def test_cost_calculate_cost_exact_match(self):
         """Calculate cost for exact model match."""
@@ -138,7 +142,7 @@ class TestCostLoadPrices:
                 "my-model": {"prompt": 0.1, "completion": 0.2}
             })
         )
-        with patch("src.commands.cli_usage._COST_PRICES_FILE", prices_file):
+        with patch("src.commands.cli_cost._COST_PRICES_FILE", prices_file):
             prices = _cost_load_prices()
             assert "my-model" in prices
             assert prices["my-model"]["prompt"] == 0.1
@@ -153,7 +157,7 @@ class TestCostLoadPrices:
                 "deepseek-chat": {"prompt": 0.999, "completion": 0.999}
             })
         )
-        with patch("src.commands.cli_usage._COST_PRICES_FILE", prices_file):
+        with patch("src.commands.cli_cost._COST_PRICES_FILE", prices_file):
             prices = _cost_load_prices()
             assert prices["deepseek-chat"]["prompt"] == 0.999
 
@@ -164,7 +168,7 @@ class TestCostLoadUsageData:
     def test_load_usage_no_file(self, tmp_path, monkeypatch):
         """Returns empty list when no usage file exists."""
         monkeypatch.setenv("HOME", str(tmp_path))
-        with patch("src.commands.cli_usage._COST_USAGE_FILE", tmp_path / "nonexistent.json"):
+        with patch("src.commands.cli_cost._COST_USAGE_FILE", tmp_path / "nonexistent.json"):
             data = _cost_load_usage_data()
             assert data == []
 
@@ -177,7 +181,7 @@ class TestCostLoadUsageData:
                 {"model": "deepseek-chat", "prompt_tokens": 100, "completion_tokens": 50, "timestamp": "2026-05-22T10:00:00"},
             ])
         )
-        with patch("src.commands.cli_usage._COST_USAGE_FILE", usage_file):
+        with patch("src.commands.cli_cost._COST_USAGE_FILE", usage_file):
             data = _cost_load_usage_data()
             assert len(data) == 1
             assert data[0]["model"] == "deepseek-chat"
@@ -187,7 +191,7 @@ class TestCostLoadUsageData:
         monkeypatch.setenv("HOME", str(tmp_path))
         usage_file = tmp_path / "usage.json"
         usage_file.write_text("not valid json {{{")
-        with patch("src.commands.cli_usage._COST_USAGE_FILE", usage_file):
+        with patch("src.commands.cli_cost._COST_USAGE_FILE", usage_file):
             data = _cost_load_usage_data()
             assert data == []
 
@@ -288,7 +292,7 @@ class TestCostReport:
             usage_file = Path(tmpdir) / ".config" / "oh-my-coder" / "usage.json"
             usage_file.parent.mkdir(parents=True)
             usage_file.write_text("[]")
-            with patch("src.commands.cli_usage._COST_USAGE_FILE", usage_file):
+            with patch("src.commands.cli_cost._COST_USAGE_FILE", usage_file):
                 cost_report(days=30)
         out = capsys.readouterr().out
         assert "no usage" in out.lower() or "usage" in out.lower()
@@ -309,10 +313,52 @@ class TestCostReport:
                     },
                 ])
             )
-            with patch("src.commands.cli_usage._COST_USAGE_FILE", usage_file):
+            with patch("src.commands.cli_cost._COST_USAGE_FILE", usage_file):
                 cost_report(days=30)
         out = capsys.readouterr().out
         assert "Total" in out or "total" in out or "deepseek" in out.lower()
+
+    def test_cost_report_bad_timestamp(self, capsys):
+        """cost_report skips records with malformed timestamps (lines 366-367)."""
+        with TemporaryDirectory() as tmpdir:
+            usage_file = Path(tmpdir) / ".config" / "oh-my-coder" / "usage.json"
+            usage_file.parent.mkdir(parents=True)
+            # Valid record alongside bad ones
+            now = datetime.now()
+            usage_file.write_text(
+                json.dumps([
+                    {"model": "deepseek-chat", "prompt_tokens": 100, "completion_tokens": 50, "timestamp": "NOT-A-DATE"},
+                    {"model": "gpt-4o", "prompt_tokens": 200, "completion_tokens": 100, "timestamp": ""},
+                    {"model": "claude-3-5-sonnet", "prompt_tokens": 300, "completion_tokens": 150, "timestamp": now.isoformat()},
+                ])
+            )
+            with patch("src.commands.cli_cost._COST_USAGE_FILE", usage_file):
+                cost_report(days=30)
+        out = capsys.readouterr().out
+        # Should not crash; valid record counted (bad ones skipped)
+        assert "today" in out.lower() or "period" in out.lower()
+
+    def test_cost_report_with_cutoff_filter(self, capsys):
+        """cost_model filters out records older than days cutoff (line 369)."""
+        with TemporaryDirectory() as tmpdir:
+            usage_file = Path(tmpdir) / ".config" / "oh-my-coder" / "usage.json"
+            usage_file.parent.mkdir(parents=True)
+            now = datetime.now()
+            old = now - timedelta(days=60)
+            # Old record + recent record; cutoff=30d
+            # Old record: filtered by cutoff in model_breakdown loop (line 369)
+            # Recent record: included in model breakdown
+            usage_file.write_text(
+                json.dumps([
+                    {"model": "deepseek-chat", "prompt_tokens": 100, "completion_tokens": 50, "timestamp": old.isoformat()},
+                    {"model": "gpt-4o", "prompt_tokens": 200, "completion_tokens": 100, "timestamp": now.isoformat()},
+                ])
+            )
+            with patch("src.commands.cli_cost._COST_USAGE_FILE", usage_file):
+                cost_model(days=30)
+        out = capsys.readouterr().out
+        # Old record filtered by cutoff; recent one should appear in model breakdown
+        assert "gpt-4o" in out.lower()
 
 
 class TestCostModel:
@@ -324,7 +370,7 @@ class TestCostModel:
             usage_file = Path(tmpdir) / ".config" / "oh-my-coder" / "usage.json"
             usage_file.parent.mkdir(parents=True)
             usage_file.write_text("[]")
-            with patch("src.commands.cli_usage._COST_USAGE_FILE", usage_file):
+            with patch("src.commands.cli_cost._COST_USAGE_FILE", usage_file):
                 cost_model(days=30)
         out = capsys.readouterr().out
         assert "no usage" in out.lower() or "usage" in out.lower()
@@ -342,7 +388,7 @@ class TestCostModel:
                     {"model": "gpt-4o", "prompt_tokens": 300, "completion_tokens": 150, "timestamp": now.isoformat()},
                 ])
             )
-            with patch("src.commands.cli_usage._COST_USAGE_FILE", usage_file):
+            with patch("src.commands.cli_cost._COST_USAGE_FILE", usage_file):
                 cost_model(days=30)
         out = capsys.readouterr().out
         # Should show deepseek-chat with 2 calls and gpt-4o with 1 call
@@ -358,7 +404,7 @@ class TestCostHistory:
             usage_file = Path(tmpdir) / ".config" / "oh-my-coder" / "usage.json"
             usage_file.parent.mkdir(parents=True)
             usage_file.write_text("[]")
-            with patch("src.commands.cli_usage._COST_USAGE_FILE", usage_file):
+            with patch("src.commands.cli_cost._COST_USAGE_FILE", usage_file):
                 cost_history(limit=20)
         out = capsys.readouterr().out
         assert "no usage" in out.lower()
@@ -374,7 +420,7 @@ class TestCostHistory:
                     {"model": "deepseek-chat", "prompt_tokens": 100, "completion_tokens": 50, "timestamp": now.isoformat()},
                 ])
             )
-            with patch("src.commands.cli_usage._COST_USAGE_FILE", usage_file):
+            with patch("src.commands.cli_cost._COST_USAGE_FILE", usage_file):
                 cost_history(limit=20)
         out = capsys.readouterr().out
         # Model name truncated in narrow console: 'deepseek-chat' -> 'de…'
@@ -392,7 +438,7 @@ class TestCostHistory:
                     {"model": "gpt-4o", "prompt_tokens": 200, "completion_tokens": 100, "timestamp": now.isoformat()},
                 ])
             )
-            with patch("src.commands.cli_usage._COST_USAGE_FILE", usage_file):
+            with patch("src.commands.cli_cost._COST_USAGE_FILE", usage_file):
                 cost_history(limit=20, model="deepseek")
         out = capsys.readouterr().out
         # Model name truncated in narrow console: 'deepseek-chat' -> 'de…'
@@ -410,7 +456,7 @@ class TestCostHistory:
                 for i in range(10)
             ]
             usage_file.write_text(json.dumps(records))
-            with patch("src.commands.cli_usage._COST_USAGE_FILE", usage_file):
+            with patch("src.commands.cli_cost._COST_USAGE_FILE", usage_file):
                 cost_history(limit=5)
         out = capsys.readouterr().out
         # Should show 5 records (limit)
@@ -872,14 +918,21 @@ class TestCostSuggest:
         """cost_suggest with no task shows help (function signature check)."""
         import inspect
 
-        from src.commands.cli_usage import cost_suggest
+        from src.commands.cli_cost import cost_suggest
         sig = inspect.signature(cost_suggest)
         assert "task" in sig.parameters
         assert "list_models" in sig.parameters
 
+    def test_cost_suggest_empty_task_raises(self, capsys):
+        """cost_suggest with empty task raises typer.Exit(1) (lines 241-245)."""
+        from src.commands.cli_cost import suggest
+        with pytest.raises(typer.Exit) as exc_info:
+            suggest(task="", list_models=False)
+        assert exc_info.value.exit_code == 1
+
     def test_cost_suggest_with_list(self, capsys):
         """cost_suggest with --list flag."""
-        from src.commands.cli_usage import cost_suggest
+        from src.commands.cli_cost import cost_suggest
         with patch("src.agents.cost_optimizer.CostOptimizer") as mock_opt_cls:
             mock_opt = mock_opt_cls.return_value
             mock_opt.get_all_models.return_value = [
@@ -894,7 +947,7 @@ class TestCostSuggest:
         """cost_suggest with a task description."""
         from unittest.mock import Mock
 
-        from src.commands.cli_usage import cost_suggest
+        from src.commands.cli_cost import cost_suggest
 
         mock_rec = Mock()
         mock_rec.model = "deepseek-chat"
@@ -933,7 +986,7 @@ class TestCostSuggest:
         """cost_suggest shows alternatives."""
         from unittest.mock import Mock
 
-        from src.commands.cli_usage import cost_suggest
+        from src.commands.cli_cost import cost_suggest
 
         mock_rec = Mock()
         mock_rec.model = "gpt-4o"
@@ -992,7 +1045,7 @@ class TestCostHelpersEdge:
     def test_cost_format_cost_exact_boundary(self):
         """Cost exactly 0.01."""
         result = _cost_format_cost(0.01)
-        assert result == "0.010"
+        assert result == "0.0100"
 
     def test_cost_format_cost_just_under_threshold(self):
         """Cost just under 0.01."""
@@ -1007,7 +1060,7 @@ class TestCostHelpersEdge:
     def test_cost_format_datetime_partial(self):
         """Partial datetime string."""
         result = _cost_format_datetime("2026-05-22")
-        assert "2026-05-22" in result
+        assert result == "05-22 00:00"
 
 
 # =============================================================================
@@ -2842,7 +2895,7 @@ class TestCostReportTimeBoundaries:
             usage_file.write_text(json.dumps([
                 {"model": "deepseek-chat", "prompt_tokens": 100, "completion_tokens": 50, "timestamp": now.isoformat()},
             ]))
-            with patch("src.commands.cli_usage._COST_USAGE_FILE", usage_file):
+            with patch("src.commands.cli_cost._COST_USAGE_FILE", usage_file):
                 cost_report(days=30)
         out = capsys.readouterr().out
         assert "Today" in out
@@ -2856,7 +2909,7 @@ class TestCostReportTimeBoundaries:
             usage_file.write_text(json.dumps([
                 {"model": "deepseek-chat", "prompt_tokens": 100, "completion_tokens": 50, "timestamp": old.isoformat()},
             ]))
-            with patch("src.commands.cli_usage._COST_USAGE_FILE", usage_file):
+            with patch("src.commands.cli_cost._COST_USAGE_FILE", usage_file):
                 cost_report(days=30)
         out = capsys.readouterr().out
         assert "Total" in out
@@ -2869,7 +2922,7 @@ class TestCostReportTimeBoundaries:
             usage_file.write_text(json.dumps([
                 {"model": "deepseek-chat", "prompt_tokens": 100, "completion_tokens": 50, "timestamp": "invalid"},
             ]))
-            with patch("src.commands.cli_usage._COST_USAGE_FILE", usage_file):
+            with patch("src.commands.cli_cost._COST_USAGE_FILE", usage_file):
                 cost_report(days=30)
 
 
@@ -2890,7 +2943,7 @@ class TestCostHistoryEdge:
             usage_file.write_text(json.dumps([
                 {"model": "gpt-4o", "prompt_tokens": 100, "completion_tokens": 50, "timestamp": now.isoformat()},
             ]))
-            with patch("src.commands.cli_usage._COST_USAGE_FILE", usage_file):
+            with patch("src.commands.cli_cost._COST_USAGE_FILE", usage_file):
                 cost_history(limit=20, model="")
 
     def test_cost_history_no_filter(self):
@@ -2902,7 +2955,7 @@ class TestCostHistoryEdge:
             usage_file.write_text(json.dumps([
                 {"model": "gpt-4o", "prompt_tokens": 100, "completion_tokens": 50, "timestamp": now.isoformat()},
             ]))
-            with patch("src.commands.cli_usage._COST_USAGE_FILE", usage_file):
+            with patch("src.commands.cli_cost._COST_USAGE_FILE", usage_file):
                 cost_history(limit=20, model=None)
 
 
@@ -3055,3 +3108,49 @@ class TestContextStats:
         # Both files should be counted (depth=10 is enough)
         assert "2" in out
 
+
+
+# =============================================================================
+# Cost Prices & Export
+# =============================================================================
+
+from src.commands.cli_cost import prices, export as cost_export
+
+
+class TestCostPrices:
+    """Tests for cost prices command."""
+
+    def test_cost_prices_default(self, capsys):
+        """prices() displays the pricing table."""
+        prices(edit=False, reset=False)
+        out = capsys.readouterr().out
+        assert "deepseek" in out.lower()
+
+    def test_cost_prices_reset(self, capsys):
+        """prices(reset=True) resets to defaults."""
+        prices(edit=False, reset=True)
+        out = capsys.readouterr().out
+        assert "✅" in out or "重置" in out
+
+    @patch("os.system")
+    def test_cost_prices_edit(self, mock_system, capsys):
+        """prices(edit=True) opens editor."""
+        prices(edit=True, reset=False)
+        mock_system.assert_called_once()
+
+    def test_cost_export_stdout(self, capsys):
+        """export() prints JSON to stdout."""
+        cost_export(output="")
+        out = capsys.readouterr().out
+        import json
+        data = json.loads(out.strip())
+        assert isinstance(data, list)
+
+    def test_cost_export_file(self, capsys, tmp_path):
+        """export(output=path) writes JSON to file."""
+        out_path = tmp_path / "usage_export.json"
+        cost_export(output=str(out_path))
+        assert out_path.exists()
+        import json
+        data = json.loads(out_path.read_text())
+        assert isinstance(data, list)

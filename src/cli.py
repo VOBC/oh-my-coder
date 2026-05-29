@@ -31,6 +31,7 @@ from .capabilities import app as cap_app
 from .commands.cli_checkpoint import app as checkpoint_app
 from .commands.cli_commands import app as commands_app
 from .commands.cli_config_ext import app as config_ext_app
+from .commands.cli_cost import app as cost_app
 from .commands.cli_lsp import app as lsp_app
 from .commands.cli_mcp import app as mcp_app
 from .commands.cli_migrate import app as migrate_app
@@ -71,6 +72,7 @@ app.add_typer(mcp_app, name="mcp")
 app.add_typer(
     skill_app, name="skill", help="Skill 系统 - 内置和自定义 Skill 管理与执行"
 )
+app.add_typer(cost_app, name="cost", help="Token 用量统计与成本分析")
 app.add_typer(usage_app, name="usage", help="用量统计与追踪 - stats/trace/memory")
 app.add_typer(migrate_app, name="migrate", help="记忆迁移 - 从 Claude/Gemini 导入配置")
 app.add_typer(tui_app, name="tui", help="TUI 交互界面 - 简易终端交互")
