@@ -26,9 +26,8 @@ omc usage 命令 - 用量统计与追踪
 import asyncio
 import json
 import os
-from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Optional
+from typing import Optional
 
 # Forward reference for FileNode (defined in cli.py)
 try:
@@ -1241,9 +1240,9 @@ if __name__ == "__main__":
     app()
 
 # Aliases for backwards compatibility (these live in cli_cost.py)
-from src.commands.cli_cost import (
-    cost_suggest,
-    cost_report,
-    cost_model,
+from src.commands.cli_cost import (  # noqa: F401
     cost_history,
+    cost_model,
+    cost_report,
+    cost_suggest,
 )

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Annotated
+
 # mypy: disable-error-code="abstract, arg-type, assignment, attr-defined, call-arg, call-overload, dict-item, func-returns-value, import-untyped, index, misc, no-any-return, no-redef, operator, override, return, return-value, syntax, union-attr, var-annotated"
 
 """
@@ -493,7 +495,7 @@ def prices(
 
     console.print(table)
     console.print(f"\n[dim]配置文件: {_COST_PRICES_FILE}[/dim]")
-    console.print(f"[dim]编辑: omc cost prices --edit[/dim]")
+    console.print("[dim]编辑: omc cost prices --edit[/dim]")
 
 
 @app.command("export")
