@@ -26,7 +26,6 @@ from src.commands.cli_cost import (
     cost_model,
     cost_report,
 )
-
 from src.commands.cli_usage import (
     # Stats helpers
     _get_manager,
@@ -3114,7 +3113,8 @@ class TestContextStats:
 # Cost Prices & Export
 # =============================================================================
 
-from src.commands.cli_cost import prices, export as cost_export
+from src.commands.cli_cost import export as cost_export
+from src.commands.cli_cost import prices
 
 
 class TestCostPrices:

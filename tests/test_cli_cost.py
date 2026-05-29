@@ -7,23 +7,15 @@ Covers: lines 148-160 (_cost_record_usage body), 366-367 (bad timestamp), 369 (c
 from __future__ import annotations
 
 import json
-import sys
-from datetime import datetime, timedelta
-from pathlib import Path
-from tempfile import TemporaryDirectory
-from unittest.mock import MagicMock, patch
+from datetime import datetime
+from unittest.mock import patch
 
-import pytest
-import typer
 from typer.testing import CliRunner
 
 from src.commands.cli_cost import (
-    app,
     _cost_load_prices,
-    _cost_record_usage,
     record_usage,
 )
-
 
 runner = CliRunner()
 

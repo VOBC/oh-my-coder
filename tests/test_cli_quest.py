@@ -824,7 +824,6 @@ class TestQuestNotifyWatchLoop:
     @patch("commands.cli_quest.console")
     def test_notify_watch_completes(self, mock_console, mock_qm_class, mock_nc_class, mock_nm_class, mock_cn_class):
         """Test that watch loop detects completed quest."""
-        import asyncio as real_asyncio
 
 
         # Create a quest that's already completed on second check
