@@ -18,16 +18,16 @@ from src.commands.cli_cost import (
     _cost_calculate_cost,
     _cost_format_cost,
     _cost_format_datetime,
-    # Cost suggest helpers
     _cost_load_prices,
     _cost_load_usage_data,
-    # Cost command aliases
     cost_history,
     cost_model,
     cost_report,
 )
+
+# Stats helpers
+# Trace helpers
 from src.commands.cli_usage import (
-    # Stats helpers
     _get_manager,
     context_browser,
     context_stats,
@@ -36,7 +36,6 @@ from src.commands.cli_usage import (
     memory_tier0,
     memory_tier1,
     stats_command,
-    # Trace helpers
     trace_agents,
     trace_latest,
     trace_list,
