@@ -1,220 +1,146 @@
-"""
-conftest.py - pytest 全局 fixtures
-
-提供可复用的 fixture 工厂函数，减少测试代码重复。
-"""
-
-import asyncio
-import json
+"""pytest fixtures for wiki parser tests"""
 
 import pytest
-from fastapi.testclient import TestClient
+import tempfile
+from pathlib import Path
 
-from src.agents.persistence.store import AgentConfig, AgentState
-from src.quest.models import Quest, QuestStep
-from src.web.app import app
-
-# ---------------------------------------------------------------------------
-# Web 客户端
-# ---------------------------------------------------------------------------
+from src.wiki.parser import PythonParser
 
 
 @pytest.fixture
-def client():
-    """创建测试客户端"""
-    return TestClient(app)
-
-
-# ---------------------------------------------------------------------------
-# 临时目录
-# ---------------------------------------------------------------------------
+def parser(tmp_path):
+    """Create a PythonParser instance with a temp root path"""
+    return PythonParser(root_path=str(tmp_path))
 
 
 @pytest.fixture
-def tmp_skill_dir(tmp_path):
-    """临时 skills 目录（供 SkillManager 测试复用）"""
-    d = tmp_path / "skills"
-    d.mkdir()
-    return d
+def temp_py_file(tmp_path):
+    """Create a temporary Python file and return its path"""
+    def _create_file(content: str, name: str = "test_module.py") -> Path:
+        file_path = tmp_path / name
+        file_path.write_text(content, encoding="utf-8")
+        return file_path
+    return _create_file
 
 
 @pytest.fixture
-def tmp_config(tmp_path):
-    """创建临时配置文件和目录。
+def sample_module_code():
+    """Return a sample Python module with classes, functions, imports"""
+    return '''"""
+Sample module docstring
+"""
 
-    返回 ``(config_dir, config_file)`` 元组：
-    - ``config_dir``: 临时配置目录 (Path)
-    - ``config_file``: 配置文件路径 (Path)，预填默认 JSON 配置
+import os
+import sys
+from typing import Optional, List
 
-    可通过 ``config_data`` 参数覆盖默认配置内容。
+class BaseClass:
+    """Base class docstring"""
+    
+    def __init__(self):
+        self.value = 42
+    
+    def public_method(self):
+        """Public method"""
+        pass
+    
+    def _private_method(self):
+        """Private method"""
+        pass
 
-    用法::
+class DerivedClass(BaseClass):
+    """Derived class"""
+    
+    attribute: int = 10
+    
+    def method(self, x: int) -> int:
+        """Method with args and return"""
+        return x
 
-        def test_something(tmp_config):
-            config_dir, config_file = tmp_config
-            # 或自定义内容:
-            config_dir, config_file = tmp_config(config_data={"key": "value"})
-    """
+def standalone_function(x: int, y: str) -> bool:
+    """Standalone function"""
+    return True
 
-    def _make(config_data=None):
-        config_dir = tmp_path / "config"
-        config_dir.mkdir()
-
-        if config_data is None:
-            config_data = {
-                "model": "deepseek",
-                "max_tokens": 8000,
-                "temperature": 0.7,
-            }
-
-        config_file = config_dir / "config.json"
-        config_file.write_text(json.dumps(config_data, ensure_ascii=False))
-
-        return config_dir, config_file
-
-    return _make
-
-
-# ---------------------------------------------------------------------------
-# Quest 工厂
-# ---------------------------------------------------------------------------
-
-
-@pytest.fixture
-def make_quest():
-    """Quest 对象工厂，返回真实 :class:`Quest` 实例。
-
-    所有必填字段均有合理默认值，可通过 ``**kwargs`` 覆盖：
-
-    用法::
-
-        def test_with_default(make_quest):
-            quest = make_quest()
-
-        def test_with_override(make_quest):
-            quest = make_quest(status=QuestStatus.EXECUTING, priority=QuestPriority.HIGH)
-    """
-
-    def _make(**kwargs):
-        defaults = {
-            "id": "quest-001",
-            "title": "Test Quest",
-            "description": "A test quest",
-            "project_path": "/tmp/test",
-        }
-        defaults.update(kwargs)
-        return Quest(**defaults)
-
-    return _make
+def _private_function():
+    """Private function"""
+    pass
+'''
 
 
 @pytest.fixture
-def make_quest_step():
-    """QuestStep 对象工厂，返回真实 :class:`QuestStep` 实例。
+def class_only_code():
+    """Code with only a class definition"""
+    return '''"""
+Class only module
+"""
 
-    用法::
-
-        def test_step(make_quest_step):
-            step = make_quest_step()
-            step = make_quest_step(status=QuestStatus.COMPLETED, result="done")
-    """
-
-    def _make(**kwargs):
-        defaults = {
-            "step_id": "S1",
-            "title": "Step 1",
-            "description": "Do something",
-            "agent": "executor",
-        }
-        defaults.update(kwargs)
-        return QuestStep(**defaults)
-
-    return _make
-
-
-# ---------------------------------------------------------------------------
-# Agent 工厂
-# ---------------------------------------------------------------------------
+class SimpleClass:
+    """A simple class"""
+    
+    def method1(self):
+        pass
+    
+    def _hidden(self):
+        pass
+'''
 
 
 @pytest.fixture
-def make_agent():
-    """AgentConfig 对象工厂，返回真实 :class:`AgentConfig` 实例。
+def function_only_code():
+    """Code with only function definitions"""
+    return '''"""
+Function only module
+"""
 
-    用法::
+def func1(a, b):
+    """Function 1"""
+    pass
 
-        def test_agent(make_agent):
-            config = make_agent()
-            config = make_agent(name="planner", model="kimi", tools=["read", "write"])
-    """
-
-    def _make(**kwargs):
-        defaults = {
-            "name": "test-agent",
-        }
-        defaults.update(kwargs)
-        return AgentConfig(**defaults)
-
-    return _make
+@decorator
+def func2():
+    """Decorated function"""
+    pass
+'''
 
 
 @pytest.fixture
-def make_agent_state():
-    """AgentState 对象工厂，返回真实 :class:`AgentState` 实例。
+def imports_only_code():
+    """Code with only imports"""
+    return '''"""
+Imports only
+"""
 
-    用法::
-
-        def test_state(make_agent_state):
-            state = make_agent_state(agent_name="explore", total_tokens=5000)
-    """
-
-    def _make(**kwargs):
-        defaults = {
-            "agent_name": "test-agent",
-        }
-        defaults.update(kwargs)
-        return AgentState(**defaults)
-
-    return _make
-
-
-# ---------------------------------------------------------------------------
-# 模型响应 Mock
-# ---------------------------------------------------------------------------
+import os
+import sys as system
+from typing import List, Dict
+from collections import OrderedDict as OD
+'''
 
 
 @pytest.fixture
-def mock_model_response():
-    """模拟模型响应工厂，返回类似模型 API 响应的字典。
-
-    用法::
-
-        def test_call(mock_model_response):
-            resp = mock_model_response(content="Hello", cost=0.002)
-            assert resp["content"] == "Hello"
-    """
-
-    def _mock(content="OK", cost=0.001, model="mock"):
-        return {
-            "content": content,
-            "usage": {"cost": cost},
-            "model": model,
-        }
-
-    return _mock
+def docstring_only_code():
+    """Code with only docstring"""
+    return '''"""
+This module has only a docstring.
+"""
+'''
 
 
-# ---------------------------------------------------------------------------
-# Event Loop 修复（asyncio.run 导致 Python 3.9 get_event_loop 失败）
-# ---------------------------------------------------------------------------
+@pytest.fixture
+def empty_file_code():
+    """Empty file content"""
+    return ''
 
 
-@pytest.fixture(autouse=True)
-def _restore_event_loop():
-    """每个测试后重置 event loop，避免 asyncio.run() 污染后续测试。"""
-    yield
-    try:
-        asyncio.get_event_loop()
-    except RuntimeError:
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
+@pytest.fixture
+def comments_only_code():
+    """File with only comments (will cause SyntaxError)"""
+    return '''# This is just a comment
+# Another comment
+'''
+
+
+@pytest.fixture
+def binary_content():
+    """Binary content that can't be decoded as UTF-8"""
+    return b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR'
