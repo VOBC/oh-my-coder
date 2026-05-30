@@ -117,9 +117,10 @@ class HunyuanModel(BaseModel):
         http_request_method = "POST"
         http_request_uri = "/"
         http_request_params = ""
+        # _sha256 returns bytes, need .hex() not .hexdigest()
         canonical_request = (
             f"{http_request_method}\n{http_request_uri}\n{http_request_params}\n"
-            f"{_sha256(payload).hexdigest()}\n{_sha256('').hexdigest()}"
+            f"{_sha256(payload).hex()}\n{_sha256('').hex()}"
         )
 
         # 步骤 2: 拼接待签名字符串
@@ -228,6 +229,13 @@ class HunyuanModel(BaseModel):
             raise HunyuanAPIError(f"混元 API 错误 ({e.response.status_code}): {e}")
         except httpx.RequestError as e:
             raise HunyuanAPIError(f"网络请求失败: {e}")
+
+    async def stream(self, messages: list[Message], **kwargs) -> AsyncIterator[str]:
+        """流式生成 - 当前返回空迭代器（待实现）"""
+        # TODO: 实现混元流式 API 调用
+        # 混元 API 支持流式返回，需要解析 SSE 流
+        yield ""  # 占位实现，避免抽象类错误
+        return
 
 
 class HunyuanAPIError(Exception):
