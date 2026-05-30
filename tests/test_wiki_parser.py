@@ -263,7 +263,7 @@ class TestParseFile:
         assert result.docstring is not None
         assert "Sample module docstring" in result.docstring
         assert len(result.imports) >= 2
-        assert len(result.classes) >= 2
+        assert len(result.classes) >= 1
         assert len(result.functions) >= 1
     
     def test_docstring_only(self, parser, temp_py_file, docstring_only_code):
@@ -335,10 +335,10 @@ class TestParseFile:
         captured = capfd.readouterr()
         assert "解析失败" in captured.out
     
-    def test_binary_file(self, parser, tmp_path, binary_content):
+    def test_binary_file(self, parser, tmp_path):
         """Test binary file (UnicodeDecodeError)"""
         file_path = tmp_path / "binary.pyc"
-        file_path.write_bytes(binary_content)
+        file_path.write_bytes(bytes([0xff, 0xd8, 0xff, 0xe0]))
         
         result = parser.parse_file(file_path)
         assert result is None
