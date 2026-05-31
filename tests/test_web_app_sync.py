@@ -15,7 +15,6 @@ Correct API paths (from reading app.py source):
 """
 
 import sys
-import tempfile
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -25,9 +24,7 @@ from fastapi.testclient import TestClient
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from src.web.app import (
-    SESSIONS_DIR,
     app,
-    history_store,
     task_manager,
 )
 

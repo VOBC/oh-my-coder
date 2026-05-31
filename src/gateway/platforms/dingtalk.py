@@ -142,17 +142,21 @@ class DingTalkHandler(PlatformHandler):
 
     async def _refresh_token(self) -> None:
         url = "https://api.dingtalk.com/v1.0/oauth2/accessToken"
-        async with httpx.AsyncClient(timeout=15.0) as client:
-            resp = await client.post(
-                url, json={"appKey": self.app_key, "appSecret": self.app_secret}
-            )
-            data = resp.json()
-            if data.get("accessToken"):
-                self._access_token = data["accessToken"]
-                self._token_expires_at = time.time() + data.get("expireIn", 7200) - 300
-                logger.debug("[dingtalk] Token refreshed")
-            else:
-                logger.error(f"[dingtalk] Token refresh failed: {data}")
+        try:
+            async with httpx.AsyncClient(timeout=15.0) as client:
+                resp = await client.post(
+                    url, json={"appKey": self.app_key, "appSecret": self.app_secret}
+                )
+                data = resp.json()
+                if data.get("accessToken"):
+                    self._access_token = data["accessToken"]
+                    self._token_expires_at = time.time() + data.get("expireIn", 7200) - 300
+                    logger.debug("[dingtalk] Token refreshed")
+                else:
+                    logger.error(f"[dingtalk] Token refresh failed: {data}")
+        except Exception as e:
+            logger.error(f"[dingtalk] Token refresh error: {e}")
+            self.on_error(e)
 
     async def _get_token(self) -> Optional[str]:
         if self._access_token is None or time.time() >= self._token_expires_at:

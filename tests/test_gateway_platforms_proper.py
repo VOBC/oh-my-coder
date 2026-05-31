@@ -6,17 +6,17 @@ Let internal methods (_refresh_token, send, _process_message, etc.) execute for 
 
 from __future__ import annotations
 
-import asyncio
 import json
+import sys
 import time as time_mod
+from pathlib import Path
 from typing import Any, Optional
 from unittest.mock import MagicMock, patch
-from pathlib import Path
-import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
 import pytest
+
 pytest.importorskip("httpx")
 
 from gateway.platforms.base import (

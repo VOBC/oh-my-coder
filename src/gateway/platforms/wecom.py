@@ -152,17 +152,21 @@ class WeComHandler(PlatformHandler):
     async def _refresh_token(self) -> None:
         url = "https://qyapi.weixin.qq.com/cgi-bin/gettoken"
         params = {"corpid": self.corp_id, "corpsecret": self.corp_secret}
-        async with httpx.AsyncClient(timeout=15.0) as client:
-            resp = await client.get(url, params=params)
-            data = resp.json()
-            if data.get("access_token"):
-                self._access_token = data["access_token"]
-                self._token_expires_at = (
-                    time.time() + data.get("expires_in", 7200) - 300
-                )
-                logger.debug("[wecom] Token refreshed")
-            else:
-                logger.error(f"[wecom] Token refresh failed: {data}")
+        try:
+            async with httpx.AsyncClient(timeout=15.0) as client:
+                resp = await client.get(url, params=params)
+                data = resp.json()
+                if data.get("access_token"):
+                    self._access_token = data["access_token"]
+                    self._token_expires_at = (
+                        time.time() + data.get("expires_in", 7200) - 300
+                    )
+                    logger.debug("[wecom] Token refreshed")
+                else:
+                    logger.error(f"[wecom] Token refresh failed: {data}")
+        except Exception as e:
+            logger.error(f"[wecom] Token refresh error: {e}")
+            self.on_error(e)
 
     async def _get_token(self) -> Optional[str]:
         if self._access_token is None or time.time() >= self._token_expires_at:

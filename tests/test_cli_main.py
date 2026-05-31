@@ -16,7 +16,6 @@ Mock 策略：
 - 参考 test_cli_model_coverage.py 的写法
 """
 
-import os
 import sys
 from pathlib import Path
 from unittest.mock import MagicMock, patch
@@ -26,7 +25,8 @@ from typer.testing import CliRunner
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src.commands.cli import app as cli_app, __version__, __author__, __repo__
+from src.commands.cli import __author__, __repo__, __version__
+from src.commands.cli import app as cli_app
 
 runner = CliRunner()
 
@@ -126,9 +126,11 @@ class TestPrintVersion:
 
     def test_print_version_output(self):
         """测试版本信息输出格式"""
-        from src.commands.cli import _print_version
-        from rich.console import Console
         from io import StringIO
+
+        from rich.console import Console
+
+        from src.commands.cli import _print_version
 
         # 捕获 console 输出
         console = Console(file=StringIO(), no_color=True)
@@ -194,10 +196,10 @@ class TestAgentsCommand:
         """测试成功列出 agents"""
         # Agent 类是在 agents() 函数内部导入的：from src.agents import ...
         # 所以需要 patch src.agents 模块中的 Agent 类
-        
+
         # 创建一个 mock 模块
         mock_agents_module = MagicMock()
-        
+
         # 设置所有需要的 Agent 类
         agent_classes = [
             "ExploreAgent", "AnalystAgent", "PlannerAgent", "ArchitectAgent",
@@ -209,16 +211,16 @@ class TestAgentsCommand:
             "PromptAgent", "VisionAgent", "AuthAgent", "DataAgent",
             "SelfImprovingAgent", "SkillManageAgent", "DocumentAgent"
         ]
-        
+
         for cls_name in agent_classes:
             mock_cls = MagicMock()
             mock_cls.description = f"{cls_name} description"
             mock_cls.default_tier = "standard"
             setattr(mock_agents_module, cls_name, mock_cls)
-        
+
         with patch.dict("sys.modules", {"src.agents": mock_agents_module}):
             result = _run("agents")
-        
+
         assert result.exit_code == 0
         assert "可用智能体" in result.output
 
@@ -336,7 +338,7 @@ class TestEnvLoading:
                 pass
 
         # 简化测试：直接测试 load_dotenv 被调用
-        with patch("src.commands.cli.load_dotenv") as mock_load:
+        with patch("src.commands.cli.load_dotenv"):
             # 模拟用户级 .env 存在
             with patch("pathlib.Path.exists", return_value=True):
                 # 重新执行导入时的逻辑（实际做不到，只是示意）
@@ -373,7 +375,7 @@ class TestSubcommandRegistration:
                 # 如果 name 为 None，尝试从 callback 获取函数名
                 if hasattr(cmd, 'callback') and cmd.callback:
                     commands.append(cmd.callback.__name__)
-        
+
         groups = [group.name for group in cli_app.registered_groups]
 
         # 检查顶级命令（通过 app.command() 注册的）
