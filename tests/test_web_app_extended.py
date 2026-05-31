@@ -11,8 +11,6 @@ Covers:
 - Misc missing lines (import errors, exception handlers)
 """
 
-import json
-import time
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -31,6 +29,7 @@ def _make_client(monkeypatch):
     monkeypatch.setenv("GITHUB_TOKEN", "ghp_test")
     # Re-import to pick up env
     import importlib
+
     import src.web.app as app_module
     importlib.reload(app_module)
     return TestClient(app_module.app), app_module
@@ -46,6 +45,7 @@ class TestTestConnectionProvider:
     def _setup(self, monkeypatch):
         monkeypatch.setenv("OPENAI_API_KEY", "sk-test")
         import importlib
+
         import src.web.app as app_module
         importlib.reload(app_module)
         self.app = app_module
@@ -333,6 +333,7 @@ class TestTestConnectionCustom:
     def _setup(self, monkeypatch):
         monkeypatch.setenv("OPENAI_API_KEY", "sk-test")
         import importlib
+
         import src.web.app as app_module
         importlib.reload(app_module)
         self.app = app_module
@@ -392,6 +393,7 @@ class TestSessionAPI:
     def _setup(self, monkeypatch):
         monkeypatch.setenv("OPENAI_API_KEY", "sk-test")
         import importlib
+
         import src.web.app as app_module
         importlib.reload(app_module)
         self.app = app_module
@@ -434,6 +436,7 @@ class TestWorkflowAPI:
     def _setup(self, monkeypatch):
         monkeypatch.setenv("OPENAI_API_KEY", "sk-test")
         import importlib
+
         import src.web.app as app_module
         importlib.reload(app_module)
         self.app = app_module
@@ -470,6 +473,7 @@ class TestSettingsAPI:
     def _setup(self, monkeypatch):
         monkeypatch.setenv("OPENAI_API_KEY", "sk-test")
         import importlib
+
         import src.web.app as app_module
         importlib.reload(app_module)
         self.client = TestClient(app_module.app)

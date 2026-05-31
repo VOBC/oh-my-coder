@@ -10,25 +10,19 @@ Covers:
 - close() method
 """
 
-import asyncio
-import json
-import time
-from collections.abc import AsyncIterator
-from typing import Any, Optional
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import httpx
 import pytest
 
-from src.models.kimi import KIMI_MODELS, KimiAPIError, KimiModel
 from src.models.base import (
     Message,
     ModelConfig,
     ModelProvider,
     ModelResponse,
     ModelTier,
-    Usage,
 )
+from src.models.kimi import KIMI_MODELS, KimiAPIError, KimiModel
 
 
 class TestKimiModel:
@@ -54,23 +48,23 @@ class TestKimiModel:
 
     def test_init_sets_default_base_url(self, config: ModelConfig):
         """Test that default base URL is set when not provided."""
-        model = KimiModel(config, tier=ModelTier.MEDIUM)
+        KimiModel(config, tier=ModelTier.MEDIUM)
         assert config.base_url == "https://api.moonshot.cn/v1"
 
     def test_init_sets_cost_for_tier(self, config: ModelConfig):
         """Test that cost is set based on tier."""
         # Low tier
-        model_low = KimiModel(config, tier=ModelTier.LOW)
+        KimiModel(config, tier=ModelTier.LOW)
         assert config.cost_per_1k_prompt == 0.03
         assert config.cost_per_1k_completion == 0.06
 
         # Medium tier
-        model_med = KimiModel(config, tier=ModelTier.MEDIUM)
+        KimiModel(config, tier=ModelTier.MEDIUM)
         assert config.cost_per_1k_prompt == 0.06
         assert config.cost_per_1k_completion == 0.12
 
         # High tier
-        model_high = KimiModel(config, tier=ModelTier.HIGH)
+        KimiModel(config, tier=ModelTier.HIGH)
         assert config.cost_per_1k_prompt == 0.12
         assert config.cost_per_1k_completion == 0.24
 
@@ -287,7 +281,7 @@ class TestKimiModel:
         # Patch _get_client to return mock client
         with patch.object(model, '_get_client', return_value=mock_client):
             messages = [Message(role="user", content="What's the weather?")]
-            response = await model.generate(messages, tools=tools, tool_choice="auto")
+            await model.generate(messages, tools=tools, tool_choice="auto")
 
         # Verify tools were included in request
         call_args = mock_client.post.call_args
@@ -388,7 +382,7 @@ class TestKimiModel:
                 yield line
 
         mock_response.aiter_lines = mock_aiter_lines
-        
+
         # Create a proper async context manager mock
         mock_stream_cm = AsyncMock()
         mock_stream_cm.__aenter__ = AsyncMock(return_value=mock_response)
@@ -424,7 +418,7 @@ class TestKimiModel:
                 yield line
 
         mock_response.aiter_lines = mock_aiter_lines
-        
+
         # Create a proper async context manager mock
         mock_stream_cm = AsyncMock()
         mock_stream_cm.__aenter__ = AsyncMock(return_value=mock_response)
@@ -460,7 +454,7 @@ class TestKimiModel:
                 yield line
 
         mock_response.aiter_lines = mock_aiter_lines
-        
+
         # Create a proper async context manager mock
         mock_stream_cm = AsyncMock()
         mock_stream_cm.__aenter__ = AsyncMock(return_value=mock_response)
@@ -488,7 +482,7 @@ class TestKimiModel:
                 "Internal Server Error", request=MagicMock(), response=mock_response
             )
         )
-        
+
         # Create a proper async context manager mock
         mock_stream_cm = AsyncMock()
         mock_stream_cm.__aenter__ = AsyncMock(return_value=mock_response)

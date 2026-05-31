@@ -4,11 +4,7 @@ Tests for HunyuanModel (腾讯混元)
 Coverage target: Increase from 22% to ~85%+
 """
 
-import hashlib
-import hmac
 import json
-import time
-from typing import Any, Optional
 from unittest.mock import AsyncMock, Mock, patch
 
 import httpx
@@ -20,9 +16,8 @@ from src.models.base import (
     ModelProvider,
     ModelResponse,
     ModelTier,
-    Usage,
 )
-from src.models.hunyuan import HunyuanModel, HunyuanAPIError
+from src.models.hunyuan import HunyuanAPIError, HunyuanModel
 
 
 class TestHunyuanModel:

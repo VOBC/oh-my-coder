@@ -221,8 +221,10 @@ def _restore_event_loop():
 
 
 # === wiki parser fixtures ===
-import pytest
 from pathlib import Path
+
+import pytest
+
 from src.wiki.parser import PythonParser
 
 
@@ -271,10 +273,10 @@ class Base:
 class MyClass(Base):
     """My class."""
     attr: int = 0
-    
+
     def method(self) -> None:
         pass
-    
+
     @staticmethod
     def static_method():
         pass
@@ -300,7 +302,6 @@ def decorated():
 
 # === additional wiki parser fixtures ===
 import pytest
-from pathlib import Path
 
 
 @pytest.fixture

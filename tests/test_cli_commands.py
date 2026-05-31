@@ -5,30 +5,21 @@ Target: /Users/vobc/oh-my-coder/src/commands/cli_commands.py
 Coverage goal: Increase from 23% to ~85%+
 """
 
-import os
+import shlex
 import shutil
 import tempfile
 from pathlib import Path
-from typing import Optional
 from unittest import TestCase
 from unittest.mock import patch
 
 import pytest
-import typer
 from typer.testing import CliRunner
-
-import shlex
 
 from src.commands import cli_commands as cli_module
 from src.commands.cli_commands import (
-    COMMANDS_DIR,
     Command,
     app,
-    create_command,
-    edit_command,
-    list_commands,
     load_commands,
-    run,
 )
 
 

@@ -7,10 +7,6 @@ Note: This model uses @safe_execute decorator which provides retry logic.
 """
 
 import asyncio
-import json
-import time
-from collections.abc import AsyncIterator
-from typing import Any, Optional
 from unittest.mock import AsyncMock, Mock, patch
 
 import httpx
@@ -22,9 +18,8 @@ from src.models.base import (
     ModelProvider,
     ModelResponse,
     ModelTier,
-    Usage,
 )
-from src.models.tongyi import TongyiModel, TongyiAPIError
+from src.models.tongyi import TongyiAPIError, TongyiModel
 
 
 class TestTongyiModel:

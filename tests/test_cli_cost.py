@@ -642,10 +642,10 @@ class TestAdditionalCoverage:
         """Test _cost_ensure_config_dir creates directory."""
         config_dir = tmp_path / "config" / "oh-my-coder"
         monkeypatch.setattr("src.commands.cli_cost._COST_CONFIG_DIR", config_dir)
-        
+
         from src.commands.cli_cost import _cost_ensure_config_dir
         _cost_ensure_config_dir()
-        
+
         assert config_dir.exists()
         assert config_dir.is_dir()
 
@@ -654,10 +654,10 @@ class TestAdditionalCoverage:
         prices_file = tmp_path / "model_prices.json"
         monkeypatch.setattr("src.commands.cli_cost._COST_PRICES_FILE", prices_file)
         monkeypatch.setattr("src.commands.cli_cost._COST_CONFIG_DIR", tmp_path)
-        
+
         test_prices = {"test-model": {"prompt": 0.1, "completion": 0.2}}
         _cost_save_prices(test_prices)
-        
+
         assert prices_file.exists()
         with open(prices_file) as f:
             saved = json.load(f)
@@ -669,10 +669,10 @@ class TestAdditionalCoverage:
         usage_file.write_text("[]")
         monkeypatch.setattr("src.commands.cli_cost._COST_USAGE_FILE", usage_file)
         monkeypatch.setattr("src.commands.cli_cost._COST_CONFIG_DIR", tmp_path)
-        
+
         from src.commands.cli_cost import record_usage
         record_usage("gpt-4o", 2000, 1000)
-        
+
         with open(usage_file) as f:
             data = json.load(f)
         assert len(data) == 1
@@ -685,7 +685,7 @@ class TestAdditionalCoverage:
         now = datetime.now()
         old_date = now - timedelta(days=60)
         recent_date = now - timedelta(days=5)
-        
+
         data = [
             {
                 "timestamp": old_date.isoformat(),
@@ -714,7 +714,7 @@ class TestAdditionalCoverage:
         """Test report command date range calculations (lines 271-310)."""
         usage_file = tmp_path / "usage.json"
         now = datetime.now()
-        
+
         # Create data for different time periods
         data = [
             # Today
@@ -799,13 +799,13 @@ class TestAdditionalCoverage:
         usage_file = tmp_path / "usage.json"
         usage_file.write_text("[]")
         usage_file.chmod(0o000)  # Remove all permissions
-        
+
         monkeypatch.setattr("src.commands.cli_cost._COST_USAGE_FILE", usage_file)
-        
+
         # Should not crash, should return empty list
         result = _cost_load_usage_data()
         assert result == []
-        
+
         # Restore permissions for cleanup
         usage_file.chmod(0o644)
 

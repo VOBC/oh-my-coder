@@ -7,6 +7,11 @@ workflow CRUD, chat, open-folder, save-report, coverage, and utility helpers.
 
 import asyncio
 import json
+
+# ---------------------------------------------------------------------------
+# Import the app
+# ---------------------------------------------------------------------------
+import sys
 import tempfile
 from datetime import datetime
 from pathlib import Path
@@ -15,34 +20,21 @@ from unittest.mock import MagicMock, patch
 import pytest
 from fastapi.testclient import TestClient
 
-# ---------------------------------------------------------------------------
-# Import the app
-# ---------------------------------------------------------------------------
-import sys
-
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from src.web.app import (
-    ChatMessage,
-    ChatRequest,
-    ExecuteRequest,
-    SessionCreate,
-    SessionUpdate,
     _cleanup_target,
+    _detect_model,
     _detect_target_type,
     _detect_target_type_from_message,
-    _detect_model,
     _detect_workflow,
     _generate_task_summary,
     _mask_key,
     _preprocess_target,
-    _read_settings,
     app,
     json_dumps,
     task_manager,
 )
-from src.web.history_api import verify_api_token
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -1329,7 +1321,7 @@ class TestExecuteAsyncTask:
                 },
             )
             assert response.status_code == 200
-            tid = response.json()["task_id"]
+            response.json()["task_id"]
             # History should record the failure
             mock_store.save.assert_called()
             call_args = mock_store.save.call_args

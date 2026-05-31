@@ -1,8 +1,6 @@
 """Comprehensive tests for gateway platform handlers"""
 
-import asyncio
 import time
-from typing import Any, Optional
 from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 import pytest

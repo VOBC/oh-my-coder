@@ -5,15 +5,13 @@ Coverage target: Improve from 37% (97 lines missing)
 """
 
 import asyncio
-import os
-import sys
 import builtins
-from typing import Optional
-from unittest.mock import patch, MagicMock, AsyncMock, Mock
+import os
+from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.context.browser_context import BrowserContext, BrowserAwareness
+from src.context.browser_context import BrowserAwareness, BrowserContext
 
 
 class TestBrowserContext:
@@ -120,7 +118,7 @@ class TestBrowserAwareness:
         """Test browser detection - Playwright"""
         # Skip if playwright not installed
         try:
-            import playwright
+            import playwright  # noqa: F401
             has_playwright = True
         except ImportError:
             has_playwright = False

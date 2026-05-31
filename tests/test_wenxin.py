@@ -4,10 +4,7 @@ Tests for WenxinModel (文心一言)
 Coverage target: Increase from 25% to ~85%+
 """
 
-import asyncio
 import time
-from collections.abc import AsyncIterator
-from typing import Any, Optional
 from unittest.mock import AsyncMock, Mock, patch
 
 import httpx
@@ -19,9 +16,8 @@ from src.models.base import (
     ModelProvider,
     ModelResponse,
     ModelTier,
-    Usage,
 )
-from src.models.wenxin import WenxinModel, WenxinAPIError
+from src.models.wenxin import WenxinAPIError, WenxinModel
 
 
 class TestWenxinModel:

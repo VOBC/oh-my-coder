@@ -10,22 +10,19 @@ Covers:
 - close() method
 """
 
-import asyncio
-import json
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import httpx
 import pytest
 
-from src.models.doubao import DOUBAO_MODELS, DoubaoAPIError, DoubaoModel
 from src.models.base import (
     Message,
     ModelConfig,
     ModelProvider,
     ModelResponse,
     ModelTier,
-    Usage,
 )
+from src.models.doubao import DOUBAO_MODELS, DoubaoAPIError, DoubaoModel
 
 
 class TestDoubaoModel:
@@ -51,23 +48,23 @@ class TestDoubaoModel:
 
     def test_init_sets_default_base_url(self, config: ModelConfig):
         """Test that default base URL is set when not provided."""
-        model = DoubaoModel(config, tier=ModelTier.MEDIUM)
+        DoubaoModel(config, tier=ModelTier.MEDIUM)
         assert config.base_url == "https://ark.cn-beijing.volces.com/api/v3"
 
     def test_init_sets_cost_for_tier(self, config: ModelConfig):
         """Test that cost is set based on tier."""
         # Low tier
-        model_low = DoubaoModel(config, tier=ModelTier.LOW)
+        DoubaoModel(config, tier=ModelTier.LOW)
         assert config.cost_per_1k_prompt == 0.003
         assert config.cost_per_1k_completion == 0.009
 
         # Medium tier
-        model_med = DoubaoModel(config, tier=ModelTier.MEDIUM)
+        DoubaoModel(config, tier=ModelTier.MEDIUM)
         assert config.cost_per_1k_prompt == 0.006
         assert config.cost_per_1k_completion == 0.018
 
         # High tier
-        model_high = DoubaoModel(config, tier=ModelTier.HIGH)
+        DoubaoModel(config, tier=ModelTier.HIGH)
         assert config.cost_per_1k_prompt == 0.012
         assert config.cost_per_1k_completion == 0.036
 
@@ -284,7 +281,7 @@ class TestDoubaoModel:
         # Patch _get_client to return mock client
         with patch.object(model, "_get_client", return_value=mock_client):
             messages = [Message(role="user", content="What's the weather?")]
-            response = await model.generate(messages, tools=tools, tool_choice="auto")
+            await model.generate(messages, tools=tools, tool_choice="auto")
 
         # Verify tools were included in request
         call_args = mock_client.post.call_args

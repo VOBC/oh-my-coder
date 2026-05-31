@@ -10,22 +10,19 @@ Covers:
 - close() method
 """
 
-import asyncio
-import json
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import httpx
 import pytest
 
-from src.models.tiangong import TIANGONG_MODELS, TiangongAPIError, TiangongModel
 from src.models.base import (
     Message,
     ModelConfig,
     ModelProvider,
     ModelResponse,
     ModelTier,
-    Usage,
 )
+from src.models.tiangong import TIANGONG_MODELS, TiangongAPIError, TiangongModel
 
 
 class TestTiangongModel:
@@ -51,23 +48,23 @@ class TestTiangongModel:
 
     def test_init_sets_default_base_url(self, config: ModelConfig):
         """Test that default base URL is set when not provided."""
-        model = TiangongModel(config, tier=ModelTier.MEDIUM)
+        TiangongModel(config, tier=ModelTier.MEDIUM)
         assert config.base_url == "https://model-platform.tiangong.cn/v1"
 
     def test_init_sets_cost_for_tier(self, config: ModelConfig):
         """Test that cost is set based on tier (currently all 0.0 for Tiangong)."""
         # Low tier
-        model_low = TiangongModel(config, tier=ModelTier.LOW)
+        TiangongModel(config, tier=ModelTier.LOW)
         assert config.cost_per_1k_prompt == 0.0
         assert config.cost_per_1k_completion == 0.0
 
         # Medium tier
-        model_med = TiangongModel(config, tier=ModelTier.MEDIUM)
+        TiangongModel(config, tier=ModelTier.MEDIUM)
         assert config.cost_per_1k_prompt == 0.0
         assert config.cost_per_1k_completion == 0.0
 
         # High tier
-        model_high = TiangongModel(config, tier=ModelTier.HIGH)
+        TiangongModel(config, tier=ModelTier.HIGH)
         assert config.cost_per_1k_prompt == 0.0
         assert config.cost_per_1k_completion == 0.0
 
@@ -284,7 +281,7 @@ class TestTiangongModel:
         # Patch _get_client to return mock client
         with patch.object(model, "_get_client", return_value=mock_client):
             messages = [Message(role="user", content="What's the weather?")]
-            response = await model.generate(messages, tools=tools, tool_choice="auto")
+            await model.generate(messages, tools=tools, tool_choice="auto")
 
         # Verify tools were included in request
         call_args = mock_client.post.call_args

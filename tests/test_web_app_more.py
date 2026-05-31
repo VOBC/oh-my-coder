@@ -26,33 +26,27 @@ tests/test_web_app_more.py
  20. _cleanup_target()             - 完整场景
 """
 
-import asyncio
-import json
+# ---------------------------------------------------------------------------
+# Import — 必须放在 sys.path.insert 之后（与 app.py 内部逻辑一致）
+# ---------------------------------------------------------------------------
+import sys
 import tempfile
-from datetime import datetime
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
 from fastapi.testclient import TestClient
 
-# ---------------------------------------------------------------------------
-# Import — 必须放在 sys.path.insert 之后（与 app.py 内部逻辑一致）
-# ---------------------------------------------------------------------------
-import sys
-
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from src.web.app import (
     _cleanup_target,
     _detect_target_type,
-    _preprocess_target,
     _mask_key,
+    _preprocess_target,
     app,
     task_manager,
 )
-from src.web.history_api import verify_api_token
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
