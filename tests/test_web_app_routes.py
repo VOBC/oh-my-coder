@@ -35,6 +35,8 @@ from src.web.app import (
     json_dumps,
     task_manager,
 )
+from src.agents.base import AgentOutput, AgentStatus
+from fastapi.responses import JSONResponse
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -1620,3 +1622,40 @@ class TestAgentLiveStream:
             response = client.get("/api/agent/live")
             assert response.status_code == 200
             assert "text/event-stream" in response.headers.get("content-type", "")
+
+
+class TestExecuteSyncEndpoint:
+    """Test POST /api/execute-sync endpoint."""
+
+    @patch("src.web.app.execute_task_sync")
+    def test_execute_sync_success(self, mock_execute, client):
+        """Test synchronous execution success."""
+        mock_execute.return_value = JSONResponse({
+            "status": "completed",
+            "result": "Task completed",
+            "usage": {"total_tokens": 100, "total_cost": 0.01},
+        })
+
+        response = client.post(
+            "/api/execute-sync",
+            json={
+                "task": "test task",
+                "project_path": ".",
+                "model": "deepseek",
+                "workflow": "build",
+            },
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert data["status"] == "completed"
+
+    def test_execute_sync_missing_task(self, client):
+        """Test missing task field returns 422."""
+        response = client.post(
+            "/api/execute-sync",
+            json={
+                "project_path": ".",
+                "model": "deepseek",
+            },
+        )
+        assert response.status_code == 422
