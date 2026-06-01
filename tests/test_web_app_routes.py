@@ -1659,3 +1659,40 @@ class TestExecuteSyncEndpoint:
             },
         )
         assert response.status_code == 422
+
+
+class TestPreprocessTarget:
+    """Test _preprocess_target function."""
+
+    @patch("src.web.app.subprocess.run")
+    def test_preprocess_target_github(self, mock_run, tmp_path):
+        """Test GitHub target type clones repo."""
+        mock_run.return_value = MagicMock(returncode=0, stderr="")
+        
+        with patch("tempfile.mkdtemp", return_value=str(tmp_path / "repo")):
+            path, ctx = _preprocess_target("https://github.com/user/repo", "github", "task-123")
+        
+        assert "GitHub" in ctx
+
+    def test_preprocess_target_url(self):
+        """Test URL target type fetches webpage."""
+        with patch("requests.get") as mock_get:
+            mock_get.return_value.text = "<html><body><h1>Test</h1></body></html>"
+            mock_get.return_value.status_code = 200
+            
+            path, ctx = _preprocess_target("https://example.com", "url", "task-123")
+        
+        assert path == "."
+        assert "网页内容" in ctx
+
+    def test_preprocess_target_local(self):
+        """Test local target type returns as-is."""
+        path, ctx = _preprocess_target("/tmp/test", "local", "task-123")
+        assert path == "/tmp/test"
+        assert ctx == ""
+
+    def test_preprocess_target_empty(self):
+        """Test empty target returns '.' and empty context."""
+        path, ctx = _preprocess_target("", "", "task-123")
+        assert path == "."
+        assert ctx == ""
