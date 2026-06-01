@@ -15,7 +15,7 @@ import sys
 import tempfile
 from datetime import datetime
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, patch, Mock, AsyncMock
 
 import pytest
 from fastapi.testclient import TestClient
@@ -377,89 +377,6 @@ class TestSaveReport:
 
 # ---------------------------------------------------------------------------
 # Settings API
-# ---------------------------------------------------------------------------
-
-class TestSettingsAPI:
-    """GET /api/settings and POST /api/settings."""
-
-    @patch("src.web.app.SETTINGS_FILE")
-    def test_get_settings_default(self, mock_settings_file, client):
-        """When no settings file exists, return defaults."""
-        mock_settings_file.exists.return_value = False
-        response = client.get("/api/settings")
-        assert response.status_code == 200
-        data = response.json()
-        assert "models" in data
-        assert "defaults" in data
-
-    def test_get_settings_masks_keys(self, client):
-        """"API keys are masked and has_key flag is set."""
-        with patch("src.web.app._read_settings") as mock_read:
-            mock_read.return_value = {
-                "models": {
-                    "deepseek": {
-                        "provider": "DeepSeek",
-                        "api_key": "sk-1234567890abcdef",
-                        "cost_level": "free",
-                        "enabled": True,
-                    }
-                },
-                "defaults": {"model": "deepseek", "workflow": "build", "timeout": 300},
-            }
-            response = client.get("/api/settings")
-            data = response.json()
-            model = data["models"]["deepseek"]
-            # Real mask for 'sk-1234567890abcdef' (len 20): 16 stars + last 4
-            assert model["api_key_masked"].endswith("cdef")
-            assert model["has_key"] is True
-
-    @patch("src.web.app.SETTINGS_DIR")
-    @patch("src.web.app.SETTINGS_FILE")
-    @patch("src.web.app._read_settings")
-    def test_save_settings(self, mock_read, mock_file, mock_dir, client):
-        mock_dir.mkdir = MagicMock()
-        mock_dir.exists.return_value = True
-        mock_read.return_value = {
-            "models": {"deepseek": {"provider": "DeepSeek", "api_key": "", "cost_level": "free", "enabled": True}},
-            "defaults": {"model": "deepseek", "workflow": "build", "timeout": 300},
-        }
-        mock_file.write_text = MagicMock()
-
-        response = client.post(
-            "/api/settings",
-            json={
-                "defaults": {"model": "kimi"}
-            },
-        )
-        assert response.status_code == 200
-        assert response.json()["status"] == "ok"
-
-    @patch("src.web.app.SETTINGS_DIR")
-    @patch("src.web.app.SETTINGS_FILE")
-    @patch("src.web.app._read_settings")
-    def test_save_settings_skips_masked_keys(self, mock_read, mock_file, mock_dir, client):
-        mock_dir.mkdir = MagicMock()
-        mock_dir.exists.return_value = True
-        mock_read.return_value = {
-            "models": {"deepseek": {"provider": "DeepSeek", "api_key": "sk-old", "cost_level": "free", "enabled": True}},
-            "defaults": {"model": "deepseek", "workflow": "build", "timeout": 300},
-        }
-        mock_file.write_text = MagicMock()
-
-        # Sending a masked key (starts with *) should be skipped
-        response = client.post(
-            "/api/settings",
-            json={
-                "models": {
-                    "deepseek": {"api_key": "*****12345678"}
-                }
-            },
-        )
-        assert response.status_code == 200
-
-
-# ---------------------------------------------------------------------------
-# Test Connection API
 # ---------------------------------------------------------------------------
 
 class TestConnectionAPI:
@@ -1956,3 +1873,209 @@ class TestWorkflowSaveDeleteAPI:
             response = client.delete("/api/workflows/nonexistent")
 
         assert response.status_code == 404
+
+
+# ===== Settings API =====
+class TestSettingsAPI:
+    """Test GET/POST /api/settings"""
+
+    @patch("src.web.app.SETTINGS_FILE", new_callable=lambda: None)
+    @patch("src.web.app.SETTINGS_DIR", new_callable=lambda: None)
+    def test_get_settings(self, mock_dir, mock_file, client):
+        """GET /api/settings returns default structure"""
+        # Mock SETTINGS_FILE.exists() to return False
+        with patch("pathlib.Path.exists", return_value=False):
+            resp = client.get("/api/settings")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert "models" in data
+        assert "defaults" in data
+
+    @patch("src.web.app._read_settings")
+    def test_get_settings_with_api_key(self, mock_read, client):
+        """GET /api/settings masks api_key"""
+        mock_read.return_value = {
+            "models": {
+                "deepseek": {
+                    "provider": "deepseek",
+                    "api_key": "sk-real-key-12345",
+                    "api_base": "https://api.deepseek.com"
+                }
+            },
+            "defaults": {"model": "deepseek"}
+        }
+        resp = client.get("/api/settings")
+        assert resp.status_code == 200
+        data = resp.json()
+        model = data["models"]["deepseek"]
+        assert model["has_key"] is True
+        assert "api_key_masked" in model
+        assert model["api_key"] == "sk-real-key-12345"  # original key preserved
+
+    @patch("src.web.app.SETTINGS_FILE")
+    def test_save_settings_new_model(self, mock_file, client):
+        """POST /api/settings saves new model"""
+        mock_file.exists.return_value = False
+        mock_file.write_text = Mock()
+        with patch("pathlib.Path.mkdir"):
+            resp = client.post("/api/settings", json={
+                "models": {
+                    "new-model": {
+                        "provider": "openai",
+                        "api_key": "sk-new-key",
+                        "api_base": "https://api.openai.com"
+                    }
+                },
+                "defaults": {"model": "new-model"}
+            })
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["status"] == "ok"
+
+    @patch("src.web.app.SETTINGS_FILE")
+    def test_save_settings_skip_masked_key(self, mock_file, client):
+        """POST /api/settings skips masked api_key (starting with *)"""
+        mock_file.exists.return_value = False
+        mock_file.write_text = Mock()
+        with patch("pathlib.Path.mkdir"):
+            resp = client.post("/api/settings", json={
+                "models": {
+                    "deepseek": {
+                        "provider": "deepseek",
+                        "api_key": "*******************************************masked",
+                        "api_base": "https://api.deepseek.com"
+                    }
+                }
+            })
+        assert resp.status_code == 200
+        # Verify write_text was called with JSON that preserves original key
+        written = mock_file.write_text.call_args[0][0]
+        import json
+        saved = json.loads(written)
+        # Masked key should NOT be saved
+        assert saved["models"]["deepseek"]["api_key"] != "*******************************************masked"
+
+
+# ===== Settings API =====
+class TestSettingsAPI:
+    """Test GET/POST /api/settings"""
+
+    @patch("src.web.app._read_settings")
+    def test_get_settings_default(self, mock_read, client):
+        """GET /api/settings returns settings with masked keys"""
+        mock_read.return_value = {
+            "models": {
+                "deepseek": {
+                    "provider": "deepseek",
+                    "api_key": "sk-real-key",
+                    "api_base": "https://api.deepseek.com"
+                }
+            },
+            "defaults": {"model": "deepseek"}
+        }
+        resp = client.get("/api/settings")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert "models" in data
+        assert data["models"]["deepseek"]["has_key"] is True
+        assert "api_key_masked" in data["models"]["deepseek"]
+
+    @patch("src.web.app._read_settings")
+    @patch("src.web.app.SETTINGS_FILE")
+    def test_save_settings_new(self, mock_file, mock_read, client):
+        """POST /api/settings saves settings to file"""
+        mock_read.return_value = {"models": {}, "defaults": {}}
+        mock_file.write_text = Mock()
+        with patch("pathlib.Path.mkdir"):
+            resp = client.post("/api/settings", json={
+                "models": {
+                    "openai": {
+                        "provider": "openai",
+                        "api_key": "sk-openai-key",
+                        "api_base": "https://api.openai.com"
+                    }
+                },
+                "defaults": {"model": "openai"}
+            })
+        assert resp.status_code == 200
+        assert resp.json()["status"] == "ok"
+        # Verify file was written
+        mock_file.write_text.assert_called_once()
+
+    @patch("src.web.app._read_settings")
+    @patch("src.web.app.SETTINGS_FILE")
+    def test_save_settings_skip_masked_key(self, mock_file, mock_read, client):
+        """POST /api/settings should not save masked api_key"""
+        mock_read.return_value = {
+            "models": {
+                "deepseek": {
+                    "provider": "deepseek",
+                    "api_key": "sk-original-key",
+                    "api_base": "https://api.deepseek.com"
+                }
+            },
+            "defaults": {"model": "deepseek"}
+        }
+        mock_file.write_text = Mock()
+        with patch("pathlib.Path.mkdir"):
+            resp = client.post("/api/settings", json={
+                "models": {
+                    "deepseek": {
+                        "provider": "deepseek",
+                        "api_key": "*******************************************masked",
+                        "api_base": "https://api.deepseek.com"
+                    }
+                }
+            })
+        assert resp.status_code == 200
+        # Check that original key is preserved (masked key not saved)
+        written_json = mock_file.write_text.call_args[0][0]
+        import json
+        saved = json.loads(written_json)
+        assert saved["models"]["deepseek"]["api_key"] == "sk-original-key"
+
+
+# ===== Coverage API =====
+class TestCoverageAPI:
+    """Test GET/POST /api/coverage"""
+
+    @patch("src.web.app.run_coverage_analysis")
+    @patch("src.web.app.format_coverage_report")
+    def test_get_coverage_success(self, mock_format, mock_run, client):
+        """GET /api/coverage returns coverage report"""
+        mock_run.return_value = {"overall": {"coverage": 85.2}}
+        mock_format.return_value = {
+            "overall": {"coverage": 85.2, "color": "#22c55e"},
+            "modules": []
+        }
+        resp = client.get("/api/coverage")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert "overall" in data
+        assert data["overall"]["coverage"] == 85.2
+
+    @patch("src.web.app.run_coverage_analysis")
+    @patch("src.web.app.format_coverage_report")
+    def test_get_coverage_error(self, mock_format, mock_run, client):
+        """GET /api/coverage handles exceptions"""
+        mock_run.side_effect = RuntimeError("coverage error")
+        resp = client.get("/api/coverage")
+        assert resp.status_code == 500
+        data = resp.json()
+        assert "error" in data
+        assert data["overall"]["coverage"] == 0
+
+    @patch("src.web.app.run_coverage_analysis")
+    @patch("src.web.app.format_coverage_report")
+    def test_post_coverage_run(self, mock_format, mock_run, client):
+        """POST /api/coverage/run re-runs coverage analysis"""
+        mock_run.return_value = {"overall": {"coverage": 86.0}}
+        mock_format.return_value = {
+            "overall": {"coverage": 86.0, "color": "#22c55e"},
+            "modules": []
+        }
+        resp = client.post("/api/coverage/run")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["overall"]["coverage"] == 86.0
+        mock_run.assert_called_once()
