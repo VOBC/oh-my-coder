@@ -2079,3 +2079,81 @@ class TestCoverageAPI:
         data = resp.json()
         assert data["overall"]["coverage"] == 86.0
         mock_run.assert_called_once()
+
+
+# ===== Sessions API =====
+class TestSessionsAPI:
+    """Test GET/POST/PUT/DELETE /api/sessions/*"""
+
+    @pytest.fixture
+    def sess_dir(self, tmp_path):
+        """Mock SESSIONS_DIR to a temp directory"""
+        from src.web.app import SESSIONS_DIR
+        tmp_sess_dir = tmp_path / "sessions"
+        tmp_sess_dir.mkdir()
+        import src.web.app as app_module
+        original = SESSIONS_DIR
+        app_module.SESSIONS_DIR = tmp_sess_dir
+        yield tmp_sess_dir
+        app_module.SESSIONS_DIR = original
+
+    def test_list_sessions_empty(self, client, sess_dir):
+        """GET /api/sessions returns empty list"""
+        resp = client.get("/api/sessions")
+        assert resp.status_code == 200
+        assert resp.json() == {"sessions": []}
+
+    def test_create_session(self, client, sess_dir):
+        """POST /api/sessions creates a new session"""
+        resp = client.post("/api/sessions", json={"title": "Test Chat"})
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["status"] == "ok"
+        assert data["session"]["title"] == "Test Chat"
+        assert "id" in data["session"]
+
+    def test_get_session_not_found(self, client, sess_dir):
+        """GET /api/sessions/{id} returns 404"""
+        resp = client.get("/api/sessions/nonexistent")
+        assert resp.status_code == 404
+
+    def test_get_session_found(self, client, sess_dir):
+        """GET /api/sessions/{id} returns session data"""
+        # Create a session first
+        create_resp = client.post("/api/sessions", json={"title": "My Chat"})
+        session_id = create_resp.json()["session"]["id"]
+        # Get it
+        resp = client.get(f"/api/sessions/{session_id}")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["title"] == "My Chat"
+
+    def test_update_session_title(self, client, sess_dir):
+        """PUT /api/sessions/{id} updates title"""
+        create_resp = client.post("/api/sessions", json={"title": "Old"})
+        session_id = create_resp.json()["session"]["id"]
+        resp = client.put(f"/api/sessions/{session_id}", json={"title": "New"})
+        assert resp.status_code == 200
+        assert resp.json()["status"] == "ok"
+
+    def test_delete_session(self, client, sess_dir):
+        """DELETE /api/sessions/{id} removes session"""
+        create_resp = client.post("/api/sessions", json={"title": "To Delete"})
+        session_id = create_resp.json()["session"]["id"]
+        resp = client.delete(f"/api/sessions/{session_id}")
+        assert resp.status_code == 200
+        assert resp.json() == {"status": "ok"}
+        # Confirm gone
+        resp2 = client.get(f"/api/sessions/{session_id}")
+        assert resp2.status_code == 404
+
+
+# ===== Agent Live Stream API =====
+@pytest.mark.skip(reason="SSE infinite stream -- needs async integration test")
+class TestAgentLiveStream:
+    """Test GET /api/agent/live SSE endpoint
+
+    Skipped: testing infinite SSE streams with sync test client times out.
+    Coverage for this endpoint requires an async test with stream disconnect.
+    """
+    pass
