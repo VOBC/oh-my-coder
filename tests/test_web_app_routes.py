@@ -1829,3 +1829,130 @@ class TestHealthAPI:
         data = response.json()
         assert data["status"] == "healthy"
         assert "version" in data
+
+
+class TestWorkflowAPI:
+    """Test /api/workflows endpoints."""
+
+    def test_list_workflows(self, client):
+        """Test listing workflows."""
+        mock_loader = MagicMock()
+        mock_loader.list_workflows.return_value = ["build", "test"]
+        mock_loader.list_builtins.return_value = ["build"]
+
+        with patch("src.web.app.WorkflowLoader", return_value=mock_loader):
+            response = client.get("/api/workflows")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert "workflows" in data
+        assert data["builtin_count"] >= 0
+
+    def test_get_workflow_not_found(self, client):
+        """Test getting non-existent workflow."""
+        mock_loader = MagicMock()
+        mock_loader.get_workflow_config.return_value = None
+
+        with patch("src.web.app.WorkflowLoader", return_value=mock_loader), \
+             patch("src.web.app.WORKFLOW_TEMPLATES", {}):
+            response = client.get("/api/workflows/nonexistent")
+
+        assert response.status_code == 404
+
+    def test_get_workflow_found(self, client):
+        """Test getting existing workflow."""
+        from dataclasses import dataclass
+
+        @dataclass
+        class FakeConfig:
+            name: str = "build"
+            description: str = "Build workflow"
+            source: str = "builtin"
+            steps: list = None
+
+            def model_dump(self):
+                return {
+                    "name": self.name,
+                    "description": self.description,
+                    "source": self.source,
+                    "steps": self.steps or [],
+                }
+
+        mock_loader = MagicMock()
+        mock_loader.get_workflow_config.return_value = FakeConfig()
+
+        with patch("src.web.app.WorkflowLoader", return_value=mock_loader):
+            response = client.get("/api/workflows/build")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["name"] == "build"
+
+    def test_delete_workflow_builtin(self, client):
+        """Test deleting builtin workflow is forbidden."""
+        mock_loader = MagicMock()
+        mock_loader.is_builtin.return_value = True
+
+        with patch("src.web.app.WorkflowLoader", return_value=mock_loader):
+            response = client.delete("/api/workflows/build")
+
+        assert response.status_code == 403
+        data = response.json()
+        assert "内置" in data["error"] or "builtin" in data["error"].lower() or "不可" in data["error"]
+
+
+class TestWorkflowSaveDeleteAPI:
+    """Test PUT/DELETE /api/workflows/{name}."""
+
+    def test_save_workflow_success(self, client):
+        """Test saving a workflow."""
+        mock_loader = MagicMock()
+        mock_loader.parse_yaml_string.return_value = MagicMock()
+        mock_loader.parse_yaml_string.return_value.name = "my-flow"
+        mock_loader.parse_yaml_string.return_value.source = "user"
+
+        with patch("src.web.app.WorkflowLoader", return_value=mock_loader):
+            response = client.put(
+                "/api/workflows/my-flow",
+                json={"yaml": "name: my-flow\nsteps: []"}
+            )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["status"] == "ok"
+
+    def test_save_workflow_bad_yaml(self, client):
+        """Test saving workflow with bad YAML."""
+        mock_loader = MagicMock()
+        mock_loader.parse_yaml_string.return_value = None  # parse failed
+
+        with patch("src.web.app.WorkflowLoader", return_value=mock_loader):
+            response = client.put(
+                "/api/workflows/my-flow",
+                json={"yaml": "bad: [yaml"}
+            )
+
+        assert response.status_code == 400
+
+    def test_delete_workflow_success(self, client):
+        """Test deleting user workflow."""
+        mock_loader = MagicMock()
+        mock_loader.is_builtin.return_value = False
+
+        with patch("src.web.app.WorkflowLoader", return_value=mock_loader):
+            response = client.delete("/api/workflows/my-flow")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["status"] == "ok"
+
+    def test_delete_workflow_not_found(self, client):
+        """Test deleting non-existent workflow."""
+        mock_loader = MagicMock()
+        mock_loader.is_builtin.return_value = False
+        mock_loader.delete_workflow.side_effect = FileNotFoundError()
+
+        with patch("src.web.app.WorkflowLoader", return_value=mock_loader):
+            response = client.delete("/api/workflows/nonexistent")
+
+        assert response.status_code == 404
