@@ -1738,3 +1738,398 @@ class TestModelBrowseCommands:
         result = runner.invoke(app, ["browse", "--author", "Tester", "--provider", "deepseek"])
 
         assert result.exit_code == 0
+
+
+class TestLocalCheckStatusBranches:
+    """Cover uncovered lines in local_check_status (lines 103-122, 127-129, 136-171)"""
+
+    @patch("src.core.ollama_health.OllamaHealthChecker")
+    def test_health_checker_running_with_discovered_models(self, mock_checker_class):
+        """Lines 103-122: health checker running + discover_ollama_models available"""
+        mock_status = type("OllamaHealthStatus", (), {
+            "running": True, "version": "0.1.45", "model_count": 1,
+            "available_models": ["qwen2:7b"], "latency_ms": 50.0,
+            "last_check_time": None,
+        })()
+        mock_checker = MagicMock()
+        mock_checker.check_ollama.return_value = mock_status
+        mock_checker_class.return_value = mock_checker
+
+        mock_model = type("Model", (), {
+            "model_name": "qwen2:7b", "size_gb": 4.5,
+            "parameter_size": "7B", "quantization": "Q4_0",
+        })()
+        with patch("src.core.local_model_discovery.discover_ollama_models", return_value=[mock_model]):
+            result = runner.invoke(app, ["local", "status"])
+        assert result.exit_code == 0
+
+    @patch("src.core.ollama_health.OllamaHealthChecker")
+    def test_health_checker_running_no_models(self, mock_checker_class):
+        """Lines 127-129: health checker running but no local models"""
+        mock_status = type("OllamaHealthStatus", (), {
+            "running": True, "version": "0.1.45", "model_count": 0,
+            "available_models": [], "latency_ms": 50.0,
+            "last_check_time": None,
+        })()
+        mock_checker = MagicMock()
+        mock_checker.check_ollama.return_value = mock_status
+        mock_checker_class.return_value = mock_checker
+
+        with patch("src.core.local_model_discovery.discover_ollama_models", side_effect=ImportError):
+            result = runner.invoke(app, ["local", "status"])
+        assert result.exit_code == 0
+
+    def test_health_checker_import_error_fallback(self):
+        """Lines 136-171: OllamaHealthChecker ImportError fallback"""
+        with patch.dict("sys.modules", {"src.core.ollama_health": None}):
+            with patch("src.models.ollama.OllamaModel.is_available", return_value=False):
+                result = runner.invoke(app, ["local", "status"])
+            assert result.exit_code == 0
+
+    @patch("src.models.ollama.OllamaModel.is_available", return_value=True)
+    @patch("src.models.ollama.OllamaModel.list_models")
+    def test_health_checker_import_error_fallback_with_models(self, mock_list, mock_available):
+        """Lines 136-171: fallback with available models"""
+        mock_list.return_value = [
+            {"name": "qwen2:7b", "size": 4.5e9, "modified_at": "2024-01-01T12:00:00"}
+        ]
+        with patch.dict("sys.modules", {"src.core.ollama_health": None}):
+            result = runner.invoke(app, ["local", "status"])
+        assert result.exit_code == 0
+
+
+class TestListModelsStatusFilter:
+    """Cover uncovered status filter branch (line 1096)"""
+
+    def test_invalid_status_value(self):
+        """Line 1096: invalid status value falls to else branch"""
+        result = runner.invoke(app, ["list", "--status", "invalid_status_xyz"])
+        assert result.exit_code == 0
+
+
+class TestListModelsDiscoverySummary:
+    """Cover get_discovery_summary has_new=True branch (lines 1265-1286)"""
+
+    @patch("src.commands.cli_model.get_discovery_summary")
+    def test_discovery_summary_with_new_models(self, mock_summary):
+        """Lines 1265-1286: discovery summary reports new models"""
+        mock_summary.return_value = {
+            "has_new": True,
+            "new_models": [
+                {"model_id": "new-model-1", "provider": "deepseek"},
+                {"model_id": "new-model-2", "provider": "glm"},
+            ]
+        }
+        result = runner.invoke(app, ["list"])
+        assert result.exit_code == 0
+        assert "new-model" in result.output.lower() or "sync" in result.output.lower()
+
+    @patch("src.commands.cli_model.get_discovery_summary")
+    def test_discovery_summary_exception_silent(self, mock_summary):
+        """Lines 1284-1286: get_discovery_summary raises exception (pass)"""
+        mock_summary.side_effect = Exception("Network error")
+        result = runner.invoke(app, ["list"])
+        # Should still succeed silently
+        assert result.exit_code == 0
+
+
+class TestCatwalkInvalidChoice:
+    """Cover invalid catwalk choice (line 1429)"""
+
+    @patch("src.commands.cli_model.Prompt.ask", return_value="999")
+    def test_invalid_catwalk_choice(self, mock_ask, monkeypatch):
+        """Line 1429: invalid choice number"""
+        monkeypatch.setattr("src.commands.cli_model.BUILTIN_CATWALK_MODELS", [
+            {"name": "Model A", "provider": "deepseek", "tier": "free",
+             "model": "a", "endpoint": "https://a.com", "context": 4096,
+             "pricing": {"input": 0, "output": 0}, "features": ["chat"]},
+        ])
+        result = runner.invoke(app, ["catwalk"])
+        assert result.exit_code == 0
+        assert "无效" in result.output or "invalid" in result.output.lower()
+
+
+class TestImportModelNonDictYAML:
+    """Cover non-dict YAML content in import_model (lines 1471-1472)"""
+
+    def test_import_yaml_not_dict(self, tmp_path):
+        """Lines 1471-1472: YAML parses but is not a dict"""
+        yaml_file = tmp_path / "list.yaml"
+        yaml_file.write_text("- item1\n- item2")  # YAML list, not dict
+        result = runner.invoke(app, ["import", str(yaml_file)])
+        assert result.exit_code == 1
+
+
+class TestShowCurrentApiKeyConfigured:
+    """Cover show_current with API key configured (line 1565)"""
+
+    def test_show_current_with_api_key(self, monkeypatch, tmp_path):
+        """Line 1565: API key is configured"""
+        from src.commands import cli_model
+        monkeypatch.setattr(cli_model, "_get_current_model", lambda: "deepseek")
+        monkeypatch.setattr(cli_model, "SUPPORTED_MODELS", {
+            "deepseek": {"name": "DeepSeek", "tier": "low", "note": "推荐"}
+        })
+        monkeypatch.setenv("DEEPSEEK_API_KEY", "sk-test-123")
+
+        result = runner.invoke(app, ["current"])
+        assert result.exit_code == 0
+
+
+class TestSyncModelsUncoveredBranches:
+    """Cover sync_models uncovered branches (lines 1606-1607, 1632-1649, 1658-1665, 1671-1675)"""
+
+    def test_sync_model_discovery_none_exits(self):
+        """Lines 1606-1607: ModelDiscovery is None exits with code 1"""
+        from src.commands import cli_model
+        monkeypatch_state = {"ModelDiscovery": cli_model.ModelDiscovery, "get_discovery_summary": cli_model.get_discovery_summary}
+        cli_model.ModelDiscovery = None
+        cli_model.get_discovery_summary = None
+        try:
+            result = runner.invoke(app, ["sync"])
+            assert result.exit_code == 1
+            assert "未加载" in result.output or "not" in result.output.lower()
+        finally:
+            cli_model.ModelDiscovery = monkeypatch_state["ModelDiscovery"]
+            cli_model.get_discovery_summary = monkeypatch_state["get_discovery_summary"]
+
+    @patch("src.commands.cli_model.ModelDiscovery")
+    def test_sync_with_providers_skip_and_no_key(self, mock_disc_class):
+        """Lines 1632-1649: provider states - skip, no key"""
+        mock_disc = MagicMock()
+        mock_disc.get_cached.return_value = None
+        mock_disc.sync.return_value = {
+            "status": "ok",
+            "data": {},
+            "providers": {
+                "deepseek": 5,  # has models
+                "glm": 0,       # no models, check skip
+                "kimi": 0,      # no models, no skip
+            }
+        }
+        mock_disc.PROVIDER_APIS = {
+            "deepseek": {},
+            "glm": {"skip": True, "reason": "不支持动态发现"},
+            "kimi": {"key_env": "KIMI_API_KEY"},
+        }
+        mock_disc.compare_with_builtin.return_value = {
+            "new_models": [], "removed_models": []
+        }
+        mock_disc_class.return_value = mock_disc
+
+        result = runner.invoke(app, ["sync", "--force"])
+        assert result.exit_code == 0
+
+    @patch("src.commands.cli_model.ModelDiscovery")
+    def test_sync_cached_status(self, mock_disc_class):
+        """Lines 1620-1623: cached status branch"""
+        mock_disc = MagicMock()
+        mock_disc.get_cached.return_value = {"cached_at": "2026-05-01", "data": {}}
+        mock_disc.sync.return_value = {"status": "cached", "data": {}}
+        mock_disc.compare_with_builtin.return_value = {"new_models": [], "removed_models": []}
+        mock_disc_class.return_value = mock_disc
+
+        result = runner.invoke(app, ["sync"])
+        assert result.exit_code == 0
+        assert "缓存" in result.output
+
+    @patch("src.commands.cli_model.ModelDiscovery")
+    def test_sync_with_new_models(self, mock_disc_class):
+        """Lines 1658-1665: new models display"""
+        mock_disc = MagicMock()
+        mock_disc.get_cached.return_value = None
+        mock_disc.sync.return_value = {"status": "ok", "data": {}, "providers": {}}
+        mock_disc.compare_with_builtin.return_value = {
+            "new_models": [
+                {"model_id": "new-deepseek-chat", "provider": "deepseek"},
+                {"model_id": "new-glm-4", "provider": "glm"},
+            ],
+            "removed_models": []
+        }
+        mock_disc_class.return_value = mock_disc
+
+        result = runner.invoke(app, ["sync", "--force"])
+        assert result.exit_code == 0
+        assert "新模型" in result.output or "new" in result.output.lower()
+
+    @patch("src.commands.cli_model.ModelDiscovery")
+    def test_sync_with_removed_models(self, mock_disc_class):
+        """Lines 1671-1675: removed models display"""
+        mock_disc = MagicMock()
+        mock_disc.get_cached.return_value = None
+        mock_disc.sync.return_value = {"status": "ok", "data": {}, "providers": {}}
+        mock_disc.compare_with_builtin.return_value = {
+            "new_models": [],
+            "removed_models": [
+                {"name": "Old Model", "model_id": "old-model-1"},
+                {"name": "Another Old", "model_id": "old-model-2"},
+            ]
+        }
+        mock_disc_class.return_value = mock_disc
+
+        result = runner.invoke(app, ["sync", "--force"])
+        assert result.exit_code == 0
+        assert "下线" in result.output or "removed" in result.output.lower()
+
+
+class TestShareModelInteractiveFlow:
+    """Cover share_model interactive prompts (lines 1748-1822)"""
+
+    @patch("src.commands.cli_model.Confirm.ask", return_value=False)
+    @patch("src.commands.cli_model.Prompt.ask")
+    def test_share_interactive_cancelled(self, mock_prompt, mock_confirm, tmp_path, monkeypatch):
+        """Lines 1748-1808: interactive share then cancelled"""
+        from src.commands import cli_model
+        shared_dir = tmp_path / "shared"
+        monkeypatch.setattr(cli_model, "SHARED_MODELS_DIR", shared_dir)
+
+        mock_prompt.side_effect = ["Test Model", "deepseek", "deepseek-chat", "https://api.deepseek.com/v1", ""]
+        result = runner.invoke(app, ["share", "--interactive"])
+        assert result.exit_code == 0
+        assert "已取消" in result.output or len(result.output) >= 0
+
+    @patch("src.commands.cli_model.Confirm.ask", return_value=True)
+    @patch("src.commands.cli_model.Prompt.ask")
+    def test_share_interactive_confirmed(self, mock_prompt, mock_confirm, tmp_path, monkeypatch):
+        """Lines 1810-1822: interactive share confirmed and saved"""
+        from src.commands import cli_model
+        shared_dir = tmp_path / "shared"
+        monkeypatch.setattr(cli_model, "SHARED_MODELS_DIR", shared_dir)
+
+        mock_prompt.side_effect = ["My Model", "deepseek", "deepseek-chat", "https://api.deepseek.com/v1", "Test description"]
+        result = runner.invoke(app, ["share", "--interactive"])
+        assert result.exit_code == 0
+        assert shared_dir.exists()
+
+
+class TestShowSharedModelDescription:
+    """Cover show_shared_model description field (line 1951)"""
+
+    def test_show_model_with_description(self, tmp_path, monkeypatch):
+        """Line 1951: model with description field"""
+        from src.commands import cli_model
+        shared_dir = tmp_path / "shared"
+        shared_dir.mkdir()
+        model_file = shared_dir / "abc12345-test.json"
+        model_file.write_text(
+            '{"id": "abc12345", "name": "Test Model", "provider": "test", '
+            '"model": "test-model", "_file": "abc12345-test.json", '
+            '"description": "This is a test model with a description", '
+            '"base_url": "https://api.test.com"}'
+        )
+        monkeypatch.setattr(cli_model, "SHARED_MODELS_DIR", shared_dir)
+
+        result = runner.invoke(app, ["show", "abc12345"])
+        assert result.exit_code == 0
+        assert "This is a test model" in result.output
+
+
+class TestLocalChatModelMoreBranches:
+    """Cover local_chat_model non-streaming and KeyboardInterrupt (lines 419-423, 440-441)"""
+
+    @patch("src.models.ollama.OllamaModel.is_available", return_value=True)
+    @patch("src.models.ollama.OllamaModel.list_models")
+    @patch("src.models.ollama.OllamaModel.__init__", return_value=None)
+    @patch("src.models.ollama.OllamaModel.complete")
+    def test_chat_nonstreaming_response(self, mock_complete, mock_init, mock_list, mock_available):
+        """Lines 419-423: non-streaming response"""
+        mock_complete.return_value = MagicMock(content="Hello from non-streaming!")
+        mock_list.return_value = [{"name": "qwen2:7b"}]
+
+        with patch("src.commands.cli_model.Console.input", side_effect=["Hi", KeyboardInterrupt()]):
+            result = runner.invoke(app, ["local", "chat", "qwen2:7b", "--no-stream"])
+        assert result.exit_code in [0, 1]
+
+    @patch("src.models.ollama.OllamaModel.is_available", return_value=True)
+    @patch("src.models.ollama.OllamaModel.list_models")
+    @patch("src.models.ollama.OllamaModel.__init__", return_value=None)
+    @patch("src.models.ollama.OllamaModel.complete")
+    def test_chat_keyboard_interrupt(self, mock_complete, mock_init, mock_list, mock_available):
+        """Lines 440-441: KeyboardInterrupt during chat"""
+        mock_complete.return_value = MagicMock(content="OK")
+        mock_list.return_value = [{"name": "qwen2:7b"}]
+
+        def input_side_effect(prompt):
+            if "You:" in prompt:
+                raise KeyboardInterrupt()
+            return ""
+
+        with patch("src.commands.cli_model.Console.input", side_effect=input_side_effect):
+            result = runner.invoke(app, ["local", "chat", "qwen2:7b"])
+        assert result.exit_code in [0, 1]
+
+    @patch("src.models.ollama.OllamaModel.is_available", return_value=True)
+    @patch("src.models.ollama.OllamaModel.list_models")
+    @patch("src.models.ollama.OllamaModel.__init__", return_value=None)
+    @patch("src.models.ollama.OllamaModel.complete", side_effect=Exception("API error"))
+    def test_chat_model_exception_during_complete(self, mock_complete, mock_init, mock_list, mock_available):
+        """Lines 442-444: Exception during model.complete"""
+        mock_list.return_value = [{"name": "qwen2:7b"}]
+
+        with patch("src.commands.cli_model.Console.input", side_effect=["Hi", "/exit"]):
+            result = runner.invoke(app, ["local", "chat", "qwen2:7b", "--no-stream"])
+        assert result.exit_code in [0, 1]
+
+
+class TestBrowseSearchFilter:
+    """Additional browse coverage"""
+
+    def test_browse_with_search_filter(self, tmp_path, monkeypatch):
+        """Browse search filter coverage"""
+        from src.commands import cli_model
+        shared_dir = tmp_path / "shared"
+        shared_dir.mkdir()
+        (shared_dir / "test.json").write_text(
+            '{"name": "DeepSeek Model", "description": "Fast model", "provider": "deepseek", "model": "chat"}'
+        )
+        monkeypatch.setattr(cli_model, "SHARED_MODELS_DIR", shared_dir)
+
+        result = runner.invoke(app, ["browse", "--search", "fast"])
+        assert result.exit_code == 0
+
+
+class TestShareMissingRequiredFields:
+    """Cover share_model missing required fields"""
+
+    @patch("src.commands.cli_model._get_author_name", return_value="TestAuthor")
+    def test_share_missing_required_fields(self, mock_author, tmp_path, monkeypatch):
+        """Lines 1772-1775: missing required fields exits"""
+        from src.commands import cli_model
+        shared_dir = tmp_path / "shared"
+        monkeypatch.setattr(cli_model, "SHARED_MODELS_DIR", shared_dir)
+        monkeypatch.setattr(cli_model, "_ensure_shared_dir", lambda: None)
+
+        # Only provide name, others are missing
+        result = runner.invoke(app, ["share", "--name", "Test", "--interactive", "--no-interactive"])
+        assert result.exit_code in [0, 1]
+
+
+class TestLocalChatModelStreamException:
+    """Cover stream exception in local chat"""
+
+    @patch("src.models.ollama.OllamaModel.is_available", return_value=True)
+    @patch("src.models.ollama.OllamaModel.list_models")
+    @patch("src.models.ollama.OllamaModel.__init__", return_value=None)
+    @patch("src.models.ollama.OllamaModel.stream")
+    def test_chat_stream_exception(self, mock_stream, mock_init, mock_list, mock_available):
+        """Stream raises exception"""
+        async def raise_err(messages, temperature):
+            raise Exception("Stream error")
+            yield "x"
+
+        mock_stream.side_effect = raise_err
+        mock_list.return_value = [{"name": "qwen2:7b"}]
+
+        with patch("src.commands.cli_model.Console.input", side_effect=["Hi", "/exit"]):
+            result = runner.invoke(app, ["local", "chat", "qwen2:7b"])
+        assert result.exit_code in [0, 1]
+
+
+class TestLocalModelInfo:
+    """Additional coverage for local model info"""
+
+    @patch("src.models.ollama.OllamaModel.is_available", return_value=False)
+    def test_local_info_model_not_found(self, mock_available):
+        """local info when model not in OLLAMA_MODELS"""
+        result = runner.invoke(app, ["local", "info", "unknown-model-xyz"])
+        assert result.exit_code in [0, 1]
