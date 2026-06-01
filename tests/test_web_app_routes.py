@@ -929,9 +929,9 @@ class TestChatEndpoint:
 class TestChatCompletions:
     """POST /api/chat/completions."""
 
-
-    @pytest.mark.skip(reason="mock not intercepting correctly")
-    def test_chat_completions_non_stream(self, client):
+    @patch("src.web.app.get_orchestrator")
+    def test_chat_completions_non_stream(self, mock_get_orch, client):
+        """Test non-streaming chat completions."""
         mock_orch = MagicMock()
         mock_router = MagicMock()
         mock_response = MagicMock()
@@ -940,23 +940,29 @@ class TestChatCompletions:
         mock_response.usage.completion_tokens = 5
         mock_response.usage.total_tokens = 15
         mock_response.model = "deepseek-chat"
-        mock_router.route_and_call = MagicMock(return_value=mock_response)
+        
+        # Make route_and_call return a coroutine
+        async def mock_route(*args, **kwargs):
+            return mock_response
+        mock_router.route_and_call = mock_route
         mock_orch.model_router = mock_router
-        with patch("src.web.app.get_orchestrator", return_value=mock_orch):
-            response = client.post(
-                "/api/chat/completions",
-                json={
-                    "messages": [{"role": "user", "content": "Hi"}],
-                    "model": "deepseek",
-                    "stream": False,
-                },
-            )
-            assert response.status_code == 200
-            data = response.json()
-            assert data["content"] == "Hello!"
+        mock_get_orch.return_value = mock_orch
+        
+        response = client.post(
+            "/api/chat/completions",
+            json={
+                "messages": [{"role": "user", "content": "Hi"}],
+                "model": "deepseek",
+                "stream": False,
+            },
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert data["content"] == "Hello!"
 
-    @pytest.mark.skip(reason="mock not intercepting correctly")
-    def test_chat_completions_stream(self, client):
+    @patch("src.web.app.get_orchestrator")
+    def test_chat_completions_stream(self, mock_get_orch, client):
+        """Test streaming chat completions."""
         mock_orch = MagicMock()
         mock_router = MagicMock()
         mock_response = MagicMock()
@@ -965,37 +971,47 @@ class TestChatCompletions:
         mock_response.usage.completion_tokens = 5
         mock_response.usage.total_tokens = 15
         mock_response.model = "deepseek-chat"
-        mock_router.route_and_call = MagicMock(return_value=mock_response)
+        
+        async def mock_route(*args, **kwargs):
+            return mock_response
+        mock_router.route_and_call = mock_route
         mock_orch.model_router = mock_router
-        with patch("src.web.app.get_orchestrator", return_value=mock_orch):
-            response = client.post(
-                "/api/chat/completions",
-                json={
-                    "messages": [{"role": "user", "content": "Hi"}],
-                    "model": "deepseek",
-                    "stream": True,
-                },
-            )
-            assert response.status_code == 200
-            assert "text/event-stream" in response.headers["content-type"]
+        mock_get_orch.return_value = mock_orch
+        
+        response = client.post(
+            "/api/chat/completions",
+            json={
+                "messages": [{"role": "user", "content": "Hi"}],
+                "model": "deepseek",
+                "stream": True,
+            },
+        )
+        assert response.status_code == 200
+        assert "text/event-stream" in response.headers["content-type"]
 
-    def test_chat_completions_exception(self, client):
+    @patch("src.web.app.get_orchestrator")
+    def test_chat_completions_exception(self, mock_get_orch, client):
+        """Test exception handling in chat completions."""
         mock_orch = MagicMock()
         mock_router = MagicMock()
-        mock_router.route_and_call.side_effect = RuntimeError("Model error")
+        
+        async def mock_route(*args, **kwargs):
+            raise RuntimeError("Model error")
+        mock_router.route_and_call = mock_route
         mock_orch.model_router = mock_router
-        with patch("src.web.app.get_orchestrator", return_value=mock_orch):
-            response = client.post(
-                "/api/chat/completions",
-                json={
-                    "messages": [{"role": "user", "content": "Hi"}],
-                    "model": "deepseek",
-                    "stream": False,
-                },
-            )
-            assert response.status_code == 200
-            data = response.json()
-            assert "❌" in data["content"]
+        mock_get_orch.return_value = mock_orch
+        
+        response = client.post(
+            "/api/chat/completions",
+            json={
+                "messages": [{"role": "user", "content": "Hi"}],
+                "model": "deepseek",
+                "stream": False,
+            },
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert "❌" in data["content"]
 
 
 # ---------------------------------------------------------------------------
@@ -1021,17 +1037,104 @@ class TestSSEExecute:
 class TestExecuteTask:
     """POST /api/execute-sync (synchronous task execution)."""
 
-    @pytest.mark.skip(reason="mock setup complexity - orchestrator async execution")
-    def test_execute_sync_success(self, client):
-        pass
+    @patch("src.web.app.create_router")
+    @patch("src.web.app.create_orchestrator")
+    def test_execute_sync_success(self, mock_create_orch, mock_create_router, client):
+        """Test successful synchronous execution."""
+        import asyncio
+        
+        # Setup mocks
+        mock_agent = MagicMock()
+        
+        # Create a proper async mock
+        async def mock_execute(*args, **kwargs):
+            return MagicMock(
+                status=MagicMock(value="completed"),
+                result="Done",
+                error=None,
+                usage={"total_tokens": 100}
+            )
+        
+        mock_agent.execute = mock_execute
+        
+        mock_orch = MagicMock()
+        mock_orch.get_agent.return_value = mock_agent
+        mock_orch.model_router = MagicMock()
+        mock_create_orch.return_value = mock_orch
+        
+        response = client.post(
+            "/api/execute-sync",
+            json={
+                "task": "test task",
+                "project_path": ".",
+                "model": "deepseek",
+                "workflow": "build",
+            },
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert data["status"] == "success"
 
-    @pytest.mark.skip(reason="mock setup complexity - orchestrator async execution")
-    def test_execute_sync_agent_failed(self, client):
-        pass
+    @patch("src.web.app.create_router")
+    @patch("src.web.app.create_orchestrator")
+    def test_execute_sync_agent_failed(self, mock_create_orch, mock_create_router, client):
+        """Test sync execution with agent failure."""
+        import asyncio
+        
+        mock_agent = MagicMock()
+        
+        async def mock_execute(*args, **kwargs):
+            return MagicMock(
+                status=MagicMock(value="failed"),
+                result=None,
+                error="Agent failed",
+                usage={}
+            )
+        
+        mock_agent.execute = mock_execute
+        
+        mock_orch = MagicMock()
+        mock_orch.get_agent.return_value = mock_agent
+        mock_create_orch.return_value = mock_orch
+        
+        response = client.post(
+            "/api/execute-sync",
+            json={
+                "task": "test task",
+                "workflow": "build",
+            },
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert data["status"] == "error"
+        assert "失败" in data["message"]
 
-    @pytest.mark.skip(reason="mock setup complexity - orchestrator async execution")
-    def test_execute_sync_timeout(self, client):
-        pass
+    @patch("src.web.app.create_router")
+    @patch("src.web.app.create_orchestrator")
+    def test_execute_sync_timeout(self, mock_create_orch, mock_create_router, client):
+        """Test sync execution timeout."""
+        import concurrent.futures
+        mock_agent = MagicMock()
+        # Simulate timeout
+        async def slow_execution(*args, **kwargs):
+            raise asyncio.TimeoutError()
+        mock_agent.execute = slow_execution
+        
+        mock_orch = MagicMock()
+        mock_orch.get_agent.return_value = mock_agent
+        mock_create_orch.return_value = mock_orch
+        
+        response = client.post(
+            "/api/execute-sync",
+            json={
+                "task": "test task",
+                "workflow": "build",
+            },
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert data["status"] == "error"
+        assert "超时" in data["message"]
 
 
 # ---------------------------------------------------------------------------
@@ -1279,6 +1382,42 @@ class TestExecuteAsyncTask:
         assert data["status"] == "started"
         assert "task_id" in data
         assert data["target_type"] == "github"
+
+    def test_execute_missing_task_field(self, client):
+        """Missing 'task' field should return 400."""
+        response = client.post(
+            "/api/execute",
+            json={
+                "project_path": "/tmp",
+            },
+        )
+        assert response.status_code == 400
+        assert "Missing" in response.json()["detail"]
+
+    @patch("src.web.app._preprocess_target")
+    def test_execute_preprocess_exception(self, mock_preprocess, client):
+        """When _preprocess_target raises, should return 200 but task fails."""
+        mock_preprocess.side_effect = RuntimeError("Clone failed")
+        response = client.post(
+            "/api/execute",
+            json={
+                "task": "test task",
+                "project_path": "https://github.com/user/repo",
+                "target_type": "github",
+            },
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert data["status"] == "started"
+        # The task should have failed during preprocessing
+        task_id = data["task_id"]
+        task = task_manager.get_task(task_id)
+        # Give it a moment for background task to potentially start
+        import time
+        time.sleep(0.1)
+        # Check if task exists and has error
+        if task:
+            assert task.get("status") == "failed"
 
     def test_execute_auto_detect_local(self, client):
         response = client.post(
