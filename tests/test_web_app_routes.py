@@ -225,6 +225,37 @@ class TestTaskAPI:
             assert response.status_code == 404
 
 
+class TestDashboardAPI:
+    """测试仪表板 API"""
+
+    def test_get_dashboard_stats(self, client):
+        """获取仪表板统计数据"""
+        response = client.get("/api/dashboard/stats")
+        assert response.status_code == 200
+        data = response.json()
+        assert isinstance(data, dict)
+
+    def test_get_dashboard_files(self, client):
+        """获取仪表板文件列表"""
+        response = client.get("/api/dashboard/files")
+        assert response.status_code == 200
+        data = response.json()
+        assert isinstance(data, dict)
+        assert "files" in data
+        assert isinstance(data["files"], list)
+
+
+class TestConfigAPI:
+    """测试配置 API"""
+
+    def test_get_config(self, client):
+        """获取配置信息"""
+        response = client.get("/api/config")
+        assert response.status_code == 200
+        data = response.json()
+        assert "version" in data
+
+
 class TestApiHistory:
     """GET /api/history (app-level, not history_api)."""
 
