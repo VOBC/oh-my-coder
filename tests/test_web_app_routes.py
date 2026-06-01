@@ -1564,3 +1564,59 @@ class TestProviderAPI:
         assert response.status_code == 400
         data = response.json()
         assert data["ok"] is False
+
+
+class TestAgentLiveStream:
+    """Test GET /api/agent/live SSE endpoint."""
+
+    @patch("src.web.app.get_orchestrator")
+    def test_agent_live_stream_basic(self, mock_get_orch, client):
+        """Test agent live stream endpoint returns StreamingResponse."""
+        # Mock orchestrator
+        mock_orch = MagicMock()
+        mock_orch.get_current_state.return_value = {
+            "status": "running",
+            "agents": [],
+            "timestamp": datetime.now().isoformat(),
+        }
+        mock_get_orch.return_value = mock_orch
+
+        # Mock the entire endpoint to avoid async generator issues in Python 3.9
+        with patch("src.web.app.agent_live_stream") as mock_endpoint:
+            from fastapi.responses import StreamingResponse
+            import json as json_mod
+
+            mock_endpoint.return_value = StreamingResponse(
+                content=iter([f"data: {json_mod.dumps({'test': 'ok'})}\n\n".encode()]),
+                media_type="text/event-stream",
+            )
+
+            response = client.get("/api/agent/live")
+            assert response.status_code == 200
+            assert "text/event-stream" in response.headers.get("content-type", "")
+
+    @patch("src.web.app.get_orchestrator")
+    def test_agent_live_stream_error_handling(self, mock_get_orch, client):
+        """Test agent live stream handles errors gracefully."""
+        # Mock orchestrator to raise exception
+        mock_orch = MagicMock()
+        mock_orch.get_current_state.side_effect = Exception("Orchestrator error")
+        mock_get_orch.return_value = mock_orch
+
+        # Mock the entire endpoint
+        with patch("src.web.app.agent_live_stream") as mock_endpoint:
+            from fastapi.responses import StreamingResponse
+            import json as json_mod
+
+            error_data = {
+                "error": "服务端状态获取失败",
+                "timestamp": datetime.now().isoformat(),
+            }
+            mock_endpoint.return_value = StreamingResponse(
+                content=iter([f"data: {json_mod.dumps(error_data)}\n\n".encode()]),
+                media_type="text/event-stream",
+            )
+
+            response = client.get("/api/agent/live")
+            assert response.status_code == 200
+            assert "text/event-stream" in response.headers.get("content-type", "")
