@@ -1696,3 +1696,136 @@ class TestPreprocessTarget:
         path, ctx = _preprocess_target("", "", "task-123")
         assert path == "."
         assert ctx == ""
+
+
+class TestListTasksAPI:
+    """Test GET /api/tasks endpoint."""
+
+    def test_list_tasks_empty(self, client):
+        """Test listing tasks when empty."""
+        with patch("src.web.app.task_manager") as mock_tm:
+            mock_tm.list_tasks.return_value = []
+            response = client.get("/api/tasks")
+        
+        assert response.status_code == 200
+        data = response.json()
+        assert data["tasks"] == []
+
+    def test_list_tasks_with_data(self, client):
+        """Test listing tasks with data."""
+        with patch("src.web.app.task_manager") as mock_tm:
+            mock_tm.list_tasks.return_value = [
+                {"task_id": "task-1", "status": "completed"},
+                {"task_id": "task-2", "status": "running"},
+            ]
+            response = client.get("/api/tasks")
+        
+        assert response.status_code == 200
+        data = response.json()
+        assert len(data["tasks"]) == 2
+        assert data["tasks"][0]["task_id"] == "task-1"
+
+
+class TestOpenFolderAPI:
+    """Test POST /api/open-folder endpoint."""
+
+    def test_open_folder_missing_path(self, client):
+        """Test open folder without path."""
+        response = client.post("/api/open-folder", json={})
+        assert response.status_code == 400
+        assert "path required" in response.json()["detail"]
+
+    def test_open_folder_success(self, client):
+        """Test open folder success."""
+        with patch("src.web.app.subprocess.run") as mock_run:
+            response = client.post("/api/open-folder", json={"path": "/tmp/test"})
+        
+        assert response.status_code == 200
+        data = response.json()
+        assert data["status"] == "ok"
+        mock_run.assert_called_once()
+        # Verify correct command for macOS
+        call_args = mock_run.call_args
+        assert call_args[0][0][0] == "open"
+
+
+class TestSaveReportAPI:
+    """Test POST /api/save-report endpoint."""
+
+    def test_save_report_missing_task_id(self, client):
+        """Test save report without task_id."""
+        response = client.post("/api/save-report", json={})
+        assert response.status_code == 400
+        assert "task_id required" in response.json()["detail"]
+
+    def test_save_report_task_not_found(self, client):
+        """Test save report when task not found."""
+        with patch("src.web.app.task_manager") as mock_tm, \
+             patch("src.web.app.history_store") as mock_hs:
+            mock_tm.get_task.return_value = None
+            mock_hs.load.return_value = None
+            
+            response = client.post("/api/save-report", json={"task_id": "nonexistent"})
+        
+        assert response.status_code == 404
+        assert "Task not found" in response.json()["detail"]
+
+    def test_save_report_success(self, client, tmp_path):
+        """Test save report success."""
+        import tempfile
+        from pathlib import Path
+        
+        task_data = {
+            "task_id": "test-task-123",
+            "task": "Test task",
+            "status": "completed",
+            "started_at": "2026-06-01 12:00:00",
+            "output": {"result": "Test result"},
+        }
+        
+        # Create a temp file to simulate saved report
+        report_file = tmp_path / "report.md"
+        report_file.write_text("# Test Report\n\nResult: Test result")
+        
+        with patch("src.web.app.task_manager") as mock_tm, \
+             patch("src.web.app.history_store") as mock_hs, \
+             patch("src.web.app.Path.home") as mock_home:
+            
+            mock_tm.get_task.return_value = task_data
+            mock_hs.load.return_value = None
+            
+            # Mock home path to use tmp_path
+            mock_home.return_value = tmp_path
+            
+            response = client.post("/api/save-report", json={"task_id": "test-task-123"})
+        
+        # The endpoint saves to Desktop, which we mocked
+        # Just verify it didn't return an error
+        assert response.status_code == 200
+        data = response.json()
+        assert data["status"] == "saved"
+        assert "path" in data
+
+
+class TestHealthAPI:
+    """Test GET /health endpoint."""
+
+    def test_health_check(self, client):
+        """Test health check returns correct status."""
+        response = client.get("/health")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["status"] == "healthy"
+        assert "version" in data
+
+
+class TestHealthAPI:
+    """Test GET /health endpoint."""
+
+    def test_health_check(self, client):
+        """Test health check returns correct status."""
+        response = client.get("/health")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["status"] == "healthy"
+        assert "version" in data
