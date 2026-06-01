@@ -200,6 +200,16 @@ class TestTaskAPI:
         response = client.get("/api/tasks/nonexistent")
         assert response.status_code == 404
 
+    def test_get_task_success(self, client):
+        """任务存在时返回任务详情"""
+        task_manager._tasks.clear()
+        task_manager._queues.clear()
+        tid = task_manager.create_task()
+        response = client.get(f"/api/tasks/{tid}")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["task_id"] == tid
+
     @patch("src.web.app.verify_api_token", return_value="token")
     def test_delete_task_with_token(self, mock_verify, client):
         task_manager._tasks.clear()
@@ -1468,3 +1478,58 @@ class TestExecuteAsyncTask:
             call_args = mock_store.save.call_args
             record = call_args[0][1]
             assert record["status"] == "failed"
+
+
+# ========== 新增测试：SSE 端点和 Provider API 测试 ==========
+
+
+class TestSSEEndpoint:
+    """测试 SSE 执行端点"""
+
+    @patch("src.web.app.task_manager")
+    def test_sse_execute_task_not_found(self, mock_tm, client):
+        """任务不存在时返回 404"""
+        mock_tm.get_task.return_value = None
+        response = client.get("/sse/execute/nonexistent")
+        assert response.status_code == 404
+
+    @pytest.mark.skip(reason="Python 3.9 asyncio compatibility")
+    @patch("src.web.app.task_manager")
+    def test_sse_execute_success(self, mock_tm, client):
+        """任务存在时返回 SSE stream"""
+        mock_tm.get_task.return_value = {"status": "running"}
+        mock_queue = MagicMock()
+        mock_queue.get = AsyncMock(side_effect=[None])
+        mock_tm._queues = {"task-123": mock_queue}
+        
+        response = client.get("/sse/execute/task-123")
+        assert response.status_code == 200
+        assert "text/event-stream" in response.headers.get("content-type", "")
+
+
+class TestProviderAPI:
+    """测试各供应商 API 连接检测"""
+
+    @patch("src.web.app._read_settings")
+    @patch("httpx.Client")
+    def test_test_connection_kimi_success(self, mock_client, mock_settings, client):
+        """Kimi (Moonshot) 连接成功"""
+        mock_settings.return_value = {
+            "models": {"kimi": {"api_key": "test-key", "base_url": ""}}
+        }
+        mock_resp = MagicMock()
+        mock_resp.status_code = 200
+        mock_client.return_value.__enter__.return_value.post = MagicMock(return_value=mock_resp)
+        
+        response = client.post("/api/test-connection", json={"provider": "kimi"})
+        assert response.status_code == 200
+        data = response.json()
+        assert data["ok"] is True
+
+    def test_test_connection_missing_api_key(self, client):
+        """API Key 缺失时返回错误"""
+        # 不传 api_key，且 settings 中也没有 → 端点返回 400
+        response = client.post("/api/test-connection", json={"provider": "unknown_provider"})
+        assert response.status_code == 400
+        data = response.json()
+        assert data["ok"] is False
