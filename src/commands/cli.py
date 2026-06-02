@@ -187,7 +187,10 @@ def main(
         is_eager=True,
     ),
 ):
-    """Oh My Coder - 多智能体 AI 编程助手"""
+    """Oh My Coder - 多智能体 AI 编程助手
+
+    处理全局 CLI 选项并显示帮助信息。
+    """
     if version:
         _print_version()
         raise typer.Exit(0)
@@ -249,7 +252,10 @@ app.command("quest-wait")(quest_wait)
 
 @app.command()
 def agents():
-    """列出所有可用 Agent"""
+    """列出所有可用 Agent
+
+    以表格形式展示所有智能体及其描述和层级。
+    """
     table = Table(title="可用智能体")
     table.add_column("名称", style="cyan")
     table.add_column("描述")
@@ -362,7 +368,10 @@ def agents():
 
 @app.command()
 def status():
-    """查看系统状态"""
+    """查看系统状态
+
+    检查 API 密钥配置和路由器状态。
+    """
     console.print("[bold]系统状态[/bold]\n")
 
     # 检查 API Key

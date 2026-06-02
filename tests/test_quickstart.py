@@ -136,8 +136,22 @@ class TestCheckApiKeyWorks:
 
     def test_network_error_fallback_true(self, monkeypatch):
         monkeypatch.setenv("DEEPSEEK_API_KEY", "sk-longenoughkey12345")
-        with patch("httpx.get", side_effect=httpx.ConnectError("fail")):
+        # import httpx is local inside _check_api_key_works → patch the right namespace
+        with patch("src.commands.quickstart.httpx.get", side_effect=httpx.ConnectError("fail")):
             assert _check_api_key_works("DEEPSEEK_API_KEY", "deepseek") is True
+
+    def test_glm_network_error_fallback_true(self, monkeypatch):
+        """httpx exception inside glm branch → fallback to return True (lines 149-150)"""
+        monkeypatch.setenv("ZHIPUAI_API_KEY", "longkey1234567890")
+        with patch("src.commands.quickstart.httpx.get", side_effect=httpx.ConnectError("fail")):
+            assert _check_api_key_works("ZHIPUAI_API_KEY", "glm") is True
+
+    def test_deepseek_http_error_500(self, monkeypatch):
+        """deepseek with 500 status → return False (line ~148)"""
+        monkeypatch.setenv("DEEPSEEK_API_KEY", "sk-longenoughkey12345")
+        mock_resp = MagicMock(status_code=500)
+        with patch("src.commands.quickstart.httpx.get", return_value=mock_resp):
+            assert _check_api_key_works("DEEPSEEK_API_KEY", "deepseek") is False
 
 
 # ── detect_completed_steps ──────────────────────────────────────
@@ -173,6 +187,29 @@ class TestDetectCompletedSteps:
                 steps = detect_completed_steps()
                 assert steps["apikey"] is True
                 assert steps["verify"] is True
+
+    def test_config_file_malformed_json(self, monkeypatch, tmp_path):
+        """Config file exists but has invalid JSON → except Exception: pass (lines 149-150)"""
+        monkeypatch.delenv("DEEPSEEK_API_KEY", raising=False)
+        monkeypatch.delenv("OMC_DEFAULT_MODEL", raising=False)
+        config_dir = tmp_path / ".config" / "oh-my-coder"
+        config_dir.mkdir(parents=True)
+        # Write malformed JSON to trigger the except Exception: pass branch
+        (config_dir / "config.json").write_text("{not valid json}")
+        monkeypatch.setattr(Path, "home", lambda: tmp_path)
+        steps = detect_completed_steps()
+        # Should NOT crash; model step is False since no key/env
+        assert steps["model"] is False
+        assert steps["apikey"] is False
+
+    def test_verify_with_http_error_on_check(self, monkeypatch, tmp_path):
+        """API key present but _check_api_key_works returns False (network/format error)"""
+        monkeypatch.setenv("KIMI_API_KEY", "sk-short")  # short key → returns False without HTTP call
+        monkeypatch.setattr(Path, "home", lambda: tmp_path)
+        steps = detect_completed_steps()
+        # apikey is True (env var is set), but verify is False (key too short)
+        assert steps["apikey"] is True
+        assert steps["verify"] is False
 
 
 # ── _get_wenxin_access_token ────────────────────────────────────
@@ -483,6 +520,22 @@ class TestStep2ConfigApikey:
             with patch("src.commands.quickstart.Prompt.ask", return_value="sk-updated-67890"):
                 result = _step2_config_apikey(model_info)
         assert result is True
+
+    def test_existing_key_update_via_main_flow(self, tmp_path, monkeypatch):
+        """
+        User has existing key, says 'yes' to update → enters new key.
+        This exercises the Confirm.ask=True branch (line ~213 pass statement)
+        and the subsequent new-key input flow.
+        """
+        monkeypatch.chdir(tmp_path)
+        model_info = MODEL_CATEGORIES["国产付费"][0]  # use a different model
+        monkeypatch.setenv(model_info["api_key_env"], "sk-oldkey-long12345")
+        with patch("src.commands.quickstart.Confirm.ask", return_value=True):
+            with patch("src.commands.quickstart.Prompt.ask", return_value="sk-newkey-updated-99"):
+                result = _step2_config_apikey(model_info)
+        assert result is True
+        # Verify the new key was written to the env
+        assert os.getenv(model_info["api_key_env"]) == "sk-newkey-updated-99"
 
 
 # ── _step3_run_demo ────────────────────────────────────────────
