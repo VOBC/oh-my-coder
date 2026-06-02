@@ -42,7 +42,7 @@ class TestCostPricesEdit:
                         # default values are OptionInfo objects which are always truthy
                         prices(edit=True, reset=False)
         # Line 477: _cost_save_prices called when file doesn't exist
-        assert mock_save.call_count == 1
+        assert mock_save.call_count == 1, "Expected _cost_save_prices to be called once"
         # Line 479: os.system called with editor command
         assert mock_system.call_count == 1
         assert "cat" in mock_system.call_args[0][0]
@@ -63,7 +63,7 @@ class TestCostRecordUsage:
                     completion_tokens=500,
                 )
         data = json.loads(usage_file.read_text())
-        assert len(data) == 1
+        assert len(data) == 1, "Expected exactly one usage record to be saved"
         assert data[0]["model"] == "deepseek-chat"
         assert data[0]["prompt_tokens"] == 1000
         assert data[0]["completion_tokens"] == 500
@@ -88,7 +88,7 @@ class TestCostRecordUsage:
                 )
         data = json.loads(usage_file.read_text())
         # Should have exactly 5000 (oldest dropped)
-        assert len(data) == 5000
+        assert len(data) == 5000, "Expected usage records to be truncated to 5000"
         # Last record should be the new one
         assert data[-1]["model"] == "deepseek-chat"
 
