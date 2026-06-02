@@ -1805,13 +1805,13 @@ class TestPreprocessTargetGitHubSuccess:
         # Mock temp directory - return a string that Path can work with
         mock_tmp_dir_str = "/tmp/omc-gh-test123"
         mock_mkdtemp.return_value = mock_tmp_dir_str
-        
+
         # Mock successful git clone
         mock_run.return_value = MagicMock(returncode=0, stderr="")
-        
+
         # Call the function - should execute the return statement at line 110
         result = _preprocess_target("https://github.com/user/repo", "github", "task123")
-        
+
         # Verify the return value
         assert result[0] == mock_tmp_dir_str
         assert "GitHub 仓库" in result[1]
@@ -1833,7 +1833,7 @@ class TestPreprocessTargetUrlTruncation:
         mock_resp = MagicMock()
         mock_resp.text = long_content
         mock_get.return_value = mock_resp
-        
+
         path, extra = _preprocess_target("https://example.com", "url", "task123")
         assert path == "."
         assert "网页内容" in extra
@@ -1929,7 +1929,7 @@ class TestGenerateTaskSummaryExtended:
 
 class TestOrchestratorFunctions:
     """Test orchestrator factory functions (cover lines 313-316, 324-325, 330-352)"""
-    
+
     @patch("src.web.app.create_orchestrator")
     @patch("src.web.app.create_router")
     def test_get_orchestrator_creates_singleton(self, mock_create_router, mock_create_orchestrator):
@@ -1937,44 +1937,44 @@ class TestOrchestratorFunctions:
         # Reset global orchestrator
         import src.web.app as app_module
         app_module._global_orchestrator = None
-        
+
         # Mock the returned objects
         mock_router = MagicMock()
         mock_orch = MagicMock()
         mock_create_router.return_value = mock_router
         mock_create_orchestrator.return_value = mock_orch
-        
+
         # Call get_orchestrator
         result = app_module.get_orchestrator()
-        
+
         # Verify create_router and create_orchestrator were called
         mock_create_router.assert_called_once()
         mock_create_orchestrator.assert_called_once_with(mock_router)
         assert result == mock_orch
-        
+
         # Call again - should return same instance
         result2 = app_module.get_orchestrator()
         assert result2 == mock_orch
         # Should not call create again
         assert mock_create_router.call_count == 1
-    
+
     def test_create_router(self):
         """Test create_router() function (cover lines 324-325)"""
         from src.web.app import create_router
         router = create_router()
         assert router is not None
-    
+
     @patch("src.web.app.get_agent")
     def test_create_orchestrator(self, mock_get_agent):
         """Test create_orchestrator() function (cover lines 330-352)"""
         from src.web.app import create_orchestrator, create_router
-        
+
         # Mock get_agent to return None (agent not found)
         mock_get_agent.return_value = None
-        
+
         router = create_router()
         orch = create_orchestrator(router)
-        
+
         assert orch is not None
         # Verify get_agent was called for each agent name
         assert mock_get_agent.call_count == 10
@@ -1982,63 +1982,63 @@ class TestOrchestratorFunctions:
 
 class TestTaskManagerQueueExceptions:
     """Test TaskManager queue exception handling (cover lines 246-247, 271-272, 282-283)"""
-    
+
     def test_update_step_queue_full(self):
         """Test update_step when queue.put_nowait raises exception"""
         task_manager._tasks.clear()
         task_manager._queues.clear()
-        
+
         tid = task_manager.create_task()
-        
+
         # Make the queue raise an exception on put_nowait
         queue = task_manager._queues[tid]
         queue.put_nowait = MagicMock(side_effect=Exception("Queue full"))
-        
+
         # Should not raise - exception is caught and printed
         task_manager.update_step(tid, "executor", "active", "output")
-        
+
         # Verify the step was still updated
         task = task_manager.get_task(tid)
         assert task["step_status"]["executor"] == "active"
-    
+
     def test_complete_task_queue_full(self):
         """Test complete_task when queue.put_nowait raises exception"""
         task_manager._tasks.clear()
         task_manager._queues.clear()
-        
+
         tid = task_manager.create_task()
-        
+
         # Make the queue raise an exception on put_nowait
         queue = task_manager._queues[tid]
         queue.put_nowait = MagicMock(side_effect=Exception("Queue full"))
-        
+
         # Should not raise - exception is caught and printed
         task_manager.complete_task(tid, result={"ok": True})
-        
+
         # Verify the task was still completed
         task = task_manager.get_task(tid)
         assert task["status"] == "completed"
-    
+
     def test_delete_task_queue_full(self):
         """Test delete_task when queue.put_nowait raises exception"""
         task_manager._tasks.clear()
         task_manager._queues.clear()
-        
+
         tid = task_manager.create_task()
-        
+
         # Make the queue raise an exception on put_nowait
         queue = task_manager._queues[tid]
         queue.put_nowait = MagicMock(side_effect=Exception("Queue full"))
-        
+
         # Should not raise - exception is caught and printed
         result = task_manager.delete_task(tid)
-        
+
         assert result is True
 
 
 class TestApiHistoryFunction:
     """Test api_history() function (cover lines 526-527)"""
-    
+
     @pytest.fixture(autouse=True)
     def reset_task_manager(self):
         """Reset task manager state before each test."""
@@ -2047,7 +2047,7 @@ class TestApiHistoryFunction:
         yield
         task_manager._tasks.clear()
         task_manager._queues.clear()
-    
+
     def test_api_history_no_tasks(self, client):
         """Test api_history() when no tasks exist"""
         response = client.get("/api/history")
@@ -2055,13 +2055,13 @@ class TestApiHistoryFunction:
         data = response.json()
         assert "records" in data
         assert len(data["records"]) == 0
-    
+
     def test_api_history_with_tasks(self, client):
         """Test api_history() when tasks exist"""
         # Create some tasks
         tid1 = task_manager.create_task(task_desc="task1")
         tid2 = task_manager.create_task(task_desc="task2")
-        
+
         response = client.get("/api/history")
         assert response.status_code == 200
         data = response.json()
@@ -2071,7 +2071,7 @@ class TestApiHistoryFunction:
 
 class TestDashboardStatsFunction:
     """Test dashboard_stats() function (cover lines 486-488)"""
-    
+
     @patch("src.web.app.history_store")
     def test_dashboard_stats(self, mock_history_store, client):
         """Test dashboard_stats() returns stats from history_store"""
@@ -2081,7 +2081,7 @@ class TestDashboardStatsFunction:
             "completed_tasks": 8,
             "failed_tasks": 2,
         }
-        
+
         response = client.get("/api/dashboard/stats")
         assert response.status_code == 200
         data = response.json()
@@ -2094,21 +2094,21 @@ class TestDashboardStatsFunction:
 
 class TestOpenFolderErrors:
     """Test /api/open-folder error handling (cover lines 597-610)"""
-    
+
     def test_open_folder_missing_path(self, client):
         """Test open-folder with missing path"""
         response = client.post("/api/open-folder", json={})
         assert response.status_code == 400
         data = response.json()
         assert "path" in data.get("detail", "").lower() or "required" in data.get("detail", "").lower()
-    
+
     def test_open_folder_invalid_path(self, client):
         """Test open-folder with non-existent path"""
         import platform
-        
+
         if platform.system() == "Darwin":  # macOS might have different behavior
             pass  # Skip detailed assertion due to OS differences
-        
+
         response = client.post("/api/open-folder", json={"path": "/nonexistent/path/that/does/not/exist"})
         # Should return error status or success (depending on OS)
         assert response.status_code in [200, 500]
@@ -2116,17 +2116,17 @@ class TestOpenFolderErrors:
 
 class TestSaveReportErrors:
     """Test /api/save-report error handling (cover lines 625-650)"""
-    
+
     def test_save_report_missing_task_id(self, client):
         """Test save-report with missing task_id"""
         response = client.post("/api/save-report", json={})
         assert response.status_code == 400
-    
+
     @patch("src.web.app.task_manager.get_task")
     @patch("src.web.app.history_store.load")
     def test_save_report_task_not_found(self, mock_load, mock_get_task, client):
         """Test save-report when task not found"""
         mock_get_task.return_value = None
-        
+
         response = client.post("/api/save-report", json={"task_id": "nonexistent"})
         assert response.status_code == 404

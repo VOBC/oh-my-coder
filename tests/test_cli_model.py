@@ -2166,3 +2166,32 @@ class TestEdgeCases:
         from src.commands.cli_model import _validate_model_config
         ok, msg = _validate_model_config({"name": "  ", "model": "gpt4", "provider": "deepseek", "tier": "free"})
         assert ok  # validator doesn't strip whitespace
+
+
+class TestLogging:
+    """Tests for logging in cli_model.py"""
+
+    def test_logger_error_on_json_read_failure(self, tmp_path, caplog):
+        """logger.error called when JSON file is unreadable"""
+        import logging
+        from src.commands import cli_model
+        models_dir = tmp_path / "models"
+        models_dir.mkdir()
+        bad_file = models_dir / "bad.json"
+        bad_file.write_text("{invalid json")
+        cli_model.SHARED_MODELS_DIR = models_dir
+        with caplog.at_level(logging.ERROR, logger="src.commands.cli_model"):
+            from src.commands.cli_model import _list_shared_configs
+            _list_shared_configs()
+        assert any("Error reading JSON file" in r.message for r in caplog.records)
+
+    def test_logger_error_on_git_user_name_failure(self, monkeypatch, caplog):
+        """logger.error called when git config user.name fails"""
+        import logging
+        from unittest.mock import patch
+        monkeypatch.delenv("OMC_AUTHOR_NAME", raising=False)
+        with caplog.at_level(logging.ERROR, logger="src.commands.cli_model"):
+            with patch("subprocess.run", side_effect=Exception("git fail")):
+                from src.commands.cli_model import _get_author_name
+                result = _get_author_name()
+        assert any("Error getting git user.name" in r.message for r in caplog.records)

@@ -18,14 +18,14 @@ class TestOpenFolderException:
         """Test subprocess error returns 500 status."""
         from fastapi.testclient import TestClient
         from src.web.app import app
-        
+
         mock_run.side_effect = Exception("subprocess failed")
-        
-        
-        
-        
-        
-    
+
+
+
+
+
+
 
 
 class TestPreprocessTargetGitClone:
@@ -36,102 +36,106 @@ class TestPreprocessTargetGitClone:
     def test_git_clone_failure_raises_error(self, mock_rmtree, mock_run):
         """Test git clone failure raises RuntimeError."""
         from src.web.app import _preprocess_target
-        
-        
 
-        
-            
-            
-            
-            
-            
-            
-            
-            
-            
-        
-        
-    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 class TestPreprocessTargetUrlFetch:
-    
-    
-    
-    
-    
-    
-    
-    
-
-    
-    
-    
-    
-    
-    
-    
-    
-    
-
-        
-
-            
-
-                
-
-            
-
-        
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    pass
 
 class TestCreateOrchestratorAgentWarning:
-    
-    
-    
-    
-    
-    
-    
-    
 
-    
-    
-    
-    
-    
+    pass
 
-        
 
-            
 
-                
 
-            
 
-        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
 
 class TestChatCompletionNonStreamingException:
-    
-
-    
-
-
-    
-    
-    
-    
-    
-    
-    
-
-    
-    
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    pass
 
