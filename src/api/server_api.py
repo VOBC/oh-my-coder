@@ -28,7 +28,7 @@ from pathlib import Path
 from typing import Any, Optional
 
 from fastapi import Depends, FastAPI, Header, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 # =============================================================================
 # 数据模型
@@ -265,8 +265,7 @@ class TaskResponse(BaseModel):
     execution_time: float = 0.0
     metadata: dict[str, Any] = {}
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # =============================================================================
