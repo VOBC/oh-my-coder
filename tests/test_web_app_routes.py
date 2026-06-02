@@ -2126,3 +2126,7 @@ class TestSaveReportErrors:
     @patch("src.web.app.history_store.load")
     def test_save_report_task_not_found(self, mock_load, mock_get_task, client):
         """Test save-report when task not found"""
+        mock_get_task.return_value = None
+        
+        response = client.post("/api/save-report", json={"task_id": "nonexistent"})
+        assert response.status_code == 404
