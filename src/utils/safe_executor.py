@@ -142,6 +142,12 @@ class BlockedError(Exception):
     """命令被安全护栏拦截"""
 
     def __init__(self, command: str, reason: str):
+        """初始化拦截错误
+
+        Args:
+            command: 被拦截的命令
+            reason: 拦截原因
+        """
         self.command = command
         self.reason = reason
-        super().__init__(f"Blocked: {reason}\nCommand: {command}")
+        super().__init__(f"Blocked: {reason}\nCommand:{command}")
