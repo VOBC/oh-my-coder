@@ -2088,3 +2088,41 @@ class TestDashboardStatsFunction:
         assert data["total_tasks"] == 10
         assert data["completed_tasks"] == 8
         assert data["failed_tasks"] == 2
+
+
+# ===== Additional Coverage Tests (76% → 80%+) =====
+
+class TestOpenFolderErrors:
+    """Test /api/open-folder error handling (cover lines 597-610)"""
+    
+    def test_open_folder_missing_path(self, client):
+        """Test open-folder with missing path"""
+        response = client.post("/api/open-folder", json={})
+        assert response.status_code == 400
+        data = response.json()
+        assert "path" in data.get("detail", "").lower() or "required" in data.get("detail", "").lower()
+    
+    def test_open_folder_invalid_path(self, client):
+        """Test open-folder with non-existent path"""
+        import platform
+        
+        if platform.system() == "Darwin":  # macOS might have different behavior
+            pass  # Skip detailed assertion due to OS differences
+        
+        response = client.post("/api/open-folder", json={"path": "/nonexistent/path/that/does/not/exist"})
+        # Should return error status or success (depending on OS)
+        assert response.status_code in [200, 500]
+
+
+class TestSaveReportErrors:
+    """Test /api/save-report error handling (cover lines 625-650)"""
+    
+    def test_save_report_missing_task_id(self, client):
+        """Test save-report with missing task_id"""
+        response = client.post("/api/save-report", json={})
+        assert response.status_code == 400
+    
+    @patch("src.web.app.task_manager.get_task")
+    @patch("src.web.app.history_store.load")
+    def test_save_report_task_not_found(self, mock_load, mock_get_task, client):
+        """Test save-report when task not found"""

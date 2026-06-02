@@ -1,6 +1,4 @@
-"""
-Commands - CLI 命令模块
-"""
+"""Commands - CLI 命令模块."""
 
 from src.commands.cli import app
 

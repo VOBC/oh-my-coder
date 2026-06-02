@@ -65,8 +65,7 @@ local_app = typer.Typer(help="本地模型管理 - Ollama 支持")
 
 @local_app.command("status")
 def local_check_status():
-    """
-    检查 Ollama 服务状态
+    """检查 Ollama 服务状态
 
     示例:
         omc model local status
@@ -173,8 +172,7 @@ def local_check_status():
 
 @local_app.command("list")
 def local_list_models():
-    """
-    列出本地可用的模型
+    """列出本地可用的模型
 
     示例:
         omc model local list
@@ -214,8 +212,7 @@ def local_list_models():
 def local_pull_model(
     model_name: str = typer.Argument(..., help="模型名称（如 qwen2:7b）"),
 ):
-    """
-    拉取模型到本地
+    """拉取模型到本地
 
     示例:
         omc model local pull qwen2:7b
@@ -243,8 +240,7 @@ def local_run_ollama(
     model_name: str = typer.Argument("qwen2:7b", help="默认模型"),
     port: int = typer.Option(11434, "--port", "-p", help="端口"),
 ):
-    """
-    启动 Ollama 服务（如果未运行）
+    """启动 Ollama 服务（如果未运行）
 
     示例:
         omc model local run
@@ -278,8 +274,7 @@ def local_run_ollama(
 def local_model_info(
     model_name: str = typer.Argument(..., help="模型名称"),
 ):
-    """
-    显示模型详细信息
+    """显示模型详细信息
 
     示例:
         omc model local info qwen2:7b
@@ -318,8 +313,7 @@ def local_chat_model(
     temperature: float = typer.Option(0.7, "--temp", "-t", help="温度参数"),
     no_stream: bool = typer.Option(False, "--no-stream", help="禁用流式输出"),
 ):
-    """
-    与本地模型聊天（交互式）
+    """与本地模型聊天（交互式）
 
     示例:
         omc model local chat
@@ -395,11 +389,11 @@ def local_chat_model(
             if user_input in ("/exit", "/quit", "/q"):
                 console.print("\n[dim]退出聊天[/dim]")
                 break
-            elif user_input == "/clear":
+            if user_input == "/clear":
                 messages = [m for m in messages if m.role == "system"]
                 console.print("[dim]已清空对话历史[/dim]\n")
                 continue
-            elif user_input == "/help":
+            if user_input == "/help":
                 console.print(
                     "\n[dim]命令列表：[/dim]\n"
                     "  /exit, /quit  - 退出聊天\n"
@@ -481,31 +475,13 @@ SUPPORTED_MODELS = {
 
 
 # =============================================================================
-# 工具函数
+# 工具函数（从 cli_init 导入共享函数）
 # =============================================================================
 
-
-def _ensure_config_dir() -> None:
-    """确保配置目录存在"""
-    CONFIG_DIR.mkdir(parents=True, exist_ok=True)
-
-
-def _load_config() -> dict:
-    """加载配置文件"""
-    if CONFIG_FILE.exists():
-        try:
-            with open(CONFIG_FILE, encoding="utf-8") as f:
-                return json.load(f)
-        except Exception:
-            pass
-    return {}
-
-
-def _save_config(config: dict) -> None:
-    """保存配置文件"""
-    _ensure_config_dir()
-    with open(CONFIG_FILE, "w", encoding="utf-8") as f:
-        json.dump(config, f, indent=2, ensure_ascii=False)
+from src.commands.cli_init import (
+    _load_config,
+    _save_config,
+)
 
 
 def _get_current_model() -> str:
@@ -537,13 +513,6 @@ def _get_current_api_key(model_id: str) -> Optional[str]:
     if env_var:
         return os.getenv(env_var)
     return None
-
-
-def _tier_style(tier: str) -> str:
-    """根据 tier 返回颜色"""
-    return {"free": "green", "low": "cyan", "medium": "yellow", "high": "red"}.get(
-        tier, "white"
-    )
 
 
 # =============================================================================
@@ -2020,7 +1989,7 @@ def remove_shared_model(
 
 @app.callback(invoke_without_command=True)
 def main(ctx: typer.Context) -> None:
-    """模型管理 - 查看/切换/分享/推荐"""
+    """模型管理 - 查看/切换/分享/推荐."""
     if ctx.invoked_subcommand is None:
         console.print(ctx.get_help())
 
