@@ -94,20 +94,20 @@ app.add_typer(mcp_app, name="mcp")
 app.add_typer(
     skill_app, name="skill", help="Skill 系统 - 内置和自定义 Skill 管理与执行"
 )
-app.add_typer(usage_app, name="usage", help="用量统计与追踪 - stats/trace/memory")
+app.add_typer(usage_app, name="usage", help="用量统计与追踪 - 查看 API 使用量、Token 消耗和记忆数据")
 app.add_typer(migrate_app, name="migrate", help="记忆迁移 - 从 Claude/Gemini 导入配置")
 app.add_typer(tui_app, name="tui", help="TUI 交互界面 - 简易终端交互")
 app.add_typer(
     self_config_app, name="self-config", help="自配置 - 自然语言配置 API Key/模型/代理"
 )
 app.add_typer(doctor_app, name="doctor", help="环境诊断 - 检查常见问题并给出修复建议")
-app.add_typer(commands_app, name="cmd", help="命令系统 - 运行自定义 Markdown 命令")
+app.add_typer(commands_app, name="cmd", help="自定义指令集 -执行可复用的 .md命令行脚本")
 app.add_typer(pkg_app, name="pkg", help="包管理器 - Homebrew/npm/scoop/winget/AUR")
 app.add_typer(lsp_app, name="lsp", help="LSP 集成 - 读取代码诊断信息")
 app.add_typer(search_app, name="search", help="代码搜索 - Sourcegraph 公开代码库搜索")
 app.add_typer(review_app, name="review", help="代码审查 - 智能分析代码变更")
 app.add_typer(quality_app, name="quality", help="代码质量检查 - ruff/black 集成")
-app.add_typer(profile_app, name="profile", help="Profile 隔离 - 子 Agent 上下文管理")
+app.add_typer(profile_app, name="profile", help="环境配置切换 -为不同项目创建独立的Agent运行环境")
 app.add_typer(server_app, name="server", help="远程 Server - HTTP REST API 服务")
 
 # 代码清理命令
