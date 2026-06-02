@@ -23,6 +23,7 @@ Model CLI - 模型切换 + Catwalk 模型仓库 + 模型配置分享 + 模型推
 
 
 import json
+import logging
 import os
 import subprocess
 import urllib.request
@@ -37,6 +38,8 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.prompt import Confirm, Prompt
 from rich.table import Table
+
+logger = logging.getLogger(__name__)
 
 # 导入模型发现模块
 try:
@@ -537,7 +540,8 @@ def _list_shared_configs() -> list[dict]:
                 data = json.load(f)
                 data["_file"] = json_file.name
                 configs.append(data)
-        except Exception:
+        except Exception as e:
+            logger.error("Error reading JSON file %s: %s", json_file.name, e)
             continue
 
     return configs
@@ -560,8 +564,8 @@ def _get_author_name() -> str:
         )
         if result.returncode == 0 and result.stdout.strip():
             return result.stdout.strip()
-    except Exception:
-        pass
+    except Exception as e:
+        logger.error("Error getting git user.name: %s", e)
 
     # 3. 默认
     return "Anonymous"
@@ -787,7 +791,8 @@ def _list_yaml_configs() -> list[dict[str, Any]]:
                     )
                     data["_file"] = yaml_file.name
                     configs.append(data)
-            except Exception:
+            except Exception as e:
+                logger.error("Error reading YAML file %s: %s", yaml_file.name, e)
                 continue
 
     return configs
@@ -1250,9 +1255,9 @@ def list_models(
                         console.print(
                             "[dim]   运行 [cyan]omc model sync[/cyan] 查看详情并同步[/dim]"
                         )
-            except Exception:
+            except Exception as e:
                 # 静默失败，不影响主功能
-                pass
+                logger.debug("Error checking for new models: %s", e)
 
 
 @app.command("catwalk")
