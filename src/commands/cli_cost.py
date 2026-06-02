@@ -165,6 +165,8 @@ def _cost_record_usage(model: str, prompt_tokens: int, completion_tokens: int) -
 def _cost_calculate_cost(model: str, prompt_tokens: int, completion_tokens: int) -> float:
     """计算单次调用成本（元）"""
     prices = _cost_load_prices()
+    if not model or not isinstance(model, str):
+        return 0.0
     model_key = model.lower()
 
     # 精确匹配
@@ -305,8 +307,8 @@ def report(
                 continue
             if start and ts < start:
                 continue
-            p = r.get("prompt_tokens", 0)
-            c = r.get("completion_tokens", 0)
+            p = r.get("prompt_tokens") or 0
+            c = r.get("completion_tokens") or 0
             result["calls"] += 1
             result["prompt"] += p
             result["completion"] += c
