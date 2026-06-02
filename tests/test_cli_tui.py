@@ -810,6 +810,38 @@ class TestCollectWorkspaceCode:
             result = session._collect_workspace_code()
             assert result == ""
 
+    def test_collects_code_from_real_files(self):
+        """Test that actual Python files are read and collected."""
+        import tempfile
+        import os
+        
+        # Create a temporary directory with Python files
+        with tempfile.TemporaryDirectory() as tmpdir:
+            # Create a simple Python file
+            file1 = os.path.join(tmpdir, "test1.py")
+            with open(file1, "w") as f:
+                f.write("def hello():\n    print('hello')\n")
+            
+            # Create another Python file
+            file2 = os.path.join(tmpdir, "test2.py")
+            with open(file2, "w") as f:
+                f.write("class MyClass:\n    pass\n")
+            
+            # Change to the temp directory
+            original_cwd = os.getcwd()
+            os.chdir(tmpdir)
+            
+            try:
+                session = TUISession()
+                result = session._collect_workspace_code()
+                
+                # Verify the result contains code from the files
+                assert isinstance(result, str)
+                assert len(result) > 0
+                assert "def hello" in result or "class MyClass" in result
+            finally:
+                os.chdir(original_cwd)
+
 
 class TestWaitKey:
     """Test _wait_key()."""
