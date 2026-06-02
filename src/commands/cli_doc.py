@@ -174,7 +174,7 @@ def _collect_cli_commands() -> list[dict]:
 
 def _collect_web_api() -> list[dict]:
     """收集 Web API 端点信息"""
-    endpoints = []
+    endpoints: list[dict] = []
 
     web_app = Path("src/web/app.py")
     if not web_app.exists():
