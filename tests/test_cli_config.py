@@ -103,3 +103,24 @@ class TestModelsCommand:
         with patch("src.commands.cli_config.Path.home", return_value=tmp_path):
             result = runner.invoke(app, ["models"])
             assert result.exit_code == 0
+
+
+class TestValidateConfigFile:
+    """测试配置文件验证"""
+
+    def test_missing_file(self):
+        from src.config.agent_config import validate_config_file
+
+        valid, errors = validate_config_file("/nonexistent/config.yaml")
+        assert valid is False
+        assert "配置文件不存在" in errors
+
+    def test_invalid_name(self):
+        from src.config.agent_config import AgentConfig, EnvironmentConfig
+
+        config = AgentConfig(
+            name="Invalid Name!", description="test", environment=EnvironmentConfig()
+        )
+        errors = config.validate()
+        assert len(errors) > 0
+        assert any("name" in e for e in errors)
