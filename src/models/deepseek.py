@@ -124,7 +124,7 @@ class DeepSeekModel(BaseModel):
             )
         return self._client
 
-    async def close(self):
+    async def close(self) -> None:
         """关闭 HTTP 客户端"""
         if self._client and not self._client.is_closed:
             await self._client.aclose()
