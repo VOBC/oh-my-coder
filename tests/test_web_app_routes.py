@@ -2093,12 +2093,17 @@ class TestTaskManagerQueueExceptions:
 class TestApiHistoryFunction:
     """Test api_history() function (cover lines 526-527)"""
     
-    def test_api_history_no_tasks(self, client):
-        """Test api_history() when no tasks exist"""
-        # Clear all tasks using the reset_task_manager fixture behavior
+    @pytest.fixture(autouse=True)
+    def reset_task_manager(self):
+        """Reset task manager state before each test."""
         task_manager._tasks.clear()
         task_manager._queues.clear()
-        
+        yield
+        task_manager._tasks.clear()
+        task_manager._queues.clear()
+    
+    def test_api_history_no_tasks(self, client):
+        """Test api_history() when no tasks exist"""
         response = client.get("/api/history")
         assert response.status_code == 200
         data = response.json()
@@ -2107,10 +2112,6 @@ class TestApiHistoryFunction:
     
     def test_api_history_with_tasks(self, client):
         """Test api_history() when tasks exist"""
-        # Clear all tasks
-        task_manager._tasks.clear()
-        task_manager._queues.clear()
-        
         # Create some tasks
         tid1 = task_manager.create_task(task_desc="task1")
         tid2 = task_manager.create_task(task_desc="task2")
@@ -2120,3 +2121,24 @@ class TestApiHistoryFunction:
         data = response.json()
         assert "records" in data
         assert len(data["records"]) == 2
+
+
+class TestDashboardStatsFunction:
+    """Test dashboard_stats() function (cover lines 486-488)"""
+    
+    @patch("src.web.app.history_store")
+    def test_dashboard_stats(self, mock_history_store, client):
+        """Test dashboard_stats() returns stats from history_store"""
+        # Mock the get_stats method
+        mock_history_store.get_stats.return_value = {
+            "total_tasks": 10,
+            "completed_tasks": 8,
+            "failed_tasks": 2,
+        }
+        
+        response = client.get("/api/dashboard/stats")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["total_tasks"] == 10
+        assert data["completed_tasks"] == 8
+        assert data["failed_tasks"] == 2
