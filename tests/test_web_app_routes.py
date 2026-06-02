@@ -1842,3 +1842,281 @@ class TestSessionsAPI:
         resp2 = client.get(f"/api/sessions/{session_id}")
         assert resp2.status_code == 404
 
+
+
+# ---------------------------------------------------------------------------
+# Additional Coverage Tests for Helper Functions
+# ---------------------------------------------------------------------------
+
+
+class TestPreprocessTargetGitHubSuccess:
+    """Test _preprocess_target GitHub clone success (cover line 110)"""
+
+    @patch("subprocess.run")
+    @patch("tempfile.mkdtemp")
+    def test_preprocess_github_success(self, mock_mkdtemp, mock_run):
+        """Test successful GitHub clone returns path and context"""
+        # Mock temp directory - return a string that Path can work with
+        mock_tmp_dir_str = "/tmp/omc-gh-test123"
+        mock_mkdtemp.return_value = mock_tmp_dir_str
+        
+        # Mock successful git clone
+        mock_run.return_value = MagicMock(returncode=0, stderr="")
+        
+        # Call the function - should execute the return statement at line 110
+        result = _preprocess_target("https://github.com/user/repo", "github", "task123")
+        
+        # Verify the return value
+        assert result[0] == mock_tmp_dir_str
+        assert "GitHub 仓库" in result[1]
+        # Verify that subprocess.run was called with correct arguments
+        mock_run.assert_called_once()
+        call_args = mock_run.call_args
+        assert "git" in call_args[0][0]
+        assert "clone" in call_args[0][0]
+
+
+class TestPreprocessTargetUrlTruncation:
+    """Test _preprocess_target URL content truncation (cover line 139)"""
+
+    @patch("requests.get")
+    def test_preprocess_url_content_truncated(self, mock_get):
+        """Test URL content > 8000 chars gets truncated"""
+        # Create content > 8000 chars
+        long_content = "<html><body>" + "x" * 9000 + "</body></html>"
+        mock_resp = MagicMock()
+        mock_resp.text = long_content
+        mock_get.return_value = mock_resp
+        
+        path, extra = _preprocess_target("https://example.com", "url", "task123")
+        assert path == "."
+        assert "网页内容" in extra
+        # Check that content was truncated
+        # Remove the header to get the actual content
+        content_start = extra.find("\n\n") + 2
+        actual_content = extra[content_start:]
+        assert len(actual_content) <= 8000 + 50  # 50 chars for "... (内容已截断)"
+        assert "内容已截断" in extra
+
+
+class TestDetectTargetTypeFromMessageEdgeCases:
+    """Test _detect_target_type_from_message edge cases (cover line 552)"""
+
+    def test_detect_github_url_with_path(self):
+        """Test GitHub URL with full path"""
+        result_type, result_path = _detect_target_type_from_message(
+            "Check https://github.com/user/repo/issues/1"
+        )
+        assert result_type == "github"
+        assert "github.com" in result_path
+
+    def test_detect_url_non_github(self):
+        """Test non-GitHub URL"""
+        result_type, result_path = _detect_target_type_from_message(
+            "Read https://example.com/page"
+        )
+        assert result_type == "url"
+        assert result_path == "https://example.com/page"
+
+    def test_detect_local_path_with_tilde(self):
+        """Test local path starting with ~"""
+        result_type, result_path = _detect_target_type_from_message(
+            "Build ~/projects/myproject"
+        )
+        assert result_type == "local"
+        assert result_path == "~/projects/myproject"
+
+
+class TestGenerateTaskSummaryExtended:
+    """Test _generate_task_summary extended cases"""
+
+    def test_generate_summary_review_workflow(self):
+        """Test review workflow"""
+        task = {
+            "workflow": "review",
+            "model": "deepseek",
+            "project_path": "/tmp/test",
+            "target_type": "local",
+        }
+        summary = _generate_task_summary(task)
+        assert "代码审查" in summary
+        assert "DeepSeek V4" in summary
+
+    def test_generate_summary_debug_workflow(self):
+        """Test debug workflow"""
+        task = {
+            "workflow": "debug",
+            "model": "glm-4-flash",
+            "project_path": "https://github.com/user/repo",
+            "target_type": "github",
+        }
+        summary = _generate_task_summary(task)
+        assert "调试修复" in summary
+        assert "GLM-4.7-Flash" in summary
+        assert "GitHub 仓库" in summary
+
+    def test_generate_summary_test_workflow(self):
+        """Test test workflow with URL target"""
+        task = {
+            "workflow": "test",
+            "model": "moonshot-v1-128k",
+            "project_path": "https://example.com",
+            "target_type": "url",
+        }
+        summary = _generate_task_summary(task)
+        assert "测试用例" in summary
+        assert "Kimi 128K" in summary
+        assert "网页" in summary
+
+    def test_generate_summary_unknown_workflow_model(self):
+        """Test unknown workflow and model"""
+        task = {
+            "workflow": "unknown",
+            "model": "unknown-model",
+            "project_path": "/tmp/test",
+            "target_type": "local",
+        }
+        summary = _generate_task_summary(task)
+        assert "unknown" in summary
+        assert "unknown-model" in summary
+
+
+class TestOrchestratorFunctions:
+    """Test orchestrator factory functions (cover lines 313-316, 324-325, 330-352)"""
+    
+    @patch("src.web.app.create_orchestrator")
+    @patch("src.web.app.create_router")
+    def test_get_orchestrator_creates_singleton(self, mock_create_router, mock_create_orchestrator):
+        """Test get_orchestrator() creates singleton (cover lines 313-316)"""
+        # Reset global orchestrator
+        import src.web.app as app_module
+        app_module._global_orchestrator = None
+        
+        # Mock the returned objects
+        mock_router = MagicMock()
+        mock_orch = MagicMock()
+        mock_create_router.return_value = mock_router
+        mock_create_orchestrator.return_value = mock_orch
+        
+        # Call get_orchestrator
+        result = app_module.get_orchestrator()
+        
+        # Verify create_router and create_orchestrator were called
+        mock_create_router.assert_called_once()
+        mock_create_orchestrator.assert_called_once_with(mock_router)
+        assert result == mock_orch
+        
+        # Call again - should return same instance
+        result2 = app_module.get_orchestrator()
+        assert result2 == mock_orch
+        # Should not call create again
+        assert mock_create_router.call_count == 1
+    
+    def test_create_router(self):
+        """Test create_router() function (cover lines 324-325)"""
+        from src.web.app import create_router
+        router = create_router()
+        assert router is not None
+    
+    @patch("src.web.app.get_agent")
+    def test_create_orchestrator(self, mock_get_agent):
+        """Test create_orchestrator() function (cover lines 330-352)"""
+        from src.web.app import create_orchestrator, create_router
+        
+        # Mock get_agent to return None (agent not found)
+        mock_get_agent.return_value = None
+        
+        router = create_router()
+        orch = create_orchestrator(router)
+        
+        assert orch is not None
+        # Verify get_agent was called for each agent name
+        assert mock_get_agent.call_count == 10
+
+
+class TestTaskManagerQueueExceptions:
+    """Test TaskManager queue exception handling (cover lines 246-247, 271-272, 282-283)"""
+    
+    def test_update_step_queue_full(self):
+        """Test update_step when queue.put_nowait raises exception"""
+        task_manager._tasks.clear()
+        task_manager._queues.clear()
+        
+        tid = task_manager.create_task()
+        
+        # Make the queue raise an exception on put_nowait
+        queue = task_manager._queues[tid]
+        queue.put_nowait = MagicMock(side_effect=Exception("Queue full"))
+        
+        # Should not raise - exception is caught and printed
+        task_manager.update_step(tid, "executor", "active", "output")
+        
+        # Verify the step was still updated
+        task = task_manager.get_task(tid)
+        assert task["step_status"]["executor"] == "active"
+    
+    def test_complete_task_queue_full(self):
+        """Test complete_task when queue.put_nowait raises exception"""
+        task_manager._tasks.clear()
+        task_manager._queues.clear()
+        
+        tid = task_manager.create_task()
+        
+        # Make the queue raise an exception on put_nowait
+        queue = task_manager._queues[tid]
+        queue.put_nowait = MagicMock(side_effect=Exception("Queue full"))
+        
+        # Should not raise - exception is caught and printed
+        task_manager.complete_task(tid, result={"ok": True})
+        
+        # Verify the task was still completed
+        task = task_manager.get_task(tid)
+        assert task["status"] == "completed"
+    
+    def test_delete_task_queue_full(self):
+        """Test delete_task when queue.put_nowait raises exception"""
+        task_manager._tasks.clear()
+        task_manager._queues.clear()
+        
+        tid = task_manager.create_task()
+        
+        # Make the queue raise an exception on put_nowait
+        queue = task_manager._queues[tid]
+        queue.put_nowait = MagicMock(side_effect=Exception("Queue full"))
+        
+        # Should not raise - exception is caught and printed
+        result = task_manager.delete_task(tid)
+        
+        assert result is True
+
+
+class TestApiHistoryFunction:
+    """Test api_history() function (cover lines 526-527)"""
+    
+    def test_api_history_no_tasks(self, client):
+        """Test api_history() when no tasks exist"""
+        # Clear all tasks using the reset_task_manager fixture behavior
+        task_manager._tasks.clear()
+        task_manager._queues.clear()
+        
+        response = client.get("/api/history")
+        assert response.status_code == 200
+        data = response.json()
+        assert "records" in data
+        assert len(data["records"]) == 0
+    
+    def test_api_history_with_tasks(self, client):
+        """Test api_history() when tasks exist"""
+        # Clear all tasks
+        task_manager._tasks.clear()
+        task_manager._queues.clear()
+        
+        # Create some tasks
+        tid1 = task_manager.create_task(task_desc="task1")
+        tid2 = task_manager.create_task(task_desc="task2")
+        
+        response = client.get("/api/history")
+        assert response.status_code == 200
+        data = response.json()
+        assert "records" in data
+        assert len(data["records"]) == 2
