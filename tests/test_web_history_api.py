@@ -11,7 +11,9 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-# 确保 src 在路径中
+# Ensure src is in path
+# Prevent concurrent execution - global singleton pollution
+pytestmark = pytest.mark.xdist_group("web_history_api")
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 # 导入被测试模块

@@ -6,6 +6,9 @@ from unittest.mock import patch, MagicMock
 
 import pytest
 
+# Prevent concurrent execution - global singleton pollution
+pytestmark = pytest.mark.xdist_group("web_app")
+
 
 class TestDetectTargetType:
     """Tests for _detect_target_type function."""

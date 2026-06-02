@@ -18,6 +18,9 @@ import httpx
 import pytest
 from fastapi.testclient import TestClient
 
+# Prevent concurrent execution - global singleton pollution
+pytestmark = pytest.mark.xdist_group("web_app_extended")
+
 # Must import app AFTER mocking env to avoid import errors
 # We import here; if USE_MOCK env is needed, set before import
 

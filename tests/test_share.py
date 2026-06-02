@@ -11,6 +11,9 @@ from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
 
+# Prevent concurrent execution - global singleton pollution
+pytestmark = pytest.mark.xdist_group("share")
+
 # ========================================
 # Fixtures
 # ========================================

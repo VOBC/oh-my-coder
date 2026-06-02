@@ -20,6 +20,9 @@ from unittest.mock import AsyncMock, MagicMock, Mock, patch
 import pytest
 from fastapi.testclient import TestClient
 
+# Prevent concurrent execution - global singleton pollution
+pytestmark = pytest.mark.xdist_group("web_app_routes")
+
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from fastapi.responses import JSONResponse

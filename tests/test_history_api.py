@@ -15,6 +15,9 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
+# Prevent concurrent execution - global singleton pollution
+pytestmark = pytest.mark.xdist_group("history_api")
+
 # 导入被测试模块
 from src.web.history_api import (
     HistoryStore,

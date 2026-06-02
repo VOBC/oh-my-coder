@@ -14,6 +14,9 @@ from fastapi.testclient import TestClient
 from src.core.orchestrator import Orchestrator
 from src.web.app import app
 
+# Prevent concurrent execution - global singleton pollution
+pytestmark = pytest.mark.xdist_group("web")
+
 
 class TestWebAPI:
     """Web API 测试"""
