@@ -10,6 +10,7 @@
 [![PyPI downloads](https://img.shields.io/pypi/dm/oh-my-coder?color=green&label=Downloads)](https://pypi.org/project/oh-my-coder/)
 [![Python](https://img.shields.io/badge/Python-3.9+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![Coverage](https://img.shields.io/badge/coverage-87%25-green)](https://github.com/VOBC/oh-my-coder/actions)
 [![Stars](https://img.shields.io/github/stars/VOBC/oh-my-coder?style=flat-square&logo=github)](https://github.com/VOBC/oh-my-coder/stargazers)
 [![Tests](https://img.shields.io/github/actions/workflow/status/VOBC/oh-my-coder/test.yml?branch=main&label=Tests)](https://github.com/VOBC/oh-my-coder/actions)
 
