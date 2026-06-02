@@ -24,6 +24,9 @@ class TestMaskSecret:
     def test_empty(self):
         assert self._mask("") == ""
 
+    def test_none(self):
+        assert self._mask(None) == ""
+
     def test_short(self):
         assert self._mask("abc") == "****"
 
@@ -32,6 +35,9 @@ class TestMaskSecret:
 
     def test_long(self):
         assert self._mask("sk-1234567890abcdef") == "sk-1****cdef"
+
+    def test_9_chars(self):
+        assert self._mask("123456789") == "1234****6789"
 
 
 class TestShowCommand:
