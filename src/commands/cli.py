@@ -187,9 +187,24 @@ def main(
         is_eager=True,
     ),
 ):
-    """Oh My Coder - 多智能体 AI 编程助手
+    """Oh My Coder CLI 主入口函数。
 
-    处理全局 CLI 选项并显示帮助信息。
+    处理全局 CLI 选项（如 --version）并在没有子命令时显示帮助信息。
+
+    Args:
+        ctx (typer.Context): Typer 上下文对象，包含命令行调用信息。
+        version (bool): 如果为 True，显示版本信息并退出。
+
+    Returns:
+        None: 此函数不返回值，通过 typer.Exit() 退出。
+
+    Examples:
+        >>> # 显示版本信息
+        >>> omc --version
+        >>> # 显示帮助面板（无子命令时）
+        >>> omc
+        >>> # 调用子命令
+        >>> omc run
     """
     if version:
         _print_version()
