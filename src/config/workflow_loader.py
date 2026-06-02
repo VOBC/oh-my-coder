@@ -71,7 +71,7 @@ class WorkflowLoader:
     - 回退：YAML 加载失败时使用 WORKFLOW_TEMPLATES
     """
 
-    def __init__(self, default_workflows_dir: Optional[Path] = None):
+    def __init__(self, default_workflows_dir: Optional[Path] = None) -> None:
         """
         Args:
             default_workflows_dir: 默认工作流目录（默认：src/config/default_workflows）
@@ -256,7 +256,7 @@ class WorkflowLoader:
             self._cache.pop(name, None)
             return None
 
-    def _ensure_user_dir(self):
+    def _ensure_user_dir(self) -> None:
         """确保用户工作流目录存在"""
         self._user_dir.mkdir(parents=True, exist_ok=True)
 

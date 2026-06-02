@@ -321,7 +321,7 @@ def create_app(
     app.mount("/", web_app)
 
     @app.get("/favicon.ico")
-    async def favicon():
+    async def favicon() -> FileResponse:
         return FileResponse(_web_dir / "static" / "favicon.svg", media_type="image/svg+xml")
 
     @app.get("/health")
