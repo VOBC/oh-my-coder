@@ -914,3 +914,48 @@ class TestExceptionBranches:
         assert result.exit_code == 0
         # Old data should be filtered out
         assert "Token 用量汇总" in result.output
+
+
+class TestEdgeCasesAdditional:
+    """Additional edge case tests for coverage."""
+
+    def test_calculate_cost_negative_tokens(self, tmp_path, monkeypatch):
+        """Negative tokens return negative cost."""
+        prices_file = tmp_path / "prices.json"
+        prices_file.write_text(json.dumps({"m": {"prompt": 0.01, "completion": 0.03}}))
+        monkeypatch.setattr("src.commands.cli_cost._COST_PRICES_FILE", prices_file)
+        cost = _cost_calculate_cost("m", -1000, -500)
+        assert cost < 0
+
+    def test_report_zero_days(self, tmp_path, monkeypatch):
+        """Report with days=0."""
+        usage_file = tmp_path / "usage.json"
+        usage_file.write_text(json.dumps([{"timestamp": datetime.now().isoformat(), "model": "m", "prompt_tokens": 1, "completion_tokens": 1}]))
+        monkeypatch.setattr("src.commands.cli_cost._COST_USAGE_FILE", usage_file)
+        monkeypatch.setattr("src.commands.cli_cost._COST_CONFIG_DIR", tmp_path)
+        result = runner.invoke(app, ["report", "--days", "0"])
+        assert result.exit_code == 0
+        assert "Token 用量汇总" in result.output
+
+    def test_export_overwrite(self, tmp_path, monkeypatch):
+        """Export overwrites existing file."""
+        usage_file = tmp_path / "usage.json"
+        usage_file.write_text(json.dumps([{"timestamp": "2024-01-01", "model": "m", "prompt_tokens": 1, "completion_tokens": 1}]))
+        monkeypatch.setattr("src.commands.cli_cost._COST_USAGE_FILE", usage_file)
+        monkeypatch.setattr("src.commands.cli_cost._COST_CONFIG_DIR", tmp_path)
+        out = tmp_path / "out.json"
+        out.write_text("old")
+        result = runner.invoke(app, ["export", "--output", str(out)])
+        assert result.exit_code == 0
+        assert json.loads(out.read_text())[0]["model"] == "m"
+
+    def test_model_with_special_chars(self, tmp_path, monkeypatch):
+        """Model names with hyphens and slashes should not crash."""
+        usage_file = tmp_path / "usage.json"
+        usage_file.write_text(json.dumps([{"timestamp": datetime.now().isoformat(), "model": "org/model-1", "prompt_tokens": 1, "completion_tokens": 1}]))
+        monkeypatch.setattr("src.commands.cli_cost._COST_USAGE_FILE", usage_file)
+        monkeypatch.setattr("src.commands.cli_cost._COST_CONFIG_DIR", tmp_path)
+        result = runner.invoke(app, ["report"])
+        assert result.exit_code == 0
+        # Should not crash with special characters in model name
+        assert "Token 用量汇总" in result.output
