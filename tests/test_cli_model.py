@@ -10,7 +10,6 @@ from src.commands.cli_model import (
     _get_current_api_key,
     _get_current_model,
     _resolve_task,
-    _tier_style,
     _validate_model_config,
     app,
 )
@@ -184,22 +183,8 @@ class TestGetCurrentApiKey:
 
 
 class TestTierStyle:
-    """测试 _tier_style"""
-
-    def test_free_is_green(self):
-        assert _tier_style("free") == "green"
-
-    def test_low_is_cyan(self):
-        assert _tier_style("low") == "cyan"
-
-    def test_medium_is_yellow(self):
-        assert _tier_style("medium") == "yellow"
-
-    def test_high_is_red(self):
-        assert _tier_style("high") == "red"
-
-    def test_unknown_is_white(self):
-        assert _tier_style("unknown") == "white"
+    """Tests for tier style - function removed, skip"""
+    pass
 
 
 class TestEnsureSharedDir:
@@ -388,6 +373,32 @@ class TestValidateModelConfig:
         }
         is_valid, msg = _validate_model_config(data)
         assert is_valid is False
+
+    def test_validates_all_valid_tiers(self):
+        """所有有效 tier 应通过验证"""
+        for tier in ["free", "low", "medium", "high"]:
+            data = {"name": "Test", "model": "chat", "provider": "deepseek", "tier": tier}
+            is_valid, _ = _validate_model_config(data)
+            assert is_valid is True
+
+    def test_validates_known_provider(self):
+        """已知 provider 应通过验证"""
+        data = {"name": "Test", "model": "chat", "provider": "openai"}
+        is_valid, _ = _validate_model_config(data)
+        assert is_valid is True
+
+    def test_accepts_extra_fields(self):
+        """额外字段不应影响验证"""
+        data = {
+            "name": "Test",
+            "model": "chat",
+            "provider": "deepseek",
+            "extra_field": "should be ignored",
+            "tier": "low"
+        }
+        is_valid, msg = _validate_model_config(data)
+        assert is_valid is True
+        assert msg == "OK"
 
 
 class TestListYamlConfigs:
@@ -2133,3 +2144,24 @@ class TestLocalModelInfo:
         """local info when model not in OLLAMA_MODELS"""
         result = runner.invoke(app, ["local", "info", "unknown-model-xyz"])
         assert result.exit_code in [0, 1]
+
+
+class TestEdgeCases:
+    """Edge case tests for cli_model.py"""
+
+    def test_validate_model_config_empty_name(self):
+        """Empty string name should be rejected"""
+        from src.commands.cli_model import _validate_model_config
+        ok, msg = _validate_model_config({"name": "", "model": "gpt4", "provider": "openai", "tier": "free"})
+        assert not ok
+
+    def test_resolve_task_empty_string(self):
+        """Empty string task should return as-is"""
+        from src.commands.cli_model import _resolve_task
+        assert _resolve_task("") == ""
+
+    def test_validate_model_config_extra_fields_ok(self):
+        """Extra fields beyond required should still validate OK"""
+        from src.commands.cli_model import _validate_model_config
+        ok, _ = _validate_model_config({"name": "x", "model": "y", "provider": "z", "tier": "free", "extra": 123})
+        assert ok
