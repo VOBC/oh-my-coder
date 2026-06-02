@@ -238,6 +238,10 @@ class TeamAuth:
         if team.owner_id == user_id:
             return False
 
+        # 检查用户是否是团队成员
+        if not any(m.user_id == user_id for m in team.members):
+            return False
+
         team.members = [m for m in team.members if m.user_id != user_id]
         self._user_teams.pop(user_id, None)
 

@@ -548,6 +548,18 @@ class TestLeaveTeam:
         assert result is False
 
     @pytest.mark.asyncio
+    async def test_leave_team_user_not_member(
+        self, auth: TeamAuth, sample_team: Team
+    ) -> None:
+        """Test that leave_team returns False when user is not a member"""
+        # user1 is not in sample_team's members
+        result = await auth.leave_team("user1", "team_test123")
+        assert result is False
+        # Team should remain unchanged
+        assert len(sample_team.members) == 1  # only owner
+        assert sample_team.members[0].user_id == "owner1"
+
+    @pytest.mark.asyncio
     async def test_leave_team_removes_from_user_teams(
         self, auth: TeamAuth, sample_team: Team
     ) -> None:
