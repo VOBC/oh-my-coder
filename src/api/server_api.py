@@ -118,9 +118,11 @@ class TaskStore:
             return record
 
     async def get(self, task_id: str) -> Optional[TaskRecord]:
+        """获取任务记录"""
         return self._store.get(task_id)
 
     async def list_all(self) -> list[TaskRecord]:
+        """列出所有任务"""
         return sorted(
             self._store.values(),
             key=lambda r: r.created_at,
@@ -134,6 +136,7 @@ class TaskStore:
         result: Optional[dict[str, Any]] = None,
         error: Optional[str] = None,
     ) -> None:
+        """更新任务状态"""
         async with self._lock:
             if task_id not in self._store:
                 return
@@ -153,6 +156,7 @@ class TaskStore:
             self._save(record)
 
     async def delete(self, task_id: str) -> bool:
+        """删除任务"""
         async with self._lock:
             if task_id not in self._store:
                 return False
@@ -175,9 +179,11 @@ class AuthContext:
 
     @staticmethod
     def hash_key(key: str) -> str:
+        """哈希 API 密钥"""
         return hashlib.sha256(key.encode()).hexdigest()[:16]
 
     def verify(self, provided_key: Optional[str]) -> bool:
+        """验证提供的 API 密钥"""
         if not self.api_key:
             return True  # 未配置则跳过认证
         return provided_key == self.api_key
