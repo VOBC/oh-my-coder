@@ -255,6 +255,15 @@ def agents():
     """列出所有可用 Agent
 
     以表格形式展示所有智能体及其描述和层级。
+
+    该函数会导入所有已定义的 Agent 类，并展示它们的名称、
+    功能描述以及默认层级（tier）。总共有 30+ 个专用 Agent。
+
+    Returns:
+        None: 直接打印表格到控制台
+
+    Examples:
+        omc agents
     """
     table = Table(title="可用智能体")
     table.add_column("名称", style="cyan")
