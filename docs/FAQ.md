@@ -97,38 +97,38 @@ omc --help
 
 **A:** 三种配置方式，按优先级从高到低：
 
-**方式1：环境变量（高优先级）**
+**Method 1: Environment Variables (High Priority)**
 ```bash
-# DeepSeek（代码能力强）
+# DeepSeek V4 (strong code ability, free credits for new users)
 export DEEPSEEK_API_KEY=sk_xxxxxxxx
 
-# 智谱 GLM（完全免费，推荐入门）
+# Zhipu GLM-4.7-Flash (completely free, recommended for beginners)
 export ZHIPUAI_API_KEY=xxxxxxxx
 
-# Kimi（128K 长上下文）
+# Kimi (128K long context)
 export MOONSHOT_API_KEY=sk_xxxxxxxx
 ```
 
-**方式2：CLI 配置命令**
+**Method 2: CLI Config Command**
 ```bash
-# 设置 DeepSeek Key
+# Set DeepSeek Key
 omc config set -k DEEPSEEK_API_KEY -v "sk_xxxxxxxx"
 
-# 设置智谱 GLM Key
+# Set Zhipu GLM Key
 omc config set -k ZHIPUAI_API_KEY -v "xxxxxxxx"
 
-# 设置默认模型
-omc config set --default-model glm-4-flash
+# Set default model
+omc config set --default-model glm-4.7-flash
 
-# 查看当前配置
+# View current config
 omc status
 ```
 
-**方式3：直接编辑配置文件**（~/.omc/config.json）
+**Method 3: Edit Config File Directly** (~/.omc/config.json)
 ```json
 {
   "defaults": {
-    "model": "glm-4-flash"
+    "model": "glm-4.7-flash"
   },
   "models": {
     "deepseek": {
@@ -141,10 +141,10 @@ omc status
 }
 ```
 
-> 🎯 **零成本入门**：用智谱 GLM-4-Flash 完全免费，不需要充值。去 [open.bigmodel.cn](https://open.bigmodel.cn/) 注册获取 API Key 即可。
+> 🎯 **Zero Cost Entry**: Use Zhipu GLM-4.7-Flash completely free, no recharge needed. Go to [open.bigmodel.cn](https://open.bigmodel.cn/) to register and get your API Key.
 
 **⚠️ 常见陷阱：**
-- 如果配置了智谱 Key 但 CLI 仍然报 DeepSeek 错误 → 检查默认模型：`omc config set --default-model glm-4-flash`
+- If you configured Zhipu Key but CLI still reports DeepSeek error → Check default model: `omc config set --default-model glm-4.7-flash`
 - 环境变量名注意大小写：DeepSeek 用 `DEEPSEEK_API_KEY`，智谱用 `ZHIPUAI_API_KEY`
 - 环境变量设置后要重新打开终端才生效
 
@@ -248,9 +248,9 @@ omc status
    > ✅ 创建文件、改配置、查信息 → 用 --simple
    > ❌ 新功能开发、代码重构 → 不用 --simple
 
-3. **使用更快的模型**
+3. **Use a faster model**
    ```bash
-   omc config set --default-model glm-4-flash  # 免费且快
+   omc config set --default-model glm-4.7-flash  # Free and fast
    ```
 
 4. **分步执行**
@@ -290,12 +290,12 @@ omc status
 
 **A:** CLI 的默认模型还是 DeepSeek，但 DeepSeek 的 API Key 没配。
 
-**解决：**
+**Solution:**
 ```bash
-# 把默认模型设为智谱
-omc config set --default-model glm-4-flash
+# Set default model to Zhipu
+omc config set --default-model glm-4.7-flash
 
-# 验证
+# Verify
 omc status
 ```
 
@@ -486,4 +486,4 @@ save_summary(summary, format="txt")   # 纯文本
 
 ---
 
-**最后更新**: 2026-05-17
+**Last Updated**: 2026-06-03
