@@ -43,6 +43,7 @@ dev = [
     "pytest-xdist>=3.5.0",
     "pytest-asyncio>=0.21.0",
     "pytest-cov>=4.1.0",
+    "pytest-timeout>=2.2.0",
     "black==24.10.0",
     "ruff==0.15.9",
     "mypy>=1.8.0",
