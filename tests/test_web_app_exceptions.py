@@ -1,8 +1,6 @@
 """Exception handler tests for src.web.app"""
 
-import tempfile
-from pathlib import Path
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 import pytest
 
@@ -16,8 +14,6 @@ class TestOpenFolderException:
     @patch("src.web.app.subprocess.run")
     def test_open_folder_subprocess_error_returns_500(self, mock_run):
         """Test subprocess error returns 500 status."""
-        from fastapi.testclient import TestClient
-        from src.web.app import app
 
         mock_run.side_effect = Exception("subprocess failed")
 
@@ -35,7 +31,6 @@ class TestPreprocessTargetGitClone:
     @patch("src.web.app.shutil.rmtree")
     def test_git_clone_failure_raises_error(self, mock_rmtree, mock_run):
         """Test git clone failure raises RuntimeError."""
-        from src.web.app import _preprocess_target
 
 
 

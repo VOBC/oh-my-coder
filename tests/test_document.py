@@ -1,8 +1,9 @@
 """DocumentAgent 单元测试（纯逻辑，不调 API）"""
 
-import pytest
 import asyncio
 from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 
 pytestmark = pytest.mark.xdist_group("document_group")
 

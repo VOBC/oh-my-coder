@@ -701,7 +701,7 @@ class TestHandleSlashCommand:
             tmp = f.name
         try:
             with patch("src.commands.cli_tui.subprocess.run") as mock_run, \
-                 patch("src.commands.cli_tui.console") as mock_console, \
+                 patch("src.commands.cli_tui.console"), \
                  patch.object(TUISession, "_wait_key"):
                 mock_run.return_value = type("R", (), {
                     "stdout": "skill output",
@@ -722,7 +722,7 @@ class TestHandleSlashCommand:
     def test_no_file_path_collects_workspace_code(self):
         """No file path → calls _collect_workspace_code()."""
         with patch("src.commands.cli_tui.subprocess.run") as mock_run, \
-             patch("src.commands.cli_tui.console") as mock_console, \
+             patch("src.commands.cli_tui.console"), \
              patch.object(TUISession, "_wait_key"), \
              patch.object(TUISession, "_collect_workspace_code", return_value="# workspace"):
             mock_run.return_value = type("R", (), {"stdout": "", "stderr": ""})()
@@ -773,7 +773,7 @@ class TestHandleSlashCommand:
     def test_skill_wait_key_called(self):
         """_wait_key() is called after skill execution."""
         with patch("src.commands.cli_tui.subprocess.run") as mock_run, \
-             patch("src.commands.cli_tui.console") as mock_console, \
+             patch("src.commands.cli_tui.console"), \
              patch.object(TUISession, "_wait_key") as mock_wait, \
              patch.object(TUISession, "_collect_workspace_code", return_value=""):
             mock_run.return_value = type("R", (), {"stdout": "", "stderr": ""})()
@@ -812,8 +812,8 @@ class TestCollectWorkspaceCode:
 
     def test_collects_code_from_real_files(self):
         """Test that actual Python files are read and collected."""
-        import tempfile
         import os
+        import tempfile
 
         # Create a temporary directory with Python files
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -872,7 +872,7 @@ class TestStartCommand:
     def test_start_with_task_and_workflow_skips_tui(self):
         """start with task+workflow → skips interactive TUI."""
         from src.commands.cli_tui import start
-        with patch("src.commands.cli_tui.console") as mock_console, \
+        with patch("src.commands.cli_tui.console"), \
              patch("src.commands.cli_tui.Live"):
             # Should not raise
             start(task="hello", workflow="build", model="glm")
@@ -880,21 +880,21 @@ class TestStartCommand:
     def test_start_with_task_only(self):
         """start with task only → state is TASK, Live renders."""
         from src.commands.cli_tui import start
-        with patch("src.commands.cli_tui.console") as mock_console, \
+        with patch("src.commands.cli_tui.console"), \
              patch("src.commands.cli_tui.Live"):
             start(task="hello")
 
     def test_start_with_workflow_only(self):
         """start with workflow only → state is TASK, no confirm."""
         from src.commands.cli_tui import start
-        with patch("src.commands.cli_tui.console") as mock_console, \
+        with patch("src.commands.cli_tui.console"), \
              patch("src.commands.cli_tui.Live"):
             start(workflow="debug")
 
     def test_start_with_model_option(self):
         """start with model option sets selected_model."""
         from src.commands.cli_tui import start
-        with patch("src.commands.cli_tui.console") as mock_console, \
+        with patch("src.commands.cli_tui.console"), \
              patch("src.commands.cli_tui.Live"):
             start(task="hello", workflow="build", model="qwen")
 
@@ -907,7 +907,7 @@ class TestStartCommand:
     def test_start_infers_task_from_workflow(self):
         """start with only workflow (no task) → state TASK, not CONFIRM."""
         from src.commands.cli_tui import start
-        with patch("src.commands.cli_tui.console") as mock_console, \
+        with patch("src.commands.cli_tui.console"), \
              patch("src.commands.cli_tui.Live"):
             start(workflow="test")
 

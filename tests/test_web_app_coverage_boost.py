@@ -1,10 +1,7 @@
 """Targeted tests to boost coverage for src/web/app.py (81% -> 86%+)"""
 
-import asyncio
-import json
-import tempfile
 from pathlib import Path
-from unittest.mock import patch, MagicMock, AsyncMock
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from fastapi.testclient import TestClient
@@ -153,7 +150,7 @@ class TestDashboardFiles:
 # ============================================================
 class TestReadSettingsFallback:
     def test_read_settings_parse_error(self, tmp_path):
-        from src.web.app import _read_settings, SETTINGS_FILE
+        from src.web.app import _read_settings
         bad_file = tmp_path / "settings.json"
         bad_file.write_text("not json{{{{", encoding="utf-8")
         with patch("src.web.app.SETTINGS_FILE", bad_file):

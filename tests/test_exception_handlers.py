@@ -1,14 +1,10 @@
 """Exception handler tests for src.web.app"""
 
-import sys
-from pathlib import Path
 
 
-from unittest.mock import patch, MagicMock
-
+from unittest.mock import patch
 
 import pytest
-
 
 # Prevent concurrent execution
 pytestmark = pytest.mark.xdist_group("web_app")
@@ -44,7 +40,7 @@ class TestPreprocessTargetGitCloneException:
 
             _preprocess_target("https://github.com/user/repo", "github", "test-id")
 
-            assert False, "Should have raised RuntimeError"
+            raise AssertionError("Should have raised RuntimeError")
 
         except RuntimeError:
 
@@ -64,7 +60,7 @@ class TestPreprocessTargetUrlFetchException:
 
     def test_url_fetch_failure_raises_error(self, mock_get):
 
-        from src.web.app import _preprocess_target
+        pass
 
 
 

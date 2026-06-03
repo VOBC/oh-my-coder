@@ -2059,8 +2059,8 @@ class TestApiHistoryFunction:
     def test_api_history_with_tasks(self, client):
         """Test api_history() when tasks exist"""
         # Create some tasks
-        tid1 = task_manager.create_task(task_desc="task1")
-        tid2 = task_manager.create_task(task_desc="task2")
+        task_manager.create_task(task_desc="task1")
+        task_manager.create_task(task_desc="task2")
 
         response = client.get("/api/history")
         assert response.status_code == 200

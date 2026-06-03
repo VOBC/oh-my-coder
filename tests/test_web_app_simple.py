@@ -1,7 +1,7 @@
 """Simple tests for src.web.app.py - targeting easy-to-cover lines."""
 
+
 import pytest
-from unittest.mock import patch, MagicMock
 from fastapi.testclient import TestClient
 
 # Prevent concurrent execution - global singleton pollution

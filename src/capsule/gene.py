@@ -54,7 +54,7 @@ class Gene:
         valid = {
             k: v
             for k, v in data.items()
-            if k in cls.__dataclass_fields__  # type: ignore[attr-defined]
+            if k in cls.__dataclass_fields__
         }
         return cls(**valid)
 

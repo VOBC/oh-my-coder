@@ -2174,6 +2174,7 @@ class TestLogging:
     def test_logger_error_on_json_read_failure(self, tmp_path, caplog):
         """logger.error called when JSON file is unreadable"""
         import logging
+
         from src.commands import cli_model
         models_dir = tmp_path / "models"
         models_dir.mkdir()
@@ -2193,5 +2194,5 @@ class TestLogging:
         with caplog.at_level(logging.ERROR, logger="src.commands.cli_model"):
             with patch("subprocess.run", side_effect=Exception("git fail")):
                 from src.commands.cli_model import _get_author_name
-                result = _get_author_name()
+                _get_author_name()
         assert any("Error getting git user.name" in r.message for r in caplog.records)

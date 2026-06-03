@@ -37,7 +37,7 @@ if TYPE_CHECKING:
 try:
     from src.config.workflow_loader import WorkflowLoader
 except ImportError:
-    WorkflowLoader = None  # type: ignore
+    WorkflowLoader = None
 
 
 def _get_trace_context_cls():
@@ -229,7 +229,7 @@ class Orchestrator:
         self._skill_manager: Optional[SkillManager] = None
 
         # Checkpoint 管理器（懒加载）
-        self._checkpoint_manager = None  # type: ignore
+        self._checkpoint_manager = None
 
         # HealthChecker 管理器（懒加载）
         self._health_checker: Optional[HealthChecker] = None
@@ -241,14 +241,14 @@ class Orchestrator:
         self._active_workflows: dict[str, WorkflowResult] = {}
 
         # 分层记忆管理器（懒加载）
-        self._memory_manager = None  # type: ignore
+        self._memory_manager = None
         self._project_path = project_path
 
         # Workflow 加载器（YAML 驱动）
         if WorkflowLoader is not None:
             self.workflow_loader = WorkflowLoader()
         else:
-            self.workflow_loader = None  # type: ignore
+            self.workflow_loader = None
 
     # ------------------------------------------------------------------
     # Skill 自进化（Tier 0 自动注入）
@@ -560,7 +560,7 @@ class Orchestrator:
             skill_context=context.get("skill_context", ""),
             override_model=context.get("override_model"),
         )
-        sub_context._subagent_depth = current_depth + 1  # type: ignore
+        sub_context._subagent_depth = current_depth + 1
 
         # 获取子 Agent 实例
         agent = self.get_agent(agent_name)
@@ -665,7 +665,7 @@ class Orchestrator:
                 pass  # 静默，不阻塞工作流
 
         # 保存 progress_callback 到 result，供内部方法使用
-        result._progress_callback = progress_callback  # type: ignore
+        result._progress_callback = progress_callback
 
         try:
             # 根据模式执行

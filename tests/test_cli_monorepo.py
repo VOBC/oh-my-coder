@@ -560,33 +560,33 @@ if __name__ == "__main__":
 
 class TestMonorepoExceptionHandling:
     """Test exception handling in monorepo commands"""
-    
+
     def test_status_git_error(self, temp_dir, runner):
         """Test status command handles git errors gracefully"""
         from unittest.mock import patch
-        
+
         # Create a fake monorepo structure
         (temp_dir / "pnpm-workspace.yaml").write_text("packages:\n  - 'packages/*'\n")
         pkg_dir = temp_dir / "packages" / "test-app"
         pkg_dir.mkdir(parents=True)
         (pkg_dir / "package.json").write_text('{"name": "test-app"}')
-        
+
         # Mock subprocess.run to raise Exception
         with patch('subprocess.run', side_effect=Exception("Git error")):
             result = runner.invoke(app, ["status", "--path", str(temp_dir)])
             assert result.exit_code == 0
             assert "❓" in result.output
-    
+
     def test_run_subprocess_exception(self, temp_dir, runner):
         """Test run command handles subprocess exceptions"""
         from unittest.mock import patch
-        
+
         # Create a fake monorepo structure
         (temp_dir / "pnpm-workspace.yaml").write_text("packages:\n  - 'packages/*'\n")
         pkg_dir = temp_dir / "packages" / "test-app"
         pkg_dir.mkdir(parents=True)
         (pkg_dir / "package.json").write_text('{"name": "test-app", "scripts": {"test": "echo"}}')
-        
+
         # Mock subprocess.run to raise Exception during script execution
         with patch('subprocess.run', side_effect=Exception("Command failed")):
             result = runner.invoke(app, ["run", "test", "--path", str(temp_dir), "--dry-run"])

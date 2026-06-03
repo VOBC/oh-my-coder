@@ -1,13 +1,8 @@
 """Exception handler tests for src.web.app"""
 
-from pathlib import Path
-
-
-from unittest.mock import patch, MagicMock
-
+from unittest.mock import patch
 
 import pytest
-
 
 # Prevent concurrent execution
 pytestmark = pytest.mark.xdist_group("web_app")
@@ -39,9 +34,8 @@ class TestPreprocessTargetGitCloneException:
 
         # Should raise RuntimeError
 
-        try:
+        with pytest.raises(RuntimeError):
             _preprocess_target("https://github.com/user/repo", "github", "test-id")
-            assert False
 
 
 

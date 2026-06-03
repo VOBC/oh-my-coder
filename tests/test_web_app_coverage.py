@@ -1,8 +1,8 @@
 """Targeted coverage tests for src.web.app.py - Batch 2."""
 
+from unittest.mock import patch
+
 import pytest
-from unittest.mock import patch, MagicMock
-from pathlib import Path
 
 # Prevent concurrent execution - global singleton pollution
 pytestmark = pytest.mark.xdist_group("web_app")
@@ -14,8 +14,9 @@ class TestSaveReportBranches:
     @patch("src.web.app.history_store")
     def test_save_report_with_step_outputs_string(self, mock_history_store):
         """Test save_report with step outputs as string."""
-        from src.web.app import task_manager, app
         from fastapi.testclient import TestClient
+
+        from src.web.app import app, task_manager
 
         client = TestClient(app)
 
@@ -40,8 +41,9 @@ class TestSaveReportBranches:
     @patch("src.web.app.history_store")
     def test_save_report_with_step_outputs_dict_with_result(self, mock_history_store):
         """Test save_report with step outputs dict containing result field."""
-        from src.web.app import task_manager, app
         from fastapi.testclient import TestClient
+
+        from src.web.app import app, task_manager
 
         client = TestClient(app)
 
@@ -63,8 +65,9 @@ class TestSaveReportBranches:
     @patch("src.web.app.history_store")
     def test_save_report_with_step_outputs_dict_without_result(self, mock_history_store):
         """Test save_report with step outputs dict without result field."""
-        from src.web.app import task_manager, app
         from fastapi.testclient import TestClient
+
+        from src.web.app import app, task_manager
 
         client = TestClient(app)
 
@@ -86,8 +89,9 @@ class TestSaveReportBranches:
     @patch("src.web.app.history_store")
     def test_save_report_with_step_outputs_other_type(self, mock_history_store):
         """Test save_report with step outputs of other type (list)."""
-        from src.web.app import task_manager, app
         from fastapi.testclient import TestClient
+
+        from src.web.app import app, task_manager
 
         client = TestClient(app)
 
@@ -109,8 +113,9 @@ class TestSaveReportBranches:
     @patch("src.web.app.history_store")
     def test_save_report_with_empty_step_outputs(self, mock_history_store):
         """Test save_report with empty step outputs."""
-        from src.web.app import task_manager, app
         from fastapi.testclient import TestClient
+
+        from src.web.app import app, task_manager
 
         client = TestClient(app)
 
@@ -132,8 +137,9 @@ class TestSaveReportBranches:
     @patch("src.web.app.history_store")
     def test_save_report_with_result_outputs(self, mock_history_store):
         """Test save_report with result.outputs (persisted task)."""
-        from src.web.app import task_manager, app
         from fastapi.testclient import TestClient
+
+        from src.web.app import app, task_manager
 
         client = TestClient(app)
 
@@ -159,8 +165,9 @@ class TestSaveReportBranches:
     @patch("src.web.app.history_store")
     def test_save_report_with_final_result_dict_extra_keys(self, mock_history_store):
         """Test save_report with final result dict with extra keys."""
-        from src.web.app import task_manager, app
         from fastapi.testclient import TestClient
+
+        from src.web.app import app, task_manager
 
         client = TestClient(app)
 
@@ -187,8 +194,9 @@ class TestSaveReportBranches:
     @patch("src.web.app.history_store")
     def test_save_report_with_no_result(self, mock_history_store):
         """Test save_report with no result."""
-        from src.web.app import task_manager, app
         from fastapi.testclient import TestClient
+
+        from src.web.app import app, task_manager
 
         client = TestClient(app)
 

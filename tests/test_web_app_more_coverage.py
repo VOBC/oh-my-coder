@@ -1,7 +1,8 @@
 """Additional simple tests for src.web.app.py - targeting specific missing lines."""
 
+from unittest.mock import patch
+
 import pytest
-from unittest.mock import patch, MagicMock
 from fastapi.testclient import TestClient
 
 # Prevent concurrent execution - global singleton pollution
@@ -80,7 +81,7 @@ class TestSaveReportEdgeCases:
     @patch("src.web.app.history_store")
     def test_save_report_with_empty_result_outputs(self, mock_history_store):
         """Test save_report when result.outputs is empty."""
-        from src.web.app import task_manager, app
+        from src.web.app import app, task_manager
         client = TestClient(app)
 
         task_id = task_manager.create_task("test", "deepseek", "build", ".")
@@ -99,7 +100,7 @@ class TestSaveReportEdgeCases:
     @patch("src.web.app.history_store")
     def test_save_report_with_step_outputs_and_result_outputs(self, mock_history_store):
         """Test save_report with both step_outputs and result.outputs."""
-        from src.web.app import task_manager, app
+        from src.web.app import app, task_manager
         client = TestClient(app)
 
         task_id = task_manager.create_task("test", "deepseek", "build", ".")
@@ -122,8 +123,9 @@ class TestJsonDumpsFunction:
 
     def test_json_dumps_with_datetime(self):
         """Test json_dumps handles datetime objects."""
-        from src.web.app import json_dumps
         from datetime import datetime
+
+        from src.web.app import json_dumps
         data = {"time": datetime(2024, 1, 1, 12, 0, 0)}
         result = json_dumps(data)
         assert "2024" in result
