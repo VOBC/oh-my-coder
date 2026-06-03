@@ -12,3 +12,12 @@ localhost:8082
 
 # Ignore verification docs (contain experimental/temporary links)
 docs/verification/
+
+# Ignore webhook placeholder URLs (xxx placeholders in example commands)
+oapi.dingtalk.com
+discord.com/api/webhooks
+hooks.slack.com/services
+outlook.office.com/webhook
+open.feishu.cn/open-apis/bot
+qyapi.weixin.qq.com/cgi-bin/webhook
+your-proxy.com
