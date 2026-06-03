@@ -1,0 +1,8 @@
+# Ignore template placeholder URLs
+YOUR_USERNAME
+
+# Ignore localhost variations with unusual characters
+localhost:8080）
+
+# Ignore verification docs (contain experimental/temporary links)
+docs/verification/

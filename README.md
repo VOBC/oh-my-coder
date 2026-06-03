@@ -229,7 +229,7 @@ omc config set -k QWEN_API_KEY -v "your_key"
 
 **第三步：启动**
 ```bash
-# Web 界面（浏览器访问 http://localhost:8080）
+# Web 界面（浏览器访问 http://localhost:8080)
 omc server start
 
 # 或 CLI 交互
