@@ -4,5 +4,11 @@ YOUR_USERNAME
 # Ignore localhost variations with unusual characters
 localhost:8080）
 
+# Ignore localhost URLs (development server)
+localhost:8000
+localhost:8080
+localhost:8081
+localhost:8082
+
 # Ignore verification docs (contain experimental/temporary links)
 docs/verification/
