@@ -88,6 +88,11 @@ async def test_orchestrator_build_workflow():
     router = MagicMock()
     orch = Orchestrator(model_router=router)
 
+    # Mock checkpoint_manager to avoid synchronous rglob traversal of entire project
+    mock_cp_manager = MagicMock()
+    mock_cp_manager.create = MagicMock(return_value="mock-checkpoint-id")
+    orch._checkpoint_manager = mock_cp_manager
+
     # 注册所有需要的 agents
     agents = {
         "explore": create_mock_agent("explore", "扫描完成"),
@@ -140,6 +145,11 @@ async def test_orchestrator_workflow_result_persistence(tmp_path):
     router = MagicMock()
     state_dir = tmp_path / "state"
     orch = Orchestrator(model_router=router, state_dir=state_dir)
+    
+    # Mock checkpoint_manager to avoid synchronous rglob traversal
+    mock_cp_manager = MagicMock()
+    mock_cp_manager.create = MagicMock(return_value="mock-checkpoint-id")
+    orch._checkpoint_manager = mock_cp_manager
 
     mock_agent = create_mock_agent("explore", "完成")
     orch.register_agent(mock_agent)
@@ -305,6 +315,11 @@ async def test_full_build_workflow_mock():
     """模拟完整 build 工作流端到端"""
     router = MagicMock()
     orch = Orchestrator(model_router=router)
+    
+    # Mock checkpoint_manager to avoid synchronous rglob traversal
+    mock_cp_manager = MagicMock()
+    mock_cp_manager.create = MagicMock(return_value="mock-checkpoint-id")
+    orch._checkpoint_manager = mock_cp_manager
 
     # 模拟每个 Agent 返回
     mock_responses = {

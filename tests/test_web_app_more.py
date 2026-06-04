@@ -269,6 +269,16 @@ class TestCleanupTarget:
 class TestTasksAPI:
     """GET /api/tasks, GET /api/tasks/{id}, DELETE /api/tasks/{id}"""
 
+    def setup_method(self):
+        """Clear task manager state before each test."""
+        task_manager._tasks.clear()
+        task_manager._queues.clear()
+
+    def teardown_method(self):
+        """Clear task manager state after each test to prevent pollution."""
+        task_manager._tasks.clear()
+        task_manager._queues.clear()
+
     def test_list_tasks_empty(self, client):
         """空任务列表"""
         response = client.get("/api/tasks")
@@ -497,6 +507,16 @@ class TestOpenFolder:
 
 class TestSaveReport:
     """POST /api/save-report"""
+
+    def setup_method(self):
+        """Clear task manager state before each test."""
+        task_manager._tasks.clear()
+        task_manager._queues.clear()
+
+    def teardown_method(self):
+        """Clear task manager state after each test."""
+        task_manager._tasks.clear()
+        task_manager._queues.clear()
 
     def test_save_report_no_payload(self, client):
         """无 payload → 422"""
