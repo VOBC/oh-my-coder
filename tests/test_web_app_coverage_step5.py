@@ -16,13 +16,12 @@ Covers:
 12. Settings API
 """
 
-import asyncio
 import json
 import sys
 import tempfile
 from datetime import datetime
 from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from fastapi.testclient import TestClient
@@ -33,12 +32,11 @@ pytestmark = pytest.mark.xdist_group("web_app_coverage_step5")
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src.agents.base import AgentContext, AgentOutput, AgentStatus
+from src.agents.base import AgentOutput, AgentStatus
 from src.web.app import (
     _cleanup_target,
     _preprocess_target,
     app,
-    history_store,
     task_manager,
 )
 
@@ -218,7 +216,9 @@ class TestRunTask:
         mock_agent.execute = AsyncMock(return_value=mock_output)
         mock_orch.get_agent.return_value = mock_agent
 
-        from src.core.orchestrator import WORKFLOW_TEMPLATES, WorkflowResult, WorkflowStatus
+        from src.core.orchestrator import (
+            WORKFLOW_TEMPLATES,
+        )
         from src.web.app import run_task
 
         # Setup active_workflows dict
@@ -457,17 +457,18 @@ class TestPreprocessTarget:
         mock_resp = MagicMock()
         mock_resp.text = "<html><body>Hello <b>World</b></body></html>"
 
-        with patch("src.web.app.requests", create=True) as mock_requests_module:
+        with (
+            patch("src.web.app.requests", create=True),
+            patch("builtins.__import__"),
+        ):
             # Since requests is imported locally inside the function,
             # we need to patch the builtin import
-            with patch("builtins.__import__") as mock_import:
-                # This is too complex; let's test the function directly
-                pass
+            # This is too complex; let's test the function directly
+            pass
 
         # Instead, let's just test with a mock of the whole function behavior
         # by using subprocess.run to avoid the local import issue
         # Actually, let's patch at the right level
-        import src.web.app as app_module
 
         # The function does `import requests` locally, so we need to
         # make requests available in sys.modules
@@ -803,7 +804,8 @@ class TestSessionAPI:
             assert response.status_code == 200
             data = response.json()
             assert isinstance(data, dict) and "sessions" in data
-            sessions = data.get("sessions", data) if isinstance(data, dict) else data; assert any(s["id"] == "test-session-1" for s in sessions)
+            sessions = data.get("sessions", data) if isinstance(data, dict) else data
+            assert any(s["id"] == "test-session-1" for s in sessions)
 
     def test_get_session(self, client, tmp_path):
         with patch("src.web.app.SESSIONS_DIR", tmp_path):
@@ -1046,7 +1048,6 @@ class TestCleanupTarget:
 
     def test_cleanup_github_target_in_tempdir(self):
         """Cleanup should work for paths under tempfile.gettempdir()"""
-        import tempfile
         gh_dir = Path(tempfile.mkdtemp(prefix="omc-gh-test-"))
         (gh_dir / "file.txt").write_text("test")
 
