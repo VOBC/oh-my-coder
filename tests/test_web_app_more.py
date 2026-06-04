@@ -50,10 +50,14 @@ from src.web.app import (
     _mask_key,
     _preprocess_target,
     app,
-    task_manager,
 )
 
 # ---------------------------------------------------------------------------
+
+# Always get the current task_manager from the module (handles importlib.reload in other tests)
+def _tm():
+    import sys
+    return sys.modules["src.web.app"].task_manager
 # Fixtures
 # ---------------------------------------------------------------------------
 
@@ -66,11 +70,11 @@ def client():
 @pytest.fixture(autouse=True)
 def reset_task_manager():
     """每个测试前后重置 task_manager，避免状态泄漏"""
-    task_manager._tasks.clear()
-    task_manager._queues.clear()
+    _tm()._tasks.clear()
+    _tm()._queues.clear()
     yield
-    task_manager._tasks.clear()
-    task_manager._queues.clear()
+    _tm()._tasks.clear()
+    _tm()._queues.clear()
 
 
 # ---------------------------------------------------------------------------
@@ -271,13 +275,13 @@ class TestTasksAPI:
 
     def setup_method(self):
         """Clear task manager state before each test."""
-        task_manager._tasks.clear()
-        task_manager._queues.clear()
+        _tm()._tasks.clear()
+        _tm()._queues.clear()
 
     def teardown_method(self):
         """Clear task manager state after each test to prevent pollution."""
-        task_manager._tasks.clear()
-        task_manager._queues.clear()
+        _tm()._tasks.clear()
+        _tm()._queues.clear()
 
     def test_list_tasks_empty(self, client):
         """空任务列表"""
@@ -289,8 +293,8 @@ class TestTasksAPI:
 
     def test_list_tasks_with_tasks(self, client):
         """创建多个任务后列出"""
-        tid1 = task_manager.create_task(task_desc="Task 1", model="deepseek")
-        tid2 = task_manager.create_task(task_desc="Task 2", model="deepseek")
+        tid1 = _tm().create_task(task_desc="Task 1", model="deepseek")
+        tid2 = _tm().create_task(task_desc="Task 2", model="deepseek")
 
         response = client.get("/api/tasks")
         assert response.status_code == 200
@@ -308,8 +312,8 @@ class TestTasksAPI:
 
     def test_get_task_found(self, client):
         """获取存在的任务"""
-        tid = task_manager.create_task(task_desc="My Task", model="deepseek")
-        task_manager._tasks[tid]["status"] = "running"
+        tid = _tm().create_task(task_desc="My Task", model="deepseek")
+        _tm()._tasks[tid]["status"] = "running"
 
         response = client.get(f"/api/tasks/{tid}")
         assert response.status_code == 200
@@ -326,7 +330,7 @@ class TestTasksAPI:
     @patch("src.web.app.verify_api_token", return_value="token")
     def test_delete_task_found(self, mock_verify, client):
         """删除存在的任务"""
-        tid = task_manager.create_task()
+        tid = _tm().create_task()
 
         response = client.delete(f"/api/tasks/{tid}")
         assert response.status_code == 200
@@ -510,13 +514,13 @@ class TestSaveReport:
 
     def setup_method(self):
         """Clear task manager state before each test."""
-        task_manager._tasks.clear()
-        task_manager._queues.clear()
+        _tm()._tasks.clear()
+        _tm()._queues.clear()
 
     def teardown_method(self):
         """Clear task manager state after each test."""
-        task_manager._tasks.clear()
-        task_manager._queues.clear()
+        _tm()._tasks.clear()
+        _tm()._queues.clear()
 
     def test_save_report_no_payload(self, client):
         """无 payload → 422"""
@@ -537,13 +541,13 @@ class TestSaveReport:
     def test_save_report_from_memory_task(self, client):
         """从内存 task_manager 读取任务并保存"""
         with tempfile.TemporaryDirectory() as tmpdir:
-            tid = task_manager.create_task(
+            tid = _tm().create_task(
                 task_desc="Build feature X",
                 model="deepseek",
                 workflow="build",
                 project_path="/tmp",
             )
-            task_manager._tasks[tid].update({
+            _tm()._tasks[tid].update({
                 "started_at": "2026-05-28T10:00:00",
                 "status": "completed",
                 "stats": {

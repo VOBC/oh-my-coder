@@ -15,13 +15,13 @@ def test_health_endpoint():
     client = TestClient(app)
     response = client.get("/health")
     assert response.status_code == 200
-    assert response.json() == {"status": "ok"}
+    assert response.json()["status"] == "healthy"
 
 
 def test_get_tasks_empty():
     """Test getting tasks list when empty."""
     app, _ = create_app()
     client = TestClient(app)
-    response = client.get("/api/v1/tasks")
+    response = client.get("/api/tasks")
     assert response.status_code == 200
-    assert isinstance(response.json(), list)
+    assert isinstance(response.json(), dict)

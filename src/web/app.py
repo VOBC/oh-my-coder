@@ -38,7 +38,12 @@ sys.path.insert(0, str(project_root))
 try:
     from src.agents.base import AgentContext, AgentOutput, AgentStatus, get_agent
     from src.config.workflow_loader import WorkflowLoader
-    from src.core.orchestrator import WORKFLOW_TEMPLATES, Orchestrator
+    from src.core.orchestrator import (
+        WORKFLOW_TEMPLATES,
+        Orchestrator,
+        WorkflowResult,
+        WorkflowStatus,
+    )
     from src.core.router import ModelRouter, RouterConfig
     from src.web.coverage_api import format_coverage_report, run_coverage_analysis
     from src.web.dashboard_api import router as dashboard_router
@@ -596,7 +601,7 @@ async def save_report(payload: Optional[dict] = None):
 
     # 各步骤输出
     # 先从 result.outputs 找（持久化历史任务）
-    step_outputs = task.get("result", {}).get("outputs", {})
+    step_outputs = (task.get("result") or {}).get("outputs", {})
     # 兼容：如果 result.outputs 没有，尝试 step_outputs（内存任务）
     if not step_outputs:
         step_outputs = task.get("step_outputs", {})
@@ -1015,6 +1020,7 @@ async def run_task(
         )
         return
 
+    workflow_id = None
     try:
         # 复用全局 orchestrator（与 SSE /api/agent/live 共用同一实例）
         orch = get_orchestrator()
@@ -1026,8 +1032,6 @@ async def run_task(
         task_manager._tasks[task_id]["stats"]["steps_total"] = len(steps)
 
         # 在 orchestrator 中注册当前任务（供 /api/agent/live SSE 消费）
-        from src.core.orchestrator import WorkflowResult, WorkflowStatus
-
         workflow_id = task_id
         wf_result = WorkflowResult(
             workflow_id=workflow_id,
@@ -1158,7 +1162,7 @@ async def run_task(
         history_store.save(task_id, history_record)
 
     except Exception as e:
-        if orch is not None and workflow_id in orch._active_workflows:
+        if orch is not None and workflow_id is not None and workflow_id in orch._active_workflows:
             orch._active_workflows[workflow_id].status = WorkflowStatus.FAILED
         task_manager.complete_task(task_id, error="任务执行失败")
 

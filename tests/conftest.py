@@ -205,6 +205,60 @@ def mock_model_response():
 
 
 # ---------------------------------------------------------------------------
+# Plugin Registry Cleanup（防止测试间状态泄漏）
+# ---------------------------------------------------------------------------
+import os
+
+from src.plugins.registry import reset_registry
+
+
+@pytest.fixture(autouse=True)
+def _reset_plugin_registry():
+    """每个测试前重置全局插件注册表，防止测试间泄漏。
+
+    test_plugins.py 等文件会往全局注册表注册插件，
+    如果后续 test_plugins_loader.py 等文件使用默认的 get_registry()，
+    会继承之前测试注册的插件，导致 discover() 返回非预期结果。
+    """
+    reset_registry()
+    yield
+    reset_registry()
+
+
+# ---------------------------------------------------------------------------
+# API Key Env Var Cleanup（防止测试间状态泄漏）
+# ---------------------------------------------------------------------------
+
+
+_API_KEY_ENVS = [
+    "DEEPSEEK_API_KEY",
+    "KIMI_API_KEY",
+    "DOUBAO_API_KEY",
+    "ZHIPUAI_API_KEY",
+    "TONGYI_API_KEY",
+    "MINIMAX_API_KEY",
+    "WENXIN_API_KEY",
+    "HUNYUAN_API_KEY",
+    "BAICHUAN_API_KEY",
+    "OMC_DEFAULT_MODEL",
+]
+
+
+@pytest.fixture(autouse=True)
+def _cleanup_api_key_envs():
+    """每个测试后清理所有 API key 环境变量，防止测试间泄漏。
+
+    _step2_config_apikey 和 _step2_config_apikey 内部会写入 os.environ，
+    monkeypatch.delenv 只跟踪启动时的状态，不跟踪运行时的 os.environ[key] = value。
+    这个 fixture 确保每次测试后都清理干净。
+    """
+    yield
+    for key in _API_KEY_ENVS:
+        if key in os.environ:
+            del os.environ[key]
+
+
+# ---------------------------------------------------------------------------
 # Event Loop 修复（asyncio.run 导致 Python 3.9 get_event_loop 失败）
 # ---------------------------------------------------------------------------
 

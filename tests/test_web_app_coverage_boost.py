@@ -281,23 +281,23 @@ class TestApiEndpointError:
 class TestConnectionErrors:
     def test_connection_timeout(self, client):
         import httpx
-        with patch("httpx.AsyncClient") as mock_cls:
-            mock_client = AsyncMock()
-            mock_client.__aenter__ = AsyncMock(return_value=mock_client)
-            mock_client.__aexit__ = AsyncMock(return_value=False)
-            mock_client.get.side_effect = httpx.TimeoutException("timeout")
+        with patch("httpx.Client") as mock_cls:
+            mock_client = MagicMock()
+            mock_client.__enter__ = MagicMock(return_value=mock_client)
+            mock_client.__exit__ = MagicMock(return_value=False)
+            mock_client.post.side_effect = httpx.TimeoutException("timeout")
             mock_cls.return_value = mock_client
             resp = client.post("/api/test-connection", json={
                 "base_url": "https://api.example.com",
-                "api_key": "test-key",
-                "model": "test"
+                "provider": "deepseek",
+                "api_key": "test-key"
             })
             assert resp.status_code == 200
             assert "超时" in resp.json()["msg"]
 
     def test_connection_connect_error(self, client):
         import httpx
-        with patch("httpx.AsyncClient") as mock_cls:
+        with patch("httpx.Client") as mock_cls:
             mock_client = AsyncMock()
             mock_client.__aenter__ = AsyncMock(return_value=mock_client)
             mock_client.__aexit__ = AsyncMock(return_value=False)
@@ -305,28 +305,28 @@ class TestConnectionErrors:
             mock_cls.return_value = mock_client
             resp = client.post("/api/test-connection", json={
                 "base_url": "https://api.example.com",
-                "api_key": "test-key",
-                "model": "test"
+                "provider": "deepseek",
+                "api_key": "test-key"
             })
             assert resp.status_code == 502
 
     def test_connection_generic_error(self, client):
-        with patch("httpx.AsyncClient") as mock_cls:
-            mock_client = AsyncMock()
-            mock_client.__aenter__ = AsyncMock(return_value=mock_client)
-            mock_client.__aexit__ = AsyncMock(return_value=False)
-            mock_client.get.side_effect = RuntimeError("unexpected")
+        with patch("httpx.Client") as mock_cls:
+            mock_client = MagicMock()
+            mock_client.__enter__ = MagicMock(return_value=mock_client)
+            mock_client.__exit__ = MagicMock(return_value=False)
+            mock_client.post.side_effect = RuntimeError("unexpected")
             mock_cls.return_value = mock_client
             resp = client.post("/api/test-connection", json={
                 "base_url": "https://api.example.com",
-                "api_key": "test-key",
-                "model": "test"
+                "provider": "deepseek",
+                "api_key": "test-key"
             })
             assert resp.status_code == 500
 
     def test_connection_non_json_error_response(self, client):
         """Test error response that isn't JSON (lines 1567-1569)."""
-        with patch("httpx.AsyncClient") as mock_cls:
+        with patch("httpx.Client") as mock_cls:
             mock_client = AsyncMock()
             mock_client.__aenter__ = AsyncMock(return_value=mock_client)
             mock_client.__aexit__ = AsyncMock(return_value=False)
@@ -338,7 +338,7 @@ class TestConnectionErrors:
             mock_cls.return_value = mock_client
             resp = client.post("/api/test-connection", json={
                 "base_url": "https://api.example.com",
-                "api_key": "test-key",
-                "model": "test"
+                "provider": "deepseek",
+                "api_key": "test-key"
             })
             assert resp.status_code == 502

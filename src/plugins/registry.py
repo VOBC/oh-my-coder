@@ -245,6 +245,12 @@ def get_registry() -> PluginRegistry:
     return _registry
 
 
+def reset_registry() -> None:
+    """重置全局插件注册表（用于测试清理）"""
+    global _registry
+    _registry = None
+
+
 # ---- @register 装饰器 ----
 
 

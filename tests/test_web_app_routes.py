@@ -39,8 +39,13 @@ from src.web.app import (
     _preprocess_target,
     app,
     json_dumps,
-    task_manager,
 )
+
+
+# Always get the current task_manager from the module (handles importlib.reload in other tests)
+def _tm():
+    import sys
+    return sys.modules["src.web.app"].task_manager
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -55,11 +60,11 @@ def client():
 @pytest.fixture(autouse=True)
 def reset_task_manager():
     """Reset task manager state before each test."""
-    task_manager._tasks.clear()
-    task_manager._queues.clear()
+    _tm()._tasks.clear()
+    _tm()._queues.clear()
     yield
-    task_manager._tasks.clear()
-    task_manager._queues.clear()
+    _tm()._tasks.clear()
+    _tm()._queues.clear()
 
 
 @pytest.fixture
@@ -114,82 +119,82 @@ class TestTaskManager:
     """TaskManager utility functions."""
 
     def test_create_task(self):
-        task_manager._tasks.clear()
-        task_manager._queues.clear()
-        tid = task_manager.create_task(
+        _tm()._tasks.clear()
+        _tm()._queues.clear()
+        tid = _tm().create_task(
             task_desc="test task",
             model="deepseek",
             workflow="build",
             project_path="/tmp",
         )
-        assert tid in task_manager._tasks
-        assert task_manager.get_task(tid)["task"] == "test task"
+        assert tid in _tm()._tasks
+        assert _tm().get_task(tid)["task"] == "test task"
 
     def test_update_step(self):
-        task_manager._tasks.clear()
-        task_manager._queues.clear()
-        tid = task_manager.create_task()
-        task_manager.update_step(tid, "executor", "active", "step output")
-        task = task_manager.get_task(tid)
+        _tm()._tasks.clear()
+        _tm()._queues.clear()
+        tid = _tm().create_task()
+        _tm().update_step(tid, "executor", "active", "step output")
+        task = _tm().get_task(tid)
         assert task["step_status"]["executor"] == "active"
         assert task["step_outputs"]["executor"] == "step output"
 
     def test_update_step_unknown_task(self):
-        task_manager.update_step("nonexistent", "executor", "active")
+        _tm().update_step("nonexistent", "executor", "active")
 
     def test_complete_task_success(self):
-        task_manager._tasks.clear()
-        task_manager._queues.clear()
-        tid = task_manager.create_task()
-        task_manager.complete_task(tid, result={"ok": True})
-        task = task_manager.get_task(tid)
+        _tm()._tasks.clear()
+        _tm()._queues.clear()
+        tid = _tm().create_task()
+        _tm().complete_task(tid, result={"ok": True})
+        task = _tm().get_task(tid)
         assert task["status"] == "completed"
         assert task["result"] == {"ok": True}
 
     def test_complete_task_error(self):
-        task_manager._tasks.clear()
-        task_manager._queues.clear()
-        tid = task_manager.create_task()
-        task_manager.complete_task(tid, error="Something went wrong")
-        task = task_manager.get_task(tid)
+        _tm()._tasks.clear()
+        _tm()._queues.clear()
+        tid = _tm().create_task()
+        _tm().complete_task(tid, error="Something went wrong")
+        task = _tm().get_task(tid)
         assert task["status"] == "failed"
         assert task["error"] == "Something went wrong"
 
     def test_complete_task_unknown(self):
         # Should not raise
-        task_manager.complete_task("nonexistent", result={"ok": True})
+        _tm().complete_task("nonexistent", result={"ok": True})
 
     def test_delete_task(self):
-        task_manager._tasks.clear()
-        task_manager._queues.clear()
-        tid = task_manager.create_task()
-        assert task_manager.delete_task(tid) is True
-        assert task_manager.get_task(tid) is None
+        _tm()._tasks.clear()
+        _tm()._queues.clear()
+        tid = _tm().create_task()
+        assert _tm().delete_task(tid) is True
+        assert _tm().get_task(tid) is None
 
     def test_delete_task_unknown(self):
-        assert task_manager.delete_task("nonexistent") is False
+        assert _tm().delete_task("nonexistent") is False
 
     def test_list_tasks(self):
-        task_manager._tasks.clear()
-        task_manager._queues.clear()
-        tid1 = task_manager.create_task()
-        tid2 = task_manager.create_task()
-        tasks = task_manager.list_tasks()
+        _tm()._tasks.clear()
+        _tm()._queues.clear()
+        tid1 = _tm().create_task()
+        tid2 = _tm().create_task()
+        tasks = _tm().list_tasks()
         assert len(tasks) >= 2
         ids = [t["task_id"] for t in tasks]
         assert tid1 in ids
         assert tid2 in ids
 
     def test_get_queue(self):
-        task_manager._tasks.clear()
-        task_manager._queues.clear()
-        tid = task_manager.create_task()
-        q = task_manager.get_queue(tid)
+        _tm()._tasks.clear()
+        _tm()._queues.clear()
+        tid = _tm().create_task()
+        q = _tm().get_queue(tid)
         assert q is not None
         assert isinstance(q, asyncio.Queue)
 
     def test_get_queue_unknown(self):
-        assert task_manager.get_queue("nonexistent") is None
+        assert _tm().get_queue("nonexistent") is None
 
 
 class TestTaskAPI:
@@ -197,17 +202,17 @@ class TestTaskAPI:
 
     def setup_method(self):
         """Clear task manager state before each test."""
-        task_manager._tasks.clear()
-        task_manager._queues.clear()
+        _tm()._tasks.clear()
+        _tm()._queues.clear()
 
     def teardown_method(self):
         """Clear task manager state after each test to prevent pollution."""
-        task_manager._tasks.clear()
-        task_manager._queues.clear()
+        _tm()._tasks.clear()
+        _tm()._queues.clear()
 
     def test_list_tasks_empty(self, client):
-        task_manager._tasks.clear()
-        task_manager._queues.clear()
+        _tm()._tasks.clear()
+        _tm()._queues.clear()
         response = client.get("/api/tasks")
         assert response.status_code == 200
         assert "tasks" in response.json()
@@ -218,9 +223,9 @@ class TestTaskAPI:
 
     def test_get_task_success(self, client):
         """任务存在时返回任务详情"""
-        task_manager._tasks.clear()
-        task_manager._queues.clear()
-        tid = task_manager.create_task()
+        _tm()._tasks.clear()
+        _tm()._queues.clear()
+        tid = _tm().create_task()
         response = client.get(f"/api/tasks/{tid}")
         assert response.status_code == 200
         data = response.json()
@@ -228,9 +233,9 @@ class TestTaskAPI:
 
     @patch("src.web.app.verify_api_token", return_value="token")
     def test_delete_task_with_token(self, mock_verify, client):
-        task_manager._tasks.clear()
-        task_manager._queues.clear()
-        tid = task_manager.create_task()
+        _tm()._tasks.clear()
+        _tm()._queues.clear()
+        tid = _tm().create_task()
         response = client.delete(f"/api/tasks/{tid}")
         assert response.status_code == 200
 
@@ -265,10 +270,10 @@ class TestApiHistory:
     """GET /api/history (app-level, not history_api)."""
 
     def test_api_history_returns_records(self, client):
-        task_manager._tasks.clear()
-        task_manager._queues.clear()
-        tid = task_manager.create_task()
-        task_manager._tasks[tid]["started_at"] = "2026-05-28T10:00:00"
+        _tm()._tasks.clear()
+        _tm()._queues.clear()
+        tid = _tm().create_task()
+        _tm()._tasks[tid]["started_at"] = "2026-05-28T10:00:00"
         response = client.get("/api/history")
         assert response.status_code == 200
         data = response.json()
@@ -1995,53 +2000,53 @@ class TestTaskManagerQueueExceptions:
 
     def test_update_step_queue_full(self):
         """Test update_step when queue.put_nowait raises exception"""
-        task_manager._tasks.clear()
-        task_manager._queues.clear()
+        _tm()._tasks.clear()
+        _tm()._queues.clear()
 
-        tid = task_manager.create_task()
+        tid = _tm().create_task()
 
         # Make the queue raise an exception on put_nowait
-        queue = task_manager._queues[tid]
+        queue = _tm()._queues[tid]
         queue.put_nowait = MagicMock(side_effect=Exception("Queue full"))
 
         # Should not raise - exception is caught and printed
-        task_manager.update_step(tid, "executor", "active", "output")
+        _tm().update_step(tid, "executor", "active", "output")
 
         # Verify the step was still updated
-        task = task_manager.get_task(tid)
+        task = _tm().get_task(tid)
         assert task["step_status"]["executor"] == "active"
 
     def test_complete_task_queue_full(self):
         """Test complete_task when queue.put_nowait raises exception"""
-        task_manager._tasks.clear()
-        task_manager._queues.clear()
+        _tm()._tasks.clear()
+        _tm()._queues.clear()
 
-        tid = task_manager.create_task()
+        tid = _tm().create_task()
 
         # Make the queue raise an exception on put_nowait
-        queue = task_manager._queues[tid]
+        queue = _tm()._queues[tid]
         queue.put_nowait = MagicMock(side_effect=Exception("Queue full"))
 
         # Should not raise - exception is caught and printed
-        task_manager.complete_task(tid, result={"ok": True})
+        _tm().complete_task(tid, result={"ok": True})
 
         # Verify the task was still completed
-        task = task_manager.get_task(tid)
+        task = _tm().get_task(tid)
         assert task["status"] == "completed"
 
     def test_delete_task_queue_full(self):
         """Test delete_task when queue.put_nowait raises exception"""
-        task_manager._tasks.clear()
-        task_manager._queues.clear()
+        _tm()._tasks.clear()
+        _tm()._queues.clear()
 
-        tid = task_manager.create_task()
+        tid = _tm().create_task()
 
         # Make the queue raise an exception on put_nowait
-        queue = task_manager._queues[tid]
+        queue = _tm()._queues[tid]
         queue.put_nowait = MagicMock(side_effect=Exception("Queue full"))
 
         # Should not raise - exception is caught and printed
-        result = task_manager.delete_task(tid)
+        result = _tm().delete_task(tid)
 
         assert result is True
 
@@ -2058,8 +2063,8 @@ class TestApiHistoryFunction:
             "success_rate": 0, "total_tokens": 0, "total_cost": 0,
             "total_duration_hours": 0
         }
-        task_manager._tasks.clear()
-        task_manager._queues.clear()
+        _tm()._tasks.clear()
+        _tm()._queues.clear()
         response = client.get("/api/history")
         assert response.status_code == 200
         data = response.json()
@@ -2079,8 +2084,8 @@ class TestApiHistoryFunction:
             "success_rate": 100, "total_tokens": 1000, "total_cost": 0.5,
             "total_duration_hours": 0.1
         }
-        task_manager._tasks.clear()
-        task_manager._queues.clear()
+        _tm()._tasks.clear()
+        _tm()._queues.clear()
         response = client.get("/api/history")
         assert response.status_code == 200
         data = response.json()

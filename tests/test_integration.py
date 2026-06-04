@@ -145,7 +145,7 @@ async def test_orchestrator_workflow_result_persistence(tmp_path):
     router = MagicMock()
     state_dir = tmp_path / "state"
     orch = Orchestrator(model_router=router, state_dir=state_dir)
-    
+
     # Mock checkpoint_manager to avoid synchronous rglob traversal
     mock_cp_manager = MagicMock()
     mock_cp_manager.create = MagicMock(return_value="mock-checkpoint-id")
@@ -315,7 +315,7 @@ async def test_full_build_workflow_mock():
     """模拟完整 build 工作流端到端"""
     router = MagicMock()
     orch = Orchestrator(model_router=router)
-    
+
     # Mock checkpoint_manager to avoid synchronous rglob traversal
     mock_cp_manager = MagicMock()
     mock_cp_manager.create = MagicMock(return_value="mock-checkpoint-id")

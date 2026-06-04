@@ -99,6 +99,7 @@ class TestCreateProfile:
         with patch("src.commands.cli_profile.ProfileManager") as MockMgr, \
              patch("src.commands.cli_profile.create_predefined_profile") as mock_create:
             instance = MockMgr.return_value
+            instance.get_profile.return_value = None  # 不存在
 
             tmpl_profile = AgentProfile(
                 agent_id="daikexing-20240101000000",

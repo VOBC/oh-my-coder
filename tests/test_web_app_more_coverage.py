@@ -12,16 +12,17 @@ pytestmark = pytest.mark.xdist_group("web_app")
 class TestExecuteEndpointBranches:
     """Tests for execute endpoint branches."""
 
+    @patch("src.web.app._preprocess_target")
     @patch("src.web.app.task_manager")
-    def test_execute_with_auto_target_type(self, mock_task_manager):
+    def test_execute_with_auto_target_type(self, mock_task_manager, mock_preprocess):
         """Test execute with target_type='auto' triggers detection."""
         from src.web.app import app
-        client = TestClient(app)
 
-        # Mock task_manager
         mock_task_manager.create_task.return_value = "test-id-123"
         mock_task_manager._tasks = {"test-id-123": {"started_at": None, "status": "pending"}}
+        mock_preprocess.return_value = ("/tmp/fake-clone", "")
 
+        client = TestClient(app)
         response = client.post("/api/execute", json={
             "task": "test task",
             "project_path": "https://github.com/user/repo",
@@ -29,7 +30,6 @@ class TestExecuteEndpointBranches:
             "workflow": "build",
             "target_type": "auto"
         })
-        # Should work and detect target type
         assert response.status_code == 200
         assert response.json()["target_type"] == "github"
 

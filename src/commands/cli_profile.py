@@ -36,6 +36,10 @@ def create_profile(
     """创建新的 Agent Profile"""
     manager = ProfileManager()
 
+    if manager.get_profile(agent_id):
+        console.print(f"[red]Profile 已存在: {agent_id}[/red]")
+        raise typer.Exit(1)
+
     if template:
         if template not in PREDEFINED_PROFILES:
             console.print(f"[red]未知模板: {template}[/red]")
@@ -43,16 +47,15 @@ def create_profile(
             raise typer.Exit(1)
 
         profile = create_predefined_profile(template)
-        if not profile:
-            if manager.get_profile(agent_id):
-                console.print(f"[red]Profile 已存在: {agent_id}[/red]")
-                raise typer.Exit(1)
-            profile = manager.create_profile(agent_id, name)
-        else:
+        if profile:
             # 覆盖 ID 和名称
             profile.agent_id = agent_id
             profile.agent_name = name
             manager.update_profile(profile)
+        else:
+            profile = manager.create_profile(agent_id, name)
+    else:
+        profile = manager.create_profile(agent_id, name)
 
     console.print("[green]✅ Profile 创建成功[/green]")
     console.print(f"[dim]ID: {profile.agent_id}[/dim]")
