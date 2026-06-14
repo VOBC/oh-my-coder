@@ -16,7 +16,7 @@ jobs:
       fail-fast: false
       matrix:
         python-version: ["3.10", "3.11", "3.12"]
-    timeout-minutes: 30
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
 
@@ -33,4 +33,4 @@ jobs:
 
       - name: Run tests
         run: |
-          python -m pytest tests/ --cov=src --cov-report=term-missing -o "addopts=-v --tb=short -ra -q --strict-markers" --timeout=120
+          python -m pytest tests/ --cov=src --cov-report=term-missing:skip-covered -o "addopts=--tb=short -ra -q --strict-markers" --timeout=120
