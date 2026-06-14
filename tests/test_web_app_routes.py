@@ -25,7 +25,6 @@ pytestmark = pytest.mark.xdist_group("web_app_routes")
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from fastapi.responses import JSONResponse
 
 from src.agents.base import AgentStatus
 from src.web.app import (
@@ -1340,7 +1339,7 @@ class TestExecuteSyncEndpoint:
         """Test synchronous execution success."""
         # Mock agent and its execute method
         mock_agent = MagicMock()
-        
+
         # Create a proper async mock for execute
         async def mock_execute(*args, **kwargs):
             mock_result = MagicMock()
@@ -1349,14 +1348,14 @@ class TestExecuteSyncEndpoint:
             mock_result.error = None
             mock_result.usage = {"total_tokens": 100, "total_cost": 0.01}
             return mock_result
-        
+
         mock_agent.execute = mock_execute
-        
+
         # Mock orchestrator
         mock_orch = MagicMock()
         mock_orch.get_agent.return_value = mock_agent
         mock_create_orch.return_value = mock_orch
-        
+
         # Mock router
         mock_create_router.return_value = MagicMock()
 
