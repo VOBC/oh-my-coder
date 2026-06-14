@@ -1166,7 +1166,6 @@ class TestConfigAPI:
 class TestExecuteAsyncTask:
     """POST /api/execute — async background task."""
 
-    @pytest.mark.skip(reason="Python 3.9 asyncio compatibility")
     def test_execute_auto_detect_local(self, client):
         response = client.post(
             "/api/execute",
@@ -1222,11 +1221,11 @@ class TestExecuteAsyncTask:
 class TestSSEEndpoint:
     """测试 SSE 执行端点"""
 
-    @pytest.mark.skip(reason="Python 3.9 asyncio compatibility")
     @patch("src.web.app.task_manager")
     def test_sse_execute_task_not_found(self, mock_tm, client):
         """任务不存在时返回 404"""
-        mock_tm.get_task.return_value = None
+        # 模拟 task_manager 没有该任务的 queue
+        mock_tm.get_queue.return_value = None
         response = client.get("/sse/execute/nonexistent")
         assert response.status_code == 404
 
@@ -1335,15 +1334,31 @@ class TestAgentLiveStream:
 class TestExecuteSyncEndpoint:
     """Test POST /api/execute-sync endpoint."""
 
-    @pytest.mark.skip(reason="Python 3.9 asyncio compatibility")
-    @patch("src.web.app.execute_task_sync")
-    def test_execute_sync_success(self, mock_execute, client):
+    @patch("src.web.app.create_orchestrator")
+    @patch("src.web.app.create_router")
+    def test_execute_sync_success(self, mock_create_router, mock_create_orch, client):
         """Test synchronous execution success."""
-        mock_execute.return_value = JSONResponse({
-            "status": "completed",
-            "result": "Task completed",
-            "usage": {"total_tokens": 100, "total_cost": 0.01},
-        })
+        # Mock agent and its execute method
+        mock_agent = MagicMock()
+        
+        # Create a proper async mock for execute
+        async def mock_execute(*args, **kwargs):
+            mock_result = MagicMock()
+            mock_result.status = AgentStatus.COMPLETED
+            mock_result.result = "Task completed"
+            mock_result.error = None
+            mock_result.usage = {"total_tokens": 100, "total_cost": 0.01}
+            return mock_result
+        
+        mock_agent.execute = mock_execute
+        
+        # Mock orchestrator
+        mock_orch = MagicMock()
+        mock_orch.get_agent.return_value = mock_agent
+        mock_create_orch.return_value = mock_orch
+        
+        # Mock router
+        mock_create_router.return_value = MagicMock()
 
         response = client.post(
             "/api/execute-sync",
@@ -1356,7 +1371,8 @@ class TestExecuteSyncEndpoint:
         )
         assert response.status_code == 200
         data = response.json()
-        assert data["status"] == "completed"
+        assert data["status"] == "success"
+        assert "result" in data
 
     def test_execute_sync_missing_task(self, client):
         """Test missing task field returns 422."""
@@ -1410,7 +1426,8 @@ class TestOpenFolderAPI:
     def test_open_folder_success(self, client):
         """Test open folder success."""
         with patch("src.web.app.subprocess.run") as mock_run:
-            response = client.post("/api/open-folder", json={"path": "/tmp/test"})
+            with patch("platform.system", return_value="Darwin"):
+                response = client.post("/api/open-folder", json={"path": "/tmp/test"})
 
         assert response.status_code == 200
         data = response.json()
