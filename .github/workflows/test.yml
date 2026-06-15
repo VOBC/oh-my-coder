@@ -16,7 +16,7 @@ jobs:
       fail-fast: false
       matrix:
         python-version: ["3.10", "3.11", "3.12"]
-    timeout-minutes: 60
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
 
@@ -31,6 +31,12 @@ jobs:
           python -m pip install --upgrade pip setuptools wheel
           pip install -e ".[dev]"
 
-      - name: Run tests
+      - name: Run tests (fast, no coverage)
+        if: matrix.python-version != '3.12'
         run: |
-          python -m pytest tests/ --cov=src --cov-report=term-missing:skip-covered -o "addopts=--tb=short -ra -q --strict-markers" --timeout=120
+          python -m pytest tests/ -o "addopts=--tb=short -ra -q --strict-markers" --timeout=120 -n auto
+
+      - name: Run tests with coverage (Python 3.12 only)
+        if: matrix.python-version == '3.12'
+        run: |
+          python -m pytest tests/ --cov=src --cov-report=term-missing:skip-covered --cov-report=xml -o "addopts=--tb=short -ra -q --strict-markers" --timeout=120
