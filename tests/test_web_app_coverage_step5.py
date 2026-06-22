@@ -46,6 +46,12 @@ def client():
     return TestClient(app)
 
 
+# Store task IDs created during each test for proper cleanup
+def _get_task_ids_to_cleanup():
+    """Get list of task IDs that should be cleaned up."""
+    return list(task_manager._tasks.keys())
+
+
 @pytest.fixture(autouse=True)
 def reset_task_manager():
     task_manager._tasks.clear()
@@ -907,18 +913,61 @@ class TestReadSettingsFallback:
 class TestSaveReportStepOutputs:
     """Test save-report with various step_outputs formats (lines 604-649)"""
 
-    def _create_task_with_started_at(self, **kwargs):
-        """Helper to create a task with started_at set"""
-        tid = task_manager.create_task(**kwargs)
-        task_manager._tasks[tid]["started_at"] = datetime.now().isoformat()
+    @pytest.fixture(autouse=True)
+    def mock_task_manager(self, monkeypatch):
+        """Mock task_manager to avoid parallel execution conflicts."""
+        from src.web.app import task_manager as real_tm
+        
+        mock_tasks = {}
+        mock_queues = {}
+        
+        # Create a real task_manager-like object with real dicts
+        class MockTaskManager:
+            def __init__(self):
+                self._tasks = mock_tasks
+                self._queues = mock_queues
+            
+            def create_task(self, **kwargs):
+                tid = real_tm.create_task(**kwargs)
+                self._tasks[tid] = real_tm._tasks[tid].copy()
+                self._tasks[tid]["started_at"] = datetime.now().isoformat()
+                return tid
+            
+            def get_task(self, tid):
+                return self._tasks.get(tid)
+        
+        mock_tm = MockTaskManager()
+        
+        # Patch the endpoint to use our mock
+        monkeypatch.setattr("src.web.app.task_manager", mock_tm)
+        
+        yield
+        
+        mock_tasks.clear()
+        mock_queues.clear()
+    
+    def _create_task(self, mock_tasks, **kwargs):
+        """Helper to create a task and store in mock_tasks."""
+        # Use the real task_manager to create a task
+        from src.web.app import task_manager as real_tm
+        tid = real_tm.create_task(**kwargs)
+        # Store in mock_tasks for the test to use
+        mock_tasks[tid] = real_tm._tasks[tid].copy()
         return tid
 
     @patch("src.web.app.history_store")
     @patch("src.web.app.Path.home")
     def test_save_report_with_string_step_outputs(self, mock_home, mock_store, client, tmp_path):
         mock_home.return_value = tmp_path
-        tid = self._create_task_with_started_at(task_desc="report test")
+        tid = self._create_task(
+            task_manager._tasks,
+            task_desc="report test",
+            model="deepseek",
+            workflow="build",
+            project_path=str(tmp_path),
+        )
         task_manager._tasks[tid]["status"] = "completed"
+        task_manager._tasks[tid]["started_at"] = datetime.now().isoformat()
         task_manager._tasks[tid]["step_outputs"] = {
             "explore": "Scanned the project",
             "architect": "Designed the architecture",
@@ -932,8 +981,15 @@ class TestSaveReportStepOutputs:
     @patch("src.web.app.Path.home")
     def test_save_report_with_dict_step_outputs(self, mock_home, mock_store, client, tmp_path):
         mock_home.return_value = tmp_path
-        tid = self._create_task_with_started_at(task_desc="report test 2")
+        tid = self._create_task(
+            task_manager._tasks,
+            task_desc="report test 2",
+            model="deepseek",
+            workflow="build",
+            project_path=str(tmp_path),
+        )
         task_manager._tasks[tid]["status"] = "completed"
+        task_manager._tasks[tid]["started_at"] = datetime.now().isoformat()
         task_manager._tasks[tid]["step_outputs"] = {
             "explore": {"result": "Scan result", "tokens": 100},
             "architect": {"output": "Architecture design"},
@@ -952,8 +1008,15 @@ class TestSaveReportStepOutputs:
     @patch("src.web.app.Path.home")
     def test_save_report_with_dict_result_other_types(self, mock_home, mock_store, client, tmp_path):
         mock_home.return_value = tmp_path
-        tid = self._create_task_with_started_at(task_desc="report test 3")
+        tid = self._create_task(
+            task_manager._tasks,
+            task_desc="report test 3",
+            model="deepseek",
+            workflow="build",
+            project_path=str(tmp_path),
+        )
         task_manager._tasks[tid]["status"] = "completed"
+        task_manager._tasks[tid]["started_at"] = datetime.now().isoformat()
         task_manager._tasks[tid]["step_outputs"] = {
             "explore": {"content": "Scan content"},
         }
@@ -972,8 +1035,15 @@ class TestSaveReportStepOutputs:
     def test_save_report_with_string_final_result(self, mock_home, mock_store, client, tmp_path):
         """Test save-report when result dict has a string value for a key"""
         mock_home.return_value = tmp_path
-        tid = self._create_task_with_started_at(task_desc="report test 4")
+        tid = self._create_task(
+            task_manager._tasks,
+            task_desc="report test 4",
+            model="deepseek",
+            workflow="build",
+            project_path=str(tmp_path),
+        )
         task_manager._tasks[tid]["status"] = "completed"
+        task_manager._tasks[tid]["started_at"] = datetime.now().isoformat()
         # result must be a dict; test the else branch for non-dict final result
         task_manager._tasks[tid]["result"] = {
             "summary": "done",
@@ -990,8 +1060,15 @@ class TestSaveReportStepOutputs:
     def test_save_report_with_none_step_output(self, mock_home, mock_store, client, tmp_path):
         """Test step_output that is None (should show '无输出')"""
         mock_home.return_value = tmp_path
-        tid = self._create_task_with_started_at(task_desc="report test 5")
+        tid = self._create_task(
+            task_manager._tasks,
+            task_desc="report test 5",
+            model="deepseek",
+            workflow="build",
+            project_path=str(tmp_path),
+        )
         task_manager._tasks[tid]["status"] = "completed"
+        task_manager._tasks[tid]["started_at"] = datetime.now().isoformat()
         task_manager._tasks[tid]["step_outputs"] = {
             "explore": None,
         }
@@ -1001,9 +1078,6 @@ class TestSaveReportStepOutputs:
         assert response.status_code == 200
 
 
-# ============================================================
-# 8. Coverage API
-# ============================================================
 class TestCoverageAPI:
     """Test /api/coverage endpoints (lines 1832-1863)"""
 
