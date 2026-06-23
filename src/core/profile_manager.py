@@ -13,6 +13,7 @@ import json
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from pathlib import Path
+from typing import Any, cast
 from typing import Optional
 
 PROFILES_DIR = Path.home() / ".omc" / "profiles"
@@ -210,15 +211,15 @@ def create_predefined_profile(agent_type: str) -> Optional[AgentProfile]:
     if agent_type not in PREDEFINED_PROFILES:
         return None
 
-    config = PREDEFINED_PROFILES[agent_type]
+    config = cast(dict[str, Any], PREDEFINED_PROFILES[agent_type])
     manager = ProfileManager()
 
     profile = manager.create_profile(
         agent_id=f"{agent_type}-{datetime.now().strftime('%Y%m%d%H%M%S')}",
         agent_name=config["name"],
     )
-    profile.skills = config["skills"]
-    profile.preferences = config["preferences"]
+    profile.skills = cast(list[str], config["skills"])
+    profile.preferences = cast(dict[str, Any], config["preferences"])
     manager.update_profile(profile)
 
     return profile

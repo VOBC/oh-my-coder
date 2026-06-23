@@ -83,7 +83,7 @@ def save_proposal(proposal: SkillProposal) -> Path:
 
 def list_proposals() -> list[SkillProposal]:
     """列出所有待处理的 Skill 提议"""
-    proposals = []
+    proposals: list[SkillProposal] = []
 
     if not SKILL_PROPOSALS_DIR.exists():
         return proposals

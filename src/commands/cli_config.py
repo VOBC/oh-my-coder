@@ -3,6 +3,7 @@
 import json
 import os
 from pathlib import Path
+from typing import Any, cast
 
 import typer
 from rich.console import Console
@@ -19,10 +20,10 @@ def show(
     CONFIG_DIR = Path.home() / ".omc"
     CONFIG_FILE = CONFIG_DIR / "config.json"
 
-    def _load() -> dict:
+    def _load() -> dict[str, Any]:
         if CONFIG_FILE.exists():
             try:
-                return json.loads(CONFIG_FILE.read_text())
+                return cast(dict[str, Any], json.loads(CONFIG_FILE.read_text()))
             except Exception:
                 return {}
         return {}
@@ -135,10 +136,10 @@ def set(
     CONFIG_FILE = CONFIG_DIR / "config.json"
     CONFIG_FILE.parent.mkdir(parents=True, exist_ok=True)
 
-    def _load() -> dict:
+    def _load() -> dict[str, Any]:
         if CONFIG_FILE.exists():
             try:
-                return json.loads(CONFIG_FILE.read_text())
+                return cast(dict[str, Any], json.loads(CONFIG_FILE.read_text()))
             except Exception:
                 return {}
         return {}
@@ -197,10 +198,10 @@ def models():
     CONFIG_DIR = Path.home() / ".omc"
     CONFIG_FILE = CONFIG_DIR / "config.json"
 
-    def _load() -> dict:
+    def _load() -> dict[str, Any]:
         if CONFIG_FILE.exists():
             try:
-                return json.loads(CONFIG_FILE.read_text())
+                return cast(dict[str, Any], json.loads(CONFIG_FILE.read_text()))
             except Exception:
                 return {}
         return {}

@@ -4,6 +4,8 @@ OpenAPI 规范
 提供标准的 API 文档和 Swagger UI。
 """
 
+from typing import Any, Optional, cast
+
 from fastapi import FastAPI
 from fastapi.openapi.utils import get_openapi
 
@@ -11,7 +13,7 @@ from fastapi.openapi.utils import get_openapi
 API_VERSION = "0.2.0"
 
 
-def custom_openapi(app: FastAPI) -> dict:
+def custom_openapi(app: FastAPI) -> dict[str, Any]:
     """
     自定义 OpenAPI 规范
 
@@ -22,9 +24,10 @@ def custom_openapi(app: FastAPI) -> dict:
         OpenAPI 规范字典
     """
 
-    def generate() -> dict:
-        if app.openapi_schema:
-            return app.openapi_schema
+    def generate() -> dict[str, Any]:
+        schema = cast(Optional[dict[str, Any]], getattr(app, "openapi_schema", None))
+        if schema:
+            return schema
 
         openapi_schema = get_openapi(
             title="Oh My Coder API",
@@ -129,9 +132,9 @@ Oh My Coder 是一个强大的多智能体 AI 编程系统，支持：
         }
 
         app.openapi_schema = openapi_schema
-        return app.openapi_schema
+        return cast(dict[str, Any], app.openapi_schema)
 
-    return generate
+    return generate  # type: ignore[return-value]
 
 
 # API 响应模型

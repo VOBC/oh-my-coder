@@ -4,6 +4,7 @@ import asyncio
 import os
 import re
 from pathlib import Path
+from typing import Any, Optional, cast
 
 import typer
 from rich.console import Console
@@ -188,7 +189,8 @@ def run(
                     notify_workflow_complete_dingtalk,
                 )
 
-                status = "completed" if result.success else "failed"
+                from src.core.orchestrator import WorkflowStatus
+                status = "completed" if result.status == WorkflowStatus.COMPLETED else "failed"
                 steps = len(result.steps) if hasattr(result, "steps") else 1
                 exec_time = getattr(result, "execution_time", 0.0)
 
@@ -324,9 +326,9 @@ def _detect_project_name(project_path: Path) -> str:
             import tomllib
 
             with open(pyproject, "rb") as f:
-                data = tomllib.load(f)
+                data = cast(dict[str, Any], tomllib.load(f))
             if "project" in data and "name" in data["project"]:
-                return data["project"]["name"]
+                return cast(str, data["project"]["name"])
         except Exception:
             pass
 
@@ -408,30 +410,29 @@ def _model_name_from_key_env(env_key: str) -> str | None:
     return mapping.get(env_key)
 
 
-def _resolve_default_model(config: dict) -> str:
+def _resolve_default_model(config: dict[str, Any]) -> str:
     """解析默认模型：环境变量 > config.json > 第一个有 api_key 的模型 > deepseek"""
     env_model = os.getenv("OMC_DEFAULT_MODEL") or os.getenv("DEFAULT_MODEL")
     if env_model:
         return env_model
-    cfg_model = config.get("defaults", {}).get("model") or config.get("default_model")
+    defaults = cast(dict[str, Any], config.get("defaults", {}))
+    cfg_model: Optional[str] = cast(Optional[str], defaults.get("model")) or cast(Optional[str], config.get("default_model"))
     if cfg_model:
         return cfg_model
-    models = config.get("models", {})
-    if isinstance(models, dict):
-        for name, mcfg in models.items():
-            if isinstance(mcfg, dict) and mcfg.get("api_key"):
-                return name
+    models = cast(dict[str, Any], config.get("models", {}))
+    for name, mcfg in models.items():
+        if isinstance(mcfg, dict) and mcfg.get("api_key"):
+            return cast(str, name)
     return "deepseek"
 
 
-def _get_api_key(config: dict, model: str) -> str:
+def _get_api_key(config: dict[str, Any], model: str) -> str:
     """获取模型对应的 API Key：config.json > 环境变量"""
     # 1. 从 config.json 的 models 中读取
-    models = config.get("models", {})
-    if isinstance(models, dict):
-        for name, mcfg in models.items():
+    models = cast(dict[str, Any], config.get("models", {}))
+    for name, mcfg in models.items():
             if isinstance(mcfg, dict) and mcfg.get("api_key") and name in (model, model.replace("-", "_"), model.replace("_", "-")):
-                return mcfg["api_key"]
+                return cast(str, mcfg["api_key"])
     # 2. 环境变量回退
     key_map = {
         "deepseek": "DEEPSEEK_API_KEY",
@@ -561,9 +562,10 @@ def _run_simple_task(router: ModelRouter, task: str) -> None:
         console.print(f"   $ {cmd}")
 
         try:
+            # nosec B602 - cmd comes from LLM response, user confirms before execution
             result = subprocess.run(
                 cmd,
-                shell=True,
+                shell=True,  # nosec B602
                 capture_output=True,
                 text=True,
                 timeout=30,
@@ -627,6 +629,7 @@ def _init_router() -> ModelRouter:
         return ModelRouter(config)
     except Exception as e:
         _print_fatal(f"路由器初始化失败: {e}")
+        raise typer.Exit(1)
 
 
 def _print_missing_key_hint(key: str, reason: str = "", url: str = ""):

@@ -479,8 +479,9 @@ def prices(
         # 如果文件不存在，先写入当前价格
         if not _COST_PRICES_FILE.exists():
             _cost_save_prices(_cost_load_prices())
+        # nosec B605 - editor is from environment or default, file path is controlled
         cmd = f"{editor} {shlex.quote(str(_COST_PRICES_FILE))}"
-        os.system(cmd)
+        os.system(cmd)  # nosec B605
         return
 
     prices = _cost_load_prices()
