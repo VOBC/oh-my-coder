@@ -793,7 +793,6 @@ class TestCollectWorkspaceCode:
 
     def test_handles_file_read_error(self):
         """Files that cannot be read are silently skipped."""
-        from unittest.mock import MagicMock
         with patch("src.commands.cli_tui.Path.rglob") as mock_rglob:
             # Return a mock path that raises on read_text
             mock_path = MagicMock()
@@ -871,7 +870,6 @@ class TestStartCommand:
 
     def test_start_with_task_and_workflow_skips_tui(self):
         """start with task+workflow → skips interactive TUI."""
-        from src.commands.cli_tui import start
         with patch("src.commands.cli_tui.console"), \
              patch("src.commands.cli_tui.Live"):
             # Should not raise
@@ -879,34 +877,29 @@ class TestStartCommand:
 
     def test_start_with_task_only(self):
         """start with task only → state is TASK, Live renders."""
-        from src.commands.cli_tui import start
         with patch("src.commands.cli_tui.console"), \
              patch("src.commands.cli_tui.Live"):
             start(task="hello")
 
     def test_start_with_workflow_only(self):
         """start with workflow only → state is TASK, no confirm."""
-        from src.commands.cli_tui import start
         with patch("src.commands.cli_tui.console"), \
              patch("src.commands.cli_tui.Live"):
             start(workflow="debug")
 
     def test_start_with_model_option(self):
         """start with model option sets selected_model."""
-        from src.commands.cli_tui import start
         with patch("src.commands.cli_tui.console"), \
              patch("src.commands.cli_tui.Live"):
             start(task="hello", workflow="build", model="qwen")
 
     def test_start_no_args_does_not_raise(self):
         """start with no args → just verify the function is callable without crash."""
-        from src.commands.cli_tui import start
         # Verify it's a callable (no assertion needed beyond not raising)
         assert callable(start)
 
     def test_start_infers_task_from_workflow(self):
         """start with only workflow (no task) → state TASK, not CONFIRM."""
-        from src.commands.cli_tui import start
         with patch("src.commands.cli_tui.console"), \
              patch("src.commands.cli_tui.Live"):
             start(workflow="test")
@@ -1094,10 +1087,10 @@ class TestHandleModelDetail:
         assert session.state == State.MAIN
 
 """Tests for lines 496-524 in src/commands/cli_tui.py (interactive TUI loop)."""
-from unittest.mock import patch, MagicMock
 import sys
+from unittest.mock import MagicMock, patch
 
-from src.commands.cli_tui import TUISession, start, State, console
+from src.commands.cli_tui import start
 
 
 class FakeLive:
@@ -1145,7 +1138,7 @@ class TestInteractiveLoop:
     def test_backspace_in_task_state(self, monkeypatch):
         """Backspace key in TASK state removes last character."""
         # Use subprocess to get a clean environment for stdin/stdout
-        import subprocess, os, tempfile
+        import subprocess
 
         script = """
 import sys, os
@@ -1481,10 +1474,8 @@ print("state:", TUISessionCapture._instance.state)
         assert result.returncode == 0, f"subprocess failed: {result.stderr}"
         assert 'state: State.MAIN' in result.stdout
 """Tests for lines 496-524 in src/commands/cli_tui.py (interactive TUI loop)."""
-from unittest.mock import patch, MagicMock
 import sys
-
-from src.commands.cli_tui import TUISession, start, State, console
+from unittest.mock import patch
 
 
 class FakeLive:
@@ -1532,7 +1523,7 @@ class TestInteractiveLoop:
     def test_backspace_in_task_state(self, monkeypatch):
         """Backspace key in TASK state removes last character."""
         # Use subprocess to get a clean environment for stdin/stdout
-        import subprocess, os, tempfile
+        import subprocess
 
         script = """
 import sys, os
@@ -1868,10 +1859,8 @@ print("state:", TUISessionCapture._instance.state)
         assert result.returncode == 0, f"subprocess failed: {result.stderr}"
         assert 'state: State.MAIN' in result.stdout
 """Tests for lines 496-524 in src/commands/cli_tui.py (interactive TUI loop)."""
-from unittest.mock import patch, MagicMock
 import sys
-
-from src.commands.cli_tui import TUISession, start, State, console
+from unittest.mock import patch
 
 
 class FakeLive:
@@ -1919,7 +1908,7 @@ class TestInteractiveLoop:
     def test_backspace_in_task_state(self, monkeypatch):
         """Backspace key in TASK state removes last character."""
         # Use subprocess to get a clean environment for stdin/stdout
-        import subprocess, os, tempfile
+        import subprocess
 
         script = """
 import sys, os
@@ -2150,7 +2139,7 @@ print("update_count:", len(FakeLive._updates))
         print('stderr:', result.stderr[:300] if result.stderr else '')
         assert result.returncode == 0, f"subprocess failed: {result.stderr}"
         assert 'update_count:' in result.stdout
-        count = int(result.stdout.split('update_count:')[1].strip())
+        int(result.stdout.split('update_count:')[1].strip())
         # count check: FakeLive._updates is per-subprocess class, not module-level
         # The test exercises the code even if count is 0 due to subprocess isolation
 

@@ -917,35 +917,35 @@ class TestSaveReportStepOutputs:
     def mock_task_manager(self, monkeypatch):
         """Mock task_manager to avoid parallel execution conflicts."""
         from src.web.app import task_manager as real_tm
-        
+
         mock_tasks = {}
         mock_queues = {}
-        
+
         # Create a real task_manager-like object with real dicts
         class MockTaskManager:
             def __init__(self):
                 self._tasks = mock_tasks
                 self._queues = mock_queues
-            
+
             def create_task(self, **kwargs):
                 tid = real_tm.create_task(**kwargs)
                 self._tasks[tid] = real_tm._tasks[tid].copy()
                 self._tasks[tid]["started_at"] = datetime.now().isoformat()
                 return tid
-            
+
             def get_task(self, tid):
                 return self._tasks.get(tid)
-        
+
         mock_tm = MockTaskManager()
-        
+
         # Patch the endpoint to use our mock
         monkeypatch.setattr("src.web.app.task_manager", mock_tm)
-        
+
         yield
-        
+
         mock_tasks.clear()
         mock_queues.clear()
-    
+
     def _create_task(self, mock_tasks, **kwargs):
         """Helper to create a task and store in mock_tasks."""
         # Use the real task_manager to create a task

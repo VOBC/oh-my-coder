@@ -197,8 +197,9 @@ class TestPreprocessTarget:
         assert p == "/tmp/x" and c == ""
 
     def test_url_ok(self):
-        from src.web.app import _preprocess_target
         import requests as rm
+
+        from src.web.app import _preprocess_target
         mr = MagicMock()
         mr.text = "<html><body><h1>Hello</h1></body></html>"
         with patch.object(rm, "get", return_value=mr):
@@ -206,23 +207,26 @@ class TestPreprocessTarget:
         assert p == "." and "Hello" in c
 
     def test_url_truncated(self):
-        from src.web.app import _preprocess_target
         import requests as rm
+
+        from src.web.app import _preprocess_target
         mr = MagicMock(text="<p>" + "x" * 10000 + "</p>")
         with patch.object(rm, "get", return_value=mr):
             _, c = _preprocess_target("https://x.com", "url", "a")
         assert "截断" in c
 
     def test_url_fail(self):
-        from src.web.app import _preprocess_target
         import requests as rm
+
+        from src.web.app import _preprocess_target
         with patch.object(rm, "get", side_effect=Exception("f")):
             with pytest.raises(RuntimeError, match="获取网页失败"):
                 _preprocess_target("https://bad.com", "url", "a")
 
     def test_url_strip_scripts(self):
-        from src.web.app import _preprocess_target
         import requests as rm
+
+        from src.web.app import _preprocess_target
         mr = MagicMock(text="<style>x</style><script>alert(1)</script>Content")
         with patch.object(rm, "get", return_value=mr):
             _, c = _preprocess_target("https://x.com", "url", "a")
@@ -259,6 +263,7 @@ class TestPreprocessTarget:
 class TestCleanupTarget:
     def test_github(self):
         import tempfile
+
         from src.web.app import _cleanup_target
         with patch("src.web.app.shutil.rmtree") as m:
             _cleanup_target(f"{tempfile.gettempdir()}/t", "github")

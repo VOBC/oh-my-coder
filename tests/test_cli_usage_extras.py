@@ -5,11 +5,7 @@ Focuses on pure-function paths that don't require Typer CLI app import.
 """
 from __future__ import annotations
 
-from pathlib import Path
-from unittest.mock import MagicMock, patch
-
-import pytest
-import typer
+from unittest.mock import patch
 
 from src.commands.cli_usage import (
     _get_store,
@@ -18,8 +14,7 @@ from src.commands.cli_usage import (
     trace_latest,
     trace_show,
 )
-from src.stats.models import FileStats, StatsResult
-
+from src.stats.models import StatsResult
 
 # =============================================================================
 # stats_command error handling (lines 110-112)

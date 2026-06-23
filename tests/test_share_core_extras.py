@@ -9,17 +9,15 @@ Additional tests for share.py core functions covering edge cases:
 from __future__ import annotations
 
 import json
-from pathlib import Path
 
 from src.commands.share import (
     _ensure_dir,
     _generate_share_id,
     _share_path,
+    delete_share,
     export_session,
     import_session,
     list_shares,
-    delete_share,
-    SHARE_DIR,
 )
 
 

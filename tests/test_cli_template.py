@@ -8,7 +8,7 @@ from unittest.mock import patch
 
 from typer.testing import CliRunner
 
-from src.commands.cli_template import app, BUILTIN_TEMPLATES
+from src.commands.cli_template import app
 
 runner = CliRunner()
 

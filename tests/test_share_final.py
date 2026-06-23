@@ -9,11 +9,9 @@ from unittest.mock import patch
 
 from src.commands.share import (
     _ensure_dir,
-    _generate_share_id,
     _share_path,
-    get_share,
     export_session,
-    SHARE_DIR,
+    get_share,
 )
 
 
@@ -76,6 +74,7 @@ class TestShareListCLIExpires:
                 }
             ]
             from typer.testing import CliRunner
+
             from src.commands.share import app as share_app
             result = CliRunner().invoke(share_app, ["list"])
             assert result.exit_code == 0
@@ -95,6 +94,7 @@ class TestShareListCLIExpires:
                 }
             ]
             from typer.testing import CliRunner
+
             from src.commands.share import app as share_app
             result = CliRunner().invoke(share_app, ["list"])
             assert result.exit_code == 0

@@ -3,13 +3,9 @@ Round 2 edge-case tests for evolution.py — covering remaining uncovered paths.
 """
 from __future__ import annotations
 
-import json
 from pathlib import Path
-from unittest.mock import patch, MagicMock
 
-import pytest
-
-from src.agents.evolution import EvolutionStore, DecisionRecord, DecisionMemory
+from src.agents.evolution import DecisionMemory, DecisionRecord, EvolutionStore
 
 
 class TestPatternsFileError:

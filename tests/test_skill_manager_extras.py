@@ -3,15 +3,9 @@ Edge-case tests for src/memory/skill_manager.py covering uncovered paths.
 """
 from __future__ import annotations
 
-import json
 from pathlib import Path
-from unittest.mock import patch, MagicMock
-
-import pytest
-import yaml
 
 from src.memory.skill_manager import SkillManager
-
 
 # ── _parse_frontmatter error handlers ──────────────────────────────────
 

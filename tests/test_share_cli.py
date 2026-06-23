@@ -4,8 +4,7 @@ share_list, share_delete, share_show).
 """
 from __future__ import annotations
 
-import json
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 
 from typer.testing import CliRunner
 

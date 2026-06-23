@@ -4,20 +4,13 @@ Edge-case tests for src/agents/evolution.py covering exception handlers.
 from __future__ import annotations
 
 import json
-import time
 from pathlib import Path
-from unittest.mock import patch, MagicMock
-
-import pytest
 
 from src.agents.evolution import (
-    EvolutionStore,
-    EvolutionRecord,
-    SuccessPattern,
-    DecisionRecord,
     DecisionMemory,
+    EvolutionRecord,
+    EvolutionStore,
 )
-
 
 # ── save_evolution_record edge cases ────────────────────────────────────
 
