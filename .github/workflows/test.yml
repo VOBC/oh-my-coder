@@ -34,7 +34,7 @@ jobs:
       - name: Run tests (fast, no coverage)
         if: matrix.python-version != '3.12'
         run: |
-          python -m pytest tests/ -o "addopts=--tb=short -ra -q --strict-markers" --timeout=300
+          python -m pytest tests/ -o "addopts=--tb=short -ra -q --strict-markers" --timeout=300 -n auto
 
       - name: Run tests with coverage (Python 3.12 only)
         if: matrix.python-version == '3.12'
