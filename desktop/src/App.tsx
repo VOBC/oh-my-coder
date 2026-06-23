@@ -855,7 +855,7 @@ export default function App() {
         if (taskResult.outputFile) {
           responseContent += `\n\n📁 **结果已保存**:\n- 本地: \`${taskResult.outputFile}\``;
           if ((taskResult as any).desktopFile) {
-            responseContent += `\n- 桌面: \`${(taskResult as any).desktopFile}\``;
+            responseContent += `\n- 报告: \`${(taskResult as any).desktopFile}\``;
           }
         }
 
