@@ -124,8 +124,8 @@ class TestSetExtras:
         cfg_dir.mkdir(parents=True, exist_ok=True)
         (cfg_dir / "config.json").write_text("{}")
 
-        # Write to .env in cwd, use tmp_path via monkeypatch of Path
-        env_file = tmp_path / ".env"
+        # Global config writes to ~/.omc/.env (unified location)
+        env_file = tmp_path / ".omc" / ".env"
         monkeypatch.chdir(tmp_path)
 
         result = runner.invoke(
