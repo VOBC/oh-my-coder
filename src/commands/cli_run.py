@@ -346,16 +346,66 @@ def _detect_project_name(project_path: Path) -> str:
 
 
 def _load_config() -> dict:
-    """从 ~/.omc/config.json 读取配置"""
+    """从 ~/.omc/config.json 读取配置，同时合并 .env 文件"""
     config_path = Path.home() / ".omc" / "config.json"
-    if not config_path.exists():
-        return {}
-    import json
-    try:
-        with open(config_path, encoding="utf-8") as f:
-            return json.load(f)
-    except Exception:
-        return {}
+    config = {}
+    if config_path.exists():
+        import json
+        try:
+            with open(config_path, encoding="utf-8") as f:
+                config = json.load(f)
+        except Exception:
+            pass
+
+    # 合并 .env 文件（支持 ~/.omc/.env 和当前目录的 .env）
+    omc_env = Path.home() / ".omc" / ".env"
+    cwd_env = Path(".env")
+    env_vars = {}
+    for env_path in [omc_env, cwd_env]:
+        if env_path.exists():
+            for line in env_path.read_text().splitlines():
+                if "=" in line:
+                    k, v = line.split("=", 1)
+                    env_vars[k.strip()] = v.strip()
+
+    # .env 中的配置覆盖 config.json（特别是 defaults.model 和 API keys）
+    for k, v in env_vars.items():
+        if k.endswith("_API_KEY") or k in ("DEFAULT_MODEL", "DEFAULT_WORKFLOW", "OMC_DEFAULT_MODEL"):
+            # 写入对应的 config.json 路径
+            if k == "DEFAULT_MODEL":
+                if "defaults" not in config:
+                    config["defaults"] = {}
+                config["defaults"]["model"] = v
+            elif k == "DEFAULT_WORKFLOW":
+                if "defaults" not in config:
+                    config["defaults"] = {}
+                config["defaults"]["workflow"] = v
+            elif k.endswith("_API_KEY"):
+                model_name = _model_name_from_key_env(k)
+                if model_name:
+                    if "models" not in config:
+                        config["models"] = {}
+                    if model_name not in config["models"]:
+                        config["models"][model_name] = {}
+                    config["models"][model_name]["api_key"] = v
+
+    return config
+
+
+def _model_name_from_key_env(env_key: str) -> str | None:
+    """根据环境变量名反推模型名"""
+    mapping = {
+        "DEEPSEEK_API_KEY": "deepseek",
+        "ZHIPUAI_API_KEY": "glm",
+        "KIMI_API_KEY": "kimi",
+        "DOUBAO_API_KEY": "doubao",
+        "MINIMAX_API_KEY": "minimax",
+        "DASHSCOPE_API_KEY": "tongyi",
+        "ERNIE_API_KEY": "wenxin",
+        "HUNYUAN_API_KEY": "hunyuan",
+        "GLM_API_KEY": "glm",  # 用户常用的别名
+    }
+    return mapping.get(env_key)
 
 
 def _resolve_default_model(config: dict) -> str:

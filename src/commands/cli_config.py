@@ -173,8 +173,10 @@ def set(
         _save(cfg)
         console.print(f"[dim]已保存到 {CONFIG_FILE}[/dim]")
     else:
-        # 全局配置，写入 .env
-        env_path = Path(".env")
+        # 全局配置，写入 ~/.omc/.env（统一位置）
+        CONFIG_DIR = Path.home() / ".omc"
+        CONFIG_DIR.mkdir(parents=True, exist_ok=True)
+        env_path = CONFIG_DIR / ".env"
         env_vars: dict[str, str] = {}
         if env_path.exists():
             for line in env_path.read_text().splitlines():
@@ -186,7 +188,7 @@ def set(
         console.print(
             f"[green]✓ 已设置（全局）[/green] [cyan]{key}[/cyan] = {_mask_secret(value)}"
         )
-        console.print("[dim]已写入 .env 文件[/dim]")
+        console.print(f"[dim]已写入 {env_path}[/dim]")
 
 
 @app.command()

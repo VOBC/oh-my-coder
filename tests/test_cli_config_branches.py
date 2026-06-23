@@ -158,19 +158,20 @@ class TestModelsEdgeCases:
 
 class TestSetGlobalEnvDetails:
     def test_set_global_with_existing_env(self, tmp_path, monkeypatch):
-        """Set global when .env already exists with some vars."""
+        """Set global when ~/.omc/.env already exists with some vars."""
         monkeypatch.setattr(Path, "home", lambda: tmp_path)
         cfg_dir = tmp_path / ".omc"
         cfg_dir.mkdir(parents=True, exist_ok=True)
         (cfg_dir / "config.json").write_text("{}")
-        monkeypatch.chdir(tmp_path)
-        (tmp_path / ".env").write_text("EXISTING_VAR=oldvalue\nANOTHER=keep\n")
+        # Now writes to ~/.omc/.env (consistent with omc run reading from there)
+        (cfg_dir / ".env").write_text("EXISTING_VAR=oldvalue\nANOTHER=keep\n")
         result = runner.invoke(
             app, ["set", "--key", "NEW_KEY", "--value", "newval"]
         )
         assert result.exit_code == 0
         assert "已设置（全局）" in result.stdout
-        content = (tmp_path / ".env").read_text()
+        # Writes to ~/.omc/.env, preserving existing vars
+        content = (cfg_dir / ".env").read_text()
         assert "EXISTING_VAR=oldvalue" in content
         assert "NEW_KEY=newval" in content
 
