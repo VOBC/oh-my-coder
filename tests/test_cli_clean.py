@@ -5,6 +5,7 @@ from __future__ import annotations
 
 from unittest.mock import patch
 
+import pytest
 from typer.testing import CliRunner
 
 from src.commands.cli_clean import _display_report, app

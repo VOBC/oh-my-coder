@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from unittest.mock import patch, Mock, MagicMock
+from unittest.mock import Mock, patch
 
 import pytest
 from typer.testing import CliRunner
@@ -222,7 +222,6 @@ class TestHealthNoActive:
 
     def test_health_with_reassignment_logs(self, runner, mock_console, tmp_path, monkeypatch):
         """Cover lines 605-617: show reassignment logs."""
-        import time
         state_dir = tmp_path / "health"
         state_dir.mkdir(parents=True)
 
