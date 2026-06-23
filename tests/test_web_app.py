@@ -1049,8 +1049,10 @@ class TestRunTask:
         mp.side_effect = RuntimeError("clone fail")
         tid = am.task_manager.create_task("t")
         loop = asyncio.new_event_loop()
-        try: loop.run_until_complete(am.run_task(tid, "t", "/tmp", "deepseek", "build", "github"))
-        finally: loop.close()
+        try:
+            loop.run_until_complete(am.run_task(tid, "t", "/tmp", "deepseek", "build", "github"))
+        finally:
+            loop.close()
         assert am.task_manager.get_task(tid)["status"] in ("completed", "failed")  # code bug: always completed
 
     @patch("src.web.app.get_orchestrator")
@@ -1064,8 +1066,10 @@ class TestRunTask:
         mp.return_value = (".", ""); go.side_effect = Exception("fail")
         tid = am.task_manager.create_task("t")
         loop = asyncio.new_event_loop()
-        try: loop.run_until_complete(am.run_task(tid, "t", ".", "deepseek", "build", "local"))
-        finally: loop.close()
+        try:
+            loop.run_until_complete(am.run_task(tid, "t", ".", "deepseek", "build", "local"))
+        finally:
+            loop.close()
         assert am.task_manager.get_task(tid)["status"] in ("completed", "failed")  # code bug: always completed
 
     @patch("src.web.app.get_orchestrator")
@@ -1087,8 +1091,10 @@ class TestRunTask:
         orch.get_agent.return_value = agent
         tid = am.task_manager.create_task("t")
         loop = asyncio.new_event_loop()
-        try: loop.run_until_complete(am.run_task(tid, "t", ".", "deepseek", "build", "local"))
-        finally: loop.close()
+        try:
+            loop.run_until_complete(am.run_task(tid, "t", ".", "deepseek", "build", "local"))
+        finally:
+            loop.close()
         assert am.task_manager.get_task(tid)["status"] == "completed"
 
     @patch("src.web.app.get_orchestrator")
@@ -1109,8 +1115,10 @@ class TestRunTask:
         orch.get_agent.return_value = agent
         tid = am.task_manager.create_task("t")
         loop = asyncio.new_event_loop()
-        try: loop.run_until_complete(am.run_task(tid, "t", ".", "deepseek", "build", "local"))
-        finally: loop.close()
+        try:
+            loop.run_until_complete(am.run_task(tid, "t", ".", "deepseek", "build", "local"))
+        finally:
+            loop.close()
         # Code marks completed even when steps fail (bug: should use error param)
         task = am.task_manager.get_task(tid)
         assert task["status"] in ("completed", "failed")
@@ -1130,8 +1138,10 @@ class TestRunTask:
         orch.get_agent.return_value = agent
         tid = am.task_manager.create_task("t")
         loop = asyncio.new_event_loop()
-        try: loop.run_until_complete(am.run_task(tid, "t", ".", "deepseek", "build", "local"))
-        finally: loop.close()
+        try:
+            loop.run_until_complete(am.run_task(tid, "t", ".", "deepseek", "build", "local"))
+        finally:
+            loop.close()
         assert am.task_manager.get_task(tid)["status"] in ("completed", "failed")  # code bug: always completed
 
     @patch("src.web.app.get_orchestrator")
@@ -1149,8 +1159,10 @@ class TestRunTask:
         orch.get_agent.return_value = agent
         tid = am.task_manager.create_task("t")
         loop = asyncio.new_event_loop()
-        try: loop.run_until_complete(am.run_task(tid, "t", ".", "deepseek", "build", "local"))
-        finally: loop.close()
+        try:
+            loop.run_until_complete(am.run_task(tid, "t", ".", "deepseek", "build", "local"))
+        finally:
+            loop.close()
         assert am.task_manager.get_task(tid)["status"] in ("completed", "failed")  # code bug: always completed
 
     @patch("src.web.app.get_orchestrator")
@@ -1168,8 +1180,10 @@ class TestRunTask:
         orch.get_agent.return_value = agent
         tid = am.task_manager.create_task("t")
         loop = asyncio.new_event_loop()
-        try: loop.run_until_complete(am.run_task(tid, "t", ".", "deepseek", "build", "local"))
-        finally: loop.close()
+        try:
+            loop.run_until_complete(am.run_task(tid, "t", ".", "deepseek", "build", "local"))
+        finally:
+            loop.close()
         assert am.task_manager.get_task(tid)["status"] in ("completed", "failed")  # code bug: always completed
 
     @patch("src.web.app.get_orchestrator")
@@ -1187,8 +1201,10 @@ class TestRunTask:
         orch.get_agent.return_value = agent
         tid = am.task_manager.create_task("t")
         loop = asyncio.new_event_loop()
-        try: loop.run_until_complete(am.run_task(tid, "t", ".", "deepseek", "build", "local"))
-        finally: loop.close()
+        try:
+            loop.run_until_complete(am.run_task(tid, "t", ".", "deepseek", "build", "local"))
+        finally:
+            loop.close()
         assert am.task_manager.get_task(tid)["status"] in ("completed", "failed")  # code bug: always completed
 
     @patch("src.web.app.get_orchestrator")
@@ -1206,8 +1222,10 @@ class TestRunTask:
         orch.get_agent.return_value = agent
         tid = am.task_manager.create_task("t")
         loop = asyncio.new_event_loop()
-        try: loop.run_until_complete(am.run_task(tid, "t", ".", "deepseek", "build", "local"))
-        finally: loop.close()
+        try:
+            loop.run_until_complete(am.run_task(tid, "t", ".", "deepseek", "build", "local"))
+        finally:
+            loop.close()
         assert am.task_manager.get_task(tid)["status"] in ("completed", "failed")  # code bug: always completed
 
     @patch("src.web.app.get_orchestrator")
@@ -1226,8 +1244,10 @@ class TestRunTask:
         orch.get_agent.return_value = agent
         tid = am.task_manager.create_task("t")
         loop = asyncio.new_event_loop()
-        try: loop.run_until_complete(am.run_task(tid, "t", ".", "deepseek", "build", "local"))
-        finally: loop.close()
+        try:
+            loop.run_until_complete(am.run_task(tid, "t", ".", "deepseek", "build", "local"))
+        finally:
+            loop.close()
         assert am.task_manager.get_task(tid)["status"] in ("completed", "failed")  # code bug: always completed
 
     @patch("src.web.app.get_orchestrator")
@@ -1245,8 +1265,10 @@ class TestRunTask:
         orch.get_agent.return_value = agent
         tid = am.task_manager.create_task("t")
         loop = asyncio.new_event_loop()
-        try: loop.run_until_complete(am.run_task(tid, "t", ".", "deepseek", "build", "local"))
-        finally: loop.close()
+        try:
+            loop.run_until_complete(am.run_task(tid, "t", ".", "deepseek", "build", "local"))
+        finally:
+            loop.close()
         assert am.task_manager.get_task(tid)["status"] in ("completed", "failed")  # code bug: always completed
 
     @patch("src.web.app.get_orchestrator")
@@ -1269,6 +1291,8 @@ class TestRunTask:
         tid = am.task_manager.create_task("t")
         am.task_manager._tasks[tid]["model"] = "glm-4-flash"
         loop = asyncio.new_event_loop()
-        try: loop.run_until_complete(am.run_task(tid, "t", ".", "glm-4-flash", "build", "url"))
-        finally: loop.close()
+        try:
+            loop.run_until_complete(am.run_task(tid, "t", ".", "glm-4-flash", "build", "url"))
+        finally:
+            loop.close()
         assert am.task_manager.get_task(tid)["status"] == "completed"

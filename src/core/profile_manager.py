@@ -13,8 +13,7 @@ import json
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Any, cast
-from typing import Optional
+from typing import Any, Optional, cast
 
 PROFILES_DIR = Path.home() / ".omc" / "profiles"
 
