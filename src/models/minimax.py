@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 # mypy: disable-error-code="abstract, arg-type, assignment, attr-defined, call-arg, call-overload, dict-item, func-returns-value, import-untyped, index, misc, no-any-return, no-redef, operator, override, return, return-value, syntax, union-attr, var-annotated"
-from typing import Optional
+from typing import AsyncIterator, Optional
 
 """
 MiniMax 模型适配器
@@ -156,6 +156,53 @@ class MiniMaxModel(BaseModel):
                 latency_ms=latency_ms,
                 tool_calls=tool_calls,
             )
+
+        except httpx.HTTPStatusError as e:
+            raise MiniMaxAPIError(f"MiniMax API 错误 ({e.response.status_code}): {e}")
+        except httpx.RequestError as e:
+            raise MiniMaxAPIError(f"网络请求失败: {e}")
+
+    async def stream(self, messages: list[Message], **kwargs) -> AsyncIterator[str]:
+        """
+        流式生成（SSE）
+
+        MiniMax API 支持流式输出，通过 SSE (Server-Sent Events) 格式返回。
+        """
+        client = await self._get_client()
+
+        request_body = {
+            "model": self.model_name,
+            "messages": self._format_messages(messages),
+            "max_tokens": kwargs.get("max_tokens", self.config.max_tokens),
+            "temperature": kwargs.get("temperature", self.config.temperature),
+            "stream": True,
+        }
+        if "tools" in kwargs and kwargs["tools"]:
+            request_body["tools"] = kwargs["tools"]
+            request_body["tool_choice"] = kwargs.get("tool_choice", "auto")
+
+        if "top_p" in kwargs:
+            request_body["top_p"] = kwargs["top_p"]
+
+        try:
+            async with client.stream("POST", "/text/chatcompletion_v2", json=request_body) as response:
+                response.raise_for_status()
+                async for line in response.aiter_lines():
+                    line = line.strip()
+                    if not line or line.startswith(":") or line == "data: [DONE]":
+                        continue
+                    if line.startswith("data: "):
+                        try:
+                            import json
+                            data = json.loads(line[6:])  # Remove "data: " prefix
+                            choices = data.get("choices", [])
+                            if choices:
+                                delta = choices[0].get("delta", {})
+                                content = delta.get("content", "")
+                                if content:
+                                    yield content
+                        except json.JSONDecodeError:
+                            continue
 
         except httpx.HTTPStatusError as e:
             raise MiniMaxAPIError(f"MiniMax API 错误 ({e.response.status_code}): {e}")
