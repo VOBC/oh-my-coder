@@ -567,15 +567,17 @@ class TestInitRouter:
     @patch("commands.cli_run._resolve_default_model")
     @patch("commands.cli_run._get_api_key")
     def test_init_router_init_failure(self, mock_get_key, mock_resolve, mock_load):
+        from typer import Exit
+        
         mock_resolve.return_value = "deepseek"
         mock_get_key.return_value = "sk-test"
         mock_load.return_value = {}
 
         with patch("commands.cli_run.ModelRouter") as mock_router_cls:
             mock_router_cls.side_effect = RuntimeError("init failed")
-            # _init_router calls _print_fatal and returns None (doesn't raise)
-            result = _init_router()
-            assert result is None
+            # _init_router raises typer.Exit(1) on failure
+            with pytest.raises(Exit):
+                _init_router()
 
 
 # =============================================================================

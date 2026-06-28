@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 # Ensure src/ is importable
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
@@ -13,9 +13,11 @@ from src.commands.cli_tui import (
     AGENT_CATEGORIES,
     MODELS,
     WORKFLOWS,
+    TUISession,
     list_agents,
     list_models,
     list_workflows,
+    start,
 )
 
 

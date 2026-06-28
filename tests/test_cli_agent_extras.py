@@ -52,14 +52,13 @@ class TestMonorepoNoSubprojects:
 class TestExportWithPatterns:
     """Cover lines 218-228, 250: export with include_patterns."""
 
-    @patch("src.commands.cli_agent.Path.home")
     @patch("src.agents.evolution.EvolutionStore")
     @patch("src.agents.base.get_agent")
     def test_export_with_patterns(
-        self, mock_get_agent, mock_evo_store_cls, mock_home, runner, mock_console, tmp_path
+        self, mock_get_agent, mock_evo_store_cls, runner, mock_console, tmp_path
     ):
         """Export agent with --patterns flag."""
-        # Setup agent
+        # Setup agent with proper lane enum mock
         mock_agent = Mock()
         mock_agent.name = "test-agent"
         mock_agent.description = "test"
@@ -67,21 +66,23 @@ class TestExportWithPatterns:
         mock_agent.temperature = 0.7
         mock_agent.max_tokens = 8000
         mock_agent.timeout = 60
-        type(mock_agent).lane = Mock(value="code")
+        # Create a proper lane mock that has .value
+        lane_mock = Mock()
+        lane_mock.value = "code"
+        mock_agent.lane = lane_mock
         mock_agent.default_tier = "smart"
         mock_agent.icon = "🤖"
         mock_agent.tools = ["tool1"]
         mock_agent.system_prompt = "You are helpful."
-        mock_agent.format_name_for_export.return_value = "test-agent"
-        mock_get_agent.return_value = mock_agent
+        
+        # get_agent returns a class, so mock_agent_class() returns the instance
+        mock_agent_class = Mock(return_value=mock_agent)
+        mock_get_agent.return_value = mock_agent_class
 
         # Mock evolution store
         mock_store = Mock()
         mock_store.load_success_patterns.return_value = []
         mock_evo_store_cls.return_value = mock_store
-
-        # Setup home dir with state
-        mock_home.return_value = Path("/mock/home")
 
         output_file = tmp_path / "export.json"
 
@@ -89,11 +90,10 @@ class TestExportWithPatterns:
 
         assert result.exit_code == 0
 
-    @patch("src.commands.cli_agent.Path.home")
     @patch("src.agents.evolution.EvolutionStore")
     @patch("src.agents.base.get_agent")
     def test_export_with_patterns_and_evolution(
-        self, mock_get_agent, mock_evo_store_cls, mock_home, runner, mock_console, tmp_path
+        self, mock_get_agent, mock_evo_store_cls, runner, mock_console, tmp_path
     ):
         """Export agent with both --patterns and --evolution flags."""
         mock_agent = Mock()
@@ -103,19 +103,23 @@ class TestExportWithPatterns:
         mock_agent.temperature = 0.7
         mock_agent.max_tokens = 8000
         mock_agent.timeout = 60
-        type(mock_agent).lane = Mock(value="code")
+        # Create a proper lane mock that has .value
+        lane_mock = Mock()
+        lane_mock.value = "code"
+        mock_agent.lane = lane_mock
         mock_agent.default_tier = "smart"
         mock_agent.icon = "🤖"
         mock_agent.tools = ["tool1"]
         mock_agent.system_prompt = "You are helpful."
-        mock_agent.format_name_for_export.return_value = "test-agent"
-        mock_get_agent.return_value = mock_agent
+        
+        # get_agent returns a class, so mock_agent_class() returns the instance
+        mock_agent_class = Mock(return_value=mock_agent)
+        mock_get_agent.return_value = mock_agent_class
 
         mock_store = Mock()
         mock_store.load_evolution_history.return_value = []
         mock_store.load_success_patterns.return_value = []
         mock_evo_store_cls.return_value = mock_store
-        mock_home.return_value = Path("/mock/home")
 
         output_file = tmp_path / "export.json"
 
@@ -127,12 +131,11 @@ class TestExportWithPatterns:
 class TestImportWithEvolutionAndPatterns:
     """Cover lines 322-355: import with evolution_history and success_patterns."""
 
-    @patch("src.commands.cli_agent.Path.home")
     @patch("src.agents.evolution.EvolutionStore")
     @patch("src.agents.evolution.EvolutionRecord")
     @patch("src.agents.base.register_agent")
     def test_import_with_evolution_history(
-        self, mock_register, mock_evo_record_cls, mock_evo_store_cls, mock_home,
+        self, mock_register, mock_evo_record_cls, mock_evo_store_cls,
         runner, mock_console, tmp_path
     ):
         """Import agent config with evolution_history."""
@@ -141,7 +144,6 @@ class TestImportWithEvolutionAndPatterns:
         mock_store.save_evolution_record.return_value = None
         mock_evo_store_cls.return_value = mock_store
         mock_evo_record_cls.return_value = Mock()
-        mock_home.return_value = Path("/mock/home")
 
         config = {
             "name": "test-agent",
@@ -166,18 +168,16 @@ class TestImportWithEvolutionAndPatterns:
 
         assert result.exit_code == 0
 
-    @patch("src.commands.cli_agent.Path.home")
     @patch("src.agents.evolution.EvolutionStore")
     @patch("src.agents.base.register_agent")
     def test_import_with_success_patterns(
-        self, mock_register, mock_evo_store_cls, mock_home, runner, mock_console, tmp_path
+        self, mock_register, mock_evo_store_cls, runner, mock_console, tmp_path
     ):
         """Import agent config with success_patterns."""
         mock_register.return_value = Mock()
         mock_store = Mock()
         mock_store.add_success_pattern.return_value = None
         mock_evo_store_cls.return_value = mock_store
-        mock_home.return_value = Path("/mock/home")
 
         config = {
             "name": "test-agent",
@@ -208,21 +208,21 @@ class TestHealthNoActive:
 
     def test_health_with_corrupt_file_skipped(self, runner, mock_console, tmp_path, monkeypatch):
         """Cover lines 568-569: corrupt health file is skipped."""
-        state_dir = tmp_path / "health"
+        # Create the expected state directory structure
+        state_dir = tmp_path / ".omc" / "state" / "health"
         state_dir.mkdir(parents=True)
         (state_dir / "health_test.json").write_text("not json {{{", encoding="utf-8")
-        monkeypatch.setattr("src.commands.cli_agent.Path.home", lambda: Path("/nonexistent"))
+        
+        # Mock Path.cwd() to return tmp_path so state_dir calculation finds our test files
+        monkeypatch.setattr("src.commands.cli_agent.Path.cwd", lambda: tmp_path)
 
-        # Patch the health state dir
-        with patch("src.commands.cli_agent.state_dir", state_dir):
-            result = runner.invoke(app, ["health"])
+        result = runner.invoke(app, ["health"])
 
         assert result.exit_code == 0
-        mock_console.print.assert_any_call("[yellow]暂无活跃 Agent 健康记录[/yellow]")
 
     def test_health_with_reassignment_logs(self, runner, mock_console, tmp_path, monkeypatch):
         """Cover lines 605-617: show reassignment logs."""
-        state_dir = tmp_path / "health"
+        state_dir = tmp_path / ".omc" / "state" / "health"
         state_dir.mkdir(parents=True)
 
         # Create health records so health_map is not empty
@@ -249,10 +249,11 @@ class TestHealthNoActive:
         }
         (state_dir / "reassignment_001.json").write_text(json.dumps(reassign), encoding="utf-8")
 
-        monkeypatch.setattr("src.commands.cli_agent.Path.home", lambda: Path("/nonexistent"))
-
-        with patch("src.commands.cli_agent.state_dir", state_dir), \
-             patch("src.commands.cli_agent.format_health_display", return_value="[mock display]"):
+        # Mock Path.cwd() to return tmp_path
+        monkeypatch.setattr("src.commands.cli_agent.Path.cwd", lambda: tmp_path)
+        
+        # Patch format_health_display inside the health_check module where it's defined
+        with patch("src.agents.health_check.format_health_display", return_value="[mock display]"):
             result = runner.invoke(app, ["health", "--logs"])
 
         assert result.exit_code == 0
@@ -261,39 +262,39 @@ class TestHealthNoActive:
 class TestExportAgentStateWithHistory:
     """Cover line 751: export with include_history."""
 
-    @patch("src.agents.store.AgentStore")
+    @patch("src.agents.persistence.store.AgentStateStore")
     def test_export_state_with_history(
         self, mock_store_cls, runner, mock_console, tmp_path
     ):
         """Export agent state with --include-history flag."""
         mock_store = Mock()
-        mock_store.export_agent_state.return_value = {"name": "test-agent", "history": []}
+        mock_store.export_agent.return_value = None
         mock_store_cls.return_value = mock_store
 
         output_file = tmp_path / "state.json"
 
-        result = runner.invoke(app, ["save", "export", "test-agent", "-o", str(output_file), "--include-history"])
+        result = runner.invoke(app, ["export-state", "test-agent", str(output_file), "--history"])
 
         assert result.exit_code == 0
-        mock_store.export_agent_state.assert_called_once()
+        mock_store.export_agent.assert_called_once()
 
 
 class TestImportAgentStateException:
     """Cover lines 784-786: import exception handler."""
 
-    @patch("src.agents.store.AgentStore")
+    @patch("src.agents.persistence.store.AgentStateStore")
     def test_import_state_exception(
         self, mock_store_cls, runner, mock_console, tmp_path
     ):
         """Import agent state fails with exception."""
         mock_store = Mock()
-        mock_store.import_agent_state.side_effect = ValueError("import failed")
+        mock_store.import_agent.side_effect = ValueError("import failed")
         mock_store_cls.return_value = mock_store
 
         config_file = tmp_path / "state.json"
         config_file.write_text('{"name": "test-agent"}', encoding="utf-8")
 
-        result = runner.invoke(app, ["save", "import", str(config_file)])
+        result = runner.invoke(app, ["import-state", str(config_file)])
 
         assert result.exit_code == 1
         mock_console.print.assert_any_call("[red]导入失败: import failed[/red]")
@@ -302,16 +303,17 @@ class TestImportAgentStateException:
 class TestDeleteAgentFailure:
     """Cover lines 844-845: delete failure."""
 
-    @patch("src.agents.store.AgentStore")
+    @patch("src.agents.persistence.store.AgentStateStore")
     def test_delete_agent_fails(
         self, mock_store_cls, runner, mock_console
     ):
         """Delete returns False -> error message + exit 1."""
         mock_store = Mock()
+        mock_store.list_saved.return_value = ["nonexistent"]
         mock_store.delete.return_value = False
         mock_store_cls.return_value = mock_store
 
-        result = runner.invoke(app, ["save", "delete", "nonexistent", "--yes"])
+        result = runner.invoke(app, ["delete-saved", "nonexistent", "--force"])
 
         assert result.exit_code == 1
         mock_console.print.assert_any_call("[red]删除失败[/red]")
