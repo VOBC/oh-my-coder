@@ -6,8 +6,6 @@
 
 from unittest.mock import MagicMock, patch
 
-import pytest
-
 from src.core.dependency_resolver import (
     MODULE_TO_PACKAGE,
     DependencyInfo,
@@ -343,7 +341,7 @@ class TestGlobalFunctions:
         """resolve_dependencies 是 get_resolver().resolve 的包装"""
         with patch.object(DependencyResolver, "resolve") as mock_resolve:
             mock_resolve.return_value = ResolutionResult()
-            result = resolve_dependencies("import os\n")
+            resolve_dependencies("import os\n")
             mock_resolve.assert_called_once_with("import os\n", True)
 
     def test_get_resolver_singleton(self):

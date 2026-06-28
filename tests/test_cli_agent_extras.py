@@ -74,7 +74,7 @@ class TestExportWithPatterns:
         mock_agent.icon = "🤖"
         mock_agent.tools = ["tool1"]
         mock_agent.system_prompt = "You are helpful."
-        
+
         # get_agent returns a class, so mock_agent_class() returns the instance
         mock_agent_class = Mock(return_value=mock_agent)
         mock_get_agent.return_value = mock_agent_class
@@ -111,7 +111,7 @@ class TestExportWithPatterns:
         mock_agent.icon = "🤖"
         mock_agent.tools = ["tool1"]
         mock_agent.system_prompt = "You are helpful."
-        
+
         # get_agent returns a class, so mock_agent_class() returns the instance
         mock_agent_class = Mock(return_value=mock_agent)
         mock_get_agent.return_value = mock_agent_class
@@ -212,7 +212,7 @@ class TestHealthNoActive:
         state_dir = tmp_path / ".omc" / "state" / "health"
         state_dir.mkdir(parents=True)
         (state_dir / "health_test.json").write_text("not json {{{", encoding="utf-8")
-        
+
         # Mock Path.cwd() to return tmp_path so state_dir calculation finds our test files
         monkeypatch.setattr("src.commands.cli_agent.Path.cwd", lambda: tmp_path)
 
@@ -251,7 +251,7 @@ class TestHealthNoActive:
 
         # Mock Path.cwd() to return tmp_path
         monkeypatch.setattr("src.commands.cli_agent.Path.cwd", lambda: tmp_path)
-        
+
         # Patch format_health_display inside the health_check module where it's defined
         with patch("src.agents.health_check.format_health_display", return_value="[mock display]"):
             result = runner.invoke(app, ["health", "--logs"])

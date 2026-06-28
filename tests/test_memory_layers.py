@@ -5,16 +5,12 @@
 """
 
 import json
-import tempfile
 import time
 from pathlib import Path
 
-import pytest
-
-from src.memory.learnings import LearningsMemory, LearningEntry
+from src.memory.learnings import LearningEntry, LearningsMemory
 from src.memory.long_term import LongTermMemory, ProjectPreference, UserPreference
 from src.memory.short_term import Message, SessionContext, ShortTermMemory
-
 
 # =============================================================================
 # ShortTermMemory 补充测试
@@ -230,7 +226,7 @@ class TestLongTermMemoryExtra:
     def test_add_recent_project_max_10(self, tmp_path):
         """recent_projects 最多保留 10 个"""
         lt = LongTermMemory(tmp_path)
-        prefs = lt.get_user_prefs()
+        _prefs = lt.get_user_prefs()
 
         for i in range(15):
             p = tmp_path / f"proj{i}"

@@ -4,17 +4,14 @@
 覆盖 AgentProfile 数据类和 ProfileManager 的所有方法。
 """
 
-import json
-import tempfile
 from pathlib import Path
 
 import pytest
 
 from src.core.profile_manager import (
-    AgentProfile,
     PREDEFINED_PROFILES,
+    AgentProfile,
     ProfileManager,
-    PROFILES_DIR,
     create_predefined_profile,
     get_profile_summary,
 )

@@ -4,7 +4,6 @@
 覆盖 t1_extract_posts、t2_classify_posts、t3_write_summary 的所有函数。
 """
 
-import pytest
 
 from src.tasks.t1_extract_posts import Post, extract_posts, print_posts
 from src.tasks.t2_classify_posts import (
@@ -15,7 +14,6 @@ from src.tasks.t2_classify_posts import (
     print_classification,
 )
 from src.tasks.t3_write_summary import generate_summary, main
-
 
 # =============================================================================
 # T1: extract_posts 测试
@@ -140,7 +138,7 @@ class TestCATEGORIES:
             assert key in CATEGORIES
 
     def test_categories_values_are_lists(self):
-        for cat, keywords in CATEGORIES.items():
+        for _cat, keywords in CATEGORIES.items():
             assert isinstance(keywords, list)
             assert len(keywords) > 0
 

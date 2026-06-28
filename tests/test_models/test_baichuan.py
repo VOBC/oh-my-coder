@@ -16,6 +16,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import httpx
 import pytest
 
+from src.models.baichuan import BAICHUAN_MODELS, BaichuanAPIError, BaichuanModel
 from src.models.base import (
     Message,
     ModelConfig,
@@ -23,7 +24,6 @@ from src.models.base import (
     ModelResponse,
     ModelTier,
 )
-from src.models.baichuan import BAICHUAN_MODELS, BaichuanAPIError, BaichuanModel
 
 
 class TestBaichuanModel:

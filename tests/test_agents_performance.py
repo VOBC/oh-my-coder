@@ -3,14 +3,13 @@
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
 from src.agents.base import AgentContext, AgentLane, AgentOutput, AgentStatus
 from src.agents.performance import PerformanceAgent
 from src.models.base import Message
-
 
 # ─────────────────────────────────────────────────────────────
 # Fixtures

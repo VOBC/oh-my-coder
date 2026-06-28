@@ -568,7 +568,7 @@ class TestInitRouter:
     @patch("commands.cli_run._get_api_key")
     def test_init_router_init_failure(self, mock_get_key, mock_resolve, mock_load):
         from typer import Exit
-        
+
         mock_resolve.return_value = "deepseek"
         mock_get_key.return_value = "sk-test"
         mock_load.return_value = {}

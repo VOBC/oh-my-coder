@@ -18,7 +18,6 @@ from src.api.openapi import (
     custom_openapi,
 )
 
-
 # =============================================================================
 # API_VERSION Tests
 # =============================================================================
@@ -411,7 +410,7 @@ def test_custom_openapi_generate_info_description():
             "paths": {},
         }
         generate = custom_openapi(app)
-        result = generate()
+        generate()
 
     # Description is passed to get_openapi, so we check that get_openapi was called with it
     call_kwargs = mock_get_openapi.call_args.kwargs
@@ -666,7 +665,7 @@ def test_custom_openapi_returns_callable_twice():
 def test_openapi_examples_immutability():
     """Test that OPENAPI_EXAMPLES values are not accidentally shared."""
     # Each example should have its own 'summary' and 'value'
-    for name, example in OPENAPI_EXAMPLES.items():
+    for _name, example in OPENAPI_EXAMPLES.items():
         assert "summary" in example
         assert "value" in example
         # Value should be a dict
@@ -692,7 +691,7 @@ def test_openapi_responses_all_have_error_object():
 def test_openapi_response_all_different_error_codes():
     """Test that all error codes are unique and meaningful."""
     codes = set()
-    for status_code, response in OPENAPI_RESPONSES.items():
+    for _status_code, response in OPENAPI_RESPONSES.items():
         example = response["content"]["application/json"]["example"]
         error_code = example["error"]["code"]
         codes.add(error_code)

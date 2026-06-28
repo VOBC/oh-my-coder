@@ -10,16 +10,14 @@ from __future__ import annotations
 import json
 from io import StringIO
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import Mock, patch
 
 import pytest
 
 # ---------------------------------------------------------------------------
 # 导入被测模块
 # ---------------------------------------------------------------------------
-
 import src.mcp.server as mcp_server
-
 
 # ---------------------------------------------------------------------------
 # 辅助：捕获 stdout 的 fixture
@@ -551,8 +549,8 @@ class TestRun:
         try:
             server = mcp_server.McpServer()
             # 重写 run 方法来只处理一行
-            lines_processed = [0]
-            original_run = server.run
+            _lines_processed = [0]
+            _original_run = server.run
 
             def limited_run():
                 for line in sys.stdin:
@@ -631,7 +629,6 @@ class TestMain:
     @patch("src.mcp.server.McpServer")
     def test_main_creates_server_with_workspace(self, mock_server_class):
         """main() 应使用提供的工作区路径创建 McpServer。"""
-        import argparse
         from unittest.mock import patch
 
         mock_server_instance = Mock()

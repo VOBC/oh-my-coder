@@ -325,7 +325,8 @@ class TestTaskManager:
         assert not tm.delete_task("nope")
 
     def test_list(self, tm):
-        tm.create_task("a"); tm.create_task("b")
+        tm.create_task("a")
+        tm.create_task("b")
         assert len(tm.list_tasks()) == 2
 
     def test_list_empty(self, tm):
@@ -508,7 +509,8 @@ class TestHealth:
 class TestTasks:
     def test_list_empty(self, client):
         from src.web.app import task_manager
-        task_manager._tasks.clear(); task_manager._queues.clear()
+        task_manager._tasks.clear()
+        task_manager._queues.clear()
         assert client.get("/api/tasks").json()["tasks"] == []
 
     def test_get_404(self, client):
@@ -594,7 +596,8 @@ class TestSaveReport:
         with patch("src.web.app.task_manager") as m, \
              patch("src.web.app.history_store") as h, \
              patch("src.web.app.Path.home", return_value=tmp_path):
-            m.get_task.return_value = None; h.load.return_value = mt
+            m.get_task.return_value = None
+            h.load.return_value = mt
             assert client.post("/api/save-report", json={"task_id":"h"}).status_code == 200
 
     def test_string_step_output(self, client, tmp_path):
@@ -638,7 +641,8 @@ class TestSaveReport:
         with patch("src.web.app.task_manager") as m, \
              patch("src.web.app.history_store") as h, \
              patch("src.web.app.Path.home", return_value=tmp_path):
-            m.get_task.return_value = None; h.load.return_value = mt
+            m.get_task.return_value = None
+            h.load.return_value = mt
             assert client.post("/api/save-report", json={"task_id":"h"}).status_code == 200
 
     def test_step_output_empty_string(self, client, tmp_path):
@@ -690,7 +694,8 @@ class TestChatCompletion:
         resp = MagicMock(content="Hi", model="ds",
             usage=MagicMock(prompt_tokens=10, completion_tokens=20, total_tokens=30))
         mr.route_and_call = AsyncMock(return_value=resp)
-        mo.model_router = mr; go.return_value = mo
+        mo.model_router = mr
+        go.return_value = mo
         r = client.post("/api/chat/completions", json={
             "messages":[{"role":"user","content":"hi"}],"model":"ds","stream":False})
         assert r.json()["content"] == "Hi"
@@ -700,7 +705,8 @@ class TestChatCompletion:
         mo = MagicMock()
         mr = AsyncMock()
         mr.route_and_call = AsyncMock(side_effect=Exception("e"))
-        mo.model_router = mr; go.return_value = mo
+        mo.model_router = mr
+        go.return_value = mo
         assert "失败" in client.post("/api/chat/completions", json={
             "messages":[{"role":"user","content":"hi"}],"model":"ds","stream":False}).json()["content"]
 
@@ -735,7 +741,8 @@ class TestExecuteSync:
         out = MagicMock(status=AgentStatus.COMPLETED, result="done",
             usage={"total_tokens":10})
         agent.execute = AsyncMock(return_value=out)
-        orch.get_agent.return_value = agent; co.return_value = orch
+        orch.get_agent.return_value = agent
+        co.return_value = orch
         assert client.post("/api/execute-sync", json={
             "task":"do","project_path":"/tmp"}).status_code == 200
 
@@ -748,7 +755,8 @@ class TestExecuteSync:
         agent = AsyncMock()
         out = MagicMock(status=AgentStatus.FAILED, error="err")
         agent.execute = AsyncMock(return_value=out)
-        orch.get_agent.return_value = agent; co.return_value = orch
+        orch.get_agent.return_value = agent
+        co.return_value = orch
         r = client.post("/api/execute-sync", json={
             "task":"do","project_path":"/tmp"})
         assert r.json()["status"] == "error"
@@ -759,7 +767,8 @@ class TestExecuteSync:
         cr.return_value = MagicMock()
         orch = MagicMock()
         agent = AsyncMock(execute=AsyncMock(side_effect=TimeoutError()))
-        orch.get_agent.return_value = agent; co.return_value = orch
+        orch.get_agent.return_value = agent
+        co.return_value = orch
         assert "超时" in client.post("/api/execute-sync", json={
             "task":"do","project_path":"/tmp"}).json()["message"]
 
@@ -811,9 +820,12 @@ class TestSettingsEndpoints:
 class TestTestConnection:
     def _mc(self, status=200, ct="application/json", text="", jd=None):
         r = MagicMock(status_code=status, headers={"content-type":ct}, text=text)
-        if jd: r.json.return_value = jd
-        else: r.json.side_effect = Exception("not json")
-        c = MagicMock(); c.post.return_value = r
+        if jd:
+            r.json.return_value = jd
+        else:
+            r.json.side_effect = Exception("not json")
+        c = MagicMock()
+        c.post.return_value = r
         return c
 
     def test_no_params(self, client):
@@ -959,50 +971,58 @@ class TestWorkflowEndpoints:
     @patch("src.web.app.WorkflowLoader")
     @patch("src.web.app.WORKFLOW_TEMPLATES", {})
     def test_get_not_found(self, mc, client):
-        ml = MagicMock(); ml.get_workflow_config.return_value = None
+        ml = MagicMock()
+        ml.get_workflow_config.return_value = None
         mc.return_value = ml
         assert client.get("/api/workflows/unknown").status_code == 404
 
     @patch("src.web.app.WorkflowLoader")
     def test_save(self, mc, client):
-        ml = MagicMock(); ml.parse_yaml_string.return_value = MagicMock()
+        ml = MagicMock()
+        ml.parse_yaml_string.return_value = MagicMock()
         mc.return_value = ml
         assert client.put("/api/workflows/w", json={"yaml":"s:\n  - x"}).status_code == 200
 
     @patch("src.web.app.WorkflowLoader")
     def test_save_parse_fail(self, mc, client):
-        ml = MagicMock(); ml.parse_yaml_string.return_value = None
+        ml = MagicMock()
+        ml.parse_yaml_string.return_value = None
         mc.return_value = ml
         assert client.put("/api/workflows/b", json={"yaml":"x"}).status_code == 400
 
     @patch("src.web.app.WorkflowLoader")
     def test_save_exception(self, mc, client):
-        ml = MagicMock(); ml.parse_yaml_string.side_effect = Exception("bad")
+        ml = MagicMock()
+        ml.parse_yaml_string.side_effect = Exception("bad")
         mc.return_value = ml
         assert client.put("/api/workflows/b", json={"yaml":"x"}).status_code == 400
 
     @patch("src.web.app.WorkflowLoader")
     def test_delete_builtin(self, mc, client):
-        ml = MagicMock(); ml.is_builtin.return_value = True
+        ml = MagicMock()
+        ml.is_builtin.return_value = True
         mc.return_value = ml
         assert client.delete("/api/workflows/build").status_code == 403
 
     @patch("src.web.app.WorkflowLoader")
     def test_delete_not_found(self, mc, client):
-        ml = MagicMock(); ml.is_builtin.return_value = False
+        ml = MagicMock()
+        ml.is_builtin.return_value = False
         ml.delete_workflow.side_effect = FileNotFoundError()
         mc.return_value = ml
         assert client.delete("/api/workflows/c").status_code == 404
 
     @patch("src.web.app.WorkflowLoader")
     def test_delete_ok(self, mc, client):
-        ml = MagicMock(); ml.is_builtin.return_value = False
+        ml = MagicMock()
+        ml.is_builtin.return_value = False
         mc.return_value = ml
         assert client.delete("/api/workflows/c").status_code == 200
 
     @patch("src.web.app.WorkflowLoader")
     def test_delete_err(self, mc, client):
-        ml = MagicMock(); ml.is_builtin.return_value = False
+        ml = MagicMock()
+        ml.is_builtin.return_value = False
         ml.delete_workflow.side_effect = Exception("e")
         mc.return_value = ml
         assert client.delete("/api/workflows/c").status_code == 400
@@ -1019,7 +1039,8 @@ class TestCreateOrch:
     @patch("src.web.app.Orchestrator")
     def test_create(self, moc, mcr, mga):
         from src.web.app import create_orchestrator
-        mcr.return_value = MagicMock(); mga.return_value = MagicMock()
+        mcr.return_value = MagicMock()
+        mga.return_value = MagicMock()
         create_orchestrator(mcr.return_value)
         moc.return_value.register_agent.assert_called()
 
@@ -1063,7 +1084,8 @@ class TestRunTask:
     def test_main_exception(self, dt, mc, mp, mh, go):
         import src.web.app as am
         dt.now.return_value.isoformat.return_value = "2024-01-01"
-        mp.return_value = (".", ""); go.side_effect = Exception("fail")
+        mp.return_value = (".", "")
+        go.side_effect = Exception("fail")
         tid = am.task_manager.create_task("t")
         loop = asyncio.new_event_loop()
         try:
@@ -1082,8 +1104,11 @@ class TestRunTask:
         import src.web.app as am
         from src.agents.base import AgentStatus
         dt.now.return_value.isoformat.return_value = "2024-01-01"
-        mp.return_value = (".", ""); mt.side_effect = [0]*10
-        orch = MagicMock(); orch._active_workflows = {}; go.return_value = orch
+        mp.return_value = (".", "")
+        mt.side_effect = [0]*10
+        orch = MagicMock()
+        orch._active_workflows = {}
+        go.return_value = orch
         agent = AsyncMock()
         out = MagicMock(status=AgentStatus.COMPLETED, result="done",
             usage={"total_tokens":10})
@@ -1107,8 +1132,11 @@ class TestRunTask:
         import src.web.app as am
         from src.agents.base import AgentStatus
         dt.now.return_value.isoformat.return_value = "2024-01-01"
-        mp.return_value = (".", ""); mt.side_effect = [0]*10
-        orch = MagicMock(); orch._active_workflows = {}; go.return_value = orch
+        mp.return_value = (".", "")
+        mt.side_effect = [0]*10
+        orch = MagicMock()
+        orch._active_workflows = {}
+        go.return_value = orch
         agent = AsyncMock()
         out = MagicMock(status=AgentStatus.FAILED, error="failed")
         agent.execute = AsyncMock(return_value=out)
@@ -1132,8 +1160,11 @@ class TestRunTask:
     def test_timeout(self, mt, dt, mc, mp, mh, go):
         import src.web.app as am
         dt.now.return_value.isoformat.return_value = "2024-01-01"
-        mp.return_value = (".", ""); mt.side_effect = [0]*10
-        orch = MagicMock(); orch._active_workflows = {}; go.return_value = orch
+        mp.return_value = (".", "")
+        mt.side_effect = [0]*10
+        orch = MagicMock()
+        orch._active_workflows = {}
+        go.return_value = orch
         agent = AsyncMock(execute=AsyncMock(side_effect=TimeoutError()))
         orch.get_agent.return_value = agent
         tid = am.task_manager.create_task("t")
@@ -1153,8 +1184,11 @@ class TestRunTask:
     def test_429_error(self, mt, dt, mc, mp, mh, go):
         import src.web.app as am
         dt.now.return_value.isoformat.return_value = "2024-01-01"
-        mp.return_value = (".", ""); mt.side_effect = [0]*10
-        orch = MagicMock(); orch._active_workflows = {}; go.return_value = orch
+        mp.return_value = (".", "")
+        mt.side_effect = [0]*10
+        orch = MagicMock()
+        orch._active_workflows = {}
+        go.return_value = orch
         agent = AsyncMock(execute=AsyncMock(side_effect=Exception("429 Too Many Requests")))
         orch.get_agent.return_value = agent
         tid = am.task_manager.create_task("t")
@@ -1174,8 +1208,11 @@ class TestRunTask:
     def test_401_error(self, mt, dt, mc, mp, mh, go):
         import src.web.app as am
         dt.now.return_value.isoformat.return_value = "2024-01-01"
-        mp.return_value = (".", ""); mt.side_effect = [0]*10
-        orch = MagicMock(); orch._active_workflows = {}; go.return_value = orch
+        mp.return_value = (".", "")
+        mt.side_effect = [0]*10
+        orch = MagicMock()
+        orch._active_workflows = {}
+        go.return_value = orch
         agent = AsyncMock(execute=AsyncMock(side_effect=Exception("401 Unauthorized")))
         orch.get_agent.return_value = agent
         tid = am.task_manager.create_task("t")
@@ -1195,8 +1232,11 @@ class TestRunTask:
     def test_403_error(self, mt, dt, mc, mp, mh, go):
         import src.web.app as am
         dt.now.return_value.isoformat.return_value = "2024-01-01"
-        mp.return_value = (".", ""); mt.side_effect = [0]*10
-        orch = MagicMock(); orch._active_workflows = {}; go.return_value = orch
+        mp.return_value = (".", "")
+        mt.side_effect = [0]*10
+        orch = MagicMock()
+        orch._active_workflows = {}
+        go.return_value = orch
         agent = AsyncMock(execute=AsyncMock(side_effect=Exception("403 Forbidden")))
         orch.get_agent.return_value = agent
         tid = am.task_manager.create_task("t")
@@ -1216,8 +1256,11 @@ class TestRunTask:
     def test_timeout_str(self, mt, dt, mc, mp, mh, go):
         import src.web.app as am
         dt.now.return_value.isoformat.return_value = "2024-01-01"
-        mp.return_value = (".", ""); mt.side_effect = [0]*10
-        orch = MagicMock(); orch._active_workflows = {}; go.return_value = orch
+        mp.return_value = (".", "")
+        mt.side_effect = [0]*10
+        orch = MagicMock()
+        orch._active_workflows = {}
+        go.return_value = orch
         agent = AsyncMock(execute=AsyncMock(side_effect=Exception("request timeout")))
         orch.get_agent.return_value = agent
         tid = am.task_manager.create_task("t")
@@ -1236,11 +1279,15 @@ class TestRunTask:
     @patch("time.time")
     def test_no_model(self, mt, dt, mc, mp, mh, go):
         import src.web.app as am
-        class NoModelAvail(Exception): pass
+        class NoModelAvailError(Exception):
+            pass
         dt.now.return_value.isoformat.return_value = "2024-01-01"
-        mp.return_value = (".", ""); mt.side_effect = [0]*10
-        orch = MagicMock(); orch._active_workflows = {}; go.return_value = orch
-        agent = AsyncMock(execute=AsyncMock(side_effect=NoModelAvail("none")))
+        mp.return_value = (".", "")
+        mt.side_effect = [0]*10
+        orch = MagicMock()
+        orch._active_workflows = {}
+        go.return_value = orch
+        agent = AsyncMock(execute=AsyncMock(side_effect=NoModelAvailError("none")))
         orch.get_agent.return_value = agent
         tid = am.task_manager.create_task("t")
         loop = asyncio.new_event_loop()
@@ -1259,8 +1306,11 @@ class TestRunTask:
     def test_generic_error(self, mt, dt, mc, mp, mh, go):
         import src.web.app as am
         dt.now.return_value.isoformat.return_value = "2024-01-01"
-        mp.return_value = (".", ""); mt.side_effect = [0]*10
-        orch = MagicMock(); orch._active_workflows = {}; go.return_value = orch
+        mp.return_value = (".", "")
+        mt.side_effect = [0]*10
+        orch = MagicMock()
+        orch._active_workflows = {}
+        go.return_value = orch
         agent = AsyncMock(execute=AsyncMock(side_effect=ValueError("v")))
         orch.get_agent.return_value = agent
         tid = am.task_manager.create_task("t")
@@ -1281,8 +1331,11 @@ class TestRunTask:
         import src.web.app as am
         from src.agents.base import AgentStatus
         dt.now.return_value.isoformat.return_value = "2024-01-01"
-        mp.return_value = (".", "extra ctx"); mt.side_effect = [0]*10
-        orch = MagicMock(); orch._active_workflows = {}; go.return_value = orch
+        mp.return_value = (".", "extra ctx")
+        mt.side_effect = [0]*10
+        orch = MagicMock()
+        orch._active_workflows = {}
+        go.return_value = orch
         agent = AsyncMock()
         out = MagicMock(status=AgentStatus.COMPLETED, result="done",
             usage={"total_tokens":10})

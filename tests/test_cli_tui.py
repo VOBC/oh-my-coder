@@ -150,7 +150,7 @@ class TestConstants:
 # =============================================================================
 # TUISession unit tests - covers all render methods and state transitions
 # =============================================================================
-from src.commands.cli_tui import Keys, State, TUISession
+from src.commands.cli_tui import Keys, State
 
 
 class TestTUISessionInit:
