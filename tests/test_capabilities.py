@@ -117,6 +117,15 @@ class TestCapabilityPackage:
         assert any("名称" in e or "name" in e.lower() for e in errors)
         assert any("版本" in e or "version" in e.lower() for e in errors)
 
+    def test_validate_version_missing(self):
+        """测试 version 为空时的验证"""
+        package = CapabilityPackage(
+            name="test", version="", description="test",
+            author="tester", created_at="2024-01-01T00:00:00",
+        )
+        errors = package.validate()
+        assert any("版本" in e for e in errors)
+
 
 class TestCapabilityPackageManager:
     """测试 CapabilityPackageManager 管理器"""
@@ -133,6 +142,40 @@ class TestCapabilityPackageManager:
 
         assert packages_dir.exists()
         assert packages_dir.is_dir()
+
+    def test_list_packages_nonexistent_dir(self, tmp_path):
+        """测试 list_packages 在不存在的目录上返回空列表"""
+        manager = CapabilityPackageManager(packages_dir=tmp_path / "caps")
+        # __init__ 会创建目录，手动删除来模拟不存在的情况
+        manager.packages_dir.rmdir()
+        assert manager.list_packages() == []
+
+    def test_init_default_packages_dir(self, tmp_path, monkeypatch):
+        """测试默认 packages_dir 使用 ~/.omc/capabilities"""
+        monkeypatch.setenv("HOME", str(tmp_path))
+        manager = CapabilityPackageManager()
+        assert manager.packages_dir == tmp_path / ".omc" / "capabilities"
+        assert manager.packages_dir.exists()
+
+    def test_list_packages_corrupted_file(self, manager):
+        """测试 list_packages 跳过损坏的文件"""
+        bad_file = manager.packages_dir / "corrupted.json"
+        bad_file.write_text("{ invalid json }")
+        package = CapabilityPackage(
+            name="good-pkg", version="1.0.0", description="good",
+            author="tester", created_at="2024-01-01T00:00:00",
+        )
+        manager.save_package(package)
+        packages = manager.list_packages()
+        assert len(packages) == 1
+        assert packages[0].name == "good-pkg"
+
+    def test_get_package_corrupted_file(self, manager):
+        """测试 get_package 遇到损坏文件返回 None"""
+        bad_file = manager.packages_dir / "broken.json"
+        bad_file.write_text("{ this is not json }")
+        result = manager.get_package("broken")
+        assert result is None
 
     def test_save_and_get_package(self, manager):
         """测试保存和获取能力包"""
@@ -243,6 +286,25 @@ class TestCapabilityPackageManager:
         # 普通信息保持不变
         assert sanitized["normal_key"] == "normal_value"
 
+    def test_sanitize_short_secret(self, manager):
+        """测试 _sanitize_model_config 处理短 secret（≤8字符）"""
+        short_config = {"password": "short", "token": "12345678"}
+        sanitized = manager._sanitize_model_config(short_config)
+        assert sanitized["password"] == "***"
+        # 8字符也走 short 路径（≤8 都为 ***）
+        assert sanitized["token"] == "***"
+
+    def test_sanitize_nondict_agent(self, manager):
+        """测试 _sanitize_agents 处理非 dict 的 agent 配置"""
+        agents = {
+            "string_agent": "not_a_dict",
+            "none_agent": None,
+        }
+        result = manager._sanitize_agents(agents)
+        # 非 dict 保持原值
+        assert result["string_agent"] == "not_a_dict"
+        assert result["none_agent"] is None
+
     def test_apply_package(self, manager):
         """测试应用能力包"""
         # 创建能力包
@@ -280,6 +342,36 @@ class TestCapabilityPackageManager:
             manager.apply_package("nonexistent")
 
         assert "nonexistent" in str(exc_info.value)
+
+    def test_apply_package_default_target(self, manager):
+        """测试 apply_package 默认 target_config 为空字典"""
+        package = CapabilityPackage(
+            name="to-apply",
+            version="1.0.0",
+            description="待应用",
+            author="tester",
+            created_at="2024-01-01T00:00:00",
+            agents={"new_agent": {"tier": "high"}},
+            model_config={"temperature": 0.5},
+            tools=["new_tool"],
+            prompts={"custom": "prompt"},
+        )
+        manager.save_package(package)
+        # 不传 target_config，默认使用空字典
+        result = manager.apply_package("to-apply")
+        assert "new_agent" in result["agents"]
+        assert result["model_config"]["temperature"] == 0.5
+
+    def test_get_manager_singleton(self):
+        """测试 get_manager 返回单例"""
+        import src.capabilities.package as pkg_module
+
+        pkg_module._default_manager = None
+        mgr1 = pkg_module.get_manager()
+        mgr2 = pkg_module.get_manager()
+        assert mgr1 is mgr2
+        # 清理
+        pkg_module._default_manager = None
 
 
 class TestCapabilityPackageIntegration:
