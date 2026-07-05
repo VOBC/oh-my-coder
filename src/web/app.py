@@ -572,15 +572,15 @@ async def save_report(payload: Optional[dict] = None):
     if not task:
         raise HTTPException(status_code=404, detail="Task not found")
 
-    # 默认保存到桌面
-    desktop = Path.home() / "Desktop" / "omc-reports"
-    desktop.mkdir(parents=True, exist_ok=True)
+    # 保存到 ~/.omc/reports/
+    reports_dir = Path.home() / ".omc" / "reports"
+    reports_dir.mkdir(parents=True, exist_ok=True)
 
     # 生成文件名
     ts = task.get("started_at", "").replace(":", "-").replace(" ", "_")[:19]
     task_desc = task.get("task", "task")[:30].replace("/", "_").replace("\\", "_")
     filename = f"{ts}_{task_desc}_{task_id[:8]}.md"
-    filepath = desktop / filename
+    filepath = reports_dir / filename
 
     # 生成报告内容
     lines = [
