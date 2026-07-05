@@ -609,6 +609,24 @@ class TestHistoryStoreBrokenFiles:
         assert len(records) == 1
         assert records[0]["task_id"] == "normal"
 
+    def test_load_from_file_without_cache(self, temp_store):
+        """测试从文件加载（不经过缓存），覆盖 lines 81-82"""
+        store = temp_store
+        # 直接写文件（不经过 save），绕过缓存
+        file_path = store.storage_dir / "direct-file.json"
+        file_path.write_text(json.dumps({"task_id": "direct-file", "status": "running"}))
+
+        # 确认缓存为空
+        assert "direct-file" not in store._cache
+
+        # load 应该从文件读取并写入缓存（lines 81-82）
+        loaded = store.load("direct-file")
+        assert loaded is not None
+        assert loaded["task_id"] == "direct-file"
+        assert loaded["status"] == "running"
+        # 确认缓存已被填充
+        assert "direct-file" in store._cache
+
     def test_load_corrupted_json(self, temp_store):
         """测试加载损坏的 JSON 文件"""
         store = temp_store
