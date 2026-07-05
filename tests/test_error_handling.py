@@ -147,7 +147,8 @@ class TestDeepSeekAdapterErrors:
     @pytest.mark.asyncio
     async def test_network_error_raises_deepseek_api_error(self):
         """网络请求失败（如连接超时）应抛 DeepSeekAPIError"""
-        config = ModelConfig(api_key="test_key")
+        # max_retries=1 避免 tenacity 重试导致测试 hang（每次超时等待指数退避）
+        config = ModelConfig(api_key="test_key", max_retries=1)
         model = DeepSeekModel(config, ModelTier.LOW)
 
         with patch.object(model, "_get_client") as mock_client:
