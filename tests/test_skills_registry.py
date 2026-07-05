@@ -10,19 +10,14 @@ Tests cover:
 
 from __future__ import annotations
 
-import time
-from pathlib import Path
-from unittest.mock import MagicMock, patch
-
 import pytest
 
 from src.skills.registry import (
     Skill,
-    SkillResult,
     SkillRegistry,
+    SkillResult,
     get_registry,
 )
-
 
 # ── Fixtures ────────────────────────────────────────────────────────────
 
@@ -404,7 +399,7 @@ SKILL = Skill(
         init_file = temp_skills_dir / "__init__.py"
         init_file.write_text("# init file")
         registry.set_custom_dir(temp_skills_dir)
-        count = registry.load_custom_skills()
+        registry.load_custom_skills()
         # __init__.py should be skipped
         assert registry.get("init") is None
 
@@ -444,10 +439,10 @@ class TestSkillRegistryExecution:
         """Test that skill exceptions are caught"""
         def failing_skill(code: str, context: dict) -> SkillResult:
             raise ValueError("Skill error")
-        
+
         skill = Skill(name="failing", description="Fails", func=failing_skill)
         registry.register(skill)
-        
+
         result = registry.run("failing")
         assert result.success is False
         assert "ValueError" in result.error
@@ -496,16 +491,16 @@ class TestIntegration:
         # Register a custom skill
         skill = Skill(name="integration", description="Integration test", func=sample_skill)
         registry.register(skill)
-        
+
         # List all skills
         all_skills = registry.list_all()
         assert len(all_skills) >= 4  # 3 builtin + 1 custom
-        
+
         # Run the custom skill
         result = registry.run("integration")
         assert result.success is True
         assert result.output == "Custom output"
-        
+
         # Unregister
         assert registry.unregister("integration") is True
         assert registry.get("integration") is None
@@ -522,11 +517,11 @@ def subtract(a, b):
         # Test review
         result = registry.run("review", test_code)
         assert result.success is True
-        
+
         # Test test
         result = registry.run("test", test_code)
         assert result.success is True
-        
+
         # Test doc
         result = registry.run("doc", test_code, {"module_name": "math_ops"})
         assert result.success is True
@@ -535,7 +530,7 @@ def subtract(a, b):
         """Test that skill results contain useful metadata"""
         code = "def test():\n    eval('dangerous')\n"
         result = registry.run("review", code)
-        
+
         assert "issues" in result.metadata
         assert "suggestions" in result.metadata
         assert len(result.metadata["issues"]) > 0

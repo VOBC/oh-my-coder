@@ -8,7 +8,6 @@ import pytest
 
 from src.capsule import Capsule, Gene, GEPRegistry
 
-
 # ============================================================
 # 辅助 Fixture
 # ============================================================

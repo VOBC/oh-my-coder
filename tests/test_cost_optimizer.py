@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import pytest
+
 from src.agents.cost_optimizer import (
     Complexity,
     CostOptimizer,
@@ -250,8 +251,9 @@ class TestCalculateCost:
 
 class TestCostOptimizerMain:
     def test_main_list_flag(self, capsys):
-        from src.agents.cost_optimizer import main
         import sys
+
+        from src.agents.cost_optimizer import main
         sys.argv = ["cost_optimizer", "--list"]
         main()
         out = capsys.readouterr().out
@@ -259,8 +261,9 @@ class TestCostOptimizerMain:
         assert "gpt-4o" in out
 
     def test_main_recommend_task(self, capsys):
-        from src.agents.cost_optimizer import main
         import sys
+
+        from src.agents.cost_optimizer import main
         sys.argv = ["cost_optimizer", "重构微服务架构", "--files", "20"]
         main()
         out = capsys.readouterr().out

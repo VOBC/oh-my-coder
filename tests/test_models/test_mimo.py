@@ -23,9 +23,14 @@ import pytest
 
 sys.path.insert(0, "/Users/vobc/.qclaw/workspace-agent-bf627e2b/projects/oh-my-coder")
 
-from src.models.base import Message, ModelConfig, ModelProvider, ModelResponse, ModelTier
-from src.models.mimo import MimoModel, MimoAPIError, MIMO_MODELS
-
+from src.models.base import (
+    Message,
+    ModelConfig,
+    ModelProvider,
+    ModelResponse,
+    ModelTier,
+)
+from src.models.mimo import MIMO_MODELS, MimoAPIError, MimoModel
 
 # =============================================================================
 # Fixtures

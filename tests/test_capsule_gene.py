@@ -6,10 +6,7 @@ Gene 单元测试
 
 import json
 
-import pytest
-
 from src.capsule import Gene
-
 
 # ============================================================
 # 初始化 & 默认值
@@ -235,7 +232,7 @@ class TestGeneValidation:
 
     def test_validate_whitespace_name(self):
         gene = Gene(name="   ", category="coding")
-        errors = gene.validate()
+        gene.validate()
         # whitespace name is not empty string but also not valid
         # Gene only checks name == "" so "   " is valid per current impl
         # This documents current behavior
