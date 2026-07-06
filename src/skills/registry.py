@@ -322,6 +322,8 @@ class SkillRegistry:
             self._custom_skills_dir = Path.home() / ".omc" / "skills"
 
         skill_dir = self._custom_skills_dir
+        # 标记已尝试加载自定义技能（无论目录是否存在）
+        self._loaded_custom = True
         if not skill_dir.is_dir():
             logger.debug("Custom skills dir does not exist: %s", skill_dir)
             return 0
@@ -337,7 +339,6 @@ class SkillRegistry:
             except Exception as exc:
                 logger.warning("Failed to load custom skill %s: %s", py_file.name, exc)
 
-        self._loaded_custom = True
         logger.info("Loaded %d custom skills from %s", count, skill_dir)
         return count
 
