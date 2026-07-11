@@ -16,6 +16,9 @@ from src.core.orchestrator import (
     WorkflowResult,
     WorkflowStatus,
     WorkflowStep,
+    _filter_planner_steps,
+    _detect_workflow_for_autopilot,
+    _load_disable_planner,
 )
 
 # ---------------------------------------------------------------------------
@@ -414,3 +417,148 @@ class TestBuildAgentContext:
         orch.inject_memory_context = MagicMock(return_value="mem")
         ctx = orch._build_agent_context("a", {"task": "t"})
         assert "mem" in ctx.skill_context
+
+
+# ---------------------------------------------------------------------------
+# _load_disable_planner
+# ---------------------------------------------------------------------------
+
+class TestLoadDisablePlanner:
+    def test_config_not_exists(self, tmp_path: Path) -> None:
+        # ~/.omc/config.json 不存在时返回 False
+        with patch("src.core.orchestrator.Path.home", return_value=tmp_path):
+            result = _load_disable_planner()
+        assert result is False
+
+    def test_config_exists_no_disable_planner(self, tmp_path: Path) -> None:
+        # config.json 存在但无 disable_planner 字段
+        config_path = tmp_path / ".omc" / "config.json"
+        config_path.parent.mkdir(parents=True, exist_ok=True)
+        config_path.write_text('{"model": "deepseek"}', encoding="utf-8")
+        with patch("src.core.orchestrator.Path.home", return_value=tmp_path):
+            result = _load_disable_planner()
+        assert result is False
+
+    def test_config_disable_planner_true(self, tmp_path: Path) -> None:
+        config_path = tmp_path / ".omc" / "config.json"
+        config_path.parent.mkdir(parents=True, exist_ok=True)
+        config_path.write_text('{"disable_planner": true}', encoding="utf-8")
+        with patch("src.core.orchestrator.Path.home", return_value=tmp_path):
+            result = _load_disable_planner()
+        assert result is True
+
+    def test_config_disable_planner_false(self, tmp_path: Path) -> None:
+        config_path = tmp_path / ".omc" / "config.json"
+        config_path.parent.mkdir(parents=True, exist_ok=True)
+        config_path.write_text('{"disable_planner": false}', encoding="utf-8")
+        with patch("src.core.orchestrator.Path.home", return_value=tmp_path):
+            result = _load_disable_planner()
+        assert result is False
+
+    def test_json_decode_error(self, tmp_path: Path) -> None:
+        # 无效 JSON 返回 False
+        config_path = tmp_path / ".omc" / "config.json"
+        config_path.parent.mkdir(parents=True, exist_ok=True)
+        config_path.write_text("not json{", encoding="utf-8")
+        with patch("src.core.orchestrator.Path.home", return_value=tmp_path):
+            result = _load_disable_planner()
+        assert result is False
+
+
+# ---------------------------------------------------------------------------
+# _filter_planner_steps
+# ---------------------------------------------------------------------------
+
+class TestFilterPlannerSteps:
+    def test_disable_false_returns_all_steps(self) -> None:
+        steps = [
+            WorkflowStep("analyst", "分析"),
+            WorkflowStep("planner", "规划", dependencies=["analyst"]),
+            WorkflowStep("writer", "写代码", dependencies=["planner"]),
+        ]
+        with patch("src.core.orchestrator._load_disable_planner", return_value=False):
+            result = _filter_planner_steps(steps)
+        assert len(result) == 3
+        assert result[0].agent_name == "analyst"
+        assert result[1].agent_name == "planner"
+
+    def test_disable_true_removes_planner(self) -> None:
+        steps = [
+            WorkflowStep("analyst", "分析"),
+            WorkflowStep("planner", "规划", dependencies=["analyst"]),
+            WorkflowStep("writer", "写代码", dependencies=["planner"]),
+        ]
+        with patch("src.core.orchestrator._load_disable_planner", return_value=True):
+            result = _filter_planner_steps(steps)
+        names = [s.agent_name for s in result]
+        assert "planner" not in names
+        assert "analyst" in names
+        assert "writer" in names
+
+    def test_disable_true_replaces_dep_with_analyst(self) -> None:
+        steps = [
+            WorkflowStep("analyst", "分析"),
+            WorkflowStep("planner", "规划", dependencies=["analyst"]),
+            WorkflowStep("writer", "写代码", dependencies=["planner"]),
+        ]
+        with patch("src.core.orchestrator._load_disable_planner", return_value=True):
+            result = _filter_planner_steps(steps)
+        writer_step = next(s for s in result if s.agent_name == "writer")
+        # planner dep replaced with analyst (since analyst exists)
+        assert "analyst" in writer_step.dependencies
+        assert "planner" not in writer_step.dependencies
+
+    def test_disable_true_no_analyst_keeps_planner_dep(self) -> None:
+        # 没有 analyst 时，planner 步骤被移除，但依赖它的步骤中
+        # planner 依赖保留（因为没有 analyst 可替代）
+        steps = [
+            WorkflowStep("planner", "规划"),
+            WorkflowStep("writer", "写代码", dependencies=["planner", "other"]),
+        ]
+        with patch("src.core.orchestrator._load_disable_planner", return_value=True):
+            result = _filter_planner_steps(steps)
+        writer_step = next(s for s in result if s.agent_name == "writer")
+        # planner removed from steps; planner dep kept (no analyst to substitute)
+        assert "planner" not in [s.agent_name for s in result]  # planner step removed
+        assert "planner" in writer_step.dependencies  # dep kept (no analyst)
+        assert "other" in writer_step.dependencies  # other deps preserved
+
+    def test_disable_true_preserves_non_planner_deps(self) -> None:
+        steps = [
+            WorkflowStep("analyst", "分析"),
+            WorkflowStep("planner", "规划", dependencies=["analyst"]),
+            WorkflowStep("reviewer", "审查", dependencies=["analyst", "planner"]),
+        ]
+        with patch("src.core.orchestrator._load_disable_planner", return_value=True):
+            result = _filter_planner_steps(steps)
+        reviewer = next(s for s in result if s.agent_name == "reviewer")
+        assert "analyst" in reviewer.dependencies
+        assert "planner" not in reviewer.dependencies
+
+
+# ---------------------------------------------------------------------------
+# _detect_workflow_for_autopilot
+# ---------------------------------------------------------------------------
+
+class TestDetectWorkflowForAutopilot:
+    @pytest.mark.parametrize("task,expected", [
+        ("fix the bug in login", "debug"),
+        ("修复崩溃问题", "debug"),
+        ("fix this error", "debug"),
+        ("crash on startup", "debug"),
+        ("write tests for auth", "test"),
+        ("add test coverage", "test"),
+        ("run unit tests", "test"),
+        ("refactor the user module", "refactor"),
+        ("simplify the code", "build"),
+        ("代码优化", "refactor"),
+        ("review my PR", "review"),
+        ("代码审查", "review"),
+        ("do code review", "review"),
+        ("build the project", "build"),
+        ("general task", "build"),
+        ("do something", "build"),
+    ])
+    def test_detection(self, task: str, expected: str) -> None:
+        result = _detect_workflow_for_autopilot(task)
+        assert result == expected
