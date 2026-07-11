@@ -26,9 +26,10 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 from fastapi.testclient import TestClient
 
-# Use a separate xdist group to avoid task_manager state pollution
-# with test_web_app_routes.py
-pytestmark = pytest.mark.xdist_group("web_app_coverage_step5")
+# TestRunTask is excluded from xdist in CI (--deselect + -p no:xdist serial)
+# because run_task mutates the process-global `task_manager` singleton; xdist
+# cannot isolate per-worker module globals => non-deterministic cross-module
+# pollution (flaky). No xdist_group needed once TestRunTask is de-selected.
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
