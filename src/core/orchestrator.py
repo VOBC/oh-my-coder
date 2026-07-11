@@ -49,6 +49,57 @@ def _get_trace_context_cls():
         return None
 
 
+def _load_disable_planner() -> bool:
+    """从 ~/.omc/config.json 读取 disable_planner 配置"""
+    try:
+        config_path = Path.home() / ".omc" / "config.json"
+        if config_path.exists():
+            import json
+
+            with open(config_path, encoding="utf-8") as f:
+                config = json.load(f)
+            return bool(config.get("disable_planner", False))
+    except Exception:
+        pass
+    return False
+
+
+def _filter_planner_steps(
+    steps: list[WorkflowStep],
+) -> list[WorkflowStep]:
+    """
+    如果配置了 disable_planner，则从工作流中移除 planner 相关步骤。
+    同时修正依赖：原来依赖 planner 的步骤改为依赖 analyst（如果 analyst 存在）。
+    """
+    if not _load_disable_planner():
+        return steps
+
+    has_analyst = any(s.agent_name == "analyst" for s in steps)
+
+    filtered = []
+    for step in steps:
+        if step.agent_name == "planner":
+            continue  # 跳过 planner 步骤
+        # 修正依赖：把 planner 依赖替换为 analyst 依赖
+        new_deps = []
+        for dep in step.dependencies:
+            if dep == "planner" and has_analyst:
+                new_deps.append("analyst")
+            else:
+                new_deps.append(dep)
+        filtered.append(
+            WorkflowStep(
+                agent_name=step.agent_name,
+                description=step.description,
+                dependencies=new_deps,
+                retry_count=step.retry_count,
+                timeout=step.timeout,
+                metadata=step.metadata,
+            )
+        )
+    return filtered
+
+
 class WorkflowStatus(Enum):
     """工作流状态"""
 
@@ -632,6 +683,9 @@ class Orchestrator:
                 steps = WORKFLOW_TEMPLATES.get(workflow_name, [])
         else:
             steps = workflow_name
+
+        # 应用 disable_planner 配置：移除 planner 步骤并修正依赖
+        steps = _filter_planner_steps(steps)
 
         if not steps:
             raise ValueError(f"无效的工作流: {workflow_name}")
