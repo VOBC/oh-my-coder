@@ -16,8 +16,8 @@ from src.core.orchestrator import (
     WorkflowResult,
     WorkflowStatus,
     WorkflowStep,
-    _filter_planner_steps,
     _detect_workflow_for_autopilot,
+    _filter_planner_steps,
     _load_disable_planner,
 )
 
