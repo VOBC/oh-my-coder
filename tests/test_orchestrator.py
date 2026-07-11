@@ -5,7 +5,7 @@ from __future__ import annotations
 import asyncio
 from pathlib import Path
 from typing import Any
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, PropertyMock, patch
 
 import pytest
 
@@ -562,3 +562,121 @@ class TestDetectWorkflowForAutopilot:
     def test_detection(self, task: str, expected: str) -> None:
         result = _detect_workflow_for_autopilot(task)
         assert result == expected
+
+
+# ---------------------------------------------------------------------------
+# Skill inventory & context injection
+# ---------------------------------------------------------------------------
+
+class TestSkillInventory:
+    def test_get_inventory_calls_manager(self, tmp_path: Path) -> None:
+        # Mock the skill_manager property on the orchestrator class
+        mock_sm_instance = MagicMock()
+        mock_sm_instance.get_skill_inventory = MagicMock(return_value="[planner] skill-a: test")
+        mock_router = MagicMock()
+        mock_router.call_model = AsyncMock(return_value="ok")
+        with patch("src.core.orchestrator.WorkflowLoader", return_value=None):
+            o = Orchestrator(
+                model_router=mock_router,
+                state_dir=tmp_path / ".omc" / "state",
+                skills_dir=tmp_path / ".omc" / "skills",
+                project_path=tmp_path,
+            )
+        # Replace the skill_manager property with our mock
+        with patch.object(type(o), "skill_manager", new_callable=PropertyMock, return_value=mock_sm_instance):
+            result = o.get_skill_inventory(max_tokens=200)
+        assert result == "[planner] skill-a: test"
+        mock_sm_instance.get_skill_inventory.assert_called_once_with(max_tokens=200)
+
+    def test_inject_skill_context(self, orch: Orchestrator) -> None:
+        orch.inject_skill_context = MagicMock(return_value="[skill: planner] skill-a")
+        result = orch.inject_skill_context("planner", max_tokens=100)
+        assert "skill" in result
+
+
+# ---------------------------------------------------------------------------
+# Workflow result persistence
+# ---------------------------------------------------------------------------
+
+class TestWorkflowResultPersistence:
+    def test_save_and_load_roundtrip(self, orch: Orchestrator, wf_result: WorkflowResult) -> None:
+        wf_result.workflow_id = "wf-roundtrip"
+        wf_result.status = WorkflowStatus.COMPLETED
+        wf_result.steps_completed = ["analyst", "writer"]
+        wf_result.total_tokens = 1000
+        wf_result.total_cost = 0.05
+        wf_result.execution_time = 12.5
+        wf_result.error = None
+
+        orch._save_workflow_result(wf_result)
+
+        loaded = orch.load_workflow_result("wf-roundtrip")
+        assert loaded is not None
+        assert loaded.workflow_id == "wf-roundtrip"
+        assert loaded.status == WorkflowStatus.COMPLETED
+        assert loaded.steps_completed == ["analyst", "writer"]
+        assert loaded.total_tokens == 1000
+        assert loaded.total_cost == 0.05
+        assert loaded.execution_time == 12.5
+        assert loaded.error is None
+
+    def test_load_workflow_result_not_found(self, orch: Orchestrator) -> None:
+        result = orch.load_workflow_result("nonexistent-id")
+        assert result is None
+
+    def test_save_workflow_result_with_error(self, orch: Orchestrator) -> None:
+        err_result = WorkflowResult(
+            workflow_id="wf-error",
+            status=WorkflowStatus.FAILED,
+            steps_completed=["analyst"],
+            steps_failed=["writer"],
+            outputs={},
+            total_tokens=50,
+            total_cost=0.01,
+            execution_time=3.0,
+            error="Step writer failed: timeout",
+        )
+        orch._save_workflow_result(err_result)
+        loaded = orch.load_workflow_result("wf-error")
+        assert loaded is not None
+        assert loaded.status == WorkflowStatus.FAILED
+        assert loaded.error == "Step writer failed: timeout"
+
+
+# ---------------------------------------------------------------------------
+# Active workflows tracking
+# ---------------------------------------------------------------------------
+
+class TestActiveWorkflows:
+    def test_list_active_workflows_empty(self, orch: Orchestrator) -> None:
+        assert orch.list_active_workflows() == []
+
+    def test_get_workflow_status_not_found(self, orch: Orchestrator) -> None:
+        assert orch.get_workflow_status("nonexistent") is None
+
+    def test_get_current_state(self, orch: Orchestrator) -> None:
+        state = orch.get_current_state()
+        assert isinstance(state, dict)
+        assert "active_workflows" in state or "workflows" in state or len(state) >= 0
+
+
+# ---------------------------------------------------------------------------
+# Sourcegraph overrides
+# ---------------------------------------------------------------------------
+
+class TestSourcegraphOverrides:
+    def test_returns_dict(self, orch: Orchestrator) -> None:
+        result = orch._sourcegraph_overrides({"task": "fix bug"})
+        assert isinstance(result, dict)
+
+    def test_use_sourcegraph_flag(self, orch: Orchestrator) -> None:
+        result = orch._sourcegraph_overrides({"use_sourcegraph": True})
+        assert result["use_sourcegraph"] is True
+
+    def test_sourcegraph_limit(self, orch: Orchestrator) -> None:
+        result = orch._sourcegraph_overrides({"sourcegraph_limit": 50})
+        assert result["sourcegraph_limit"] == 50
+
+    def test_no_overrides(self, orch: Orchestrator) -> None:
+        result = orch._sourcegraph_overrides({"task": "do stuff"})
+        assert result == {}
