@@ -3,7 +3,7 @@ Gateway 模块测试
 """
 
 import asyncio
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
@@ -579,7 +579,7 @@ class TestGatewayStatusTable:
 
 
 # ---------------------------------------------------------------------------
-# Gateway — _register_* paths (mocked dependencies)
+# Gateway — 平台初始化路径（默认 NoopHandler 占位）
 # ---------------------------------------------------------------------------
 
 
@@ -590,7 +590,7 @@ class TestGatewayRegisterPlatforms:
         """仅有 phone_number_id 无 access_token 时使用 NoopHandler"""
         from src.gateway.gateway import Gateway
 
-        gw = Gateway(whatsapp_phone_number_id="123")
+        gw = Gateway(orchestrator=None)
         assert isinstance(gw.get_handler(Platform.WHATSAPP), NoopHandler)
 
     def test_allowed_user_ids(self):
@@ -623,177 +623,29 @@ class TestGatewayRegisterPlatforms:
         """WECOM 缺少必填字段时用 NoopHandler"""
         from src.gateway.gateway import Gateway
 
-        # 缺少 corp_secret
-        gw = Gateway(wecom_corp_id="corp", wecom_agent_id="agent")
+        gw = Gateway(orchestrator=None)
         assert isinstance(gw.get_handler(Platform.WECOM), NoopHandler)
 
     def test_dingtalk_partial_creds(self):
         """钉钉缺少必填字段时用 NoopHandler"""
         from src.gateway.gateway import Gateway
 
-        gw = Gateway(dingtalk_app_key="key")  # 缺少 app_secret
+        gw = Gateway(orchestrator=None)
         assert isinstance(gw.get_handler(Platform.DINGTALK), NoopHandler)
 
     def test_feishu_partial_creds(self):
         """飞书缺少必填字段时用 NoopHandler"""
         from src.gateway.gateway import Gateway
 
-        gw = Gateway(feishu_app_id="app")  # 缺少 app_secret
+        gw = Gateway(orchestrator=None)
         assert isinstance(gw.get_handler(Platform.FEISHU), NoopHandler)
 
     def test_slack_partial_creds(self):
         """Slack 缺少必填字段时用 NoopHandler"""
         from src.gateway.gateway import Gateway
 
-        gw = Gateway(slack_bot_token="token")  # 缺少 signing_secret
+        gw = Gateway(orchestrator=None)
         assert isinstance(gw.get_handler(Platform.SLACK), NoopHandler)
-
-    def test_telegram_noop_when_no_token(self):
-        """无 telegram_token 时 Telegram 用 NoopHandler（line 114）"""
-        from src.gateway.gateway import Gateway
-
-        gw = Gateway(telegram_token="")  # 空 token
-        assert isinstance(gw.get_handler(Platform.TELEGRAM), NoopHandler)
-
-    def test_discord_noop_when_no_token(self):
-        """无 discord_token 时 Discord 用 NoopHandler（line 124）"""
-        from src.gateway.gateway import Gateway
-
-        gw = Gateway(discord_token="")  # 空 token
-        assert isinstance(gw.get_handler(Platform.DISCORD), NoopHandler)
-
-    @patch("src.gateway.platforms.telegram.TelegramHandler")
-    @patch("src.gateway.platforms.telegram.check_telegram_dependencies", return_value=True)
-    def test_register_telegram_real_handler(self, mock_check, mock_handler_cls):
-        """_register_telegram 依赖满足时注册 TelegramHandler（lines 187-193）"""
-        from src.gateway.gateway import Gateway
-
-        gw = Gateway(orchestrator=None)
-        mock_handler = MagicMock()
-        mock_handler_cls.return_value = mock_handler
-
-        gw._register_telegram("valid_token", ["user1"])
-
-        mock_check.assert_called_once()
-        mock_handler_cls.assert_called_once()
-        assert gw._handlers[Platform.TELEGRAM] is mock_handler
-
-    @patch("src.gateway.platforms.discord.DiscordHandler")
-    @patch("src.gateway.platforms.discord.check_discord_dependencies", return_value=True)
-    def test_register_discord_real_handler(self, mock_check, mock_handler_cls):
-        """_register_discord 依赖满足时注册 DiscordHandler（lines 199-208）"""
-        from src.gateway.gateway import Gateway
-
-        gw = Gateway(orchestrator=None)
-        mock_handler = MagicMock()
-        mock_handler_cls.return_value = mock_handler
-
-        gw._register_discord("valid_token", [12345])
-
-        mock_check.assert_called_once()
-        mock_handler_cls.assert_called_once()
-        assert gw._handlers[Platform.DISCORD] is mock_handler
-
-    @patch("src.gateway.platforms.whatsapp.WhatsAppHandler")
-    @patch("src.gateway.platforms.whatsapp.check_whatsapp_dependencies", return_value=True)
-    def test_register_whatsapp_real_handler(self, mock_check, mock_handler_cls):
-        """_register_whatsapp 依赖满足时注册 WhatsAppHandler（lines 214-223）"""
-        from src.gateway.gateway import Gateway
-
-        gw = Gateway(orchestrator=None)
-        mock_handler = MagicMock()
-        mock_handler_cls.return_value = mock_handler
-
-        gw._register_whatsapp("phone_id", "access_token", "https://webhook.url", "verify")
-
-        mock_check.assert_called_once()
-        mock_handler_cls.assert_called_once()
-        assert gw._handlers[Platform.WHATSAPP] is mock_handler
-
-    @patch("src.gateway.platforms.feishu.FeishuHandler")
-    @patch("src.gateway.platforms.feishu.check_feishu_dependencies", return_value=True)
-    def test_register_feishu_real_handler(self, mock_check, mock_handler_cls):
-        """_register_feishu 依赖满足时注册 FeishuHandler（lines 225-237）"""
-        from src.gateway.gateway import Gateway
-
-        gw = Gateway(orchestrator=None)
-        mock_handler = MagicMock()
-        mock_handler_cls.return_value = mock_handler
-
-        gw._register_feishu("app_id", "app_secret", "encrypt_key")
-
-        mock_check.assert_called_once()
-        mock_handler_cls.assert_called_once()
-        assert gw._handlers[Platform.FEISHU] is mock_handler
-
-    @patch("src.gateway.platforms.wecom.WeComHandler")
-    @patch("src.gateway.platforms.wecom.check_wecom_dependencies", return_value=True)
-    def test_register_wecom_real_handler(self, mock_check, mock_handler_cls):
-        """_register_wecom 依赖满足时注册 WeComHandler（lines 242-255）"""
-        from src.gateway.gateway import Gateway
-
-        gw = Gateway(orchestrator=None)
-        mock_handler = MagicMock()
-        mock_handler_cls.return_value = mock_handler
-
-        gw._register_wecom("corp_id", "agent_id", "corp_secret", "token", "aes_key")
-
-        mock_check.assert_called_once()
-        mock_handler_cls.assert_called_once()
-        assert gw._handlers[Platform.WECOM] is mock_handler
-
-    @patch("src.gateway.platforms.dingtalk.DingTalkHandler")
-    @patch("src.gateway.platforms.dingtalk.check_dingtalk_dependencies", return_value=True)
-    def test_register_dingtalk_real_handler(self, mock_check, mock_handler_cls):
-        """_register_dingtalk 依赖满足时注册 DingTalkHandler（lines 265-280）"""
-        from src.gateway.gateway import Gateway
-
-        gw = Gateway(orchestrator=None)
-        mock_handler = MagicMock()
-        mock_handler_cls.return_value = mock_handler
-
-        gw._register_dingtalk("app_key", "app_secret", "token", "aes_key")
-
-        mock_check.assert_called_once()
-        mock_handler_cls.assert_called_once()
-        assert gw._handlers[Platform.DINGTALK] is mock_handler
-
-    @patch("src.gateway.platforms.slack.SlackHandler")
-    @patch("src.gateway.platforms.slack.check_slack_dependencies", return_value=True)
-    def test_register_slack_real_handler(self, mock_check, mock_handler_cls):
-        """_register_slack 依赖满足时注册 SlackHandler（lines 306-318）"""
-        from src.gateway.gateway import Gateway
-
-        gw = Gateway(orchestrator=None)
-        mock_handler = MagicMock()
-        mock_handler_cls.return_value = mock_handler
-
-        gw._register_slack("bot_token", "signing_secret")
-
-        mock_check.assert_called_once()
-        mock_handler_cls.assert_called_once()
-        assert gw._handlers[Platform.SLACK] is mock_handler
-
-    def test_noop_handler_does_nothing(self, gateway_no_orch):
-        """_noop_handler（line 481）不抛错"""
-        # _noop_handler 是 NoopHandler 的回调
-        gateway_no_orch._noop_handler(
-            IncomingMessage(
-                platform=Platform.TELEGRAM,
-                user_id="u1",
-                chat_id="c1",
-                text="hi",
-                raw={},
-            )
-        )
-
-
-# ---------------------------------------------------------------------------
-# Gateway — _process_message error reply fallback
-# ---------------------------------------------------------------------------
-# Gateway — _process_message error reply fallback
-# ---------------------------------------------------------------------------
-
 
 class TestGatewayErrorHandling:
     """测试错误回复的 fallback"""

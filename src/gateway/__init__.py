@@ -3,9 +3,7 @@ Gateway - 多平台消息网关
 
 子模块：
 - base: 基础类型（Platform, IncomingMessage, OutgoingMessage, PlatformHandler）
-- platforms.telegram: Telegram Bot 处理器
-- platforms.discord: Discord Bot 处理器
-- gateway: 主 Gateway 类
+- gateway: 主 Gateway 类（渠道实现已移除，平台默认 NoopHandler 占位）
 """
 
 from .base import (

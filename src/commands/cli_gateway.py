@@ -3,14 +3,12 @@ from __future__ import annotations
 """
 Gateway CLI - 多平台网关命令
 
-omc gateway start --telegram <token>
-omc gateway start --discord <token>
 omc gateway status
+omc gateway start
 """
 
 
 import asyncio
-import os
 
 import typer
 from rich.console import Console
@@ -20,7 +18,7 @@ console = Console()
 
 app = typer.Typer(
     name="gateway",
-    help="多平台消息网关（Telegram / Discord）",
+    help="多平台消息网关",
     add_completion=False,
 )
 
@@ -29,14 +27,7 @@ def _load_gateway():
     """懒加载 Gateway（避免未安装依赖时 import 报错）"""
     from src.gateway.gateway import Gateway
 
-    telegram_token = os.getenv("TELEGRAM_BOT_TOKEN")
-    discord_token = os.getenv("DISCORD_BOT_TOKEN")
-
-    return Gateway(
-        orchestrator=None,
-        telegram_token=telegram_token,
-        discord_token=discord_token,
-    )
+    return Gateway(orchestrator=None)
 
 
 @app.command()
@@ -71,41 +62,14 @@ def status():
 
 
 @app.command()
-def start(
-    telegram: str = typer.Option(
-        None, "--telegram", help="Telegram Bot Token（也可设 env TELEGRAM_BOT_TOKEN）"
-    ),
-    discord: str = typer.Option(
-        None, "--discord", help="Discord Bot Token（也可设 env DISCORD_BOT_TOKEN）"
-    ),
-):
+def start():
     """启动网关（会阻塞当前进程，按 Ctrl+C 停止）"""
-    telegram_token = telegram or os.getenv("TELEGRAM_BOT_TOKEN")
-    discord_token = discord or os.getenv("DISCORD_BOT_TOKEN")
-
-    if not telegram_token and not discord_token:
-        console.print(
-            "[yellow]⚠️ 未指定任何平台 Token。\n"
-            "设置以下环境变量之一：\n"
-            "  TELEGRAM_BOT_TOKEN=<token>  omc gateway start --telegram <token>\n"
-            "  DISCORD_BOT_TOKEN=<token>   omc gateway start --discord <token>[/yellow]"
-        )
-        raise typer.Exit(code=1)
-
     console.print("[green]启动网关...[/green]")
-    if telegram_token:
-        console.print("  ✅ Telegram: 已配置")
-    if discord_token:
-        console.print("  ✅ Discord: 已配置")
 
     try:
         from src.gateway.gateway import Gateway
 
-        gateway = Gateway(
-            orchestrator=None,  # TODO: 接入真实 Orchestrator（需先实现 WorkflowLoader）
-            telegram_token=telegram_token,
-            discord_token=discord_token,
-        )
+        gateway = Gateway(orchestrator=None)
 
         async def run():
             await gateway.start_all()
@@ -121,10 +85,6 @@ def start(
 
         asyncio.run(run())
 
-    except ImportError as e:
-        console.print(f"[red]❌ 依赖缺失: {e}[/red]")
-        console.print("安装命令：pip install python-telegram-bot discord.py")
-        raise typer.Exit(code=1)
     except Exception as e:
         console.print(f"[red]❌ 启动失败: {e}[/red]")
         raise typer.Exit(code=1)

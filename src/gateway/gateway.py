@@ -6,33 +6,24 @@ from __future__ import annotations
 """
 Gateway - 多平台统一消息网关
 
+注意：渠道实现（Telegram/Discord/WhatsApp/飞书/企业微信/钉钉/Slack）
+已移除（见 MEMORY.md），当前所有平台仅使用 NoopHandler 占位。
+
 职责：
-1. 管理所有平台处理器（Telegram/Discord/WhatsApp）
+1. 管理所有平台处理器（默认 NoopHandler 占位）
 2. 接收来自各平台的消息，统一转为 IncomingMessage
 3. 转发给 Orchestrator 处理
 4. 返回结果到对应平台
 
 用法：
 ```python
-gateway = Gateway(
-    orchestrator=orch,
-    telegram_token=os.getenv("TELEGRAM_BOT_TOKEN"),
-    discord_token=os.getenv("DISCORD_BOT_TOKEN"),
-)
-
-# 方式 1：命令行启动
+gateway = Gateway(orchestrator=orch)
 await gateway.start_all()
-
-# 方式 2：Flask/FastAPI 集成
-@app.post("/webhook/telegram")
-async def telegram_webhook(request: Request):
-    await gateway.handle_telegram_update(await request.json())
 ```
 
 CLI:
-    omc gateway start --telegram <token>
-    omc gateway start --discord <token>
     omc gateway status
+    omc gateway start
 """
 
 
@@ -66,34 +57,12 @@ class Gateway:
     def __init__(
         self,
         orchestrator: Any = None,
-        telegram_token: Optional[str] = None,
-        discord_token: Optional[str] = None,
-        whatsapp_phone_number_id: Optional[str] = None,
-        whatsapp_access_token: Optional[str] = None,
-        whatsapp_webhook_url: Optional[str] = None,
-        whatsapp_verify_token: Optional[str] = None,
-        feishu_app_id: Optional[str] = None,
-        feishu_app_secret: Optional[str] = None,
-        feishu_encrypt_key: Optional[str] = None,
-        wecom_corp_id: Optional[str] = None,
-        wecom_agent_id: Optional[str] = None,
-        wecom_corp_secret: Optional[str] = None,
-        wecom_token: Optional[str] = None,
-        wecom_encoding_aes_key: Optional[str] = None,
-        dingtalk_app_key: Optional[str] = None,
-        dingtalk_app_secret: Optional[str] = None,
-        dingtalk_token: Optional[str] = None,
-        dingtalk_aes_key: Optional[str] = None,
-        slack_bot_token: Optional[str] = None,
-        slack_signing_secret: Optional[str] = None,
         allowed_user_ids: Optional[dict[Platform, list[str]]] = None,
         plugins_dir: Optional[Path] = None,
     ):
         """
         Args:
             orchestrator: Orchestrator 实例（用于处理消息）
-            telegram_token: Telegram Bot Token
-            discord_token: Discord Bot Token
             allowed_user_ids: 各平台的白名单用户 ID
             plugins_dir: 插件目录（预留）
         """
@@ -103,219 +72,14 @@ class Gateway:
         self._lock = asyncio.Lock()
         self._stop_event = asyncio.Event()
 
-        allowed_user_ids = allowed_user_ids or {}
-
-        # ---- Telegram ----
-        if telegram_token:
-            self._register_telegram(
-                telegram_token, allowed_user_ids.get(Platform.TELEGRAM, [])
+        # 渠道实现已移除（见 MEMORY.md）：各渠道平台默认使用 NoopHandler 占位
+        # WECHAT 为内置主渠道，不经 Gateway 注册，保持无 handler
+        for platform in Platform:
+            if platform == Platform.WECHAT:
+                continue
+            self._handlers[platform] = NoopHandler(
+                platform=platform, on_message=self._noop_handler
             )
-        else:
-            self._handlers[Platform.TELEGRAM] = NoopHandler(
-                platform=Platform.TELEGRAM, on_message=self._noop_handler
-            )
-
-        # ---- Discord ----
-        if discord_token:
-            self._register_discord(
-                discord_token, allowed_user_ids.get(Platform.DISCORD, [])
-            )
-        else:
-            self._handlers[Platform.DISCORD] = NoopHandler(
-                platform=Platform.DISCORD, on_message=self._noop_handler
-            )
-
-        # ---- WhatsApp ----
-        if whatsapp_phone_number_id and whatsapp_access_token:
-            self._register_whatsapp(
-                whatsapp_phone_number_id,
-                whatsapp_access_token,
-                whatsapp_webhook_url or "",
-                whatsapp_verify_token,
-            )
-        else:
-            self._handlers[Platform.WHATSAPP] = NoopHandler(
-                platform=Platform.WHATSAPP, on_message=self._noop_handler
-            )
-
-        # ---- 飞书 ----
-        if feishu_app_id and feishu_app_secret:
-            self._register_feishu(feishu_app_id, feishu_app_secret, feishu_encrypt_key)
-        else:
-            self._handlers[Platform.FEISHU] = NoopHandler(
-                platform=Platform.FEISHU, on_message=self._noop_handler
-            )
-
-        # ---- 企业微信 ----
-        if wecom_corp_id and wecom_agent_id and wecom_corp_secret:
-            self._register_wecom(
-                wecom_corp_id,
-                wecom_agent_id,
-                wecom_corp_secret,
-                wecom_token,
-                wecom_encoding_aes_key,
-            )
-        else:
-            self._handlers[Platform.WECOM] = NoopHandler(
-                platform=Platform.WECOM, on_message=self._noop_handler
-            )
-
-        # ---- 钉钉 ----
-        if dingtalk_app_key and dingtalk_app_secret:
-            self._register_dingtalk(
-                dingtalk_app_key,
-                dingtalk_app_secret,
-                dingtalk_token,
-                dingtalk_aes_key,
-            )
-        else:
-            self._handlers[Platform.DINGTALK] = NoopHandler(
-                platform=Platform.DINGTALK, on_message=self._noop_handler
-            )
-
-        # ---- Slack ----
-        if slack_bot_token and slack_signing_secret:
-            self._register_slack(slack_bot_token, slack_signing_secret)
-        else:
-            self._handlers[Platform.SLACK] = NoopHandler(
-                platform=Platform.SLACK, on_message=self._noop_handler
-            )
-
-    # ---- 平台注册 ----
-
-    def _register_telegram(self, token: str, allowed_user_ids: list[str]) -> None:
-        from .platforms.telegram import TelegramHandler, check_telegram_dependencies
-
-        if not check_telegram_dependencies():
-            logger.warning("[gateway] Telegram 依赖缺失，跳过注册")
-            return
-
-        self._handlers[Platform.TELEGRAM] = TelegramHandler(
-            bot_token=token,
-            allowed_user_ids=allowed_user_ids,
-            on_message=self.on_platform_message,
-            on_error=lambda e: logger.error(f"[gateway/telegram] {e}"),
-        )
-        logger.info("[gateway] Telegram handler registered")
-
-    def _register_discord(self, token: str, allowed_guild_ids: list[int]) -> None:
-        from .platforms.discord import DiscordHandler, check_discord_dependencies
-
-        if not check_discord_dependencies():
-            logger.warning("[gateway] Discord 依赖缺失，跳过注册")
-            return
-
-        self._handlers[Platform.DISCORD] = DiscordHandler(
-            bot_token=token,
-            allowed_guild_ids=allowed_guild_ids,
-            on_message=self.on_platform_message,
-            on_error=lambda e: logger.error(f"[gateway/discord] {e}"),
-        )
-        logger.info("[gateway] Discord handler registered")
-
-    def _register_whatsapp(
-        self,
-        phone_number_id: str,
-        access_token: str,
-        webhook_url: str,
-        verify_token: Optional[str],
-    ) -> None:
-        from .platforms.whatsapp import WhatsAppHandler, check_whatsapp_dependencies
-
-        if not check_whatsapp_dependencies():
-            logger.warning("[gateway] WhatsApp 依赖缺失，跳过注册")
-            return
-
-        self._handlers[Platform.WHATSAPP] = WhatsAppHandler(
-            phone_number_id=phone_number_id,
-            access_token=access_token,
-            webhook_url=webhook_url,
-            verify_token=verify_token,
-            on_message=self.on_platform_message,
-            on_error=lambda e: logger.error(f"[gateway/whatsapp] {e}"),
-        )
-        logger.info("[gateway] WhatsApp handler registered")
-
-    def _register_feishu(
-        self, app_id: str, app_secret: str, encrypt_key: Optional[str]
-    ) -> None:
-        from .platforms.feishu import FeishuHandler, check_feishu_dependencies
-
-        if not check_feishu_dependencies():
-            logger.warning("[gateway] 飞书依赖缺失，跳过注册")
-            return
-
-        self._handlers[Platform.FEISHU] = FeishuHandler(
-            app_id=app_id,
-            app_secret=app_secret,
-            encrypt_key=encrypt_key,
-            on_message=self.on_platform_message,
-            on_error=lambda e: logger.error(f"[gateway/feishu] {e}"),
-        )
-        logger.info("[gateway] 飞书 handler registered")
-
-    def _register_wecom(
-        self,
-        corp_id: str,
-        agent_id: str,
-        corp_secret: str,
-        token: Optional[str],
-        encoding_aes_key: Optional[str],
-    ) -> None:
-        from .platforms.wecom import WeComHandler, check_wecom_dependencies
-
-        if not check_wecom_dependencies():
-            logger.warning("[gateway] 企业微信依赖缺失，跳过注册")
-            return
-
-        self._handlers[Platform.WECOM] = WeComHandler(
-            corp_id=corp_id,
-            agent_id=agent_id,
-            corp_secret=corp_secret,
-            token=token,
-            encoding_aes_key=encoding_aes_key,
-            on_message=self.on_platform_message,
-            on_error=lambda e: logger.error(f"[gateway/wecom] {e}"),
-        )
-        logger.info("[gateway] 企业微信 handler registered")
-
-    def _register_dingtalk(
-        self,
-        app_key: str,
-        app_secret: str,
-        token: Optional[str],
-        aes_key: Optional[str],
-    ) -> None:
-        from .platforms.dingtalk import DingTalkHandler, check_dingtalk_dependencies
-
-        if not check_dingtalk_dependencies():
-            logger.warning("[gateway] 钉钉依赖缺失，跳过注册")
-            return
-
-        self._handlers[Platform.DINGTALK] = DingTalkHandler(
-            app_key=app_key,
-            app_secret=app_secret,
-            token=token,
-            aes_key=aes_key,
-            on_message=self.on_platform_message,
-            on_error=lambda e: logger.error(f"[gateway/dingtalk] {e}"),
-        )
-        logger.info("[gateway] 钉钉 handler registered")
-
-    def _register_slack(self, bot_token: str, signing_secret: str) -> None:
-        from .platforms.slack import SlackHandler, check_slack_dependencies
-
-        if not check_slack_dependencies():
-            logger.warning("[gateway] Slack 依赖缺失，跳过注册")
-            return
-
-        self._handlers[Platform.SLACK] = SlackHandler(
-            bot_token=bot_token,
-            signing_secret=signing_secret,
-            on_message=self.on_platform_message,
-            on_error=lambda e: logger.error(f"[gateway/slack] {e}"),
-        )
-        logger.info("[gateway] Slack handler registered")
 
     # ---- 消息处理 ----
 

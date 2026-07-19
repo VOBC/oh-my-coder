@@ -127,7 +127,7 @@ app.add_typer(model_app, name="model", help="模型管理 - 查看/切换默认�
 try:
     from .cli_gateway import app as gateway_app  # noqa: E402
 
-    app.add_typer(gateway_app, name="gateway", help="多平台网关 - Telegram / Discord")
+    app.add_typer(gateway_app, name="gateway", help="多平台网关")
 except Exception:
     pass  # gateway 依赖缺失时跳过
 
