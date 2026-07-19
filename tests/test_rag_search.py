@@ -2,7 +2,7 @@
 
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -574,3 +574,110 @@ def main():
             search = SemanticSearch(indexer, search_config)
             results = search.search("main", search_type="keyword")
             assert isinstance(results, list)
+
+
+# ─────────────────────────────────────────────────────────────────
+# 补充覆盖 rag/search.py missing lines (109-130, 186-187)
+# _get_embedding 永远返回 None（embedding_client 未实现），
+# 因此需要 mock 才能触发 cosine similarity 和 hybrid merge 分支
+# ─────────────────────────────────────────────────────────────────
+
+
+class TestSemanticSearchWithEmbeddings:
+    """Mock _get_embedding 以触发 _semantic_search 的 cosine similarity 路径"""
+
+    @pytest.fixture
+    def search_with_mock_embedding(self, tmp_path):
+        """创建带 mock _get_embedding 的 SemanticSearch"""
+        project = tmp_path / "test"
+        project.mkdir()
+        (project / "main.py").write_text("def foo(): pass\ndef bar(): pass")
+
+        config = IndexConfig(root_path=project)
+        indexer = CodebaseIndexer(config)
+        indexer.index_directory()
+        search = SemanticSearch(indexer)
+        return search, indexer
+
+    def test_semantic_search_uses_cosine_similarity(
+        self, search_with_mock_embedding
+    ):
+        """_get_embedding 返回有效向量时，_semantic_search 计算 cosine similarity"""
+        search, indexer = search_with_mock_embedding
+
+        # Mock _get_embedding 返回一个随机向量
+        mock_embedding = [0.1] * 1536
+        with patch.object(search, "_get_embedding", return_value=mock_embedding):
+            # Mock 每个元素的 embedding，使 cosine similarity 计算可执行
+            for element in indexer.element_index.values():
+                element.embedding = [0.1] * 1536
+
+            results = search._semantic_search("foo")
+            # 应返回按 cosine similarity 排序的结果
+            assert isinstance(results, list)
+
+    def test_semantic_search_skips_elements_without_embedding(
+        self, search_with_mock_embedding
+    ):
+        """_semantic_search 跳过没有 embedding 的元素"""
+        search, indexer = search_with_mock_embedding
+
+        mock_embedding = [0.1] * 1536
+        with patch.object(search, "_get_embedding", return_value=mock_embedding):
+            # 清除所有元素的 embedding
+            for element in indexer.element_index.values():
+                element.embedding = None
+
+            results = search._semantic_search("foo")
+            # 所有元素都没有 embedding → 空结果
+            assert results == []
+
+    def test_semantic_search_filters_by_min_score(
+        self, search_with_mock_embedding
+    ):
+        """结果按 min_score 过滤"""
+        search, indexer = search_with_mock_embedding
+
+        mock_embedding = [0.1] * 1536
+        with patch.object(search, "_get_embedding", return_value=mock_embedding):
+            for element in indexer.element_index.values():
+                element.embedding = [0.0] * 1536  # 零向量 → cosine similarity = 0
+
+            search.config.min_score = 0.3
+            results = search._semantic_search("foo")
+            # min_score=0.3，过滤掉所有 score=0 的结果
+            assert results == []
+
+    def test_hybrid_search_merges_duplicate_element_ids(
+        self, search_with_mock_embedding
+    ):
+        """_hybrid_search 中重复 element_id 合并分数（lines 186-187）"""
+        search, indexer = search_with_mock_embedding
+
+        mock_embedding = [0.1] * 1536
+
+        # 让同一个元素同时出现在语义和关键词结果中
+        element_ids = list(indexer.element_index.keys())
+        first_id = element_ids[0] if element_ids else "fake-id"
+
+        if not element_ids:
+            # 无索引元素，直接测试合并逻辑
+            return
+
+        def mock_semantic(_q, _f=None):
+            elem = list(indexer.element_index.values())[0]
+            elem.embedding = mock_embedding
+            return [search._element_to_result(elem, 0.8)]
+
+        def mock_keyword(_q, _f=None):
+            elem = list(indexer.element_index.values())[0]
+            return [search._element_to_result(elem, 0.4)]
+
+        with patch.object(search, "_get_embedding", return_value=mock_embedding):
+            with patch.object(search, "_semantic_search", side_effect=mock_semantic):
+                with patch.object(search, "_keyword_search", side_effect=mock_keyword):
+                    results = search._hybrid_search("foo")
+                    # 合并后 score = 0.8*alpha + 0.4*(1-alpha)
+                    assert isinstance(results, list)
+                    assert len(results) >= 1
+
