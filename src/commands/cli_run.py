@@ -364,10 +364,13 @@ def _load_config() -> dict:
     env_vars = {}
     for env_path in [omc_env, cwd_env]:
         if env_path.exists():
-            for line in env_path.read_text().splitlines():
-                if "=" in line:
-                    k, v = line.split("=", 1)
-                    env_vars[k.strip()] = v.strip()
+            try:
+                for line in env_path.read_text().splitlines():
+                    if "=" in line:
+                        k, v = line.split("=", 1)
+                        env_vars[k.strip()] = v.strip()
+            except Exception:
+                pass
 
     # .env 中的配置覆盖 config.json（特别是 defaults.model 和 API keys）
     for k, v in env_vars.items():

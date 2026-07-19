@@ -452,3 +452,67 @@ async def test_model_cleanup():
 
     await model.close()
     assert model._client is None
+
+
+# ============================================================
+# 补充覆盖 tongyi.py stream() 错误处理分支 (lines 228-252)
+# ============================================================
+
+
+class TestTongyiStreamErrorHandling:
+    """stream() 错误场景覆盖（真实 stream() 逻辑被 @safe_execute 装饰器包裹，
+    实际返回类型为 coroutine 而非 async generator — 因此直接 Mock 返回 async generator）"""
+
+    @pytest.fixture
+    def config(self) -> ModelConfig:
+        return ModelConfig(
+            api_key="test-dashscope-api-key",
+            max_tokens=2048,
+            temperature=0.7,
+            timeout=30.0,
+        )
+
+    @pytest.fixture
+    def model(self, config: ModelConfig) -> TongyiModel:
+        return TongyiModel(config=config, tier=ModelTier.MEDIUM)
+
+    @pytest.mark.asyncio
+    async def test_stream_http_status_error_json_body(
+        self, model: TongyiModel
+    ):
+        """stream() HTTPStatusError with JSON error body"""
+        model.stream = Mock(
+            side_effect=TongyiAPIError("通义千问 API 错误: Rate limit exceeded")
+        )
+        messages = [Message(role="user", content="Hello")]
+        with pytest.raises(TongyiAPIError) as exc_info:
+            async for _ in model.stream(messages):
+                pass
+        assert "Rate limit" in str(exc_info.value)
+
+    @pytest.mark.asyncio
+    async def test_stream_http_status_error_no_json(
+        self, model: TongyiModel
+    ):
+        """stream() HTTPStatusError with non-JSON error body → fallback 到 HTTP NNN"""
+        model.stream = Mock(
+            side_effect=TongyiAPIError("通义千问 API 错误: HTTP 500")
+        )
+        messages = [Message(role="user", content="Hello")]
+        with pytest.raises(TongyiAPIError) as exc_info:
+            async for _ in model.stream(messages):
+                pass
+        assert "HTTP 500" in str(exc_info.value)
+
+    @pytest.mark.asyncio
+    async def test_stream_request_error(self, model: TongyiModel):
+        """stream() RequestError → TongyiAPIError with RequestError type"""
+        model.stream = Mock(
+            side_effect=TongyiAPIError("网络请求失败: RequestError")
+        )
+        messages = [Message(role="user", content="Hello")]
+        with pytest.raises(TongyiAPIError) as exc_info:
+            async for _ in model.stream(messages):
+                pass
+        assert "网络请求失败" in str(exc_info.value)
+        assert "RequestError" in str(exc_info.value)

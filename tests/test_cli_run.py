@@ -810,3 +810,115 @@ class TestRunSourcegraph:
         )
         # Should complete without error
         assert result.exit_code in (0, 1)
+
+
+# ============================================================
+# 补充覆盖 cli_run.py 零覆盖分支 (missing lines)
+# ============================================================
+
+
+class TestModelNameFromKeyEnv:
+    """_model_name_from_key_env (lines 376-391) — 零测试调用"""
+
+    def test_known_env_key_deepseek(self):
+        from src.commands.cli_run import _model_name_from_key_env
+        assert _model_name_from_key_env("DEEPSEEK_API_KEY") == "deepseek"
+
+    def test_known_env_key_zhipuai(self):
+        from src.commands.cli_run import _model_name_from_key_env
+        assert _model_name_from_key_env("ZHIPUAI_API_KEY") == "glm"
+
+    def test_known_env_key_dashscope(self):
+        from src.commands.cli_run import _model_name_from_key_env
+        assert _model_name_from_key_env("DASHSCOPE_API_KEY") == "tongyi"
+
+    def test_unknown_env_key_returns_none(self):
+        from src.commands.cli_run import _model_name_from_key_env
+        assert _model_name_from_key_env("RANDOM_API_KEY_XYZ") is None
+
+    def test_empty_env_key_returns_none(self):
+        from src.commands.cli_run import _model_name_from_key_env
+        assert _model_name_from_key_env("") is None
+
+
+class TestLoadConfigEnvHandling:
+    """_load_config .env 加载分支 (lines 342-343)"""
+
+    def test_env_file_not_found_skips_gracefully(self, tmp_path, monkeypatch):
+        """当 .env 不存在时 _load_config 静默跳过（不抛异常）"""
+        from src.commands.cli_run import _load_config
+
+        config_dir = tmp_path / ".omc"
+        config_dir.mkdir()
+        (config_dir / "config.json").write_text("{}")
+        # .env 文件不存在
+        monkeypatch.setenv("HOME", str(tmp_path))
+
+        result = _load_config()
+        # .env 不存在时 env_vars 为空，config 直接原样返回（空 dict）
+        assert result == {}
+
+    def test_env_file_with_api_key_merged(self, tmp_path, monkeypatch):
+        """_load_config 正确合并 .env 中的 DEFAULT_MODEL 和 API keys"""
+        from src.commands.cli_run import _load_config
+
+        config_dir = tmp_path / ".omc"
+        config_dir.mkdir()
+        (config_dir / "config.json").write_text("{}")
+        (config_dir / ".env").write_text(
+            "DEEPSEEK_API_KEY=sk-test123\nDEFAULT_MODEL=deepseek\n"
+        )
+        monkeypatch.setenv("HOME", str(tmp_path))
+
+        result = _load_config()
+        assert result["defaults"]["model"] == "deepseek"
+        assert result["models"]["deepseek"]["api_key"] == "sk-test123"
+
+    def test_env_file_read_error_handled(self, tmp_path, monkeypatch):
+        """_load_config 在 .env 读取失败时静默处理 (line 342-343)"""
+        from src.commands.cli_run import _load_config
+
+        config_dir = tmp_path / ".omc"
+        config_dir.mkdir()
+        (config_dir / "config.json").write_text("{}")
+        env_file = config_dir / ".env"
+        env_file.write_text("DEEPSEEK_API_KEY=sk-test\n")
+        monkeypatch.setenv("HOME", str(tmp_path))
+
+        # mock env 文件读取抛出异常，模拟 IO 错误
+        with monkeypatch.context() as m:
+            # 替换 env_path.read_text 方法
+            original_read = Path.read_text
+
+            def bad_read(self):
+                if str(self).endswith(".env"):
+                    raise OSError("Permission denied")
+                return original_read(self)
+
+            m.setattr(Path, "read_text", bad_read)
+            result = _load_config()
+        # 异常被吞掉，不应抛，返回 config（无 .env 合并）
+        assert result == {}
+
+
+class TestDetectProjectNameSetupPy:
+    """_detect_project_name setup.py 读取异常分支 (line 278)"""
+
+    def test_setup_py_read_error_falls_back_to_dirname(self, tmp_path, monkeypatch):
+        """setup.py 存在但读取抛出异常时 fallback 到目录名 (line 278)"""
+        from src.commands.cli_run import _detect_project_name
+
+        setup_py = tmp_path / "setup.py"
+        setup_py.write_text("name='should_not_parse'")
+
+        # 让 read_text 抛异常
+        original_read = Path.read_text
+        def bad_read(self):
+            if self == setup_py:
+                raise OSError("disk error")
+            return original_read(self)
+
+        monkeypatch.setattr(Path, "read_text", bad_read)
+
+        result = _detect_project_name(tmp_path)
+        assert result == tmp_path.name
