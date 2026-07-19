@@ -681,3 +681,59 @@ class TestSemanticSearchWithEmbeddings:
                     assert isinstance(results, list)
                     assert len(results) >= 1
 
+
+
+class TestSearchHelpers:
+    """补充 _cosine_similarity / _bm25_score / _match_filters 分支覆盖。"""
+
+    def test_cosine_identical(self):
+        s = SemanticSearch.__new__(SemanticSearch)
+        assert s._cosine_similarity([1.0, 0.0], [1.0, 0.0]) == 1.0
+
+    def test_cosine_orthogonal(self):
+        s = SemanticSearch.__new__(SemanticSearch)
+        assert s._cosine_similarity([1.0, 0.0], [0.0, 1.0]) == 0.0
+
+    def test_cosine_zero_vector(self):
+        s = SemanticSearch.__new__(SemanticSearch)
+        assert s._cosine_similarity([0.0, 0.0], [1.0, 0.0]) == 0.0
+
+    def test_bm25_empty_terms(self):
+        s = SemanticSearch.__new__(SemanticSearch)
+
+        class _E:
+            name = ""
+            signature = None
+            docstring = None
+
+        assert s._bm25_score(_E(), ["x"]) == 0.0
+
+    def test_match_filters_file_pattern_nomatch(self):
+        s = SemanticSearch.__new__(SemanticSearch)
+
+        class _E:
+            file_path = "src/foo.py"
+            name = "Foo"
+
+        elem = _E()
+        assert s._match_filters(elem, {"file_pattern": "*.js"}) is False
+
+    def test_match_filters_name_pattern_nomatch(self):
+        s = SemanticSearch.__new__(SemanticSearch)
+
+        class _E:
+            file_path = "src/foo.py"
+            name = "Foo"
+
+        elem = _E()
+        assert s._match_filters(elem, {"name_pattern": "Bar"}) is False
+
+    def test_match_filters_match(self):
+        s = SemanticSearch.__new__(SemanticSearch)
+
+        class _E:
+            file_path = "src/foo.py"
+            name = "Foo"
+
+        elem = _E()
+        assert s._match_filters(elem, {"file_pattern": "*.py"}) is True

@@ -10,10 +10,12 @@ import asyncio
 import hashlib
 import json
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from fastapi import FastAPI
+from fastapi.testclient import TestClient
+from starlette.routing import Mount
 
 from src.api.server_api import (
     AuthContext,
@@ -1257,3 +1259,79 @@ def test_task_store_update_with_none_error(task_store):
 
     updated = asyncio.run(task_store.get(record.task_id))
     assert updated.error == "First error"
+
+
+class TestServerApiRoutes:
+    """通过 TestClient 覆盖 /api/v1/* 与 /health 路由处理函数。"""
+
+    def _make_client(self, tmp_path):
+        store = TaskStore(tmp_path / "tasks")
+        app, _ = create_app(store=store)
+        # 剥离 create_app 中先于路由定义的 "/" 挂载（web_app），
+        # 否则 Mount 会吞掉主 app 的 /health、/favicon、/api/v1/* 路由。
+        app.router.routes = [r for r in app.router.routes if not isinstance(r, Mount)]
+        return TestClient(app), store
+
+    def test_health(self, tmp_path):
+        client, _ = self._make_client(tmp_path)
+        r = client.get("/health")
+        assert r.status_code == 200
+        assert r.json() == {"status": "ok"}
+
+    def test_favicon(self, tmp_path):
+        client, _ = self._make_client(tmp_path)
+        r = client.get("/favicon.ico")
+        assert r.status_code in (200, 404)
+
+    def test_run_status_list_delete(self, tmp_path):
+        client, _ = self._make_client(tmp_path)
+        r = client.post("/api/v1/run", json={"prompt": "hello"})
+        assert r.status_code == 200
+        tid = r.json()["task_id"]
+        assert client.get(f"/api/v1/status/{tid}").status_code == 200
+        assert client.get("/api/v1/status/nope").status_code == 404
+        rl = client.get("/api/v1/tasks")
+        assert rl.status_code == 200
+        assert rl.json()["total"] >= 1
+        rd = client.delete(f"/api/v1/tasks/{tid}")
+        assert rd.status_code == 200
+        assert rd.json()["deleted"] == "true"
+        assert client.delete("/api/v1/tasks/nope").status_code == 404
+
+    def test_result_branches(self, tmp_path):
+        client, store = self._make_client(tmp_path)
+        # 404 for missing
+        assert client.get("/api/v1/result/nope").status_code == 404
+        # pending -> 202
+        rec = asyncio.run(store.create("p", None))
+        assert client.get(f"/api/v1/result/{rec.task_id}").status_code == 202
+        # running -> 202
+        asyncio.run(store.update(rec.task_id, TaskStatus.RUNNING))
+        assert client.get(f"/api/v1/result/{rec.task_id}").status_code == 202
+        # completed -> 200 with result
+        asyncio.run(
+            store.update(
+                rec.task_id, TaskStatus.COMPLETED, result={"output": "ok"}
+            )
+        )
+        rr = client.get(f"/api/v1/result/{rec.task_id}")
+        assert rr.status_code == 200
+        assert rr.json()["result"] == {"output": "ok"}
+
+
+class TestRunAgentTask:
+    """直接调用 run_agent_task（mock Orchestrator），覆盖其内部执行路径。"""
+
+    async def test_run_agent_task_success(self):
+        store = MagicMock()
+        store.update = AsyncMock()
+        with patch("src.agents.base.AgentContext") as AC, patch(
+            "src.core.orchestrator.Orchestrator"
+        ) as O:
+            O.return_value.run = AsyncMock(
+                return_value=MagicMock(output="done")
+            )
+            await run_agent_task("prompt", "tid", store)
+        statuses = [c.args[1] for c in store.update.await_args_list]
+        assert TaskStatus.RUNNING in statuses
+        assert TaskStatus.COMPLETED in statuses

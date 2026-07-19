@@ -371,3 +371,76 @@ class TestSubProject:
         assert d["language"] == "Python"
         assert d["framework"] == "FastAPI"
         assert d["has_agent_config"] is True
+
+
+class TestMonorepoExtraCoverage:
+    """补充分支覆盖：语言/框架检测、rush/pnpm/lerna/nx 解析、空 monorepo 返回。"""
+
+    def test_detect_language_java(self, tmp_path):
+        (tmp_path / "pom.xml").write_text("<project/>", encoding="utf-8")
+        assert detect_language(tmp_path) == "Java"
+
+    def test_detect_language_javakotlin(self, tmp_path):
+        (tmp_path / "build.gradle").write_text("//", encoding="utf-8")
+        assert detect_language(tmp_path) == "Java/Kotlin"
+
+    def test_detect_language_php(self, tmp_path):
+        (tmp_path / "composer.json").write_text("{}", encoding="utf-8")
+        assert detect_language(tmp_path) == "PHP"
+
+    def test_detect_language_ruby(self, tmp_path):
+        (tmp_path / "Gemfile").write_text("#", encoding="utf-8")
+        assert detect_language(tmp_path) == "Ruby"
+
+    def test_detect_language_dart(self, tmp_path):
+        (tmp_path / "pubspec.yaml").write_text("name: app", encoding="utf-8")
+        assert detect_language(tmp_path) == "Dart/Flutter"
+
+    def test_parse_rush_packages(self, tmp_path):
+        (tmp_path / "rush.json").write_text(
+            json.dumps({"projects": [{"projectFolder": "packages/app1"}]}),
+            encoding="utf-8",
+        )
+        (tmp_path / "packages" / "app1").mkdir(parents=True)
+        info = detect_monorepo(tmp_path)
+        assert info is not None
+        assert info.type == "rush"
+        assert len(info.packages) >= 1
+
+    def test_parse_pnpm_workspace_literal_and_section(self, tmp_path):
+        (tmp_path / "pnpm-workspace.yaml").write_text(
+            "packages:\n  - packages/*\n  - apps\ncacheDir: .pnpm\n",
+            encoding="utf-8",
+        )
+        (tmp_path / "packages" / "a").mkdir(parents=True)
+        (tmp_path / "apps").mkdir()
+        pkgs = _parse_pnpm_workspace(tmp_path)
+        paths = [str(p) for p in pkgs]
+        assert any("packages/a" in p for p in paths)
+        assert any("apps" in p for p in paths)
+
+    def test_parse_lerna_literal(self, tmp_path):
+        (tmp_path / "lerna.json").write_text(
+            json.dumps({"packages": ["custom"]}), encoding="utf-8"
+        )
+        (tmp_path / "custom").mkdir()
+        pkgs = _parse_lerna_packages(tmp_path)
+        assert any("custom" in str(p) for p in pkgs)
+
+    def test_parse_nx_invalid_json(self, tmp_path):
+        (tmp_path / "workspace.json").write_text("{not json", encoding="utf-8")
+        assert _parse_nx_workspace(tmp_path) == []
+
+    def test_detect_framework_bad_json(self, tmp_path):
+        (tmp_path / "package.json").write_text("{bad", encoding="utf-8")
+        assert detect_framework(tmp_path) == ""
+
+    def test_list_subprojects_not_monorepo(self, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        assert list_subprojects() == []
+
+    def test_get_monorepo_context_not_monorepo(self, monkeypatch):
+        monkeypatch.setattr(
+            "src.core.monorepo.find_monorepo_root", lambda *a, **k: None
+        )
+        assert get_monorepo_context("/any") == {}
