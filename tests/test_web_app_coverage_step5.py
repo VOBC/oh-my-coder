@@ -379,6 +379,54 @@ class TestRunTask:
     @patch("src.web.app._cleanup_target")
     @patch("src.web.app.get_orchestrator")
     @patch("src.web.app._preprocess_target")
+    async def test_run_task_agent_failure_marks_failed(
+        self, mock_preprocess, mock_get_orch, mock_cleanup, mock_hist_store, tmp_path
+    ):
+        """Regression: when steps fail, run_task must mark status 'failed' (not 'completed')."""
+        mock_preprocess.return_value = (str(tmp_path), "")
+        mock_cleanup.return_value = None
+        mock_hist_store.save = MagicMock()
+
+        mock_orch = MagicMock()
+        mock_agent = MagicMock()
+        mock_agent.execute = AsyncMock(side_effect=RuntimeError("step boom"))
+        mock_orch.get_agent.return_value = mock_agent
+        mock_orch._active_workflows = {}
+
+        from src.core.orchestrator import WORKFLOW_TEMPLATES
+        from src.web.app import run_task
+
+        with patch("src.web.app.WORKFLOW_TEMPLATES", WORKFLOW_TEMPLATES):
+            with patch("src.web.app.history_store", mock_hist_store):
+                mock_get_orch.return_value = mock_orch
+
+                task_id = task_manager.create_task(
+                    task_desc="test all-fail",
+                    model="deepseek",
+                    workflow="build",
+                    project_path=str(tmp_path),
+                )
+
+                await run_task(
+                    task_id=task_id,
+                    task="test task",
+                    project_path=str(tmp_path),
+                    model="deepseek",
+                    workflow_name="build",
+                    target_type="local",
+                )
+
+                t = task_manager.get_task(task_id)
+                assert t["status"] == "failed"
+                saved = mock_hist_store.save.call_args
+                assert saved is not None
+                assert saved.args[1]["status"] == "failed"
+
+    @pytest.mark.asyncio
+    @patch("src.web.app.history_store")
+    @patch("src.web.app._cleanup_target")
+    @patch("src.web.app.get_orchestrator")
+    @patch("src.web.app._preprocess_target")
     async def test_run_task_outer_exception(
         self, mock_preprocess, mock_get_orch, mock_cleanup, mock_hist_store, tmp_path
     ):
@@ -1074,6 +1122,26 @@ class TestSaveReportStepOutputs:
             "explore": None,
         }
         task_manager._tasks[tid]["result"] = {"summary": "done"}
+
+        response = client.post("/api/save-report", json={"task_id": tid})
+        assert response.status_code == 200
+
+
+    @patch("src.web.app.history_store")
+    @patch("src.web.app.Path.home")
+    def test_save_report_with_string_result(self, mock_home, mock_store, client, tmp_path):
+        """Regression: task['result'] as a bare string must not crash (AttributeError)."""
+        mock_home.return_value = tmp_path
+        tid = self._create_task(
+            task_manager._tasks,
+            task_desc="report test 6",
+            model="deepseek",
+            workflow="build",
+            project_path=str(tmp_path),
+        )
+        task_manager._tasks[tid]["status"] = "completed"
+        task_manager._tasks[tid]["started_at"] = datetime.now().isoformat()
+        task_manager._tasks[tid]["result"] = "plain text final result"
 
         response = client.post("/api/save-report", json={"task_id": tid})
         assert response.status_code == 200

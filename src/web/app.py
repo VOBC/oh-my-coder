@@ -601,7 +601,8 @@ async def save_report(payload: Optional[dict] = None):
 
     # 各步骤输出
     # 先从 result.outputs 找（持久化历史任务）
-    step_outputs = (task.get("result") or {}).get("outputs", {})
+    result = task.get("result")
+    step_outputs = result.get("outputs", {}) if isinstance(result, dict) else {}
     # 兼容：如果 result.outputs 没有，尝试 step_outputs（内存任务）
     if not step_outputs:
         step_outputs = task.get("step_outputs", {})
@@ -1131,8 +1132,13 @@ async def run_task(
         total_time = time.time() - start_time
         task_manager._tasks[task_id]["stats"]["execution_time"] = round(total_time, 1)
 
+        has_error = bool(wf_result.steps_failed)
         result = {
-            "result": f"工作流 '{workflow_name}' 执行完成",
+            "result": (
+                f"工作流 '{workflow_name}' 执行完成"
+                if not has_error
+                else f"工作流 '{workflow_name}' 有 {len(wf_result.steps_failed)} 个步骤执行失败"
+            ),
             "outputs": {
                 name: {
                     "result": out.result,
@@ -1144,7 +1150,14 @@ async def run_task(
             "stats": task_manager._tasks[task_id]["stats"],
         }
 
-        task_manager.complete_task(task_id, result=result)
+        if has_error:
+            error_msg = (
+                f"{len(wf_result.steps_failed)} 个步骤执行失败: "
+                f"{', '.join(wf_result.steps_failed)}"
+            )
+            task_manager.complete_task(task_id, error=error_msg)
+        else:
+            task_manager.complete_task(task_id, result=result)
 
         # 保存历史记录
         history_record = {
@@ -1153,12 +1166,14 @@ async def run_task(
             "workflow": workflow_name,
             "project_path": project_path,
             "model": model,
-            "status": "completed",
+            "status": "failed" if has_error else "completed",
             "started_at": task_manager._tasks[task_id].get("started_at"),
             "completed_at": datetime.now().isoformat(),
             "stats": task_manager._tasks[task_id]["stats"],
             "result": result,
         }
+        if has_error:
+            history_record["error_type"] = "WorkflowExecutionError"
         history_store.save(task_id, history_record)
 
     except Exception as e:
