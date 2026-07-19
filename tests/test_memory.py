@@ -383,3 +383,217 @@ class TestLayeredMemory:
         tokens = mgr.count_tokens(tier0)
         # 截断后不应大幅超过限制
         assert tokens <= 30 + 30  # 系数 0.4 对应容差翻倍
+
+
+# ─────────────────────────────────────────────────────────────────
+# 补充覆盖 memory/manager.py missing lines
+# ─────────────────────────────────────────────────────────────────
+
+
+class TestCompactStats:
+    """compact_stats / record_compact / _empty_stats (lines 73-101)"""
+
+    def test_empty_stats_returns_correct_structure(self, memory_mgr):
+        """_empty_stats() 返回正确的空统计结构"""
+        stats = memory_mgr._empty_stats()
+        assert stats["total_compact_count"] == 0
+        assert stats["total_tokens_saved"] == 0
+        assert stats["total_messages_removed"] == 0
+        assert stats["total_deduplicated"] == 0
+        assert stats["total_errors_removed"] == 0
+
+    def test_compact_stats_returns_empty_when_file_not_exists(self, memory_mgr):
+        """_stats_file 不存在时返回 _empty_stats()"""
+        assert not memory_mgr._stats_file.exists()
+        stats = memory_mgr.compact_stats
+        assert stats["total_compact_count"] == 0
+
+    def test_compact_stats_returns_empty_on_json_error(self, memory_mgr, temp_dir):
+        """JSON 解析失败时返回 _empty_stats()"""
+        # 写入非法 JSON 内容
+        memory_mgr._stats_file.parent.mkdir(parents=True, exist_ok=True)
+        memory_mgr._stats_file.write_text("not valid json{!!", encoding="utf-8")
+        stats = memory_mgr.compact_stats
+        assert stats["total_compact_count"] == 0
+
+
+class TestCountTokensFallback:
+    """count_tokens 无 tiktoken 时使用回退估算 (lines 118-122)"""
+
+    def test_count_tokens_falls_back_to_char_estimation(self, temp_dir):
+        """_enc 为 None 时使用 len(text)/2.5 估算"""
+        from src.memory.manager import MemoryManager, MemoryConfig
+
+        config = MemoryConfig(storage_dir=temp_dir)
+        mgr = MemoryManager.__new__(MemoryManager)
+        mgr.config = config
+        mgr._enc = None  # 强制无 tiktoken
+        mgr._stats_file = Path(temp_dir) / "stats.json"
+        mgr.short_term = None
+        mgr.long_term = None
+        mgr.learnings = None
+
+        # 回退估算：25 字符 / 2.5 = 10 tokens
+        count = mgr.count_tokens("hello world this is a test")
+        assert count == 10  # 25 chars / 2.5 = 10
+
+
+class TestProjectPrefsDelegates:
+    """get/update_project_prefs / add_recent_project (lines 199-211)"""
+
+    def test_update_and_get_project_prefs(self, memory_mgr, temp_dir):
+        """更新后能正确读取项目偏好"""
+        project = temp_dir / "test_project"
+        project.mkdir()
+
+        memory_mgr.update_project_prefs(project, name="MyProj", framework="FastAPI")
+        prefs = memory_mgr.get_project_prefs(project)
+
+        assert prefs.name == "MyProj"
+        assert prefs.framework == "FastAPI"
+
+    def test_add_recent_project(self, memory_mgr, temp_dir):
+        """add_recent_project 将项目加入最近项目列表"""
+        project = temp_dir / "recent_proj"
+        project.mkdir()
+
+        memory_mgr.add_recent_project(project)
+        recent = memory_mgr.get_recent_projects(limit=5)
+        assert any(p.name == "recent_proj" for p in recent)
+
+
+class TestLearningsDelegates:
+    """get_recent_learnings / get_learnings_by_category (lines 234-240)"""
+
+    def test_get_learnings_by_category(self, memory_mgr):
+        """按类别筛选学习记录"""
+        memory_mgr.add_learning("tip1", "content 1", "ops")
+        memory_mgr.add_learning("tip2", "content 2", "ci")
+        memory_mgr.add_learning("tip3", "content 3", "ops")
+
+        ops = memory_mgr.get_learnings_by_category("ops")
+        ci = memory_mgr.get_learnings_by_category("ci")
+
+        assert all(e.category == "ops" for e in ops)
+        assert all(e.category == "ci" for e in ci)
+        assert len(ops) == 2
+        assert len(ci) == 1
+
+    def test_get_recent_learnings(self, memory_mgr):
+        """按限制返回最近学习记录"""
+        for i in range(5):
+            memory_mgr.add_learning(f"entry {i}", f"content {i}", "note")
+
+        recent = memory_mgr.get_recent_learnings(limit=3)
+        assert len(recent) == 3
+
+
+class TestRecallFiltering:
+    """recall 的项目偏好名称/备注过滤 (line 205)"""
+
+    def test_recall_filters_by_project_prefs_notes(
+        self, memory_mgr, temp_dir
+    ):
+        """recall 搜索到项目备注时包含在 long_term 结果中"""
+        project = temp_dir / "recall_proj"
+        project.mkdir()
+
+        # 添加备注包含关键词
+        memory_mgr.update_project_prefs(
+            project, name="MyData", notes="postgres connection pool tuning"
+        )
+
+        results = memory_mgr.recall("postgres")
+        # recall 应该搜索项目备注
+        assert "long_term" in results
+
+
+class TestLayeredSummaryContent:
+    """分层 summary 的详细 content building 分支 (lines 236-345)"""
+
+    def test_tier0_includes_recent_projects_section(
+        self, memory_mgr, temp_dir
+    ):
+        """Tier 0 包含最近项目章节（当有项目时）"""
+        project = temp_dir / "proj_tier0"
+        project.mkdir()
+        memory_mgr.add_recent_project(project)
+        memory_mgr.update_project_prefs(project, name="Tier0Proj", framework="React")
+
+        tier0 = memory_mgr.get_tier0_summary()
+        assert "最近项目" in tier0
+        assert "Tier0Proj" in tier0
+
+    def test_tier0_includes_user_prefs_section(self, memory_mgr):
+        """Tier 0 包含用户偏好章节"""
+        memory_mgr.update_user_prefs(default_model="deepseek", theme="dark")
+
+        tier0 = memory_mgr.get_tier0_summary()
+        # 用户偏好应出现在 summary 中
+        assert len(tier0) > 0
+
+    def test_tier0_truncation_without_tiktoken(self, temp_dir):
+        """无 tiktoken 时 Tier 0 截断走字符数 fallback"""
+        from src.memory.manager import MemoryManager, MemoryConfig
+
+        config = MemoryConfig(storage_dir=temp_dir, tier0_max_tokens=10)
+        mgr = MemoryManager(config)
+
+        # 强制无 tiktoken
+        mgr._enc = None
+
+        # 塞入大量内容
+        for i in range(5):
+            mgr.add_learning(f"entry {i}", "x " * 200, "note")
+
+        tier0 = mgr.get_tier0_summary()
+        # 截断后字符数约为 10 * 4 = 40 字符
+        assert len(tier0) <= 50
+
+    def test_tier1_truncation_without_tiktoken(self, memory_mgr):
+        """无 tiktoken 时 Tier 1 截断走字符数 fallback"""
+        memory_mgr._enc = None
+        for i in range(3):
+            memory_mgr.add_learning(f"t1 {i}", "y " * 200, "note")
+
+        tier1 = memory_mgr.get_tier1_summary(max_tokens=20)
+        # 回退：20 * 4 = 80 字符
+        assert len(tier1) <= 90
+
+    def test_tier2_archive_includes_projects_section(
+        self, memory_mgr, temp_dir
+    ):
+        """Tier 2 存档包含项目列表章节（当有项目时）"""
+        project = temp_dir / "proj_tier2"
+        project.mkdir()
+        memory_mgr.add_recent_project(project)
+        memory_mgr.update_project_prefs(
+            project,
+            name="Tier2Proj",
+            framework="Django",
+            language="Python",
+            notes="API design patterns",
+        )
+
+        archive = memory_mgr.get_tier2_archive()
+        assert "项目列表" in archive
+        assert "Tier2Proj" in archive
+        assert "Django" in archive
+        assert "Python" in archive
+        assert "API design patterns" in archive
+
+    def test_tier2_archive_content_truncation(
+        self, memory_mgr, temp_dir
+    ):
+        """Tier 2 内容过多时截断（无 tiktoken 回退）"""
+        config = MemoryConfig(storage_dir=temp_dir, tier0_max_tokens=5)
+        mgr = MemoryManager(config)
+        mgr._enc = None
+
+        for i in range(5):
+            mgr.add_learning(f"entry {i}", "z " * 300, "note")
+
+        archive = mgr.get_tier2_archive()
+        # Tier 2 无 max_tokens 参数，不截断内容
+        assert "entry 4" in archive
+
