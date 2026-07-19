@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import asyncio
-import os
 from pathlib import Path
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock, PropertyMock, patch
@@ -692,7 +691,6 @@ class TestGetTraceContextCls:
 
     def test_import_fails_returns_none(self) -> None:
         """Make the internal `from ..agents.transparency import TraceContext` fail"""
-        import sys
         import src.agents.transparency as trans_mod
 
         # Delete TraceContext from the module so the import inside raises ImportError
@@ -845,7 +843,6 @@ class TestRegisterAgent:
 
 class TestGetAgentDynamic:
     def test_dynamic_load_and_caches(self, orch: Orchestrator) -> None:
-        from src.agents.base import get_agent as base_get_agent
 
         mock_agent_class = MagicMock()
         mock_instance = MagicMock()
@@ -1366,7 +1363,7 @@ class TestExecuteSequentialAdditional:
 
         with patch.object(orch, "get_agent", return_value=mock_agent):
             steps = [WorkflowStep("a", "A")]
-            with pytest.raises(Exception):
+            with pytest.raises(Exception):  # noqa: B017
                 await orch._execute_sequential(steps, {}, wf_result)
         assert len(wf_result.steps_failed) == 1
 
@@ -1484,7 +1481,6 @@ class TestExecuteSingleAgentAdditional:
     @pytest.mark.asyncio
     async def test_with_trace_context_and_output_attr(self, orch: Orchestrator) -> None:
         """execute_single_agent with TraceContext and hasattr output"""
-        from src.core.orchestrator import _get_trace_context_cls
 
         # Create a TraceContext-like mock
         mock_trace_ctx = MagicMock()

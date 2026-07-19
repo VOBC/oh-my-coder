@@ -2,11 +2,7 @@
 
 from __future__ import annotations
 
-import asyncio
 import json
-import os
-import tempfile
-from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -22,7 +18,6 @@ from src.core.router import (
     RoutingDecision,
     TaskType,
 )
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -523,7 +518,7 @@ class TestModelRouterRouteAndCall:
 
         # Pass dict messages (not Message objects)
         messages = [{"role": "user", "content": "hello"}]
-        response = await router.route_and_call(
+        await router.route_and_call(
             TaskType.CODE_GENERATION, messages  # type: ignore
         )
         model.generate.assert_called_once()
@@ -537,7 +532,7 @@ class TestModelRouterRouteAndCall:
     @pytest.mark.asyncio
     async def test_cache_hit_returns_cached(self):
         """Cache hit returns cached response without calling model."""
-        from src.models.base import Message, Usage
+        from src.models.base import Message
         cache = ResponseCache(ttl_seconds=300)
         cached_resp = MagicMock()
         cached_resp.usage = MagicMock()
@@ -596,7 +591,7 @@ class TestModelRouterRouteAndCall:
 
         from src.models.base import Message
         msg = Message(role="user", content="hello")
-        response = await router.route_and_call(
+        await router.route_and_call(
             TaskType.CODE_GENERATION, [msg], override_model="glm-4-flash"
         )
         router._models["glm"]["high"].generate.assert_called_once()
@@ -617,7 +612,7 @@ class TestModelRouterRouteAndCall:
 
         from src.models.base import Message
         msg = Message(role="user", content="hello")
-        response = await router.route_and_call(
+        await router.route_and_call(
             TaskType.CODE_GENERATION, [msg], override_model="deepseek"
         )
         router._models["deepseek"]["high"].generate.assert_called_once()
@@ -636,7 +631,7 @@ class TestModelRouterRouteAndCall:
         from src.models.base import Message
         msg = Message(role="user", content="hello")
         # override_model="completely-unknown" → falls back to auto select
-        response = await router.route_and_call(
+        await router.route_and_call(
             TaskType.CODE_GENERATION, [msg], override_model="completely-unknown"
         )
         # Should have used deepseek via auto-select (not forced)
@@ -862,7 +857,6 @@ class TestModelRouterHelpers:
 
     def test_reset_stats(self):
         router = _make_router_for_route()
-        from src.models.base import Message
         router._total_cost = 5.0
         router._decision_history.append(
             RoutingDecision(
@@ -1082,7 +1076,7 @@ class TestModelRouterLoadUserModels:
 
         from src.core import router as router_module
         with patch.object(router_module, "USER_MODELS_DIR", mock_models_dir):
-            router = ModelRouter()  # should not raise
+            ModelRouter()  # should not raise
 
         assert True  # no exception
 
@@ -1125,7 +1119,6 @@ class TestModelRouterInitExceptions:
         monkeypatch.setenv("DEFAULT_MODEL", "")
 
         from src.models import deepseek as deepseek_module
-        original_init = deepseek_module.DeepSeekModel.__init__
 
         def raising_init(self, *args, **kwargs):
             raise RuntimeError("intentional init failure")
