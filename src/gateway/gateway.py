@@ -244,36 +244,3 @@ class Gateway:
 
     def _noop_handler(self, message: IncomingMessage) -> None:
         """NoopHandler 的 on_message 回调"""
-
-    # ---- Webhook 支持（供 FastAPI 集成）----
-
-    async def handle_telegram_update(self, update: dict[str, Any]) -> None:
-        """
-        处理 Telegram Webhook 更新。
-
-        用于 FastAPI 路由：
-        @app.post("/webhook/telegram")
-        async def telegram_webhook(request: Request):
-            await gateway.handle_telegram_update(await request.json())
-        """
-        handler = self._handlers.get(Platform.TELEGRAM)
-        if handler is None or isinstance(handler, NoopHandler):
-            logger.warning("[gateway] Telegram not configured")
-            return
-
-        # Telegram Webhook 需要从 Update 提取 message
-        message_data = update.get("message", {})
-        if not message_data:
-            return
-
-        from .base import IncomingMessage
-
-        incoming = IncomingMessage(
-            platform=Platform.TELEGRAM,
-            user_id=str(message_data.get("from", {}).get("id", "")),
-            chat_id=str(message_data.get("chat", {}).get("id", "")),
-            text=message_data.get("text", ""),
-            raw=update,
-            reply_to=str(message_data.get("message_id", "")),
-        )
-        self.on_platform_message(incoming)
