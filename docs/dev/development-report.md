@@ -47,7 +47,7 @@
 | 更新 `src/models/base.py` | 添加 OLLAMA 枚举 |
 | 更新 `src/models/__init__.py` | 导出 OllamaModel |
 | 更新 `src/core/router.py` | 添加 Ollama 配置和初始化 |
-| 更新 `src/cli.py` | 注册 `omc local` 命令 |
+| 更新 `src/commands/cli.py` | 注册 `omc local` 命令 |
 
 ### 功能特性
 

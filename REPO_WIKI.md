@@ -2316,7 +2316,7 @@ GEP 能力注册表
 | `unregister(self, gene_id)` | 移除注册，返回是否成功 |
 | `count(self)` |  |
 
-### `src/cli.py`
+### `src/commands/cli.py`
 
 Oh My Coder CLI - 命令行入口
 
