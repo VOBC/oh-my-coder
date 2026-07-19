@@ -132,7 +132,7 @@ def quest(
 
     try:
         asyncio.run(run())
-    except SystemExit:
+    except (SystemExit, typer.Exit):
         raise
     except Exception as e:
         _print_fatal(f"Quest 执行出错: {e}")
