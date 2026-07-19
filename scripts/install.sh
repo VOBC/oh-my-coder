@@ -263,12 +263,12 @@ verify_installation() {
         print_success "CLI 安装成功"
     else
         print_warning "CLI 验证失败，尝试直接运行..."
-        python -m src.cli --version 2>&1 || print_warning "模块验证失败"
+        python -m src.commands.cli --version 2>&1 || print_warning "模块验证失败"
     fi
     
     echo ""
     print_step "运行 omc model current..."
-    python -m src.cli model current 2>&1 || true
+    python -m src.commands.cli model current 2>&1 || true
     
     # 测试 Python 模块
     if python -c "import oh_my_coder" 2>/dev/null; then

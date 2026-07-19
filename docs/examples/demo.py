@@ -258,8 +258,8 @@ async def main():
         print("🎉 演示完成!")
         print()
         print("📚 了解更多:")
-        print("   - 查看所有 Agent: python -m src.cli agents")
-        print("   - 查看系统状态: python -m src.cli status")
+        print("   - 查看所有 Agent: python -m src.commands.cli agents")
+        print("   - 查看系统状态: python -m src.commands.cli status")
         print("   - 完整文档: cat README.md")
         print()
 

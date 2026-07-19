@@ -50,17 +50,17 @@ def main():
     )
 
     # 示例 1: 帮助信息
-    run([sys.executable, "-m", "src.cli", "--help"], "示例 1: 查看 CLI 帮助信息")
+    run([sys.executable, "-m", "src.commands.cli", "--help"], "示例 1: 查看 CLI 帮助信息")
 
     # 示例 2: 列出可用 Agent
-    run([sys.executable, "-m", "src.cli", "list"], "示例 2: 列出所有可用的 Agent")
+    run([sys.executable, "-m", "src.commands.cli", "list"], "示例 2: 列出所有可用的 Agent")
 
     # 示例 3: 探索当前目录
-    run([sys.executable, "-m", "src.cli", "explore", "."], "示例 3: 探索当前项目代码库")
+    run([sys.executable, "-m", "src.commands.cli", "explore", "."], "示例 3: 探索当前项目代码库")
 
     # 示例 4: 直接提问
     run(
-        [sys.executable, "-m", "src.cli", "ask", "Python 的列表推导式是什么？"],
+        [sys.executable, "-m", "src.commands.cli", "ask", "Python 的列表推导式是什么？"],
         "示例 4: 直接向 AI 提问",
     )
 
@@ -73,16 +73,16 @@ def main():
     以下示例展示了完整的工作流执行方式：
 
     # 完整开发流程（build）
-    python -m src.cli run "实现一个 TODO 列表应用" -w build
+    python -m src.commands.cli run "实现一个 TODO 列表应用" -w build
 
     # 代码审查流程（review）
-    python -m src.cli run "审查项目代码质量" -w review
+    python -m src.commands.cli run "审查项目代码质量" -w review
 
     # 调试流程（debug）
-    python -m src.cli run "修复登录失败的问题" -w debug
+    python -m src.commands.cli run "修复登录失败的问题" -w debug
 
     # 测试流程（test）
-    python -m src.cli run "为项目添加单元测试" -w test
+    python -m src.commands.cli run "为项目添加单元测试" -w test
 
     ═══════════════════════════════════════════════════════
     """
@@ -95,13 +95,13 @@ def main():
     📌 示例 6: 指定使用的模型
 
     # 使用 DeepSeek（默认，免费）
-    python -m src.cli run "实现一个计算器" --model deepseek
+    python -m src.commands.cli run "实现一个计算器" --model deepseek
 
     # 使用通义千问（需要配置 API Key）
-    python -m src.cli run "实现一个计算器" --model tongyi
+    python -m src.commands.cli run "实现一个计算器" --model tongyi
 
     # 使用文心一言（需要配置 API Key）
-    python -m src.cli run "实现一个计算器" --model wenxin
+    python -m src.commands.cli run "实现一个计算器" --model wenxin
 
     ═══════════════════════════════════════════════════════
     """
@@ -114,8 +114,8 @@ def main():
     📌 示例 7: 查看模型路由统计
 
     # 运行任务后，查看 Token 消耗和路由决策
-    python -m src.cli run "实现一个计算器"
-    python -m src.cli stats
+    python -m src.commands.cli run "实现一个计算器"
+    python -m src.commands.cli stats
 
     统计信息包括：
     - 各模型调用次数
@@ -136,13 +136,13 @@ def main():
     ║     export DEEPSEEK_API_KEY=your_key                  ║
     ║                                                        ║
     ║  2. 在指定目录工作                                    ║
-    ║     python -m src.cli explore /path/to/project         ║
+    ║     python -m src.commands.cli explore /path/to/project         ║
     ║                                                        ║
     ║  3. 查看详细日志                                     ║
-    ║     python -m src.cli run "任务" --verbose            ║
+    ║     python -m src.commands.cli run "任务" --verbose            ║
     ║                                                        ║
     ║  4. 保存输出到文件                                    ║
-    ║     python -m src.cli run "任务" -o output.md         ║
+    ║     python -m src.commands.cli run "任务" -o output.md         ║
     ╚══════════════════════════════════════════════════════╝
     """
     )

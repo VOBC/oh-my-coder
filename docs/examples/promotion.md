@@ -71,7 +71,7 @@ export DEEPSEEK_API_KEY=your_key_here  # 推荐，免费额度高
 python -m src.web.app
 
 # 💻 命令行
-python -m src.cli run "实现一个用户认证系统"
+python -m src.commands.cli run "实现一个用户认证系统"
 
 # 🔌 API
 python -m uvicorn src.main:app --reload

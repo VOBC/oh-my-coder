@@ -230,7 +230,7 @@ Web (Node.js) --HTTP--> Python FastAPI Server --subprocess--> CLI Core
 ```
 Web ---> Next.js API Routes ---> Python subprocess ---> CLI
 ```
-- 用 `child_process.spawn` 调用 `python -m src.cli`
+- 用 `child_process.spawn` 调用 `python -m src.commands.cli`
 - 更简单，但流式输出需特殊处理
 
 **方案 C: 独立服务模式**
