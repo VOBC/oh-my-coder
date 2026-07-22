@@ -1325,10 +1325,10 @@ class TestRunAgentTask:
     async def test_run_agent_task_success(self):
         store = MagicMock()
         store.update = AsyncMock()
-        with patch("src.agents.base.AgentContext") as AC, patch(
+        with patch("src.agents.base.AgentContext"), patch(
             "src.core.orchestrator.Orchestrator"
-        ) as O:
-            O.return_value.run = AsyncMock(
+        ) as mock_orch:
+            mock_orch.return_value.run = AsyncMock(
                 return_value=MagicMock(output="done")
             )
             await run_agent_task("prompt", "tid", store)

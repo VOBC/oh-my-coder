@@ -5,12 +5,10 @@ cli_gateway 测试 — 覆盖简化后的 Gateway CLI 命令（status / stop / s
 因此只测「依赖导入失败 → typer.Exit(1)」的异常分支，
 正常启动路径不在单测内覆盖（需手动 / Ctrl+C）。
 """
-import pytest
 from typer.testing import CliRunner
 
 from src.commands import cli_gateway
 from src.commands.cli_gateway import app
-
 
 runner = CliRunner()
 

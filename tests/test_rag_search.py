@@ -658,7 +658,6 @@ class TestSemanticSearchWithEmbeddings:
 
         # 让同一个元素同时出现在语义和关键词结果中
         element_ids = list(indexer.element_index.keys())
-        first_id = element_ids[0] if element_ids else "fake-id"
 
         if not element_ids:
             # 无索引元素，直接测试合并逻辑

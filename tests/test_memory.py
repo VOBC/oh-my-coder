@@ -422,7 +422,7 @@ class TestCountTokensFallback:
 
     def test_count_tokens_falls_back_to_char_estimation(self, temp_dir):
         """_enc 为 None 时使用 len(text)/2.5 估算"""
-        from src.memory.manager import MemoryManager, MemoryConfig
+        from src.memory.manager import MemoryConfig, MemoryManager
 
         config = MemoryConfig(storage_dir=temp_dir)
         mgr = MemoryManager.__new__(MemoryManager)
@@ -534,7 +534,7 @@ class TestLayeredSummaryContent:
 
     def test_tier0_truncation_without_tiktoken(self, temp_dir):
         """无 tiktoken 时 Tier 0 截断走字符数 fallback"""
-        from src.memory.manager import MemoryManager, MemoryConfig
+        from src.memory.manager import MemoryConfig, MemoryManager
 
         config = MemoryConfig(storage_dir=temp_dir, tier0_max_tokens=10)
         mgr = MemoryManager(config)
