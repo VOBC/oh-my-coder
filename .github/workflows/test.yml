@@ -39,8 +39,8 @@ jobs:
       - name: Run tests (fast, no coverage)
         if: matrix.python-version != '3.12'
         run: |
-            python -m pytest tests/ -o "addopts=--tb=short -ra -q --strict-markers" --timeout=300 --timeout-method=signal -n auto --deselect "tests/test_web_app_coverage_step5.py::TestRunTask"
-            python -m pytest "tests/test_web_app_coverage_step5.py::TestRunTask" -o "addopts=--tb=short -ra -q --strict-markers" --timeout=300 --timeout-method=signal -p no:xdist
+            python -m pytest tests/ -o "addopts=" -o "addopts=--tb=short -ra -q --strict-markers" --timeout=300 --timeout-method=signal -n auto --deselect "tests/test_web_app_coverage_step5.py::TestRunTask"
+            python -m pytest "tests/test_web_app_coverage_step5.py::TestRunTask" -o "addopts=" -o "addopts=--tb=short -ra -q --strict-markers" --timeout=300 --timeout-method=signal -p no:xdist
 
       - name: Run tests with coverage (Python 3.12 only)
         if: matrix.python-version == '3.12'
