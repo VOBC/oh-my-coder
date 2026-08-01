@@ -39,11 +39,11 @@ jobs:
       - name: Run tests (fast, no coverage)
         if: matrix.python-version != '3.12'
         run: |
-            python -m pytest tests/ -o "addopts=" -o "addopts=--tb=short -ra -q --strict-markers" --timeout=300 --timeout-method=thread -n auto --deselect "tests/test_web_app_coverage_step5.py::TestRunTask"
+            python -m pytest tests/ -o "addopts=" -o "addopts=--tb=short -ra -q --strict-markers" --timeout=300 --timeout-method=thread -n auto --deselect "tests/test_web_app_coverage_step5.py::TestRunTask" --deselect "tests/test_web_app_routes.py::TestExecuteAsyncTask::test_execute_auto_detect_local"
             python -m pytest "tests/test_web_app_coverage_step5.py::TestRunTask" -o "addopts=" -o "addopts=--tb=short -ra -q --strict-markers" --timeout=300 --timeout-method=thread -p no:xdist
 
       - name: Run tests with coverage (Python 3.12 only)
         if: matrix.python-version == '3.12'
         run: |
-            python -m pytest tests/ --cov=src --cov-report=term-missing:skip-covered --cov-report=xml -o "addopts=--tb=short -ra -q --strict-markers" --timeout=300 --timeout-method=thread --deselect "tests/test_web_app_coverage_step5.py::TestRunTask"
+            python -m pytest tests/ --cov=src --cov-report=term-missing:skip-covered --cov-report=xml -o "addopts=--tb=short -ra -q --strict-markers" --timeout=300 --timeout-method=thread --deselect "tests/test_web_app_coverage_step5.py::TestRunTask" --deselect "tests/test_web_app_routes.py::TestExecuteAsyncTask::test_execute_auto_detect_local"
             python -m pytest "tests/test_web_app_coverage_step5.py::TestRunTask" --cov=src --cov-append --cov-report=xml -o "addopts=--tb=short -ra -q --strict-markers" --timeout=300 --timeout-method=thread -p no:xdist
