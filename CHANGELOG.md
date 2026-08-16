@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Documentation Updates
+- Update README coverage badge: 87% → 96% (2026-08-16)
+
+---
+
+## [0.2.1] - 2026-08-01
+
 ### Fixed
 - Fix mypy type errors in cli.py (commit 1dbc576)
 - Fix `leave_team` returns False when user is not a member of any team (commit e14ab6c)
