@@ -83,6 +83,31 @@ class TestShowExtras:
         assert result.exit_code == 0
         assert "无按模型配置" in result.stdout
 
+    def test_show_includes_all_provider_keys(self, tmp_path, monkeypatch):
+        """Regression: show must list all supported provider API keys, not just
+        deepseek/kimi/doubao. GLM (ZHIPUAI_API_KEY) was previously missing."""
+        cfg_dir = tmp_path / ".omc"
+        cfg_dir.mkdir()
+        (cfg_dir / "config.json").write_text("{}")
+
+        monkeypatch.setattr(Path, "home", lambda: tmp_path)
+        with patch.dict("os.environ", {}, clear=True):
+            result = runner.invoke(app, ["show"])
+        assert result.exit_code == 0
+        # Every supported provider key must appear in show output
+        for key in (
+            "DEEPSEEK_API_KEY",
+            "KIMI_API_KEY",
+            "DOUBAO_API_KEY",
+            "ZHIPUAI_API_KEY",
+            "GLM_API_KEY",
+            "MINIMAX_API_KEY",
+            "DASHSCOPE_API_KEY",
+            "ERNIE_API_KEY",
+            "HUNYUAN_API_KEY",
+        ):
+            assert key in result.stdout, f"{key} missing from show output"
+
 
 # ── list command extras ────────────────────────────────────────────────
 
@@ -110,6 +135,24 @@ class TestListExtras:
         # Should show all items with ✗
         assert "DEEPSEEK_API_KEY" in result.stdout
         assert "✓" not in result.stdout or "✗" in result.stdout
+
+    def test_list_includes_all_provider_keys(self):
+        """Regression: list must advertise all supported provider API keys."""
+        with patch.dict("os.environ", {}, clear=True):
+            result = runner.invoke(app, ["list"])
+        assert result.exit_code == 0
+        for key in (
+            "DEEPSEEK_API_KEY",
+            "KIMI_API_KEY",
+            "DOUBAO_API_KEY",
+            "ZHIPUAI_API_KEY",
+            "GLM_API_KEY",
+            "MINIMAX_API_KEY",
+            "DASHSCOPE_API_KEY",
+            "ERNIE_API_KEY",
+            "HUNYUAN_API_KEY",
+        ):
+            assert key in result.stdout, f"{key} missing from list output"
 
 
 # ── set command extras ─────────────────────────────────────────────────

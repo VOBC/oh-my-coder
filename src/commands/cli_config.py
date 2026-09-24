@@ -47,6 +47,12 @@ def show(
         "DEEPSEEK_BASE_URL",
         "KIMI_API_KEY",
         "DOUBAO_API_KEY",
+        "ZHIPUAI_API_KEY",
+        "GLM_API_KEY",  # 智谱 GLM 别名
+        "MINIMAX_API_KEY",
+        "DASHSCOPE_API_KEY",
+        "ERNIE_API_KEY",
+        "HUNYUAN_API_KEY",
     ]
     for k in global_keys:
         val = os.getenv(k, "")
@@ -102,8 +108,14 @@ def list():
         ("DEFAULT_WORKFLOW", "默认工作流（默认 build）"),
         ("DEEPSEEK_API_KEY", "DeepSeek API Key（推荐，性价比高）"),
         ("DEEPSEEK_BASE_URL", "DeepSeek API 地址（默认官方）"),
-        ("KIMI_API_KEY", "KIMI API Key"),
-        ("DOUBAO_API_KEY", "豆包 API Key"),
+        ("KIMI_API_KEY", "KIMI API Key（Moonshot）"),
+        ("DOUBAO_API_KEY", "豆包 API Key（字节）"),
+        ("ZHIPUAI_API_KEY", "智谱 GLM API Key"),
+        ("GLM_API_KEY", "智谱 GLM 别名（同 ZHIPUAI_API_KEY）"),
+        ("MINIMAX_API_KEY", "MiniMax API Key"),
+        ("DASHSCOPE_API_KEY", "阿里通义千问 DashScope API Key"),
+        ("ERNIE_API_KEY", "百度文心一言 API Key"),
+        ("HUNYUAN_API_KEY", "腾讯混元 API Key"),
     ]
     for k, desc in items:
         val = os.getenv(k, "")
