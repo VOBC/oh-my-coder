@@ -218,12 +218,12 @@ def main():
     print(
         """
 ╔══════════════════════════════════════════════════════╗
-║                   示例运行完毕                       ║
-║                                                        ║
-║  相关命令:                                             ║
-║  • omc config load config/code-review.yaml            ║
-║  • omc config validate config/code-review.yaml        ║
-║  • omc config create my_agent.yaml                    ║
+║                        示例运行完毕                        ║
+║                                                      ║
+║  相关命令:                                               ║
+║  • omc config set -k ZHIPUAI_API_KEY -v "your_key"   ║
+║  • omc config show                                   ║
+║  • omc config models                                 ║
 ╚══════════════════════════════════════════════════════╝
     """
     )
