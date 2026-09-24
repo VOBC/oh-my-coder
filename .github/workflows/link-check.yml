@@ -33,7 +33,7 @@ jobs:
             --exclude 'example\.com'
             --exclude 'localhost'
             --exclude 'YOUR_USERNAME'
-            --accept 403,401,429
+            --accept 200,206,401,403,429
             './**/*.md' './docs/**/*.md'
           fail: true
           jobSummary: true
