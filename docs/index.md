@@ -20,7 +20,7 @@ description: 🤖 支持国内大模型、31 个专业 Agent、多 Agent 协作�
 
 [![Python](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](https://github.com/VOBC/oh-my-coder/blob/main/LICENSE)
-[![GitHub stars](https://img.shields.io/github/stars/VOBC/oh-my-coder?style=flat-square)](https://github.com/VOBC/oh-my-coder/stargazers)
+[![GitHub stars](https://img.shields.io/github/stars/VOBC/oh-my-coder?style=flat-square)](https://github.com/VOBC/oh-my-coder)
 
 </div>
 

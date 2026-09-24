@@ -12,7 +12,7 @@ https://github.com/sponsors/VOBC
 - 🐛 [报告 Bug](https://github.com/VOBC/oh-my-coder/issues/new/choose)
 - 📖 [提交功能需求](https://github.com/VOBC/oh-my-coder/issues/new/choose)
 - 🤝 [贡献代码](https://github.com/VOBC/oh-my-coder/blob/main/CONTRIBUTING.md)
-- ⭐ [给项目点 Star](https://github.com/VOBC/oh-my-coder/stargazers)
+- ⭐ [给项目点 Star](https://github.com/VOBC/oh-my-coder)
 
 ## 🙏 致谢
 

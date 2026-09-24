@@ -11,7 +11,7 @@
 [![Python](https://img.shields.io/badge/Python-3.9+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Coverage](https://img.shields.io/badge/coverage-96%25-green)](https://github.com/VOBC/oh-my-coder/actions)
-[![Stars](https://img.shields.io/github/stars/VOBC/oh-my-coder?style=flat-square&logo=github)](https://github.com/VOBC/oh-my-coder/stargazers)
+[![Stars](https://img.shields.io/github/stars/VOBC/oh-my-coder?style=flat-square&logo=github)](https://github.com/VOBC/oh-my-coder)
 [![Tests](https://img.shields.io/github/actions/workflow/status/VOBC/oh-my-coder/test.yml?branch=main&label=Tests)](https://github.com/VOBC/oh-my-coder/actions)
 
 **💡 灵感来源**: [oh-my-claudecode](https://github.com/Yeachan-Heo/oh-my-claudecode) (28.9k ⭐) — 我们为国内开发者提供零门槛替代方案
