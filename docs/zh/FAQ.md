@@ -118,7 +118,7 @@ omc config set -k DEEPSEEK_API_KEY -v "sk_xxxxxxxx"
 omc config set -k ZHIPUAI_API_KEY -v "xxxxxxxx"
 
 # 设置默认模型
-omc config set --default-model glm-4.7-flash
+omc config set -k DEFAULT_MODEL -v "glm-4.7-flash"
 
 # 查看当前配置
 omc status
@@ -144,7 +144,7 @@ omc status
 > 🎯 **零成本入门**：用智谱 GLM-4.7-Flash 完全免费，不需要充值。去 [open.bigmodel.cn](https://open.bigmodel.cn/) 注册获取 API Key 即可。
 
 **⚠️ 常见陷阱：**
-- 如果配置了智谱 Key 但 CLI 仍然报 DeepSeek 错误 → 检查默认模型：`omc config set --default-model glm-4.7-flash`
+- 如果配置了智谱 Key 但 CLI 仍然报 DeepSeek 错误 → 检查默认模型：`omc config set -k DEFAULT_MODEL -v "glm-4.7-flash"`
 - 环境变量名注意大小写：DeepSeek 用 `DEEPSEEK_API_KEY`，智谱用 `ZHIPUAI_API_KEY`
 - 环境变量设置后要重新打开终端才生效
 
@@ -250,7 +250,7 @@ omc status
 
 3. **使用更快的模型**
    ```bash
-   omc config set --default-model glm-4.7-flash  # 免费且快
+   omc config set -k DEFAULT_MODEL -v "glm-4.7-flash"  # 免费且快
    ```
 
 4. **分步执行**
@@ -293,13 +293,13 @@ omc status
 **解决：**
 ```bash
 # 把默认模型设为智谱
-omc config set --default-model glm-4.7-flash
+omc config set -k DEFAULT_MODEL -v "glm-4.7-flash"
 
 # 验证
 omc status
 ```
 
-> 💡 系统根据 `--default-model` 决定哪个模型是首选。配置了智谱 Key 但默认模型还是 DeepSeek，就会先去查 DeepSeek Key，查不到就报错。
+> 💡 系统根据 `DEFAULT_MODEL` 决定哪个模型是首选。配置了智谱 Key 但默认模型还是 DeepSeek，就会先去查 DeepSeek Key，查不到就报错。
 
 ### Q13: 模型调用超时怎么办？
 

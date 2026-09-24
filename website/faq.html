@@ -315,7 +315,7 @@ omc config set -k DEEPSEEK_API_KEY -v "sk_xxxxxxxx"
 omc config set -k ZHIPUAI_API_KEY -v "xxxxxxxx"
 
 # 设置默认模型
-omc config set --default-model glm-4-flash
+omc config set -k DEFAULT_MODEL -v "glm-4-flash"
 
 # 查看当前配置
 omc status</code></pre>
@@ -339,7 +339,7 @@ omc status</code></pre>
                         </div>
                         <p><strong>⚠️ 常见陷阱：</strong></p>
                         <ul>
-                            <li>如果配置了智谱 Key 但 CLI 仍然报 DeepSeek 错误 → 检查默认模型是否设为智谱：<code>omc config set --default-model glm-4-flash</code></li>
+                            <li>如果配置了智谱 Key 但 CLI 仍然报 DeepSeek 错误 → 检查默认模型是否设为智谱：<code>omc config set -k DEFAULT_MODEL -v "glm-4-flash"</code></li>
                             <li>环境变量名注意大小写：DeepSeek 用 <code>DEEPSEEK_API_KEY</code>，智谱用 <code>ZHIPUAI_API_KEY</code></li>
                             <li>环境变量设置后要重新打开终端才生效</li>
                         </ul>
@@ -674,7 +674,7 @@ omc status</code></pre>
                                 <pre><code>ping api.deepseek.com</code></pre>
                             </li>
                             <li><strong>切换模型试试</strong> — 如果正在用 DeepSeek，换成智谱 GLM（免费更快）：
-                                <pre><code>omc config set --default-model glm-4-flash</code></pre>
+                                <pre><code>omc config set -k DEFAULT_MODEL -v "glm-4-flash"</code></pre>
                             </li>
                             <li><strong>检查 API Key 是否有效</strong> — 在对应平台后台查看 Key 的状态</li>
                         </ol>
@@ -692,14 +692,14 @@ omc status</code></pre>
                         <p><strong>原因：</strong>CLI 的默认模型还是 DeepSeek，但 DeepSeek 的 API Key 没配。</p>
                         <p><strong>解决：</strong></p>
                         <pre><code># 1. 把默认模型设为智谱
-omc config set --default-model glm-4-flash
+omc config set -k DEFAULT_MODEL -v "glm-4-flash"
 
 # 2. 验证
 omc status</code></pre>
                         <p>或者把 DeepSeek Key 也配置上，让系统自动选择可用模型。</p>
                         <div class="tip-box">
                             <div class="tip-box-title">💡 原理</div>
-                            <p>系统根据 <code>--default-model</code> 决定哪个模型是首选。配置了智谱 Key 但默认模型还是 DeepSeek，就会先去查 DeepSeek Key，查不到就报错。</p>
+                            <p>系统根据 <code>DEFAULT_MODEL</code> 决定哪个模型是首选。配置了智谱 Key 但默认模型还是 DeepSeek，就会先去查 DeepSeek Key，查不到就报错。</p>
                         </div>
                     </div>
                 </div>

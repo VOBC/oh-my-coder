@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Documentation
+- 修正文档中错误的 provider key 名：`MIMOX_API_KEY` → `MINIMAX_API_KEY`、`QWEN_API_KEY` → `DASHSCOPE_API_KEY`（对齐 `cli_run.py` 实际支持的 key）
+- 修正不存在的 `omc config set --default-model` 选项 → `omc config set -k DEFAULT_MODEL -v`（`DEFAULT_MODEL` 是 `router.py` 实际读取的环境变量）
+- 修正不存在的 `omc config list-models` 命令 → `omc config models`
+- 官网 quickstart 统一为不带 `-m` 的全局配置命令（`omc config set -k ZHIPUAI_API_KEY -v`），与 CLI 真实签名及 README 保持一致
+
 ---
 
 ## [0.3.0] - 2026-09-24

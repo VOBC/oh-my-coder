@@ -47,7 +47,7 @@ omc config set -k GLM_API_KEY -v "your_key"  # https://open.bigmodel.cn/
 
 # 或者使用其他国产模型（有免费额度）
 omc config set -k DEEPSEEK_API_KEY -v "你的DeepSeek API Key"
-omc config set -k QWEN_API_KEY -v "你的通义千问 API Key"
+omc config set -k DASHSCOPE_API_KEY -v "你的通义千问 API Key"
 ```
 
 ### 第3步：验证安装

@@ -93,7 +93,7 @@ omc config set -k DEFAULT_MODEL -v "deepseek"
 
 ```bash
 # 设置 API Key
-omc config set -k MIMOX_API_KEY -v "your_api_key"
+omc config set -k MINIMAX_API_KEY -v "your_api_key"
 
 # 设置为默认模型
 omc config set -k DEFAULT_MODEL -v "mimo"
@@ -122,7 +122,7 @@ omc config set -k DEEPSEEK_API_KEY -v "your_key"
 omc config set -k DEFAULT_MODEL -v "deepseek"
 
 # 方案 C：大文件处理
-omc config set -k MIMOX_API_KEY -v "your_key"
+omc config set -k MINIMAX_API_KEY -v "your_key"
 omc config set -k DEFAULT_MODEL -v "mimo"
 ```
 

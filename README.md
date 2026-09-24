@@ -182,7 +182,7 @@ omc config set -k GLM_API_KEY -v "your_key"  # https://open.bigmodel.cn/
 omc config set -k DEEPSEEK_API_KEY -v "your_key"  # https://platform.deepseek.com/
 
 # 方式3: 小米 MiMo（长上下文支持）
-omc config set -k MIMOX_API_KEY -v "your_key"  # https://platform.xiaomimimo.com/
+omc config set -k MINIMAX_API_KEY -v "your_key"  # https://platform.xiaomimimo.com/
 ```
 
 ### 免费模型对比
@@ -224,7 +224,7 @@ omc config set -k DEEPSEEK_API_KEY -v "your_key"
 # 注册地址：https://platform.deepseek.com/
 
 # 方式 C：通义千问
-omc config set -k QWEN_API_KEY -v "your_key"
+omc config set -k DASHSCOPE_API_KEY -v "your_key"
 ```
 
 **第三步：启动**
@@ -287,7 +287,7 @@ omc config set -k DEEPSEEK_API_KEY -v <your-key>
 omc config set -k GLM_API_KEY -v <your-key>
 
 # 列出可用模型
-omc config list-models
+omc config models
 
 # === 代码清理 ===
 # 扫描项目中的冗余代码
@@ -645,12 +645,12 @@ omc context browser
 |--------|------|------|
 | `DEEPSEEK_API_KEY` | 推荐 | [DeepSeek 平台](https://platform.deepseek.com/)，新用户赠送余额 |
 | `GLM_API_KEY` | 推荐 | [智谱平台](https://open.bigmodel.cn/)，GLM-4.7-Flash 完全免费 |
-| `QWEN_API_KEY` | 可选 | [阿里云百炼](https://dashscope.console.aliyun.com/) |
+| `DASHSCOPE_API_KEY` | 可选 | [阿里云百炼](https://dashscope.console.aliyun.com/) |
 | `KIMI_API_KEY` | 可选 | [Moonshot](https://platform.moonshot.cn/) |
 | `DOUBAO_API_KEY` | 可选 | [火山引擎](https://console.volcengine.com/) |
 | `BAIDU_API_KEY` / `ERNIE_API_KEY` | 可选 | [文心一言](https://console.bce.baidu.com/) |
 | `MINIMAX_API_KEY` | 可选 | [MiniMax](https://api.minimax.chat/) |
-| `MIMOX_API_KEY` | 可选 | [小米 MiMo](https://platform.xiaomimimo.com/) |
+| `MINIMAX_API_KEY` | 可选 | [小米 MiMo](https://platform.xiaomimimo.com/) |
 | `OMC_DEFAULT_MODEL` | 可选 | 覆盖默认模型，如 `deepseek-chat` |
 | `REQUEST_TIMEOUT` | 可选 | 请求超时（秒），默认 60 |
 
