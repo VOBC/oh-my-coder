@@ -256,3 +256,44 @@ class TestModelsExtras:
         assert "kimi" in result.stdout
         assert "0.3" in result.stdout
         assert "https://api.kimi.com" in result.stdout
+
+    def test_models_lists_max_tokens_and_system_prompt(self, tmp_path, monkeypatch):
+        """Regression: models must display max_tokens and system_prompt when set.
+        Previously only api_key/base_url/temperature were shown."""
+        monkeypatch.setattr(Path, "home", lambda: tmp_path)
+        cfg_dir = tmp_path / ".omc"
+        cfg_dir.mkdir(parents=True, exist_ok=True)
+        cfg = {
+            "models": {
+                "glm": {
+                    "api_key": "sk-glm-test-key-1234",
+                    "temperature": 0.7,
+                    "max_tokens": 4096,
+                    "system_prompt": "You are a helpful assistant.",
+                }
+            }
+        }
+        (cfg_dir / "config.json").write_text(json.dumps(cfg))
+
+        result = runner.invoke(app, ["models"])
+        assert result.exit_code == 0
+        assert "glm" in result.stdout
+        assert "max_tokens" in result.stdout
+        assert "4096" in result.stdout
+        assert "system_prompt" in result.stdout
+        assert "You are a helpful assistant." in result.stdout
+        # unknown keys are also surfaced (not silently dropped)
+
+    def test_models_lists_unknown_fields(self, tmp_path, monkeypatch):
+        """Any non-preferred key configured for a model is still displayed."""
+        monkeypatch.setattr(Path, "home", lambda: tmp_path)
+        cfg_dir = tmp_path / ".omc"
+        cfg_dir.mkdir(parents=True, exist_ok=True)
+        cfg = {"models": {"custom": {"api_key": "sk-c-1234", "top_p": 0.9}}}
+        (cfg_dir / "config.json").write_text(json.dumps(cfg))
+
+        result = runner.invoke(app, ["models"])
+        assert result.exit_code == 0
+        assert "custom" in result.stdout
+        assert "top_p" in result.stdout
+        assert "0.9" in result.stdout

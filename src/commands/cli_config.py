@@ -233,16 +233,26 @@ def models():
             "\n[bold]快速开始：[/bold] omc config set -m kimi -k api_key -v <your-key>"
         )
     else:
+        # 字段显示顺序：常用字段优先，其他未知字段按字母顺序追加
+        preferred = ("api_key", "base_url", "temperature", "max_tokens", "system_prompt")
         console.print(f"[bold]已配置 {len(models)} 个模型：[/bold]\n")
         for name, opts in models.items():
-            api_key = opts.get("api_key", "")
-            base = opts.get("base_url", "")
-            temp = opts.get("temperature", None)
             console.print(f"  [cyan]{name}[/cyan]")
-            if api_key:
-                console.print(f"    api_key: {_mask_secret(api_key)}")
-            if base:
-                console.print(f"    base_url: {base}")
-            if temp is not None:
-                console.print(f"    temperature: {temp}")
+            # 先输出 preferred 顺序里的字段（note: 模块顶层有 `set` 命令，
+            # 内置 set 被覆盖，这里用 list 去重避免误调命令函数）
+            shown: list[str] = []
+            for k2 in preferred:
+                if k2 in opts:
+                    shown.append(k2)
+                    v2 = opts[k2]
+                    if k2 == "api_key":
+                        v2 = _mask_secret(str(v2))
+                    console.print(f"    {k2}: {v2}")
+            # 再输出其他未知字段
+            for k2 in sorted(opts.keys()):
+                if k2 not in shown:
+                    v2 = opts[k2]
+                    if k2 == "api_key":
+                        v2 = _mask_secret(str(v2))
+                    console.print(f"    {k2}: {v2}")
             console.print()
