@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.3.0] - 2026-09-24
 
 ### Fixed
+- ci: 修复 link-check workflow 中 lychee `--accept` 重复传参（lychee-action v2.9.0 不允许多次 `--accept`），改为逗号分隔单次传入
 - **config show/list 现在列出所有 provider 的 API Key** — 之前仅硬编码 DeepSeek/KIMI/豆包，
   配了智谱 GLM（ZHIPUAI_API_KEY）、MiniMax、通义千问、文心一言、混元后 `omc config show`
   看不到注入情况，与官网教程命令配合形成死锁（set 报错 + show 不显示 key）
